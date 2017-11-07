@@ -167,7 +167,7 @@ class TestInfluxLch(unittest.TestCase):
             d_influx = ar_i[idx]
             idx += 1
 
-            self.assertEqual(d_influx["time"], Tools.dt_ensure_utc_naive(Tools.epoch2datetime(cur_ts)).strftime('%Y-%m-%dT%H:%M:%SZ'))
+            self.assertEqual(d_influx["time"], SolBase.dt_ensure_utc_naive(SolBase.epoch_to_dt(cur_ts)).strftime('%Y-%m-%dT%H:%M:%SZ'))
             self.assertEqual(d_influx["measurement"], cur_probe)
             self.assertEqual(d_influx["fields"]["value"], cur_v)
 

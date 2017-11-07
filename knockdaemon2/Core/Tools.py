@@ -23,9 +23,8 @@
 """
 
 import logging
-from datetime import datetime
 
-import pytz
+from pysolbase.SolBase import SolBase
 
 logger = logging.getLogger(__name__)
 
@@ -34,85 +33,6 @@ class Tools(object):
     """
     Tools
     """
-
-    # ==========================================
-    # EPOCH / DT
-    # ==========================================
-
-    DT_EPOCH = datetime.utcfromtimestamp(0)
-
-    @classmethod
-    def datetime2epoch_int(cls, dt):
-        """
-        Convert a datetime (UTC required) to a unix time since epoch, as seconds, as integer.
-        Note that millis precision is lost.
-        :param dt: datetime
-        :type dt: datetime
-        :return int
-        :rtype int
-        """
-
-        return int((dt - cls.DT_EPOCH).total_seconds())
-
-    @classmethod
-    def epoch2datetime(cls, epoch):
-        """
-        Convert an epoch float or int to datetime (UTC)
-        :param epoch: float,int
-        :type epoch: float,int
-        :return datetime
-        :rtype datetime
-        """
-
-        return datetime.utcfromtimestamp(epoch)
-
-    @classmethod
-    def dt_is_naive(cls, dt):
-        """
-        Return true if dt is naive
-        :param dt: datetime.datetime
-        :type dt: datetime.datetime
-        :return bool
-        :rtype bool
-        """
-
-        # Naive : no tzinfo
-        if not dt.tzinfo:
-            return True
-
-        # Aware
-        return False
-
-    @classmethod
-    def dt_ensure_utc_aware(cls, dt):
-        """
-        Switch dt to utc time zone. If dt is naive, assume utc, otherwise, convert it to utc timezone.
-        Return an AWARE timezone (utc switched) datetime,
-        :param dt: datetime.datetime
-        :type dt:datetime.datetime
-        :return datetime.datetime
-        :rtype datetime.datetime
-        """
-
-        # If naive, add utc
-        if cls.dt_is_naive(dt):
-            return dt.replace(tzinfo=pytz.utc)
-        else:
-            # Not naive, go utc, keep aware
-            return dt.astimezone(pytz.utc)
-
-    @classmethod
-    def dt_ensure_utc_naive(cls, dt):
-        """
-        Ensure dt is naive. Return dt, switched to UTC (if applicable), and naive.
-        :param dt: datetime.datetime
-        :type dt:datetime.datetime
-        :return datetime.datetime
-        :rtype datetime.datetime
-        """
-
-        dt = cls.dt_ensure_utc_aware(dt)
-        return dt.replace(tzinfo=None)
 
     # ==========================================
     # INFLUX CONVERT
@@ -167,7 +87,7 @@ class Tools(object):
         for probe_name, dd, value, timestamp, d_opt_tags in notify_values:
             # We got a unix timestamp (1503045097.626604)
             # Convert it to required date format
-            dt_temp = cls.dt_ensure_utc_naive(cls.epoch2datetime(timestamp))
+            dt_temp = SolBase.dt_ensure_utc_naive(SolBase.epoch_to_dt(timestamp))
             s_dt_temp = dt_temp.strftime('%Y-%m-%dT%H:%M:%SZ')
 
             # Init
