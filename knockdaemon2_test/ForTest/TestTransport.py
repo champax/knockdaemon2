@@ -47,19 +47,19 @@ class TestTransport(KnockTransport):
         self.custom_key_b = None
         self.stop_count = 0
 
-    def init_from_config(self, config_parser, section_name, auto_start=True):
+    def init_from_config(self, d_yaml_config, d, auto_start=True):
         """
         Initialize from configuration
-        :param config_parser: dict
-        :type config_parser: dict
-        :param section_name: Ini file section for our probe
-        :type section_name: str
+        :param d_yaml_config: dict
+        :type d_yaml_config: dict
+        :param d: local dict
+        :type d: dict
         :param auto_start: bool
         :type auto_start: bool
         """
 
         # Go
-        self.custom_key_b = config_parser[section_name]["custom_key_b"]
+        self.custom_key_b = d["custom_key_b"]
 
     def process_notify(self, account_hash, node_hash, notify_hash, notify_values):
         """

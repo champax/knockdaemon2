@@ -55,9 +55,9 @@ try:
     # ENV
     # EXPECTED PATTERN LIKE :
     # - Binary : C:\Program Files\knock\knockdaemon2\knockdaemon2.exe
-    # - Config : C:\Program Files\knock\knockdaemon2\knockdaemon2.ini
+    # - Config : C:\Program Files\knock\knockdaemon2\knockdaemon2.yaml
     # - Config : C:\Program Files\knock\knockdaemon2\*.json
-    # - Config : C:\Program Files\knock\knockdaemon2\conf.d\*.ini
+    # - Config : C:\Program Files\knock\knockdaemon2\conf.d\*.yaml
     # - Logfile : C:\Users\champax\AppData\Local\knock\knockdaemon2\knockdaemon2.log
     # -------------------
 
@@ -142,7 +142,7 @@ try:
         for cur_dir in D_PATH["AR_SEARCH_DIRS"]:
             # CONFIG
             if not D_PATH["LOCATED_CONFIG_FILE"]:
-                f_config = SolBase.get_pathseparator().join([cur_dir, "knockdaemon2.ini"])
+                f_config = SolBase.get_pathseparator().join([cur_dir, "knockdaemon2.yaml"])
                 logger.info("Config : trying %s", f_config)
                 if FileUtility.is_file_exist(f_config):
                     D_PATH["LOCATED_CONFIG_FILE"] = f_config

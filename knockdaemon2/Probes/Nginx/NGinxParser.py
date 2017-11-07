@@ -132,20 +132,22 @@ class NGinxParser(BaseParser):
         # Call base
         BaseParser.__init__(self, file_mask, position_file, kv_callback)
 
-    def init_from_config(self, config_parser, section_name):
+    def init_from_config(self, k, d_yaml_config, d):
         """
         Initialize from configuration
-        :param config_parser: dict
-        :type config_parser: dict
-        :param section_name: Ini file section for our probe
-        :type section_name: str
+        :param k: str
+        :type k: str
+        :param d_yaml_config: full conf
+        :type d_yaml_config: d
+        :param d: local conf
+        :type d: dict
         """
 
         # Base
-        BaseParser.init_from_config(self, config_parser, section_name)
+        BaseParser.init_from_config(self, k, d_yaml_config, d)
 
         # Go
-        temp = config_parser[section_name][NGinxParser.__EXCLUDE_SERVER]
+        temp = d["excludeserver"]
         ar = temp.lower().split(',')
         for a in ar:
             self.hash_exclude[a] = a

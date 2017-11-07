@@ -70,9 +70,9 @@ class AutoUpdateBase(object):
     Auto update base class
     """
 
-    _init_config_parser = KnockManager.__dict__['_init_config_parser']
+    _init_config_yaml = KnockManager.__dict__['_init_config_yaml']
 
-    def __init__(self, config_file_name='/etc/knock/knockdaemon2/knockdaemon2.ini', unittest=False, auto_start=True, lock_file='/var/run/knockdaemon2_autoupdate.pid'):
+    def __init__(self, config_file_name='/etc/knock/knockdaemon2/knockdaemon2.yaml', unittest=False, auto_start=True, lock_file='/var/run/knockdaemon2_autoupdate.pid'):
         """
 
         :param config_file_name: name of configuration file
@@ -90,7 +90,7 @@ class AutoUpdateBase(object):
         self._unittest = unittest
 
         # Parser instance
-        self._config_parser = None
+        self._d_yaml_config = None
 
         # Lock file
         self._file_lock = lock_file
@@ -346,12 +346,18 @@ class AutoUpdateBase(object):
         """
         # load configuration
         try:
-            self._config_parser = self._init_config_parser()
+            self._d_yaml_config = self._init_config_yaml()
         except IOError as err:
             logger.warn(SolBase.extostr(err))
             raise ExitOnError(2, err.message)
         try:
-            uri = self._config_parser['transport']['http_uri']
+            uri = None
+            for k, d in self._d_yaml_config['transports'].iteritems():
+                # Take the first one
+                if d["class_name"].find("HttpAsyncTransport") >= 0:
+                    uri = d["http_uri"]
+                    break
+            assert uri, "Need http_uri"
         except KeyError:
             logger.warn('Missing transport.http_uri parameter in conf file')
             raise ExitOnError(2, 'Missing transport.http_uri parameter in conf file')
@@ -370,7 +376,7 @@ class AutoUpdateBase(object):
         """
 
         try:
-            staging = self._config_parser['knockd']['staging']
+            staging = self._d_yaml_config['knockd']['staging']
         except KeyError:
             staging = 'prod'
         return staging

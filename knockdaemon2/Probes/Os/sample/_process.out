@@ -31,7 +31,7 @@
         "-stdout=/var/log/knockdaemon2.log",
         "-maxopenfiles=4096",
         "-user=root",
-        "-c=/etc/knock/knockdaemon2/knockdaemon2.ini",
+        "-c=/etc/knock/knockdaemon2/knockdaemon2.yaml",
         "start"
     ],
     "create_time": 1462267139.54,

@@ -39,7 +39,6 @@ psutil
 dnspython
 ntplib
 argparse
-anyconfig
 PyYAML
 urllib3
 jinja2

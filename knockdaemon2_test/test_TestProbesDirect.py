@@ -91,14 +91,14 @@ class TestProbesDirect(unittest.TestCase):
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
         self.config_file = \
             self.current_dir + "conf" + SolBase.get_pathseparator() \
-            + "realall" + SolBase.get_pathseparator() + "knockdaemon2.ini"
+            + "realall" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
 
         # Config files
         for f in [
             "k.CheckProcess.json",
             "k.CheckDns.json",
-            "knockdaemon2.ini",
-            SolBase.get_pathseparator().join(["conf.d", "10_auth.ini"])
+            "knockdaemon2.yaml",
+            SolBase.get_pathseparator().join(["conf.d", "10_auth.yaml"])
         ]:
             src = self.current_dir + "conf" + SolBase.get_pathseparator() + "realall" + SolBase.get_pathseparator() + f
             dst = PTools.get_tmp_dir() + SolBase.get_pathseparator() + f
@@ -118,7 +118,7 @@ class TestProbesDirect(unittest.TestCase):
             FileUtility.append_text_to_file(dst, buf, "utf8", overwrite=True)
 
         # Overwrite
-        self.config_file = PTools.get_tmp_dir() + SolBase.get_pathseparator() + "knockdaemon2.ini"
+        self.config_file = PTools.get_tmp_dir() + SolBase.get_pathseparator() + "knockdaemon2.yaml"
 
         # Reset meter
         Meters.reset()

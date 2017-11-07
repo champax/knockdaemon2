@@ -38,13 +38,13 @@ class KnockTransport(object):
         """
         pass
 
-    def init_from_config(self, config_parser, section_name, auto_start=True):
+    def init_from_config(self, d_yaml_config, d, auto_start=True):
         """
         Initialize from configuration
-        :param config_parser: dict
-        :type config_parser: dict
-        :param section_name: Ini file section for our probe
-        :type section_name: str
+        :param d_yaml_config: dict
+        :type d_yaml_config: dict
+        :param d: local dict
+        :type d: dict
         :param auto_start: bool
         :type auto_start: bool
         """

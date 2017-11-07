@@ -30,19 +30,18 @@ from collections import OrderedDict
 from threading import Lock
 from time import time
 
-import anyconfig
 import gevent
 import os
+import yaml
 from gevent.timeout import Timeout
 from os.path import dirname, abspath
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
 
-from knockdaemon2.Core.KnockProbe import KnockConfigurationKeys, KnockProbe
+from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Core.KnockProbeContext import KnockProbeContext
 from knockdaemon2.Core.UDPServer import UDPServer
-from knockdaemon2.Kindly.Kindly import Kindly
 from knockdaemon2.Platform.PTools import PTools
 from knockdaemon2.Transport.KnockTransport import KnockTransport
 
@@ -95,7 +94,7 @@ class KnockManager(object):
 
         # File name
         self._config_file_name = config_file_name
-        self._config_parser = None
+        self._d_yaml_config = None
 
         # Daemon control
         self._locker = Lock()
@@ -133,9 +132,11 @@ class KnockManager(object):
     # INIT FROM CONFIG
     # ==============================
 
-    def _init_config_parser(self):
+    def _init_config_yaml(self):
         """
-        Init a config parser
+        Init configuration
+        :return dict
+        :rtype dict
         """
 
         # Files to load
@@ -149,7 +150,7 @@ class KnockManager(object):
         # and merge it into memory....
         config_path = dirname(abspath(self._config_file_name))
         ps = SolBase.get_pathseparator()
-        file_match = config_path + ps + "conf.d" + ps + "*.ini"
+        file_match = config_path + ps + "conf.d" + ps + "*.yaml"
         logger.info("Using file_match=%s", file_match)
 
         # Setup
@@ -158,9 +159,18 @@ class KnockManager(object):
             ar_to_load.append(cur_file)
 
         # Ok, ready, load & merge
-        d = anyconfig.load(ar_to_load)
-        d = Kindly.kindly_anyconfig_fix_ta_shitasse(d)
-        return d
+        d_conf = {}
+        for cur_file in ar_to_load:
+            logger.info("Loading cur_file=%s", cur_file)
+            with open(cur_file, 'r') as yml_file:
+                cur_d = yaml.load(yml_file)
+
+            logger.info("Merging cur_d=%s", cur_d)
+            d_conf.update(cur_d)
+
+        # Ok
+        logger.info("Got effective d_conf=%s", d_conf)
+        return d_conf
 
     def _init_from_config(self):
         """
@@ -169,58 +179,49 @@ class KnockManager(object):
 
         try:
             # Init
-            self._config_parser = self._init_config_parser()
+            self._d_yaml_config = self._init_config_yaml()
 
             # Init us
-            tag = KnockConfigurationKeys.INI_KNOCKD_TAG
-            self._exectimeout_ms = \
-                int(self._config_parser[tag][KnockConfigurationKeys.INI_KNOCKD_EXEC_TIMEOUT_MS])
+            if "exectimeout_ms" in self._d_yaml_config["knockd"]:
+                self._exectimeout_ms = self._d_yaml_config["knockd"]["exectimeout_ms"]
 
             # Account
-            k = KnockConfigurationKeys.INI_KNOCKD_ACC_NAMESPACE
-            self._account_hash[k] = self._config_parser[tag][k]
-
-            k = KnockConfigurationKeys.INI_KNOCKD_ACC_KEY
-            self._account_hash[k] = self._config_parser[tag][k]
+            self._account_hash["acc_namespace"] = self._d_yaml_config["knockd"]["acc_namespace"]
+            self._account_hash["acc_key"] = self._d_yaml_config["knockd"]["acc_key"]
 
             logger.info("Account hash=%s", self._account_hash)
 
             # Check them
-            if not SolBase.is_string_not_empty(
-                    self._account_hash[KnockConfigurationKeys.INI_KNOCKD_ACC_NAMESPACE]):
-                raise Exception("Invalid {0}".format(
-                    KnockConfigurationKeys.INI_KNOCKD_ACC_NAMESPACE))
-            elif not SolBase.is_string_not_empty(
-                    self._account_hash[KnockConfigurationKeys.INI_KNOCKD_ACC_KEY]):
-                raise Exception("Invalid {0}".format(
-                    KnockConfigurationKeys.INI_KNOCKD_ACC_KEY))
+            assert len(self._account_hash["acc_namespace"]) > 0, "Invalid acc_namespace"
+            assert len(self._account_hash["acc_key"]) > 0, "Invalid acc_key"
 
             # Init transport
-            self._init_transport(KnockConfigurationKeys.INI_TRANSPORT_TAG)
-            self._init_transport(KnockConfigurationKeys.INI_TRANSPORT_INFLUX_TAG)
+            for k, d in self._d_yaml_config["transports"].iteritems():
+                self._init_transport(k, d)
 
             # Init Udp Listener
-            self._init_udp_server(KnockConfigurationKeys.INI_UDP_SERVER_TAG)
+            self._init_udp_server()
 
             # Init probes
-            for s in self._config_parser.iterkeys():
-                if s.startswith(KnockConfigurationKeys.INI_PROBE_TAG):
-                    self._init_probe(s)
+            for k, d in self._d_yaml_config["probes"].iteritems():
+                self._init_probe(k, d)
 
         except Exception as e:
             logger.error("Exception, e=%s", SolBase.extostr(e))
             raise
 
-    def _init_probe(self, section_name):
+    def _init_probe(self, k, d):
         """
         Initialize a probe
-        :param section_name: Section name
-        :type section_name: str
+        :param k: str
+        :type k: str
+        :param d: local conf
+        :type d: dict
         """
 
         # Fetch class name and try to allocate
-        logger.debug("Trying section_name=%s", section_name)
-        class_name = self._config_parser[section_name][KnockConfigurationKeys.INI_PROBE_CLASS]
+        logger.debug("Trying d=%s", d)
+        class_name = d["class_name"]
 
         # Try alloc
         p = self._try_alloc_class(class_name)
@@ -229,14 +230,16 @@ class KnockManager(object):
         if not isinstance(p, KnockProbe):
             raise Exception("Allocation invalid, not a KnockProbe, having class={0}, instance={1}".format(SolBase.get_classname(p), p))
 
-        logger.debug("Trying init, section_name=%s, class_name=%s", section_name, class_name)
-        self._init_probe_internal(section_name, p)
+        logger.debug("Trying init, d=%s", d)
+        self._init_probe_internal(k, d, p)
 
-    def _init_probe_internal(self, section_name, p):
+    def _init_probe_internal(self, k, d, p):
         """
         Init
-        :param section_name: Section name
-        :type section_name: str
+        :param k: str
+        :type k: str
+        :param d: local conf
+        :type d: dict
         :param p: KnockProbe
         :type p: KnockProbe
         """
@@ -245,19 +248,15 @@ class KnockManager(object):
         p.set_manager(self)
 
         # Initialize
-
-        p.init_from_config(self._config_parser, section_name)
+        p.init_from_config(k, self._d_yaml_config, d)
 
         # Ok, register it
         self._probe_list.append(p)
         logger.info("Probe registered, p=%s", p)
 
-    # noinspection PyUnusedLocal
-    def _init_udp_server(self, section_name):
+    def _init_udp_server(self):
         """
         Initialize udp server
-        :param section_name: Section name
-        :type section_name: str
         """
 
         # TODO : Config for udp server
@@ -269,27 +268,24 @@ class KnockManager(object):
         if self.auto_start:
             self._udp_server.start()
 
-    def _init_transport(self, section_name):
+    def _init_transport(self, k, d):
         """
         Initialize transport
-        :param section_name: Section name
-        :type section_name: str
+        :param k: key
+        :type k: str
+        :param d: dict
+        :type d: dict
         """
 
-
         # Go
-        logger.info("Trying section_name=%s", section_name)
+        logger.info("Trying transport, k=%s, d=%s", k, d)
 
-        # Check we can load
-        if section_name not in self._config_parser:
-            logger.info("Bypassing transport due to non section_name _config_parser, section_name=%s", section_name)
-            return
-        elif KnockConfigurationKeys.INI_PROBE_CLASS not in self._config_parser[section_name]:
-            logger.info("Bypassing transport due to non class_name in section_action=%s", section_name)
+        if "class_name" not in d:
+            logger.info("Bypassing transport due to non class_name in d=%s", d)
             return
 
         # Fetch class name and try to allocate
-        class_name = self._config_parser[section_name][KnockConfigurationKeys.INI_PROBE_CLASS]
+        class_name = d["class_name"]
 
         # Try alloc
         t = self._try_alloc_class(class_name)
@@ -299,8 +295,8 @@ class KnockManager(object):
             raise Exception("Allocation invalid, not a KnockTransport, having class={0}, instance={1}".format(SolBase.get_classname(t), t))
 
         # Initialize
-        logger.debug("Trying init, section_name=%s, class_name=%s", section_name, class_name)
-        t.init_from_config(self._config_parser, section_name, auto_start=self.auto_start)
+        logger.debug("Trying init transport now")
+        t.init_from_config(self._d_yaml_config, d, auto_start=self.auto_start)
 
         # Ok, register it
         self._ar_knock_transport.append(t)

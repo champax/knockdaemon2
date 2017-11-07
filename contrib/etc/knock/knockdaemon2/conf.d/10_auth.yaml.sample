@@ -1,0 +1,3 @@
+knockd:
+    acc_namespace: companyName
+    acc_key: Namespace_api_key

@@ -1,0 +1,16 @@
+[Unit]
+Description=Knock Daemon
+After=tlp-init.service
+
+[Service]
+Type=forking
+RemainAfterExit=no
+ExecStart=/usr/share/python/knockdaemon2/bin/python /usr/share/python/knockdaemon2/bin/knockdaemon2 -pidfile=/var/run/knockdaemon2.pid -stderr=/var/log/knockdaemon2.err -stdout=/dev/null -logfile=/var/log/knockdaemon2.log -loglevel=INFO -maxopenfiles=4096 -user=root -c=/etc/knock/knockdaemon2/knockdaemon2.yaml start
+ExecStop=/usr/share/python/knockdaemon2/bin/python /usr/share/python/knockdaemon2/bin/knockdaemon2 -pidfile=/var/run/knockdaemon2.pid -stderr=/var/log/knockdaemon2.err -stdout=/dev/null -logfile=/var/log/knockdaemon2.log -loglevel=INFO -maxopenfiles=4096 -user=root -c=/etc/knock/knockdaemon2/knockdaemon2.yaml stop
+Restart=always
+RestartSec=5
+# Need PIDFile, otherwise redhat restart in loop
+PIDFile=/var/run/knockdaemon2.pid
+
+[Install]
+WantedBy=multi-user.target

@@ -53,7 +53,7 @@ if PTools.get_distribution_type() == "windows":
                 UDPServer.UDP_WINDOWS_SOCKET_PORT = UDPServer.UDP_WINDOWS_UNITTEST_SOCKET_PORT
 
             # Fetch config
-            config_file = SolBase.get_pathseparator().join(["C:", "champax", "kd_conf_local", "knockdaemon2", "knockdaemon2.ini"])
+            config_file = SolBase.get_pathseparator().join(["C:", "champax", "kd_conf_local", "knockdaemon2", "knockdaemon2.yaml"])
             logger.info("config_file=%s", config_file)
 
             # Init manager

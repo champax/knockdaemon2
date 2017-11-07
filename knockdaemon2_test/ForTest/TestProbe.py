@@ -54,20 +54,22 @@ class TestProbe(KnockProbe):
         # Sleep ms
         self.sleep_ms_in_exec = 0
 
-    def init_from_config(self, config_parser, section_name):
+    def init_from_config(self, k, d_yaml_config, d):
         """
         Initialize from configuration
-        :param config_parser: dict
-        :type config_parser: dict
-        :param section_name: Ini file section for our probe
-        :type section_name: str
+        :param k: str
+        :type k: str
+        :param d_yaml_config: full conf
+        :type d_yaml_config: d
+        :param d: local conf
+        :type d: dict
         """
 
         # Base
-        KnockProbe.init_from_config(self, config_parser, section_name)
+        KnockProbe.init_from_config(self, k, d_yaml_config, d)
 
         # Go
-        self.custom_key_b = config_parser[section_name]["custom_key_b"]
+        self.custom_key_b = d["custom_key_b"]
 
     def _execute_linux(self):
         """

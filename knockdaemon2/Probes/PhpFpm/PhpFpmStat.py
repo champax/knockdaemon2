@@ -129,17 +129,20 @@ class PhpFpmStat(KnockProbe):
         # Just call base, not supported
         KnockProbe._execute_windows(self)
 
-    def init_from_config(self, config_parser, section_name):
+    def init_from_config(self, k, d_yaml_config, d):
         """
         Initialize from configuration
-        :param config_parser: dict
-        :type config_parser: dict
-        :param section_name: Ini file section for our probe
-        :type section_name: str
+        :param k: str
+        :type k: str
+        :param d_yaml_config: full conf
+        :type d_yaml_config: d
+        :param d: local conf
+        :type d: dict
         """
 
         # Base
-        KnockProbe.init_from_config(self, config_parser, section_name)
+        KnockProbe.init_from_config(self, k, d_yaml_config, d)
+        
 
         # Load config
         # url0 = pool_name|uri
@@ -158,12 +161,12 @@ class PhpFpmStat(KnockProbe):
                 key = "url" + str(idx)
 
                 # Check
-                if key not in config_parser[section_name]:
+                if key not in d:
                     logger.info("All url loaded")
                     break
 
                 # Get it
-                buf = config_parser[section_name][key]
+                buf = d[key]
                 ar = buf.split("|")
                 k = ar[0]
                 v = ar[1:]

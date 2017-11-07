@@ -96,9 +96,9 @@ class KnockDaemon(Daemon):
             "-c",
             metavar="c",
             type=str,
-            default="/etc/knock/knockdaemon2.ini",
+            default="/etc/knock/knockdaemon2.yaml",
             action="store",
-            help="knockdaemon2 ini file [default: /etc/knock/knockdaemon2.ini]"
+            help="knockdaemon2 ini file [default: /etc/knock/knockdaemon2.yaml]"
         )
 
         return arg_parser

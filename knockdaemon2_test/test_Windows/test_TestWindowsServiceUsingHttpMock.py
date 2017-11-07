@@ -68,7 +68,7 @@ if PTools.get_distribution_type() == "windows":
 
             self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
             self.manager_config_dir = self.current_dir + "conf" + SolBase.get_pathseparator() + "real"
-            self.manager_config_file = self.manager_config_dir + SolBase.get_pathseparator() + "knockdaemon2.ini"
+            self.manager_config_file = self.manager_config_dir + SolBase.get_pathseparator() + "knockdaemon2.yaml"
 
             # Config
             self.testtimeout_ms = 5000

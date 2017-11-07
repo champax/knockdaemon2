@@ -27,7 +27,6 @@ import logging
 import os
 from pysolbase.SolBase import SolBase
 
-from knockdaemon2.Core.KnockConfigurationKeys import KnockConfigurationKeys
 from knockdaemon2.Platform.PTools import PTools
 
 logger = logging.getLogger(__name__)
@@ -49,7 +48,8 @@ class KnockProbe(object):
         """
 
         self._knock_manager = None
-        self.section_name = None
+        self.key = None
+        self.d_local_conf = None
         self.probe_class = None
         self.exec_interval_ms = 60000
         self.exec_enabled = True
@@ -77,22 +77,22 @@ class KnockProbe(object):
         """
         self._knock_manager = knock_manager
 
-    def init_from_config(self, config_parser, section_name):
+    def init_from_config(self, k, d_yaml_config, d):
         """
         Initialize from configuration
-        :param config_parser: dict
-        :type config_parser: dict
-        :param section_name: Ini file section for our probe
-        :type section_name: str
+        :param k: str
+        :type k: str
+        :param d_yaml_config: full conf
+        :type d_yaml_config: d
+        :param d: local conf
+        :type d: dict
         """
 
-        self.section_name = section_name
-        self.probe_class = \
-            config_parser[section_name][KnockConfigurationKeys.INI_PROBE_CLASS]
-        self.exec_enabled = \
-            bool(config_parser[section_name][KnockConfigurationKeys.INI_PROBE_EXEC_ENABLED])
-        self.exec_interval_ms = \
-            int(config_parser[section_name][KnockConfigurationKeys.INI_PROBE_EXEC_INTERVAL_SEC]) * 1000
+        self.d_local_conf = d
+        self.key = k
+        self.probe_class = d["class_name"]
+        self.exec_enabled = d["exec_enabled"]
+        self.exec_interval_ms = d["exec_interval_sec"] * 1000
 
         self._check_and_fix_limits()
 
@@ -201,7 +201,7 @@ class KnockProbe(object):
         :rtype string
         """
 
-        return "kprobe:ms={0}*s={1}*c={2}*on={3}*ux={4}*win={5}*pl={6}*sup={7}".format(
+        return "kprobe:ms={0}*s={1}*c={2}*on={3}*ux={4}*win={5}*pl={6}*sup={7}*k={8}".format(
             self.exec_interval_ms,
             self.probe_class,
             self.class_name,
@@ -209,5 +209,6 @@ class KnockProbe(object):
             self.linux_support,
             self.windows_support,
             self.platform,
-            self.platform_supported
+            self.platform_supported,
+            self.key
         )

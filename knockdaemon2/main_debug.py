@@ -29,7 +29,7 @@ from knockdaemon2.Core.KnockManager import KnockManager
 # CMD : /usr/share/python/knockdaemon2/bin/python /usr/share/python/knockdaemon2/bin/knockdaemon2
 # -pidfile=/var/run/knockdaemon2.pid -stderr=/var/log/knockdaemon2.err -stdout=/var/log/knockdaemon2.log -maxopenfiles=4096
 # -user=root
-# -c=/etc/knock/knockdaemon2/knockdaemon2.ini start
+# -c=/etc/knock/knockdaemon2/knockdaemon2.yaml start
 #
 # REQUIRES : A valid /etc/knock/knockdaemon2/ folder
 from knockdaemon2.Core.UDPServer import UDPServer
@@ -56,7 +56,7 @@ def run():
             UDPServer.UDP_SOCKET_NAME = UDPServer.UDP_UNITTEST_SOCKET_NAME
 
         # Fetch config
-        config_file = "/etc/knock/knockdaemon2_lchgui/knockdaemon2.ini"
+        config_file = "/etc/knock/knockdaemon2_lchgui/knockdaemon2.yaml"
         logger.info("config_file=%s", config_file)
 
         # Init manager

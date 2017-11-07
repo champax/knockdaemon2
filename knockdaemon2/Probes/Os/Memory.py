@@ -52,21 +52,6 @@ class Memory(KnockProbe):
         # Go
         self.category = "/os/memory"
 
-    def init_from_config(self, config_parser, section_name):
-        """
-        Initialize from configuration
-        :param config_parser: dict
-        :type config_parser: dict
-        :param section_name: Ini file section for our probe
-        :type section_name: str
-        """
-
-        # Base
-        KnockProbe.init_from_config(self, config_parser, section_name)
-
-        # Go
-        pass
-
     def _execute_linux(self):
         """
         Execute a probe.

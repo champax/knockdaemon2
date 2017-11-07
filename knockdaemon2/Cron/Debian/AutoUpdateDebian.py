@@ -45,7 +45,7 @@ class AutoUpdateDebian(AutoUpdateBase):
     Auto update for debian
     """
 
-    def __init__(self, config_file_name='/etc/knock/knockdaemon2/knockdaemon2.ini', unittest=False, auto_start=True, lock_file='/var/run/knockdaemon2_autoupdate.pid'):
+    def __init__(self, config_file_name='/etc/knock/knockdaemon2/knockdaemon2.yaml', unittest=False, auto_start=True, lock_file='/var/run/knockdaemon2_autoupdate.pid'):
         """
         Init
         :param config_file_name: name of configuration file

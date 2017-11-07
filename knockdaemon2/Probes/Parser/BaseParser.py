@@ -38,11 +38,6 @@ class BaseParser(KnockProbe):
     Base parser
     """
 
-    # File mask to scan (will take the more recent for processing)
-    INI_FILE_MASK = "file_mask"
-    # Position file
-    INI_POS_FILE = "pos_file"
-
     def __init__(self, file_mask=None, pos_file=None, kvc=None):
         """
         Init
@@ -77,21 +72,23 @@ class BaseParser(KnockProbe):
         logger.info("Starting, file_mask=%s, pos_file=%s", self.file_mask, self.pos_file)
         self.load_position()
 
-    def init_from_config(self, config_parser, section_name):
+    def init_from_config(self, k, d_yaml_config, d):
         """
         Initialize from configuration
-        :param config_parser: dict
-        :type config_parser: dict
-        :param section_name: Ini file section for our probe
-        :type section_name: str
+        :param k: str
+        :type k: str
+        :param d_yaml_config: full conf
+        :type d_yaml_config: d
+        :param d: local conf
+        :type d: dict
         """
 
         # Base
-        KnockProbe.init_from_config(self, config_parser, section_name)
+        KnockProbe.init_from_config(self, k, d_yaml_config, d)
 
         # Go
-        self.file_mask = config_parser[section_name][BaseParser.INI_FILE_MASK]
-        self.pos_file = config_parser[section_name][BaseParser.INI_POS_FILE]
+        self.file_mask = d["file_mask"]
+        self.pos_file = d["pos_file"]
 
     def _execute_windows(self):
         """

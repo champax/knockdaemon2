@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 logger.info("knockdaemon2 starting")
 
 # Fetch config
-config_file = "knockdaemon2.ini"
+config_file = "knockdaemon2.yaml"
 logger.info("config_file=%s", config_file)
 
 # Init manager

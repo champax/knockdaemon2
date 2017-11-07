@@ -58,7 +58,7 @@ class TestBasic(unittest.TestCase):
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
         self.config_file = \
             self.current_dir + "conf" + SolBase.get_pathseparator() \
-            + "basic" + SolBase.get_pathseparator() + "knockdaemon2.ini"
+            + "basic" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
         self.k = None
 
         # Reset meter
@@ -103,18 +103,18 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(len(self.k._ar_knock_transport), 1)
         self.assertEqual(len(self.k._probe_list), 2)
         for p in self.k._probe_list:
-            if p.section_name == "knock_TestProbe1":
+            if p.key == "TestProbe1":
                 self.assertEqual(p.custom_key_b, "customValueB_1")
                 self.assertEqual(p.exec_count, 0)
                 self.assertEqual(p.exec_enabled, True)
                 self.assertEqual(p.exec_interval_ms, 1000)
-            elif p.section_name == "knock_TestProbe2":
+            elif p.key == "TestProbe2":
                 self.assertEqual(p.custom_key_b, "customValueB_2")
                 self.assertEqual(p.exec_count, 0)
                 self.assertEqual(p.exec_enabled, True)
                 self.assertEqual(p.exec_interval_ms, 1000)
             else:
-                self.fail("Invalid section_name=" + p.section_name)
+                self.fail("Invalid key=" + p.key)
         self.assertFalse(self.k._is_running)
 
     # ==========================

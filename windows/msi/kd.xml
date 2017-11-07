@@ -74,17 +74,17 @@
                             <File Id="KD_pyd" Source="..\pyinstaller\dist\win32evtlog.pyd"/>
                             <File Id="KD_checkdns" Source="..\pyinstaller\dist\k.CheckDns.json"/>
                             <File Id="KD_checkprocess" Source="..\pyinstaller\dist\k.CheckProcess.json"/>
-                            <File Id="KD_ini" Source="..\pyinstaller\dist\knockdaemon2.ini"/>
+                            <File Id="KD_ini" Source="..\pyinstaller\dist\knockdaemon2.yaml"/>
                         </Component>
                         <!-- CONF.D -->
                         <Directory Id="KNOCKDIR_CONFD" Name="conf.d">
                             <Component Id="knockdaemon2CustomConfigurationFiles" Guid="$(var.GUID2)">
                                 <!-- SAMPLE FILE -->
-                                <File Id="KD_confd_10authinisample" Source="..\pyinstaller\dist\conf.d\10_auth.ini.sample"/>
+                                <File Id="KD_confd_10authinisample" Source="..\pyinstaller\dist\conf.d\10_auth.yaml.sample"/>
 
                                 <!-- INIT UPDATE -->
-                                <IniFile Id="KD_10_auth_custom_ini_1" Name="10_auth.ini" Action="addLine" Directory="KNOCKDIR_CONFD" Key="acc_namespace" Section="knockd" Value="[K_NAMESPACE]"/>
-                                <IniFile Id="KD_10_auth_custom_ini_2" Name="10_auth.ini" Action="addLine" Directory="KNOCKDIR_CONFD" Key="acc_key" Section="knockd" Value="[K_API_KEY]"/>
+                                <IniFile Id="KD_10_auth_custom_yaml_1" Name="10_auth.yaml" Action="addLine" Directory="KNOCKDIR_CONFD" Key="acc_namespace" Section="knockd" Value="[K_NAMESPACE]"/>
+                                <IniFile Id="KD_10_auth_custom_yaml_2" Name="10_auth.yaml" Action="addLine" Directory="KNOCKDIR_CONFD" Key="acc_key" Section="knockd" Value="[K_API_KEY]"/>
                             </Component>
                         </Directory>
                     </Directory>
@@ -124,7 +124,7 @@
                 <Control Id="Title" Type="Text" X="15" Y="15" Width="300" Height="15" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}Knock namespace and api key"/>
 
                 <Control Id="k_txt_1" X="25" Y="70" NoWrap="no" RightAligned="no" Transparent="yes" Type="Text" Width="320" Height="100" Text="Knock Daemon requires your namespace and api key to publish datas."/>
-                <Control Id="k_txt_2" X="25" Y="90" NoWrap="no" RightAligned="no" Transparent="yes" Type="Text" Width="320" Height="100" Text="You can edit them later inside '\conf.d\10_auth.ini'."/>
+                <Control Id="k_txt_2" X="25" Y="90" NoWrap="no" RightAligned="no" Transparent="yes" Type="Text" Width="320" Height="100" Text="You can edit them later inside '\conf.d\10_auth.yaml'."/>
                 <Control Id="k_txt_3" X="25" Y="110" NoWrap="no" RightAligned="no" Transparent="yes" Type="Text" Width="320" Height="100" Text="Think to recycle Knock Daemon service whenever you modify this file."/>
 
                 <Control Id="k_lab_namespace" Type="Text" X="25" Y="140" Height="17" Width="65" Transparent="yes" Text="Knock namespace"/>

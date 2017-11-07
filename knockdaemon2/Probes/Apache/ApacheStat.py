@@ -107,26 +107,28 @@ class ApacheStat(KnockProbe):
 
         self.category = "/web/apache"
 
-    def init_from_config(self, config_parser, section_name):
+    def init_from_config(self, k, d_yaml_config, d):
         """
         Initialize from configuration
-        :param config_parser: dict
-        :type config_parser: dict
-        :param section_name: Ini file section for our probe
-        :type section_name: str
+        :param k: str
+        :type k: str
+        :param d_yaml_config: full conf
+        :type d_yaml_config: d
+        :param d: local conf
+        :type d: dict
         """
 
         # Base
-        KnockProbe.init_from_config(self, config_parser, section_name)
+        KnockProbe.init_from_config(self, k, d_yaml_config, d)
 
         # Go
         if self.ar_url:
             logger.info("Skip loading ar_url from config (already set), ar_url=%s", self.ar_url)
             return
 
-        if "url" in config_parser[section_name]:
+        if "url" in d:
             logger.info("Loading url from config")
-            url = config_parser[section_name]["url"]
+            url = d["url"]
             url = url.strip()
 
             if url.lower() == "auto":

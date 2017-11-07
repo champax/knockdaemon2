@@ -35,7 +35,6 @@ from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
 
-from knockdaemon2.Core.KnockConfigurationKeys import KnockConfigurationKeys
 from knockdaemon2.Core.KnockManager import KnockManager
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 from knockdaemon2.Platform.PTools import PTools
@@ -78,15 +77,15 @@ class TestRealAll(unittest.TestCase):
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
         self.manager_config_file = \
             self.current_dir + "conf" + SolBase.get_pathseparator() + "realall" \
-            + SolBase.get_pathseparator() + "knockdaemon2.ini"
+            + SolBase.get_pathseparator() + "knockdaemon2.yaml"
         self.k = None
 
         # Config files
         for f in [
             "k.CheckProcess.json",
             "k.CheckDns.json",
-            "knockdaemon2.ini",
-            SolBase.get_pathseparator().join(["conf.d", "10_auth.ini"])
+            "knockdaemon2.yaml",
+            SolBase.get_pathseparator().join(["conf.d", "10_auth.yaml"])
         ]:
             src = self.current_dir + "conf" + SolBase.get_pathseparator() + "realall" + SolBase.get_pathseparator() + f
             dst = PTools.get_tmp_dir() + SolBase.get_pathseparator() + f
@@ -106,7 +105,7 @@ class TestRealAll(unittest.TestCase):
             FileUtility.append_text_to_file(dst, buf, "utf8", overwrite=True)
 
         # Overwrite
-        self.manager_config_file = PTools.get_tmp_dir() + SolBase.get_pathseparator() + "knockdaemon2.ini"
+        self.manager_config_file = PTools.get_tmp_dir() + SolBase.get_pathseparator() + "knockdaemon2.yaml"
 
         # Reset meter
         Meters.reset()
@@ -210,13 +209,12 @@ class TestRealAll(unittest.TestCase):
 
         # Init our probes
         i_count = 0
-        for s in self.k._config_parser.iterkeys():
-            if s.startswith(KnockConfigurationKeys.INI_PROBE_TAG):
-                class_name = self.k._config_parser[s][KnockConfigurationKeys.INI_PROBE_CLASS]
-                f_name = self.fullname(p)
-                if class_name == f_name:
-                    self.k._init_probe_internal(s, p)
-                    i_count += 1
+        for k, d in self.k._d_yaml_config["probes"].iteritems():
+            class_name = d["class_name"]
+            f_name = self.fullname(p)
+            if class_name == f_name:
+                self.k._init_probe_internal(k, d, p)
+                i_count += 1
         self.assertEqual(i_count, 1)
 
         # Ok, probe ready, manager started by executing nothing : execute our probe

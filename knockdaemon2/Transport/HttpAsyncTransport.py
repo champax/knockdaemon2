@@ -22,6 +22,7 @@
 # ===============================================================================
 """
 import logging
+# noinspection PyUnresolvedReferences
 import ujson
 from datetime import datetime
 from greenlet import GreenletExit
@@ -46,15 +47,6 @@ class HttpAsyncTransport(KnockTransport):
     """
     Http transport
     """
-
-    HTTP_TARGET_URI = "http_uri"
-    HTTP_MAX_ITEM_IN_QUEUE = "max_items_in_queue"
-    HTTP_KO_INTERVAL_MS = "http_ko_interval_ms"
-    HTTP_SEND_MIN_INTERVAL_MS = "http_send_min_interval_ms"
-    HTTP_SEND_MAX_BYTES = "http_send_max_bytes"
-    HTTP_SEND_BYPASS_WAIT_MS = "http_send_bypass_wait_ms"
-    HTTP_LIFECYCLE_INTERVAL_MS = "lifecycle_interval_ms"
-    HTTP_ZIP_ENABLED = "zip_enabled"
 
     QUEUE_WAIT_SEC_PER_LOOP = None
 
@@ -117,68 +109,54 @@ class HttpAsyncTransport(KnockTransport):
         # To rewrite
         self.load_http_uri = True
 
-    def init_from_config(self, config_parser, section_name, auto_start=True):
+    def init_from_config(self, d_yaml_config, d, auto_start=True):
         """
         Initialize from configuration
-        :param config_parser: dict
-        :type config_parser: dict
-        :param section_name: Ini file section for our probe
-        :type section_name: str
+        :param d_yaml_config: dict
+        :type d_yaml_config: dict
+        :param d: local dict
+        :type d: dict
         :param auto_start: bool
         :type auto_start: bool
         """
 
         if self.load_http_uri:
-            self.http_uri = config_parser[section_name][HttpAsyncTransport.HTTP_TARGET_URI]
+            self.http_uri = d["http_uri"]
 
         try:
-            self._max_items_in_queue = \
-                int(config_parser[section_name][HttpAsyncTransport.HTTP_MAX_ITEM_IN_QUEUE])
+            self._max_items_in_queue = d["max_items_in_queue"]
         except KeyError:
-            logger.debug("Key not present, using default, section=%s, key=%s", section_name,
-                         HttpAsyncTransport.HTTP_MAX_ITEM_IN_QUEUE)
+            logger.debug("Key max_items_in_queue not present, using default, d=%s", d)
 
         try:
-            self._http_ko_interval_ms = \
-                int(config_parser[section_name][HttpAsyncTransport.HTTP_KO_INTERVAL_MS])
+            self._http_ko_interval_ms = d["http_ko_interval_ms"]
         except KeyError:
-            logger.debug("Key not present, using default, section=%s, key=%s", section_name,
-                         HttpAsyncTransport.HTTP_KO_INTERVAL_MS)
+            logger.debug("Key http_ko_interval_ms not present, using default, d=%s", d)
 
         try:
-            self._http_send_min_interval_ms = \
-                int(config_parser[section_name][HttpAsyncTransport.HTTP_SEND_MIN_INTERVAL_MS])
+            self._http_send_min_interval_ms = d["http_send_min_interval_ms"]
         except KeyError:
-            logger.debug("Key not present, using default, section=%s, key=%s", section_name,
-                         HttpAsyncTransport.HTTP_SEND_MIN_INTERVAL_MS)
+            logger.debug("Key http_send_min_interval_ms not present, using default, d=%s", d)
 
         try:
-            self._http_send_max_bytes = \
-                int(config_parser[section_name][HttpAsyncTransport.HTTP_SEND_MAX_BYTES])
+            self._http_send_max_bytes = d["http_send_max_bytes"]
         except KeyError:
-            logger.debug("Key not present, using default, section=%s, key=%s", section_name,
-                         HttpAsyncTransport.HTTP_SEND_MAX_BYTES)
+            logger.debug("Key http_send_max_bytes not present, using default, d=%s", d)
 
         try:
-            self._http_send_bypass_wait_ms = \
-                int(config_parser[section_name][HttpAsyncTransport.HTTP_SEND_BYPASS_WAIT_MS])
+            self._http_send_bypass_wait_ms = d["http_send_bypass_wait_ms"]
         except KeyError:
-            logger.debug("Key not present, using default, section=%s, key=%s", section_name,
-                         HttpAsyncTransport.HTTP_SEND_BYPASS_WAIT_MS)
+            logger.debug("Key http_send_bypass_wait_ms not present, using default, d=%s", d)
 
         try:
-            self._lifecycle_interval_ms = \
-                int(config_parser[section_name][HttpAsyncTransport.HTTP_LIFECYCLE_INTERVAL_MS])
+            self._lifecycle_interval_ms = d["lifecycle_interval_ms"]
         except KeyError:
-            logger.debug("Key not present, using default, section=%s, key=%s", section_name,
-                         HttpAsyncTransport.HTTP_LIFECYCLE_INTERVAL_MS)
+            logger.debug("Key lifecycle_interval_ms not present, using default, d=%s", d)
 
         try:
-            self._zip_enabled = \
-                bool(config_parser[section_name][HttpAsyncTransport.HTTP_ZIP_ENABLED])
+            self._zip_enabled = d["zip_enabled"]
         except KeyError:
-            logger.debug("Key not present, using default, section=%s, key=%s", section_name,
-                         HttpAsyncTransport.HTTP_ZIP_ENABLED)
+            logger.debug("Key zip_enabled not present, using default, d=%s", d)
 
         # Limits
         self._check_and_fix_limits()

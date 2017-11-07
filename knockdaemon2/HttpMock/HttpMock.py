@@ -40,8 +40,6 @@ from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
 
-from knockdaemon2.Core.KnockConfigurationKeys import KnockConfigurationKeys
-
 SolBase.voodoo_init()
 
 logger = logging.getLogger(__name__)
@@ -735,7 +733,7 @@ class HttpMock(object):
         host = node_hash["host"]
 
         # Get namespace
-        account_ns = account_hash[KnockConfigurationKeys.INI_KNOCKD_ACC_NAMESPACE]
+        account_ns = account_hash["acc_namespace"]
 
         # Ok, push all
         return self._go_to_supervision_internal(account_ns, host, notify_hash,

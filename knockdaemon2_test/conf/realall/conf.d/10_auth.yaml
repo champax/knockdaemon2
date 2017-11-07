@@ -1,0 +1,4 @@
+knockd:
+  acc_namespace: unittest
+  acc_key: tamereenshort
+  staging: beta

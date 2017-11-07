@@ -59,7 +59,7 @@ if PTools.get_distribution_type() == "windows":
 
             self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
             self.config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                            'conf/realall/knockdaemon2.ini')
+                                            'conf/realall/knockdaemon2.yaml')
             self.refresh_count = 0
             Wmi._reset()
 

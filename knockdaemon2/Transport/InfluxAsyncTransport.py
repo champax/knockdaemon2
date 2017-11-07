@@ -61,26 +61,26 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         self.log_tag = "InfluxAsynch"
         self.load_http_uri = False
 
-    def init_from_config(self, config_parser, section_name, auto_start=True):
+    def init_from_config(self, d_yaml_config, d, auto_start=True):
         """
         Initialize from configuration
-        :param config_parser: dict
-        :type config_parser: dict
-        :param section_name: Ini file section for our probe
-        :type section_name: str
+        :param d_yaml_config: dict
+        :type d_yaml_config: dict
+        :param d: local dict
+        :type d: dict
         :param auto_start: bool
         :type auto_start: bool
         """
 
         # Call base, hacking autostart
-        HttpAsyncTransport.init_from_config(self, config_parser, section_name, auto_start=False)
+        HttpAsyncTransport.init_from_config(self, d_yaml_config, d, auto_start=False)
 
         # Load our stuff
-        self._influx_host = config_parser[section_name]["influx_host"]
-        self._influx_port = int(config_parser[section_name]["influx_port"])
-        self._influx_login = config_parser[section_name]["influx_login"]
-        self._influx_password = config_parser[section_name]["influx_password"]
-        self._influx_database = config_parser[section_name]["influx_database"]
+        self._influx_host = d["influx_host"]
+        self._influx_port = d["influx_port"]
+        self._influx_login = d["influx_login"]
+        self._influx_password = d["influx_password"]
+        self._influx_database = d["influx_database"]
 
         lifecyclelogger.info("_influx_host=%s", self._influx_host)
         lifecyclelogger.info("_influx_port=%s", self._influx_port)

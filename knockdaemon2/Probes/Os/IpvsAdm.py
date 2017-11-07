@@ -50,18 +50,6 @@ class IpvsAdm(KnockProbe):
 
         self.category = "/web/ipvsadm"
 
-    def init_from_config(self, config_parser, section_name):
-        """
-        Initialize from configuration
-        :param config_parser: dict
-        :type config_parser: dict
-        :param section_name: Ini file section for our probe
-        :type section_name: str
-        """
-
-        # Base
-        KnockProbe.init_from_config(self, config_parser, section_name)
-
     def _execute_windows(self):
         """
         Execute a probe (windows)

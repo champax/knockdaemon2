@@ -1,0 +1,23 @@
+knockd:
+  exectimeout_ms: 1000
+  acc_namespace: unittest
+  acc_key: tamereenshort
+
+transports:
+  TestTransport:
+    class_name: knockdaemon2_test.ForTest.TestTransport.TestTransport
+    custom_key_b: customValueA
+
+probes:
+  TestProbe1:
+    class_name: knockdaemon2_test.ForTest.TestProbe.TestProbe
+    exec_interval_sec: 1
+    exec_enabled: true
+    custom_key_b: customValueB_1
+  TestProbe2:
+    class_name: knockdaemon2_test.ForTest.TestProbe.TestProbe
+    exec_interval_sec: 1
+    exec_enabled: true
+    custom_key_b: customValueB_2
+
+

@@ -79,20 +79,22 @@ class CheckDns(KnockProbe):
 
         self.category = "/os/dns"
 
-    def init_from_config(self, config_parser, section_name):
+    def init_from_config(self, k, d_yaml_config, d):
         """
         Initialize from configuration
-        :param config_parser: dict
-        :type config_parser: dict
-        :param section_name: Ini file section for our probe
-        :type section_name: str
+        :param k: str
+        :type k: str
+        :param d_yaml_config: full conf
+        :type d_yaml_config: d
+        :param d: local conf
+        :type d: dict
         """
 
         # Base
-        KnockProbe.init_from_config(self, config_parser, section_name)
+        KnockProbe.init_from_config(self, k, d_yaml_config, d)
 
         # Go
-        self.host_to_check = config_parser[section_name]["dns_host"].split(',')
+        self.host_to_check = d["dns_host"].split(',')
 
     def resolv(self, record, dnsserver):
         """
