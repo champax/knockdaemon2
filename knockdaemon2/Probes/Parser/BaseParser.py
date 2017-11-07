@@ -109,7 +109,7 @@ class BaseParser(KnockProbe):
         try:
             file_found = self.parse_file()
         except Exception as e:
-            logger.warning("Ex=%s", SolBase.extostr(e))
+            logger.warn("Ex=%s", SolBase.extostr(e))
             raise
         finally:
             if file_found:

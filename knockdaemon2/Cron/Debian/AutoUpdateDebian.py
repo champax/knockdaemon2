@@ -91,7 +91,7 @@ class AutoUpdateDebian(AutoUpdateBase):
 
             # Check
             if hresp.status_code != 200:
-                logger.warning('Cant download binary_url=%s, got hresp=%s', binary_url, hresp)
+                logger.warn('Cant download binary_url=%s, got hresp=%s', binary_url, hresp)
                 raise ExitOnError(2, "Download error")
 
             # Write
@@ -206,7 +206,7 @@ class AutoUpdateDebian(AutoUpdateBase):
 
         ret_code, so, se = ButcherTools.invoke(cmd, timeout_ms=self.invoke_timeout)
         if ret_code != 0:
-            logger.warning("cmd=%s ret_code=%s se=%s", cmd, ret_code, se)
+            logger.warn("cmd=%s ret_code=%s se=%s", cmd, ret_code, se)
             if not self._unittest:
                 sys.exit(ret_code)
             else:

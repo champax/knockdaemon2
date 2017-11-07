@@ -231,7 +231,7 @@ class HttpAsyncTransport(KnockTransport):
 
         # If not running, exit
         if not self._is_running:
-            logger.warning("Not running, processing not possible")
+            logger.warn("Not running, processing not possible")
             return False
 
         # Fix value
@@ -259,7 +259,7 @@ class HttpAsyncTransport(KnockTransport):
         # Check max
         if self._queue_to_send.qsize() >= self._max_items_in_queue:
             # Too much, kick
-            logger.warning("Max queue reached, discarding older item")
+            logger.warn("Max queue reached, discarding older item")
             self._queue_to_send.get(block=True)
             Meters.aii("knock_stat_transport_queue_discard")
         elif self._queue_to_send.qsize() == 0:
@@ -465,7 +465,7 @@ class HttpAsyncTransport(KnockTransport):
 
             # Check
             if self._greenlet:
-                logger.warning("_greenlet already set, doing nothing")
+                logger.warn("_greenlet already set, doing nothing")
                 return
 
             # Fire
@@ -484,7 +484,7 @@ class HttpAsyncTransport(KnockTransport):
 
             # Check
             if not self._greenlet:
-                logger.warning("_greenlet not set, doing nothing")
+                logger.warn("_greenlet not set, doing nothing")
                 return
 
             # Kill
@@ -623,7 +623,7 @@ class HttpAsyncTransport(KnockTransport):
                 # --------------------
                 # NOT POSSIBLE
                 # --------------------
-                logger.warning("HttpCheck : Impossible case (not maxed, not empty)")
+                logger.warn("HttpCheck : Impossible case (not maxed, not empty)")
 
             # --------------------
             # HTTP NO GO
@@ -651,7 +651,7 @@ class HttpAsyncTransport(KnockTransport):
             logger.debug("go_to_http true")
             b = self._send_to_http(buf_to_send)
             if not b:
-                logger.warning("go_to_http failed, re-queue now, then sleep=%s", self._http_ko_interval_ms)
+                logger.warn("go_to_http failed, re-queue now, then sleep=%s", self._http_ko_interval_ms)
                 self._requeue_pending_array(buf_pending_array)
 
                 # Wait a bit
@@ -698,7 +698,7 @@ class HttpAsyncTransport(KnockTransport):
                     logger.debug("GreenletExit in loop2")
                     return
                 except Exception as e:
-                    logger.warning("Exception in loop2=%s", SolBase.extostr(e))
+                    logger.warn("Exception in loop2=%s", SolBase.extostr(e))
                     continue
         except GreenletExit:
             logger.debug("GreenletExit in loop1")
@@ -729,7 +729,7 @@ class HttpAsyncTransport(KnockTransport):
 
             # Check
             if self._lifecycle_greenlet:
-                logger.warning("_lifecycle_greenlet already set, doing nothing")
+                logger.warn("_lifecycle_greenlet already set, doing nothing")
                 return
 
             # Fire
@@ -749,7 +749,7 @@ class HttpAsyncTransport(KnockTransport):
 
             # Check
             if not self._lifecycle_greenlet:
-                logger.warning("_lifecycle_greenlet not set, doing nothing")
+                logger.warn("_lifecycle_greenlet not set, doing nothing")
                 return
 
             # Kill
@@ -837,7 +837,7 @@ class HttpAsyncTransport(KnockTransport):
                     logger.debug("GreenletExit in loop2")
                     return
                 except Exception as e:
-                    logger.warning("Exception in loop2=%s", SolBase.extostr(e))
+                    logger.warn("Exception in loop2=%s", SolBase.extostr(e))
                     if self._is_running:
                         SolBase.sleep(self._lifecycle_interval_ms)
                     continue

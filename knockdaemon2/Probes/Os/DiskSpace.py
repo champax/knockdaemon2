@@ -232,7 +232,7 @@ class DiskSpace(KnockProbe):
                         self.add_to_hash(all_hash, 'k.vfs.dev.io.totalms', cumulative_wait_rtime_ms)
 
                     except Exception as e:
-                        logger.warning(SolBase.extostr(e))
+                        logger.warn(SolBase.extostr(e))
                         continue
                     continue
                 # END ZFS PROCESSING

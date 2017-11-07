@@ -114,7 +114,7 @@ class TestInflux(SingleTestCaseWithServerMixin, unittest.TestCase):
                 logger.info("result=%s", result)
         except Timeout as e:
             # noinspection PyTypeChecker
-            logger.warning(SolBase.extostr(e))
+            logger.warn(SolBase.extostr(e))
             self.assertTrue(False)
 
     def test_to_influx_format_single_disco(self):
@@ -202,5 +202,5 @@ class TestInflux(SingleTestCaseWithServerMixin, unittest.TestCase):
                 self.assertEqual(count_value,
                                  count_before + iter_count)
         except Exception as e:
-            logger.warning(SolBase.extostr(e))
+            logger.warn(SolBase.extostr(e))
             self.assertTrue(False)

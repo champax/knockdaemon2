@@ -109,7 +109,7 @@ class ButcherTools:
                 p = None
                 return ret_code, so, se
         except InvokeTimeout:
-            logger.warning("invoke timeout, ar_or_string=%s, ms=%s", ar_or_string, SolBase.msdiff(ms))
+            logger.warn("invoke timeout, ar_or_string=%s, ms=%s", ar_or_string, SolBase.msdiff(ms))
             return -999, so, se
         except Exception as e:
             logger.warn("Exception in invoke, ar_or_string=%s, ex=%s", ar_or_string, SolBase.extostr(e))

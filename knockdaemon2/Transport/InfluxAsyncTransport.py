@@ -108,7 +108,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
 
         # If not running, exit
         if not self._is_running:
-            logger.warning("Not running, processing not possible")
+            logger.warn("Not running, processing not possible")
             return False
 
         # We receive :
@@ -148,7 +148,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         # Check max
         if self._queue_to_send.qsize() >= self._max_items_in_queue:
             # Too much, kick
-            logger.warning("Max queue reached, discarding older item")
+            logger.warn("Max queue reached, discarding older item")
             self._queue_to_send.get(block=True)
             Meters.aii("knock_stat_transport_queue_discard")
         elif self._queue_to_send.qsize() == 0:
@@ -257,7 +257,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                 # --------------------
                 # NOT POSSIBLE
                 # --------------------
-                logger.warning("HttpCheck : Impossible case (not maxed, not empty)")
+                logger.warn("HttpCheck : Impossible case (not maxed, not empty)")
 
             # --------------------
             # HTTP NO GO
@@ -281,7 +281,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
             logger.debug("go_to_http true")
             b = self._send_to_http_influx(buf_pending_array, buf_pending_length)
             if not b:
-                logger.warning("go_to_http failed, re-queue now, then sleep=%s", self._http_ko_interval_ms)
+                logger.warn("go_to_http failed, re-queue now, then sleep=%s", self._http_ko_interval_ms)
                 self._requeue_pending_array(buf_pending_array)
 
                 # Wait a bit
@@ -329,8 +329,14 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                 self._influx_db_created = True
 
             # Write lines
-            logger.info("Pushing ar_lines=%s", ar_lines)
-            ri = client.write_points(ar_lines, protocol="line")
+            try:
+                ms = SolBase.mscurrent()
+                logger.info("Push now, ar_lines=%s", ar_lines)
+                ri = client.write_points(ar_lines, protocol="line")
+            finally:
+                logger.info("Push done, ms=%s", SolBase.msdiff(ms))
+
+            # Check
             assert ri, "write_points returned false, ar_lines={0}".format(repr(ar_lines))
 
             # Stats (non zip)

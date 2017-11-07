@@ -159,21 +159,24 @@ class Mysql(KnockProbe):
         """
 
         try:
-            # File is root access only
+            # File is root access only, try to load
+            buf = None
+            if FileUtility.is_file_exist(Mysql.MYSQL_CONFIG_FILE):
+                buf = FileUtility.file_to_textbuffer(Mysql.MYSQL_CONFIG_FILE, "ascii")
 
-            buf = FileUtility.file_to_textbuffer(Mysql.MYSQL_CONFIG_FILE, "ascii")
+            # Check
             if not buf:
                 # IOError 13 possible (file is root only) Retry invoke, invoke sudo (unittest mainly)
-                logger.warn("Load failed, retry invoke, fallback invoke now")
+                logger.info("Load failed, retry invoke, fallback invoke now")
                 cmd = "cat {0}".format(Mysql.MYSQL_CONFIG_FILE)
                 ec, so, se = ButcherTools.invoke(cmd)
                 if ec != 0:
-                    logger.warning("invoke failed, retry sudo, ec=%s, so=%s, se=%s", ec, so, se)
+                    logger.info("invoke failed, retry sudo, ec=%s, so=%s, se=%s", ec, so, se)
                     # Retry sudo
                     cmd = "sudo cat {0}".format(Mysql.MYSQL_CONFIG_FILE)
                     ec, so, se = ButcherTools.invoke(cmd)
                     if ec != 0:
-                        logger.warning("invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)
+                        logger.warn("invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)
                         return None, None, None
                 # Ok
                 buf = so
@@ -250,16 +253,16 @@ class Mysql(KnockProbe):
             buf = FileUtility.file_to_textbuffer(Mysql.CENTOS_CONFIG_FILE, "ascii")
             if not buf:
                 # IOError 13 possible (file is root only) Retry invoke, invoke sudo (unittest mainly)
-                logger.warn("Load failed, retry invoke, fallback invoke now")
+                logger.info("Load failed, retry invoke, fallback invoke now")
                 cmd = "cat {0}".format(Mysql.CENTOS_CONFIG_FILE)
                 ec, so, se = ButcherTools.invoke(cmd)
                 if ec != 0:
-                    logger.warning("invoke failed, retry sudo, ec=%s, so=%s, se=%s", ec, so, se)
+                    logger.info("invoke failed, retry sudo, ec=%s, so=%s, se=%s", ec, so, se)
                     # Retry sudo
                     cmd = "sudo cat {0}".format(Mysql.CENTOS_CONFIG_FILE)
                     ec, so, se = ButcherTools.invoke(cmd)
                     if ec != 0:
-                        logger.warning("invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)
+                        logger.warn("invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)
                         return None, None, None
                 # Ok
                 buf = so

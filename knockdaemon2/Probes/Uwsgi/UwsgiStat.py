@@ -173,7 +173,7 @@ class UwsgiStat(KnockProbe):
                 if line.startswith(stuff):
                     ar_temp = line.split("=", 1)
                     if len(ar_temp) != 2:
-                        logger.warning("Found, split failed, stuff_found=%s, ar_temp=%s", stuff_found, ar_temp)
+                        logger.warn("Found, split failed, stuff_found=%s, ar_temp=%s", stuff_found, ar_temp)
                     else:
                         stuff_found = ar_temp[1].strip()
                         logger.info("Found, stuff_found=%s", stuff_found)
@@ -504,10 +504,10 @@ class UwsgiStat(KnockProbe):
             ec, so, se = ButcherTools.invoke("uwsgi --connect-and-read " + effective_stats_soc)
             ms_stat = SolBase.msdiff(ms_stat_start)
             if ec != 0:
-                logger.warning("Invoke fail, go sudo, ex=%s, so=%s, se=%s", ec, so, se)
+                logger.info("Invoke fail, go sudo, ex=%s, so=%s, se=%s", ec, so, se)
                 ec, so, se = ButcherTools.invoke("sudo uwsgi --connect-and-read " + effective_stats_soc)
                 if ec != 0:
-                    logger.warning("Invoke fail, give up, ex=%s, so=%s, se=%s", ec, so, se)
+                    logger.warn("Invoke fail, give up, ex=%s, so=%s, se=%s", ec, so, se)
                     continue
 
             # Log

@@ -177,7 +177,7 @@ class Network(KnockProbe):
                     operstate = open(interface + "/operstate", "r").read().strip()
 
                 except Exception as e:
-                    logger.warning(SolBase.extostr(e))
+                    logger.warn(SolBase.extostr(e))
 
                 try:
                     # if  IPv6-in-IPv4
@@ -191,7 +191,7 @@ class Network(KnockProbe):
                 except IOError:
                     carrier = "0"
                 except Exception as e:
-                    logger.warning("interface %s: %s", interface, SolBase.extostr(e))
+                    logger.warn("interface %s: %s", interface, SolBase.extostr(e))
                     carrier = "0"
 
                 # Interface tunnel / loopback

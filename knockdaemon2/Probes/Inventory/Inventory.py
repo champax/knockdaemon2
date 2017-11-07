@@ -268,7 +268,7 @@ class Inventory(KnockProbe):
             ec, so, se = ButcherTools.invoke("dmidecode")
             if ec != 0:
                 # Non-zero exit code, retry sudo
-                logger.warn("dmidecode invoke failed, retry sudo, ec=%s, so=%s, se=%s", ec, so, se)
+                logger.info("dmidecode invoke failed, retry sudo, ec=%s, so=%s, se=%s", ec, so, se)
                 ec, so, se = ButcherTools.invoke("sudo dmidecode")
                 if ec != 0:
                     logger.warn("dmidecode invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)

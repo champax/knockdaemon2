@@ -272,7 +272,7 @@ class Wmi(object):
             try:
                 # Check
                 if cls._WMI_IS_STARTED:
-                    logger.warning("_WMI_IS_STARTED=True, doing nothing")
+                    logger.warn("_WMI_IS_STARTED=True, doing nothing")
                     return
 
                 # Log

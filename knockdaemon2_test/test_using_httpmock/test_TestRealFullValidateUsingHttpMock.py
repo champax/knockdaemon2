@@ -265,7 +265,7 @@ class TestRealAll(unittest.TestCase):
                 break
 
             # NOT OK
-            logger.warning(
+            logger.warn(
                 "Re-looping, having=%s, target=%s",
                 processed_ok,
                 disco_count + 1

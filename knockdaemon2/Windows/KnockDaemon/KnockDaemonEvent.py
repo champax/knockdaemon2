@@ -136,7 +136,7 @@ class KnockDaemonEvent(object):
             logger.debug("GreenletExit")
             return
         except Exception as e:
-            logger.warning("Exception=%s", SolBase.extostr(e))
+            logger.warn("Exception=%s", SolBase.extostr(e))
 
     @classmethod
     def report_info(cls, msg, data=None):

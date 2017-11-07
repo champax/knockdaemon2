@@ -172,7 +172,7 @@ class HttpMock(object):
                 id(self),
             )
         except Exception as e:
-            logger.warning("Exception, ex=%s", SolBase.extostr(e))
+            logger.warn("Exception, ex=%s", SolBase.extostr(e))
 
     # ==============================
     # SERVER
@@ -610,12 +610,12 @@ class HttpMock(object):
             logger.info("GOT OS name=%s, version=%s, arch=%s", client_os_name, client_os_version, client_os_arch)
 
         except KeyError:
-            logger.warning("Missing parameters")
+            logger.warn("Missing parameters")
             return_status_code = 418
             return_status_message = "I'm a teapot"
 
         except Exception as e:
-            logger.warning(SolBase.extostr(e))
+            logger.warn(SolBase.extostr(e))
             return_status_code = 500
             return_status_message = 'Internal error'
 
@@ -632,12 +632,12 @@ class HttpMock(object):
                     from_cache = False
 
             except NotSupportedVersion as e:
-                logger.warning(SolBase.extostr(e))
+                logger.warn(SolBase.extostr(e))
                 return_status_message = 'Version not supported'
                 return_status_code = 404
             except Exception as e:
                 package_url = None
-                logger.warning(SolBase.extostr(e))
+                logger.warn(SolBase.extostr(e))
 
         # Reply
         rd = dict()

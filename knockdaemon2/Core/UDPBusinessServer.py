@@ -309,9 +309,9 @@ class BusinessServer(DatagramServer):
                         self._process_dtc(item, value)
                     else:
                         Meters.aii("knock_stat_udp_recv_unknown")
-                        logger.warning("Unknown item type, item=%s, cur_type=s%, value=%s", item, cur_type, value)
+                        logger.warn("Unknown item type, item=%s, cur_type=s%, value=%s", item, cur_type, value)
                 except Exception as e:
-                    logger.warning("Item exception, item=%s, cur_type=s%, value=%s, ex=%s", item, cur_type, value, SolBase.extostr(e))
+                    logger.warn("Item exception, item=%s, cur_type=s%, value=%s, ex=%s", item, cur_type, value, SolBase.extostr(e))
 
             # Send back udp
             if self._send_back_udp:
@@ -321,7 +321,7 @@ class BusinessServer(DatagramServer):
             Meters.aii("knock_stat_udp_recv")
         except Exception as e:
             # Log
-            logger.warning('Cant decode, data_len=%s, data=%s, ex=%s', len(data), repr(data), SolBase.extostr(e))
+            logger.warn('Cant decode, data_len=%s, data=%s, ex=%s', len(data), repr(data), SolBase.extostr(e))
 
             # Send back udp
             if self._send_back_udp:

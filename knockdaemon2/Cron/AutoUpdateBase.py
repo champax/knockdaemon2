@@ -136,7 +136,7 @@ class AutoUpdateBase(object):
 
             # Check
             if local_version is None:
-                logger.warning('Cant get local version, please run apt-get update && apt-get install knockdaemon2 or equivalent')
+                logger.warn('Cant get local version, please run apt-get update && apt-get install knockdaemon2 or equivalent')
                 raise ExitOnError(2, 'No local version')
 
             # Check version
@@ -181,7 +181,7 @@ class AutoUpdateBase(object):
             resp_json = ujson.loads(hresp.buffer)
             logger.info("Got=%s", hresp)
         except Exception as err:
-            logger.warning(SolBase.extostr(err))
+            logger.warn(SolBase.extostr(err))
             raise ExitOnError(2, err.message)
 
         # parse response
@@ -191,10 +191,10 @@ class AutoUpdateBase(object):
                 url = resp_json['url']
             else:
                 msg = "reply from httpservice %s" % resp_json['message']
-                logger.warning(msg)
+                logger.warn(msg)
                 raise ExitOnError(2, msg)
         except Exception as err:
-            logger.warning(SolBase.extostr(err))
+            logger.warn(SolBase.extostr(err))
             raise ExitOnError(2, err.message)
 
         return prod_version, url
@@ -264,7 +264,7 @@ class AutoUpdateBase(object):
                         self._create_lock()
                         return
                     else:
-                        logger.warning('lock file too late')
+                        logger.warn('lock file too late')
                         raise ExitOnError(5, message='lock file too late %s sec' % int(time.time() - file_mtime))
 
             if AutoUpdateBase.pid_exists(previous_pid):
@@ -348,12 +348,12 @@ class AutoUpdateBase(object):
         try:
             self._config_parser = self._init_config_parser()
         except IOError as err:
-            logger.warning(SolBase.extostr(err))
+            logger.warn(SolBase.extostr(err))
             raise ExitOnError(2, err.message)
         try:
             uri = self._config_parser['transport']['http_uri']
         except KeyError:
-            logger.warning('Missing transport.http_uri parameter in conf file')
+            logger.warn('Missing transport.http_uri parameter in conf file')
             raise ExitOnError(2, 'Missing transport.http_uri parameter in conf file')
 
         # Remove last word

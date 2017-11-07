@@ -80,7 +80,7 @@ class Tools(object):
         # Get host
         assert len(node_hash) == 1, "len(node_hash) must be 1, got node_hash={0}".format(node_hash)
         c_host = node_hash["host"]
-        logger.info("Processing c_host=%s", c_host)
+        logger.debug("Processing c_host=%s", c_host)
 
         # Process data and build output dict
         ar_out = list()
@@ -108,7 +108,7 @@ class Tools(object):
                 "time": s_dt_temp,
                 "fields": {"value": value}
             }
-            logger.info("Built, d_temp=%s", d_temp)
+            logger.debug("Built, d_temp=%s", d_temp)
             ar_out.append(d_temp)
 
         # Over

@@ -76,7 +76,7 @@ class MongoDbStat(KnockProbe):
             try:
                 self.getstat("127.0.0.1", port)
             except Exception as e:
-                logger.warning(SolBase.extostr(e))
+                logger.warn(SolBase.extostr(e))
 
     def getstat(self, host, port):
         """
@@ -90,7 +90,7 @@ class MongoDbStat(KnockProbe):
         try:
             mongo_connection = pymongo.MongoClient(host, port)
         except Exception as e:
-            logger.warning(SolBase.extostr(e))
+            logger.warn(SolBase.extostr(e))
             self.notify_value_n("k.mongodb.ok", {"PORT": self.strport}, "0")
             return
 
@@ -130,13 +130,13 @@ class MongoDbStat(KnockProbe):
                 try:
                     config = yaml.load(stream)
                 except yaml.YAMLError as e:
-                    logger.warning('Error loadding %s %s ', conf_file, SolBase.extostr(e))
+                    logger.warn('Error loadding %s %s ', conf_file, SolBase.extostr(e))
                     continue
             try:
                 port = config['net']['port']
             except KeyError as e:
                 port = 27017
-                logger.warning(SolBase.extostr(e))
+                logger.warn(SolBase.extostr(e))
 
             try:
                 cluster_role = config['sharding']['clusterRole']
