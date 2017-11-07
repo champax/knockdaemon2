@@ -1,0 +1,6 @@
+{
+    "knockdaemon": {
+        "startup": "/usr/share/python/knockdaemon/bin/knockdaemon",
+        "pid": "/var/run/knockdaemon.pid"
+    }
+}

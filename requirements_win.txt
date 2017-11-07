@@ -1,0 +1,103 @@
+# Private Pip Url
+--extra-index-url https://pypi.knock.center/knock/dev/+simple/
+pip>=8.1.1
+setuptools>=20.10.1
+#distribute>=0.7.3
+
+geventhttpclient >= 1.3.0-dev
+
+greenlet >= 0.4.0
+pycrypto >= 2.6
+PySocks
+pythonsol >= 0.0.29
+gevent
+ujson
+redis
+pymongo >= 2.4
+psutil == 4.1.0
+dnspython
+ntplib
+argparse
+anyconfig
+PyYAML
+PyMySQL
+urllib3 == 1.19.1
+jinja2
+pymemcache
+pytz
+
+# ======================
+# Windows
+# ======================
+pypiwin32
+WMI
+
+
+# ======================
+# EXTERNAL STUFF
+# ======================
+# REDIS
+# https://github-cloud.s3.amazonaws.com/releases/3402186/bb1d10fc-3fac-11e6-8dc7-a51af1d6f36f.msi
+#
+# SQUID (and check squid_windows.conf, create dirs, set dns in config and recycle service, and check using command lines)
+# http://packages.diladele.com/squid/3.5.24/squid.msi
+
+# ======================
+# PACKAGING (pyinstaller)
+#
+# venv ON
+# c:\Users\champax\k.daemon\Scripts\activate
+#
+# cd c:\champax\_devs\knockdaemon\windows\pyinstaller
+# pyinstaller -F ..\..\knockdaemon\Windows\KnockDaemon\KnockDaemon.py
+# C:\champax\_devs\knockdaemon\windows\pyinstaller\dist\KnockDaemon.exe
+#
+# AS ROOT (DO NOT FORGET THE .EXE otherwise you got "Ex=e.cls:[IndexError]" in win32 utils
+# cd c:\champax\_devs\knockdaemon\windows\pyinstaller\dist
+# KnockDaemon.exe install
+# KnockDaemon.exe remove
+# ======================
+pyinstaller
+
+# ======================
+# PALEOLITIC VENV DOC, CMD.EXE
+# ======================
+# C:\Users\champax>c:\Users\champax\k.daemon\Scripts\activate
+# (k.daemon) C:\Users\champax>
+# (k.daemon) C:\Users\champax>cd c:\champax\_devs\knockdaemon
+# (k.daemon) c:\champax\_devs\knockdaemon>
+# (k.daemon) c:\champax\_devs\knockdaemon> pip install -r requirements_win.txt
+
+# ======================
+# MISC
+# ======================
+# REDIS ON WINDOWS
+# https://github.com/MSOpenTech/redis/releases/download/win-3.2.100/Redis-x64-3.2.100.msi
+#
+# ACTIVATE
+# c:\Users\champax\k.daemon\Scripts\activate
+#
+# DEACTIVATE
+# c:\Users\champax\k.daemon\Scripts\deactivate
+#
+# CODE
+# cd c:\champax\_devs\knockdaemon
+#
+# DAEMON (AS ROOT)
+# SET PYTHONPATH=c:\champax\_devs\knockdaemon
+# python knockdaemon\Windows\KnockDaemon\KnockDaemon.py install
+# python knockdaemon\Windows\KnockDaemon\KnockDaemon.py remove
+#
+# SERVICE CONTROL
+# KnockDaemon.exe install
+# KnockDaemon.exe remove
+# KnockDaemon.exe debug
+#
+# START / STOP
+# net start KnockDaemon
+# net stop KnockDaemon
+# net restart KnockDaemon
+
+
+
+

@@ -1,0 +1,5 @@
+knockdaemon (0.1.1-BUILD_NUMBER) testing; urgency=low
+
+  * Initial release.
+
+ -- Knock Center (GPG sign package key) <debian@knock.center>  Tue, 05 Aug 2016 15:05:47 +0200

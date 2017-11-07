@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
+
+PIDFILE="/tmp/knockdaemon_dev.pid"
+LOGFILE="/tmp/knockdaemon_dev"
+
+RUNAS="root"
+CONFIGFILE="$DIR/scripts_utils/knockdaemon_runner_dev.ini"
+DAEMON_OPTS="-pidfile=$PIDFILE -stderr=$LOGFILE.err -stdout=/dev/null -logfile=$LOGFILE.log -loglevel=INFO -maxopenfiles=4096 -user=$RUNAS -c=${CONFIGFILE}"
+DAEMON="$DIR/knockdaemon/Daemon/KnockDaemon.py"
+PYTHON_BIN="/home/llabatut/.virtualenvs/knockdaemon/bin/python"
+
+SCRIPT="PYTHONPATH=$DIR $PYTHON_BIN $DAEMON $DAEMON_OPTS"
+cd $DIR
+touch $LOGFILE.err
+touch $LOGFILE.log
+# . /etc/bash_completion.d/virtualenvwrapper
+# workon knockdaemon
+
+function ask_to()
+{
+    if [ "xx$1" == "xxstart" ]
+    then
+        echo "Do you want start Knockdaemon? [y|N]: "
+        read respond
+        if [ "xx$respond" == "xxy" ]
+            then
+                sudo $SCRIPT start
+            else
+                exit 0
+        fi
+    else
+        echo "Do you want stop Knockdaemon? [y|N]: "
+        read respond
+        if [ "xx$respond" == "xxy" ]
+            then
+                sudo $SCRIPT stop
+            else
+                exit 0
+        fi
+    fi
+}
+sudo $SCRIPT status >/dev/null
+
+if [ "$?" == 0 ]
+    then
+        ask_to "stop"
+    else
+        ask_to "start"
+fi
+#echo "Starting $SCRIPT"
+#sudo $SCRIPT stop
+#sleep 5
+# sudo $SCRIPT start
+#sleep 5
+#sudo $SCRIPT status

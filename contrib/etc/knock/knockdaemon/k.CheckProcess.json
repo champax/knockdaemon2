@@ -1,0 +1,9 @@
+{
+  "knockdaemon": {
+    "startup": [
+      "/etc/init.d/knockdaemon",
+      "/usr/lib/systemd/system/knockdaemon.service"
+    ],
+    "pid": "/var/run/knockdaemon.pid"
+  }
+}

@@ -1,0 +1,13 @@
+include *.txt
+include *.sql
+include *.xml
+include *.conf
+include *.initd
+include *.service
+
+recursive-include knockdaemon *.txt
+recursive-include knockdaemon *.sql
+recursive-include knockdaemon *.xml
+recursive-include knockdaemon *.conf
+recursive-include knockdaemon *.initd
+recursive-include knockdaemon *.service

@@ -1,0 +1,112 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          knockdaemon
+# Required-Start:    $local_fs $network $named $time $syslog
+# Required-Stop:     $local_fs $network $named $time $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Description:       knockdaemon
+### END INIT INFO
+
+RUNAS=root
+NAME=knockdaemon
+PIDFILE=/var/run/$NAME.pid
+LOGFILE=/var/log/$NAME
+CONFIGFILE=/etc/knock/knockdaemon/knockdaemon.ini
+DAEMON_OPTS="-pidfile=$PIDFILE -stderr=$LOGFILE.err -stdout=/dev/null -logfile=$LOGFILE.log -loglevel=INFO -maxopenfiles=4096 -user=$RUNAS -c=${CONFIGFILE}"
+BINARY="/usr/share/python/knockdaemon/bin/knockdaemon"
+SCRIPT="$BINARY $DAEMON_OPTS"
+
+# ---------------------
+# Check the binary
+# ---------------------
+check_binary() {
+    # From LSD start/stop: 5=program is not installed
+    # From LSD status: 4=program or service status is unknown
+    EC=$1
+
+    if [ -f "$BINARY" ]
+    then
+        echo "Binary ($BINARY) present, processing..." >&2
+    else
+        echo "Binary not present ($BINARY), fatal, exiting now, exit code=$EC" >&2
+        exit $EC
+    fi
+}
+
+# ---------------------
+# Start
+# ---------------------
+start() {
+  echo "Starting service..." >&2
+
+  # Check
+  check_binary 5
+
+  # Go
+  $SCRIPT start
+
+  # Out
+  RETVAL="$?"
+  echo "Service started, exit code was=$RETVAL" >&2
+}
+
+# ---------------------
+# Stop
+# ---------------------
+
+stop() {
+  echo "Stopping service..." >&2
+
+  # Check
+  check_binary 5
+
+  # Go
+  $SCRIPT stop
+
+  # Out
+  RETVAL="$?"
+  echo "Service stopped, exit code was=$RETVAL" >&2
+}
+
+
+# ---------------------
+# Status
+# ---------------------
+
+status() {
+    echo "Checking $NAME..."
+
+    # Check
+    check_binary 4
+
+    # Go
+    $SCRIPT status
+
+    # Out
+    RETVAL="$?"
+    echo "Service status done, exit code=$RETVAL" >&2
+    exit $RETVAL
+}
+
+# ---------------------
+# Switch
+# ---------------------
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    status
+    ;;
+  restart)
+    stop
+    start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|status|restart}"
+esac

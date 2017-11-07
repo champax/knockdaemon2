@@ -1,0 +1,10 @@
+/var/log/knockdaemon.log /var/log/knock-autoupdate.log
+{
+    rotate 7
+    daily
+    missingok
+    notifempty
+    compress
+    nodelaycompress
+    sharedscripts
+}

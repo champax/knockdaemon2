@@ -1,0 +1,34 @@
+uptime_in_seconds:4296494
+
+# Clients
+connected_clients:31
+
+# Memory
+used_memory_rss:3719168
+mem_fragmentation_ratio:2.98
+
+# Persistence
+rdb_last_bgsave_status:ok
+rdb_last_bgsave_time_sec:-1
+aof_last_rewrite_time_sec:0
+aof_last_bgrewrite_status:ok
+aof_last_write_status:ok
+
+# Stats
+total_connections_received:3854880
+total_commands_processed:7950541
+expired_keys:20930
+evicted_keys:0
+keyspace_hits:4209088
+keyspace_misses:21994
+pubsub_channels:0
+pubsub_patterns:0
+
+# Optional (if not present, link to master is up)
+master_link_down_since_seconds: 0
+
+# Keyspace
+db0:keys=3,expires=3,avg_ttl=7193838
+db1:keys=12,expires=12,avg_ttl=1358926109
+db3:keys=8,expires=8,avg_ttl=163087558
+db4:keys=280,expires=280,avg_ttl=8430758

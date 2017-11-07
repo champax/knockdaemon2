@@ -1,0 +1,65 @@
+*** Jenkins with git
+*** Need psexec (sysinternal stuff)
+http://blog.thomasvandoren.com/jenkins-windows-slave-with-git.html
+
+*************************************
+
+#!/bin/bash
+export JOB_NAME=$JOB_NAME
+export BUILD_NUMBER=$BUILD_NUMBER
+export JD=$JD
+
+echo $JOB_NAME-$BUILD_NUMBER
+
+Jenkins/master.sh "$JOB_NAME"  "$BUILD_NUMBER" "$JD"
+
+*************************************
+
+SET W_JOB_NAME=%JOB_NAME%
+SET W_BUILD_NUMBER=%BUILD_NUMBER%
+SET W_JD=%JD%
+
+echo W_JOB_NAME-W_BUILD_NUMBER
+
+Jenkins/windows_build.bat "W_JOB_NAME"  "W_BUILD_NUMBER" "W_JD"
+
+
+**************************************
+
+Cloning repository git@bitbucket.org:LoloCH/knockdaemon.git
+ > git init c:\jenkins\workspace\KCLT\JD\jenkins-windows # timeout=10
+Fetching upstream changes from git@bitbucket.org:LoloCH/knockdaemon.git
+ > git --version # timeout=10
+ > git -c core.askpass=true fetch --tags --progress git@bitbucket.org:LoloCH/knockdaemon.git +refs/heads/*:refs/remotes/bitbucket_knockdaemon/*
+ > git config remote.bitbucket_knockdaemon.url git@bitbucket.org:LoloCH/knockdaemon.git # timeout=10
+ > git config --add remote.bitbucket_knockdaemon.fetch +refs/heads/*:refs/remotes/bitbucket_knockdaemon/* # timeout=10
+ > git config remote.bitbucket_knockdaemon.url git@bitbucket.org:LoloCH/knockdaemon.git # timeout=10
+Fetching upstream changes from git@bitbucket.org:LoloCH/knockdaemon.git
+ > git -c core.askpass=true fetch --tags --progress git@bitbucket.org:LoloCH/knockdaemon.git +refs/heads/*:refs/remotes/bitbucket_knockdaemon/*
+Checking out Revision d15319141d4839349f32c1f72317ed1558cf31f0 (refs/remotes/bitbucket_knockdaemon/master)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f d15319141d4839349f32c1f72317ed1558cf31f0
+ > git rev-list d15319141d4839349f32c1f72317ed1558cf31f0 # timeout=10
+Run condition [Execution node ] enabling prebuild for step [Execute shell]
+Run condition [Execution node ] enabling prebuild for step [Execute Windows batch command]
+Run condition [File exists] enabling prebuild for step [[Publish debian packages]]
+[Execution node] check if [jenkins-windows] is in [[jenkins-arm32-rasp301-jessie, jenkins-centos, jenkins-wheezy, master]]
+Run condition [Execution node ] preventing perform for step [Execute shell]
+[Execution node] check if [jenkins-windows] is in [[jenkins-windows]]
+Run condition [Execution node ] enabling perform for step [Execute Windows batch command]
+
+[jenkins-windows] $ cmd /c call C:\Windows\TEMP\jenkins8711351561489145226.bat
+
+c:\jenkins\workspace\KCLT\JD\jenkins-windows>SET W_JOB_NAME=KCLT/JD=jenkins-windows
+
+c:\jenkins\workspace\KCLT\JD\jenkins-windows>SET W_BUILD_NUMBER=487
+
+c:\jenkins\workspace\KCLT\JD\jenkins-windows>SET W_JD=jenkins-windows
+
+c:\jenkins\workspace\KCLT\JD\jenkins-windows>echo W_JOB_NAME-W_BUILD_NUMBER
+W_JOB_NAME-W_BUILD_NUMBER
+
+c:\jenkins\workspace\KCLT\JD\jenkins-windows>Jenkins/windows_build.bat "W_JOB_NAME"  "W_BUILD_NUMBER" "W_JD"
+'Jenkins' is not recognized as an internal or external command,
+operable program or batch file.
+

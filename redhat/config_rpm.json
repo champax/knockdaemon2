@@ -1,0 +1,78 @@
+{
+  "extensions": {
+    "enabled": [
+      "python_venv",
+      "file_extras",
+      "file_permissions",
+      "blocks"
+    ]
+  },
+  "core": {
+    "group": "Application/System",
+    "license": "GPL",
+    "name": "knockdaemon",
+    "summary": "Knock Center Daemon",
+    "url": "https://knock.center",
+    "version": "0.1.1",
+    "release": "BUILD_NUMBER",
+    "requires": [
+      "smartmontools", "python"
+    ]
+  },
+  "blocks": {
+    "desc": [
+      "Knock Center Daemon",
+      "https://knock.center"
+    ],
+    "post": [
+      "systemctl enable knockdaemon.service"
+    ]
+  },
+  "python_venv": {
+    "cmd": "virtualenv",
+    "flags": [
+      "--always-copy"
+    ],
+    "name": "knockdaemon",
+    "path": "/usr/share/python",
+    "python": "/usr/local/bin/python2.7",
+    "requirements": [
+      "requirements.txt"
+    ]
+  },
+  "file_extras": {
+    "files": [
+      {
+        "src": "redhat/knockdaemon.service",
+        "dest": "/usr/lib/systemd/system/knockdaemon.service"
+      },
+      {
+        "src": "redhat/conf/etc/",
+        "dest": "/etc"
+      },
+      {
+        "src": "redhat/libpython2.7.so.1.0",
+        "dest": "/usr/share/python/knockdaemon/bin/libpython2.7.so.1.0"
+      },
+      {
+        "src": "redhat/lib/",
+        "dest": "/usr/share/python/knockdaemon/lib/python2.7/"
+      },
+      {
+        "src": "redhat/knockdaemon.logrotate",
+        "dest": "/etc/logrotate.d/knockdaemon"
+      },
+      {
+        "src": "redhat/knockdaemon.cron.d",
+        "dest": "/etc/cron.d/knockdaemon"
+      }
+    ]
+  },
+  "file_permissions": {
+    "user": "root",
+    "group": "root",
+    "create_user": false,
+    "create_group": false
+  }
+}
+
