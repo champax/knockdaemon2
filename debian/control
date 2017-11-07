@@ -1,11 +1,11 @@
-Source: knockdaemon
+Source: knockdaemon2
 Section: python
 Priority: extra
 Maintainer: laurent Labatut <laurent@labatut.net>
 Build-Depends: debhelper (>= 8), python, dh-virtualenv, dh-systemd
 Standards-Version: 3.9.5
 
-Package: knockdaemon
+Package: knockdaemon2
 Architecture: i386 amd64 armhf
 Depends: ${python:Depends}, ${misc:Depends}, python, file, smartmontools, freeipmi, dmidecode
 Description: supervision daemon

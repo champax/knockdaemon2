@@ -1,3 +1,3 @@
 #!/bin/sh
 
-tar -cvzf knockdaemon.tgz --exclude=knockdaemon/.git --exclude=knockdaemon/.idea --exclude=knockdaemon/build --exclude=knockdaemon/dist --exclude=knockdaemon/knockdaemon.egg-info --exclude=knockdaemon/knockdaemon_test --exclude=knockdaemon/labo --exclude=knockdaemon/salt knockdaemon/
+tar -cvzf knockdaemon2.tgz --exclude=knockdaemon2/.git --exclude=knockdaemon2/.idea --exclude=knockdaemon2/build --exclude=knockdaemon2/dist --exclude=knockdaemon2/knockdaemon2.egg-info --exclude=knockdaemon2/knockdaemon2_test --exclude=knockdaemon2/labo --exclude=knockdaemon2/salt knockdaemon2/

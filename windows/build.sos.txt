@@ -26,17 +26,17 @@ Jenkins/windows_build.bat "W_JOB_NAME"  "W_BUILD_NUMBER" "W_JD"
 
 **************************************
 
-Cloning repository git@bitbucket.org:LoloCH/knockdaemon.git
+Cloning repository git@bitbucket.org:LoloCH/knockdaemon2.git
  > git init c:\jenkins\workspace\KCLT\JD\jenkins-windows # timeout=10
-Fetching upstream changes from git@bitbucket.org:LoloCH/knockdaemon.git
+Fetching upstream changes from git@bitbucket.org:LoloCH/knockdaemon2.git
  > git --version # timeout=10
- > git -c core.askpass=true fetch --tags --progress git@bitbucket.org:LoloCH/knockdaemon.git +refs/heads/*:refs/remotes/bitbucket_knockdaemon/*
- > git config remote.bitbucket_knockdaemon.url git@bitbucket.org:LoloCH/knockdaemon.git # timeout=10
- > git config --add remote.bitbucket_knockdaemon.fetch +refs/heads/*:refs/remotes/bitbucket_knockdaemon/* # timeout=10
- > git config remote.bitbucket_knockdaemon.url git@bitbucket.org:LoloCH/knockdaemon.git # timeout=10
-Fetching upstream changes from git@bitbucket.org:LoloCH/knockdaemon.git
- > git -c core.askpass=true fetch --tags --progress git@bitbucket.org:LoloCH/knockdaemon.git +refs/heads/*:refs/remotes/bitbucket_knockdaemon/*
-Checking out Revision d15319141d4839349f32c1f72317ed1558cf31f0 (refs/remotes/bitbucket_knockdaemon/master)
+ > git -c core.askpass=true fetch --tags --progress git@bitbucket.org:LoloCH/knockdaemon2.git +refs/heads/*:refs/remotes/bitbucket_knockdaemon2/*
+ > git config remote.bitbucket_knockdaemon2.url git@bitbucket.org:LoloCH/knockdaemon2.git # timeout=10
+ > git config --add remote.bitbucket_knockdaemon2.fetch +refs/heads/*:refs/remotes/bitbucket_knockdaemon2/* # timeout=10
+ > git config remote.bitbucket_knockdaemon2.url git@bitbucket.org:LoloCH/knockdaemon2.git # timeout=10
+Fetching upstream changes from git@bitbucket.org:LoloCH/knockdaemon2.git
+ > git -c core.askpass=true fetch --tags --progress git@bitbucket.org:LoloCH/knockdaemon2.git +refs/heads/*:refs/remotes/bitbucket_knockdaemon2/*
+Checking out Revision d15319141d4839349f32c1f72317ed1558cf31f0 (refs/remotes/bitbucket_knockdaemon2/master)
  > git config core.sparsecheckout # timeout=10
  > git checkout -f d15319141d4839349f32c1f72317ed1558cf31f0
  > git rev-list d15319141d4839349f32c1f72317ed1558cf31f0 # timeout=10

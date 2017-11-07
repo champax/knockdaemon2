@@ -1,6 +1,6 @@
 {
-    "knockdaemon": {
+    "knockdaemon2": {
         "os": "windows",
-        "name": "KnockDaemon.exe"
+        "name": "knockdaemon2.exe"
     }
 }

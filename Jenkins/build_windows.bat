@@ -78,7 +78,7 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 echo "*** TESTS"
 
 echo ### Firing test now (do not use -A "not prov")
-nosetests --where=knockdaemon_test -s --with-xunit --all-modules --traverse-namespace --with-xcoverage --cover-package=knockdaemon --cover-inclusive
+nosetests --where=knockdaemon2_test -s --with-xunit --all-modules --traverse-namespace --with-xcoverage --cover-package=knockdaemon2 --cover-inclusive
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 :: =======================
@@ -109,7 +109,7 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 :: =======================
 
 echo "*** RENAME MSI"
-copy kd.msi KnockDaemon_0.0.1-%I_BUILD_NUMBER%.msi
+copy kd.msi knockdaemon2_0.0.1-%I_BUILD_NUMBER%.msi
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 :: =======================
@@ -119,7 +119,7 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 :: =======================
 echo "*** UPLOAD MSI start at %date% %time%"
 
-call "C:\Program Files (x86)\Bitvise SSH Client\sftpc" jenkins@admin01.public -hostKeyFile=c:\Users\champax\.ssh\id_rsa.pub -keypairFile=c:\Users\champax\.ssh\id_rsa -cmd="put -o KnockDaemon_0.0.1-%I_BUILD_NUMBER%.msi /var/lib/win_repos_beta; quit" -progress=percent -encr=aes128-ctr -pipelineSize=16 -traceLog
+call "C:\Program Files (x86)\Bitvise SSH Client\sftpc" jenkins@admin01.public -hostKeyFile=c:\Users\champax\.ssh\id_rsa.pub -keypairFile=c:\Users\champax\.ssh\id_rsa -cmd="put -o knockdaemon2_0.0.1-%I_BUILD_NUMBER%.msi /var/lib/win_repos_beta; quit" -progress=percent -encr=aes128-ctr -pipelineSize=16 -traceLog
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 echo "*** UPLOAD MSI end at %date% %time%"

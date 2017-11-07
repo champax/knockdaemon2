@@ -10,6 +10,6 @@ cp debian/rules_server debian/rules
 ./Jenkins/build.sh
 
 #python setup.py sdist upload -r local
-#reprepro --confdir /var/lib/reprepro/private/conf -Vb /var/lib/reprepro/private  include jessie  ../knockdaemon_*-${BUILD_NUMBER}_amd64.changes
+#reprepro --confdir /var/lib/reprepro/private/conf -Vb /var/lib/reprepro/private  include jessie  ../knockdaemon2_*-${BUILD_NUMBER}_amd64.changes
 
 # buid .deb

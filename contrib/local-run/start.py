@@ -24,15 +24,15 @@
 
 import logging
 from pythonsol.SolBase import SolBase
-from knockdaemon.Core.KnockManager import KnockManager
-from knockdaemon.Core.UDPServer import UDPServer
+from knockdaemon2.Core.KnockManager import KnockManager
+from knockdaemon2.Core.UDPServer import UDPServer
 
 __author__ = 'llabatut'
 logger = logging.getLogger(__name__)
-logger.info("KnockDaemon starting")
+logger.info("knockdaemon2 starting")
 
 # Fetch config
-config_file = "knockdaemon.ini"
+config_file = "knockdaemon2.ini"
 logger.info("config_file=%s", config_file)
 
 # Init manager
@@ -47,12 +47,12 @@ try:
     isRunning = False
 
     # Engage run forever loop
-    logger.info("KnockDaemon started")
+    logger.info("knockdaemon2 started")
     SolBase.sleep(20000)
     while isRunning:
         SolBase.sleep(500)
     startLoopExited = True
-    logger.info("KnockDaemon signaled")
+    logger.info("knockdaemon2 signaled")
 except KeyboardInterrupt:
     logger.info("Stop now")
     if k:

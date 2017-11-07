@@ -1,4 +1,4 @@
-/var/log/knockdaemon.log /var/log/knock-autoupdate.log
+/var/log/knockdaemon2.log /var/log/knock-autoupdate.log
 {
     rotate 7
     daily

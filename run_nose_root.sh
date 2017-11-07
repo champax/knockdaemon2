@@ -4,8 +4,8 @@
 export WORKON_HOME=/root/.virtualenvs
 source '/usr/share/virtualenvwrapper/virtualenvwrapper.sh'
 
-cd /var/lib/jenkins/champax/_devs/knockdaemon/
+cd /var/lib/jenkins/champax/_devs/knockdaemon2/
 workon k.daemon
 export KNOCK_UNITTEST="yes"
 
-nosetests --where=knockdaemon_test -s --with-xunit --all-modules --traverse-namespace --with-xcoverage --cover-package=knockdaemon --cover-inclusive -A 'not prov'
+nosetests --where=knockdaemon2_test -s --with-xunit --all-modules --traverse-namespace --with-xcoverage --cover-package=knockdaemon2 --cover-inclusive -A 'not prov'

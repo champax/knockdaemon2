@@ -2,27 +2,27 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
 
-PIDFILE="/tmp/knockdaemon_dev.pid"
-LOGFILE="/tmp/knockdaemon_dev"
+PIDFILE="/tmp/knockdaemon2_dev.pid"
+LOGFILE="/tmp/knockdaemon2_dev"
 
 RUNAS="root"
-CONFIGFILE="$DIR/scripts_utils/knockdaemon_runner_dev.ini"
+CONFIGFILE="$DIR/scripts_utils/knockdaemon2_runner_dev.ini"
 DAEMON_OPTS="-pidfile=$PIDFILE -stderr=$LOGFILE.err -stdout=/dev/null -logfile=$LOGFILE.log -loglevel=INFO -maxopenfiles=4096 -user=$RUNAS -c=${CONFIGFILE}"
-DAEMON="$DIR/knockdaemon/Daemon/KnockDaemon.py"
-PYTHON_BIN="/home/llabatut/.virtualenvs/knockdaemon/bin/python"
+DAEMON="$DIR/knockdaemon2/Daemon/knockdaemon2.py"
+PYTHON_BIN="/home/llabatut/.virtualenvs/knockdaemon2/bin/python"
 
 SCRIPT="PYTHONPATH=$DIR $PYTHON_BIN $DAEMON $DAEMON_OPTS"
 cd $DIR
 touch $LOGFILE.err
 touch $LOGFILE.log
 # . /etc/bash_completion.d/virtualenvwrapper
-# workon knockdaemon
+# workon knockdaemon2
 
 function ask_to()
 {
     if [ "xx$1" == "xxstart" ]
     then
-        echo "Do you want start Knockdaemon? [y|N]: "
+        echo "Do you want start knockdaemon2? [y|N]: "
         read respond
         if [ "xx$respond" == "xxy" ]
             then
@@ -31,7 +31,7 @@ function ask_to()
                 exit 0
         fi
     else
-        echo "Do you want stop Knockdaemon? [y|N]: "
+        echo "Do you want stop knockdaemon2? [y|N]: "
         read respond
         if [ "xx$respond" == "xxy" ]
             then

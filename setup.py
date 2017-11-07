@@ -59,7 +59,7 @@ def requirement_read(req_file):
 # SETUP
 # ===========================
 
-p_name = "knockdaemon"
+p_name = "knockdaemon2"
 p_author = "Laurent Champagnac / Laurent Labatut"
 p_email = "undisclosed@undisclosed.com"
 p_url = "https://knock.center"
@@ -75,8 +75,8 @@ def entry_point_resolv():
     """
     ep = {
         'console_scripts': [
-            'knockdaemon = knockdaemon.Daemon.KnockDaemon:run',
-            'knockautoupdate = knockdaemon.Cron.AutoUpdate:cron'
+            'knockdaemon2 = knockdaemon2.Daemon.knockdaemon2:run',
+            'knockautoupdate = knockdaemon2.Cron.AutoUpdate:cron'
         ]
     }
 

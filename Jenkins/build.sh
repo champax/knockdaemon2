@@ -13,9 +13,9 @@ fi
 
 if isset "${JOB_NAME}"
 then
-    packagename=knockdaemon
+    packagename=knockdaemon2
 else
-    packagename=knockdaemon
+    packagename=knockdaemon2
 fi
 packagename_test=${packagename}_test
 

@@ -24,29 +24,29 @@
         <!-- <Property Id="ARPNOREPAIR" Value="yes" Secure="yes" /> -->
         <!-- <Property Id="ARPNOREMOVE" Value="yes" Secure="yes" /> -->
         <Property Id="ARPNOMODIFY" Value="yes" Secure="yes"/>
-        <Property Id="WIXUI_EXITDIALOGOPTIONALTEXT" Value="Thank you for installing KnockDaemon."/>
+        <Property Id="WIXUI_EXITDIALOGOPTIONALTEXT" Value="Thank you for installing knockdaemon2."/>
         <Upgrade Id="$(var.ProductUpgradeCode)">
             <UpgradeVersion Minimum="$(var.ProductVersion)" OnlyDetect="yes" Property="NEWERVERSIONDETECTED"/>
             <UpgradeVersion Minimum="0.0.0" Maximum="$(var.ProductVersion)" IncludeMinimum="yes" IncludeMaximum="no" Property="OLDERVERSIONBEINGUPGRADED"/>
         </Upgrade>
         <Condition Message="A newer version of this software is already installed.">NOT NEWERVERSIONDETECTED</Condition>
 
-        <!-- PUSH TO TARGETDIR, ProgramFilesFolder, Knock, KnockDaemon -->
+        <!-- PUSH TO TARGETDIR, ProgramFilesFolder, Knock, knockdaemon2 -->
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Directory Id="ProgramFilesFolder">
                 <Directory Id="INSTALLDIR" Name="Knock">
-                    <Directory Id="KNOCKDIR" Name="KnockDaemon">
+                    <Directory Id="KNOCKDIR" Name="knockdaemon2">
                         <!-- ROOT DIR -->
-                        <Component Id="KnockDaemonFiles" Guid="$(var.GUID1)">
+                        <Component Id="knockdaemon2Files" Guid="$(var.GUID1)">
                             <!-- SERVICE FILE -->
-                            <File Id="KD_exe" Source="..\pyinstaller\dist\KnockDaemon.exe"/>
+                            <File Id="KD_exe" Source="..\pyinstaller\dist\knockdaemon2.exe"/>
 
                             <!-- SERVICE GO -->
                             <ServiceInstall
                                     Id="ServiceInstaller"
                                     Type="ownProcess"
-                                    Name="KnockDaemon"
-                                    DisplayName="KnockDaemon"
+                                    Name="knockdaemon2"
+                                    DisplayName="knockdaemon2"
                                     Description="Monitoring and management Jobs"
                                     Start="auto"
                                     Account="[SERVICEACCOUNT]"
@@ -64,7 +64,7 @@
                                         RestartServiceDelayInSeconds='120'
                                         ResetPeriodInDays='1'/>
                             </ServiceInstall>
-                            <ServiceControl Id="StartService" Start="install" Stop="both" Remove="both" Name="KnockDaemon" Wait="yes">
+                            <ServiceControl Id="StartService" Start="install" Stop="both" Remove="both" Name="knockdaemon2" Wait="yes">
                             </ServiceControl>
 
                             <!-- OTHER FILES -->
@@ -73,11 +73,11 @@
                             <File Id="KD_pyd" Source="..\pyinstaller\dist\win32evtlog.pyd"/>
                             <File Id="KD_checkdns" Source="..\pyinstaller\dist\k.CheckDns.json"/>
                             <File Id="KD_checkprocess" Source="..\pyinstaller\dist\k.CheckProcess.json"/>
-                            <File Id="KD_ini" Source="..\pyinstaller\dist\knockdaemon.ini"/>
+                            <File Id="KD_ini" Source="..\pyinstaller\dist\knockdaemon2.ini"/>
                         </Component>
                         <!-- CONF.D -->
                         <Directory Id="KNOCKDIR_CONFD" Name="conf.d">
-                            <Component Id="KnockDaemonCustomConfigurationFiles" Guid="$(var.GUID2)">
+                            <Component Id="knockdaemon2CustomConfigurationFiles" Guid="$(var.GUID2)">
                                 <!-- SAMPLE FILE -->
                                 <File Id="KD_confd_10authinisample" Source="..\pyinstaller\dist\conf.d\10_auth.ini.sample"/>
 
@@ -92,9 +92,9 @@
 
             <Directory Id="ProgramMenuFolder">
                 <Directory Id="ProgramMenuSubfolder" Name="Knock">
-                    <Component Id="KnockDaemonShortcuts" Guid="$(var.GUID3)">
-                        <Shortcut Id="KDS_1" Name="Knock Daemon shortcut" Description="Knock Daemon" Target="[KNOCKDIR]KnockDaemon.exe" WorkingDirectory="KNOCKDIR"/>
-                        <RegistryValue Root="HKCU" Key="Software\Knock\KnockDaemon" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+                    <Component Id="knockdaemon2Shortcuts" Guid="$(var.GUID3)">
+                        <Shortcut Id="KDS_1" Name="Knock Daemon shortcut" Description="Knock Daemon" Target="[KNOCKDIR]knockdaemon2.exe" WorkingDirectory="KNOCKDIR"/>
+                        <RegistryValue Root="HKCU" Key="Software\Knock\knockdaemon2" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
                         <RemoveFolder Id="ProgramMenuSubfolder" On="uninstall"/>
                     </Component>
                 </Directory>
@@ -106,9 +106,9 @@
         </InstallExecuteSequence>
 
         <Feature Id="DefaultFeature" Level="1">
-            <ComponentRef Id="KnockDaemonFiles"/>
-            <ComponentRef Id="KnockDaemonCustomConfigurationFiles"/>
-            <ComponentRef Id="KnockDaemonShortcuts"/>
+            <ComponentRef Id="knockdaemon2Files"/>
+            <ComponentRef Id="knockdaemon2CustomConfigurationFiles"/>
+            <ComponentRef Id="knockdaemon2Shortcuts"/>
         </Feature>
 
         <UI Id="KUI">

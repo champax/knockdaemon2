@@ -10,17 +10,17 @@ echo **** CLEAN spec
 if exist *.spec DEL *.spec
 
 echo **** BUILD
-pyinstaller --version-file version.txt -F ..\..\knockdaemon\Windows\KnockDaemon\KnockDaemon.py
+pyinstaller --version-file version.txt -F ..\..\knockdaemon2\Windows\knockdaemon2\knockdaemon2.py
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 echo **** PUSH CONF
-xcopy /Y .\conf\knockdaemon .\dist\ /s /e
+xcopy /Y .\conf\knockdaemon2 .\dist\ /s /e
 
 echo **** PUSH PYD (for event ids)
 copy *.pyd .\dist\
 
 echo **** PUSH LOGOs
-copy conf\knockdaemon\*.png .\dist\
-copy conf\knockdaemon\*.ico .\dist\
+copy conf\knockdaemon2\*.png .\dist\
+copy conf\knockdaemon2\*.ico .\dist\
 
 echo **** DONE

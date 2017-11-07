@@ -2,18 +2,18 @@
 
 # Avoid a failing "python2.7 -m compileall /usr/share/python/ "
 echo "postinst: pass 1"
-if [ -f /usr/share/python/knockdaemon/lib/python2.7/site-packages/gevent/_socket3.py ]
+if [ -f /usr/share/python/knockdaemon2/lib/python2.7/site-packages/gevent/_socket3.py ]
 then
-    rm -f /usr/share/python/knockdaemon/lib/python2.7/site-packages/gevent/_socket3.py
+    rm -f /usr/share/python/knockdaemon2/lib/python2.7/site-packages/gevent/_socket3.py
 fi
 echo "postinst: pass 1 complete"
 
 # Rc
 echo "postinst: pass 2 complete"
-update-rc.d -f knockdaemon defaults
+update-rc.d -f knockdaemon2 defaults
 echo "postinst: pass 2 complete"
 
 # Restart
 echo "postinst: pass 3"
-service knockdaemon restart
+service knockdaemon2 restart
 echo "postinst: pass 3 complete"

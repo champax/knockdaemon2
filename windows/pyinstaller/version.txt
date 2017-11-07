@@ -34,7 +34,7 @@ VSVersionInfo(
         StringStruct(u'ProductName', u'Knock Daemon'),
         StringStruct(u'ProductVersion', u'0, 1, 555, 0'),
         StringStruct(u'InternalName', u'Knock Daemon'),
-        StringStruct(u'OriginalFilename', u'KnockDaemon.exe'),
+        StringStruct(u'OriginalFilename', u'knockdaemon2.exe'),
         StringStruct(u'FileVersion', u'0, 1, 555, 000'),
         StringStruct(u'FileDescription', u'Knock Daemon Service'),
         StringStruct(u'LegalCopyright', u'Knock SAS, All Rights Reserved'),

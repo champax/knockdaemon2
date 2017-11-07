@@ -6,7 +6,7 @@ export JD=$3
 
 
 export
-# Test if jenkins project is knockdaemonMaster
+# Test if jenkins project is knockdaemon2Master
 echo ==============
 echo  Building ${JOB_NAME}
 echo ==============
@@ -14,7 +14,7 @@ echo ==============
 if [ ! -z "$JOB_NAME" ]
 then
     # JOB_NAME exist
-    if [ "$JOB_NAME" == "knockdaemonMaster" ]
+    if [ "$JOB_NAME" == "knockdaemon2Master" ]
     then
         # build all
         echo Build client and server

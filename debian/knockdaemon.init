@@ -1,20 +1,20 @@
 #!/bin/sh
 ### BEGIN INIT INFO
-# Provides:          knockdaemon
+# Provides:          knockdaemon2
 # Required-Start:    $local_fs $network $named $time $syslog
 # Required-Stop:     $local_fs $network $named $time $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Description:       knockdaemon
+# Description:       knockdaemon2
 ### END INIT INFO
 
 RUNAS=root
-NAME=knockdaemon
+NAME=knockdaemon2
 PIDFILE=/var/run/$NAME.pid
 LOGFILE=/var/log/$NAME
-CONFIGFILE=/etc/knock/knockdaemon/knockdaemon.ini
+CONFIGFILE=/etc/knock/knockdaemon2/knockdaemon2.ini
 DAEMON_OPTS="-pidfile=$PIDFILE -stderr=$LOGFILE.err -stdout=/dev/null -logfile=$LOGFILE.log -loglevel=INFO -maxopenfiles=4096 -user=$RUNAS -c=${CONFIGFILE}"
-BINARY="/usr/share/python/knockdaemon/bin/knockdaemon"
+BINARY="/usr/share/python/knockdaemon2/bin/knockdaemon2"
 SCRIPT="$BINARY $DAEMON_OPTS"
 
 # ---------------------

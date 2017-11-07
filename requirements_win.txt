@@ -1,29 +1,46 @@
 # Private Pip Url
 --extra-index-url https://pypi.knock.center/knock/dev/+simple/
+
+# pip / setup
 pip>=8.1.1
 setuptools>=20.10.1
-#distribute>=0.7.3
 
-geventhttpclient >= 1.3.0-dev
+# pysol
+pysolbase
+pysolmysql
+pysolhttpclient
+pysolmeters
+pysoltcp
 
-greenlet >= 0.4.0
-pycrypto >= 2.6
-PySocks
-pythonsol >= 0.0.29
+# gevent
 gevent
+geventhttpclient
+greenlet
+
+# crypt
+pycrypto >= 2.6
+
+# socks
+PySocks
+
+# json
 ujson
+
+# backends
 redis
-pymongo >= 2.4
-psutil == 4.1.0
+pymongo
+influxdb
+pymemcache
+
+# tools
+psutil
 dnspython
 ntplib
 argparse
 anyconfig
 PyYAML
-PyMySQL
-urllib3 == 1.19.1
+urllib3
 jinja2
-pymemcache
 pytz
 
 # ======================
@@ -31,7 +48,6 @@ pytz
 # ======================
 pypiwin32
 WMI
-
 
 # ======================
 # EXTERNAL STUFF
@@ -48,14 +64,14 @@ WMI
 # venv ON
 # c:\Users\champax\k.daemon\Scripts\activate
 #
-# cd c:\champax\_devs\knockdaemon\windows\pyinstaller
-# pyinstaller -F ..\..\knockdaemon\Windows\KnockDaemon\KnockDaemon.py
-# C:\champax\_devs\knockdaemon\windows\pyinstaller\dist\KnockDaemon.exe
+# cd c:\champax\_devs\knockdaemon2\windows\pyinstaller
+# pyinstaller -F ..\..\knockdaemon2\Windows\knockdaemon2\knockdaemon2.py
+# C:\champax\_devs\knockdaemon2\windows\pyinstaller\dist\knockdaemon2.exe
 #
 # AS ROOT (DO NOT FORGET THE .EXE otherwise you got "Ex=e.cls:[IndexError]" in win32 utils
-# cd c:\champax\_devs\knockdaemon\windows\pyinstaller\dist
-# KnockDaemon.exe install
-# KnockDaemon.exe remove
+# cd c:\champax\_devs\knockdaemon2\windows\pyinstaller\dist
+# knockdaemon2.exe install
+# knockdaemon2.exe remove
 # ======================
 pyinstaller
 
@@ -64,9 +80,9 @@ pyinstaller
 # ======================
 # C:\Users\champax>c:\Users\champax\k.daemon\Scripts\activate
 # (k.daemon) C:\Users\champax>
-# (k.daemon) C:\Users\champax>cd c:\champax\_devs\knockdaemon
-# (k.daemon) c:\champax\_devs\knockdaemon>
-# (k.daemon) c:\champax\_devs\knockdaemon> pip install -r requirements_win.txt
+# (k.daemon) C:\Users\champax>cd c:\champax\_devs\knockdaemon2
+# (k.daemon) c:\champax\_devs\knockdaemon2>
+# (k.daemon) c:\champax\_devs\knockdaemon2> pip install -r requirements_win.txt
 
 # ======================
 # MISC
@@ -81,22 +97,22 @@ pyinstaller
 # c:\Users\champax\k.daemon\Scripts\deactivate
 #
 # CODE
-# cd c:\champax\_devs\knockdaemon
+# cd c:\champax\_devs\knockdaemon2
 #
 # DAEMON (AS ROOT)
-# SET PYTHONPATH=c:\champax\_devs\knockdaemon
-# python knockdaemon\Windows\KnockDaemon\KnockDaemon.py install
-# python knockdaemon\Windows\KnockDaemon\KnockDaemon.py remove
+# SET PYTHONPATH=c:\champax\_devs\knockdaemon2
+# python knockdaemon2\Windows\knockdaemon2\knockdaemon2.py install
+# python knockdaemon2\Windows\knockdaemon2\knockdaemon2.py remove
 #
 # SERVICE CONTROL
-# KnockDaemon.exe install
-# KnockDaemon.exe remove
-# KnockDaemon.exe debug
+# knockdaemon2.exe install
+# knockdaemon2.exe remove
+# knockdaemon2.exe debug
 #
 # START / STOP
-# net start KnockDaemon
-# net stop KnockDaemon
-# net restart KnockDaemon
+# net start knockdaemon2
+# net stop knockdaemon2
+# net restart knockdaemon2
 
 
 

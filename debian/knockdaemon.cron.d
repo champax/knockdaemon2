@@ -1,4 +1,4 @@
-# /etc/cron.d/knockdaemon: crontab entries for the knockdaemon package
+# /etc/cron.d/knockdaemon2: crontab entries for the knockdaemon2 package
 
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin

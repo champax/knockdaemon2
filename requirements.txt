@@ -1,31 +1,47 @@
 # Private Pip Url
 --extra-index-url https://pypi.knock.center/knock/dev/+simple/
+
+# pip / setup
 pip>=8.1.1
 setuptools>=20.10.1
-#distribute>=0.7.3
 
-geventhttpclient >= 1.3.0-dev
+# pysol
+pysolbase
+pysolmysql
+pysolhttpclient
+pysolmeters
+pysoltcp
 
-greenlet >= 0.4.0
+# gevent
+gevent
+geventhttpclient
+greenlet
+
+# crypt
 pycrypto >= 2.6
+
+# socks
 PySocks
-pythonsol >= 0.0.29
-gevent == 1.1.1
+
+# json
 ujson
+
+# backends
 redis
-pymongo >= 2.4
-psutil == 4.1.0
+pymongo
+influxdb
+pymemcache
+
+# tools
+psutil
 dnspython
 ntplib
 argparse
 anyconfig
 PyYAML
-PyMySQL
 urllib3
 jinja2
-pymemcache
 pytz
 
-influxdb
-# -e git+https://github.com/laurentL/influxdb-python.git#egg=influxdb
+
 

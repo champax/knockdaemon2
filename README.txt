@@ -1,4 +1,4 @@
-Knock Daemon
+Knock Daemon v2
 ============
 
 Welcome to Knock Daemon source code repository
@@ -12,8 +12,8 @@ Source code
 
 - We are pep8 compliant (as far as we can, with some exemptions)
 - We use a right margin of 360 characters (please don't talk me about 80 chars)
-- Daemon code is located inside "./knockdaemon"
-- Unittests are located inside "./knockdaemon_test"
+- Daemon code is located inside "./knockdaemon2"
+- Unittests are located inside "./knockdaemon2_test"
 - All test files must begin with `test_`, should implement setUp & tearDown methods
 - All tests must adapt to any running directory
 - The whole daemon is backed by gevent (http://www.gevent.org/), and rely on pythonsol lib (https://bitbucket.org/LoloCH/pythonsol)

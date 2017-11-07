@@ -1,9 +1,9 @@
 {
-  "knockdaemon": {
+  "knockdaemon2": {
     "startup": [
-      "/etc/init.d/knockdaemon",
-      "/usr/lib/systemd/system/knockdaemon.service"
+      "/etc/init.d/knockdaemon2",
+      "/usr/lib/systemd/system/knockdaemon2.service"
     ],
-    "pid": "/var/run/knockdaemon.pid"
+    "pid": "/var/run/knockdaemon2.pid"
   }
 }

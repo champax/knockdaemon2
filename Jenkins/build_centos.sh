@@ -13,7 +13,7 @@ VIRTUALENVWRAPPER_WORKON_CD=1
 
 . /usr/local/bin/virtualenvwrapper.sh
 
-packagename=knockdaemon
+packagename=knockdaemon2
 packagename_test=${packagename}_test
 
 echo "###### Clean last build job"
@@ -55,5 +55,5 @@ tar -xzf redhat/lib.tgz -C redhat/
 echo "###### Packaging ######"
 QA_SKIP_BUILD_ROOT=1 rpmvenv --verbose  redhat/config_rpm.json  --source .
 
-scp knockdaemon*.rpm admin01.internal:/var/lib/rpm_repos_beta/centos/7/os/x86_64/
+scp knockdaemon2*.rpm admin01.internal:/var/lib/rpm_repos_beta/centos/7/os/x86_64/
 ssh admin01.internal createrepo --update /var/lib/rpm_repos_beta/centos/7/os/x86_64/
