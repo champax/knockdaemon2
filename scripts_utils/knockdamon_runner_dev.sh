@@ -12,9 +12,9 @@ DAEMON="$DIR/knockdaemon2/Daemon/knockdaemon2.py"
 PYTHON_BIN="/home/llabatut/.virtualenvs/knockdaemon2/bin/python"
 
 SCRIPT="PYTHONPATH=$DIR $PYTHON_BIN $DAEMON $DAEMON_OPTS"
-cd $DIR
-touch $LOGFILE.err
-touch $LOGFILE.log
+cd ${DIR}
+touch ${LOGFILE}.err
+touch ${LOGFILE}.log
 # . /etc/bash_completion.d/virtualenvwrapper
 # workon knockdaemon2
 
@@ -26,7 +26,7 @@ function ask_to()
         read respond
         if [ "xx$respond" == "xxy" ]
             then
-                sudo $SCRIPT start
+                sudo ${SCRIPT} start
             else
                 exit 0
         fi
@@ -35,13 +35,13 @@ function ask_to()
         read respond
         if [ "xx$respond" == "xxy" ]
             then
-                sudo $SCRIPT stop
+                sudo ${SCRIPT} stop
             else
                 exit 0
         fi
     fi
 }
-sudo $SCRIPT status >/dev/null
+sudo ${SCRIPT} status >/dev/null
 
 if [ "$?" == 0 ]
     then

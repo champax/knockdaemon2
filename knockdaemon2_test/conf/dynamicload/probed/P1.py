@@ -38,4 +38,3 @@ class P1(KnockProbe):
 
         KnockProbe.__init__(self)
         self.p1 = True
-

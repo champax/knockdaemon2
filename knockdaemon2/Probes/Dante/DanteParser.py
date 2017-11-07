@@ -22,6 +22,7 @@
 # ===============================================================================
 """
 import logging
+
 from knockdaemon2.Probes.Parser.BaseParser import BaseParser
 
 logger = logging.getLogger(__name__)

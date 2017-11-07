@@ -23,13 +23,14 @@
 """
 import glob
 import logging
-import re
-from pythonsol.FileUtility import FileUtility
-from pythonsol.SolBase import SolBase
 import ujson
 
-from knockdaemon2.Api.Http.HttpClient import HttpClient
-from knockdaemon2.Api.Http.HttpRequest import HttpRequest
+import re
+from pysolbase.FileUtility import FileUtility
+from pysolbase.SolBase import SolBase
+from pysolhttpclient.Http.HttpClient import HttpClient
+from pysolhttpclient.Http.HttpRequest import HttpRequest
+
 from knockdaemon2.Core.KnockProbe import KnockProbe
 
 logger = logging.getLogger(__name__)
@@ -294,6 +295,7 @@ class PhpFpmStat(KnockProbe):
         # All pool ok, push ALL
         self._push_all()
 
+    # noinspection PyMethodMayBeStatic
     def _process_file(self, cur_file):
         """
         Process a file
@@ -474,6 +476,7 @@ class PhpFpmStat(KnockProbe):
         # Failed
         logger.warn("Not managed knock_key=%s for ALL instance", knock_key)
 
+    # noinspection PyMethodMayBeStatic
     def fetch_url_as_json(self, url_status):
         """
         Get Status

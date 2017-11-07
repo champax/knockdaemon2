@@ -34,8 +34,8 @@ try:
     import servicemanager
     # noinspection PyUnresolvedReferences,PyPackageRequirements
     import win32evtlogutil
-    from pythonsol.FileUtility import FileUtility
-    from pythonsol.SolBase import SolBase
+    from pysolbase.FileUtility import FileUtility
+    from pysolbase.SolBase import SolBase
     # noinspection PyUnresolvedReferences,PyPackageRequirements
     import win32service
     # noinspection PyUnresolvedReferences,PyPackageRequirements
@@ -44,7 +44,7 @@ try:
     import win32event
 
     from knockdaemon2.Core.KnockManager import KnockManager
-    from knockdaemon2.Windows.knockdaemon2.knockdaemon2Event import knockdaemon2Event
+    from knockdaemon2.Windows.KnockDaemon.KnockDaemonEvent import KnockDaemonEvent
     from knockdaemon2.Windows.Registry.ClassRegistry import ClassRegistry
     from knockdaemon2.Windows.Wmi.Wmi import Wmi
 
@@ -83,8 +83,8 @@ try:
     # -------------------
     # Register event source context ASAP
     # -------------------
-    knockdaemon2Event.LOG_FILE = D_PATH["LOG_FILE"]
-    knockdaemon2Event.APP_NAME = D_PATH["APP_NAME"]
+    KnockDaemonEvent.LOG_FILE = D_PATH["LOG_FILE"]
+    KnockDaemonEvent.APP_NAME = D_PATH["APP_NAME"]
 
     # -------------------
     # DIRECT FILES
@@ -189,7 +189,7 @@ try:
             # noinspection PyShadowingNames
             ex_str = SolBase.extostr(ex)
             logger.warn("AddSourceToRegistry failed, Ex=%s", ex_str)
-            knockdaemon2Event.report_warn("AddSourceToRegistry failed", ex_str)
+            KnockDaemonEvent.report_warn("AddSourceToRegistry failed", ex_str)
 
 
     pass
@@ -208,7 +208,7 @@ try:
     # ==================================
     # Report paths
     # ==================================
-    knockdaemon2Event.report_info("Using D_PATH=%s" % D_PATH)
+    KnockDaemonEvent.report_info("Using D_PATH=%s" % D_PATH)
 
     # ==================================
     # pyinstaller requires explicit import, do it now
@@ -231,7 +231,7 @@ try:
     pass
 
 
-    class knockdaemon2Service(win32serviceutil.ServiceFramework):
+    class KnockDaemonService(win32serviceutil.ServiceFramework):
         """
         Windows service class
         """
@@ -259,7 +259,7 @@ try:
 
                 # Event log
                 logger.info("Init, args=%s", args)
-                knockdaemon2Event.report_info("knockdaemon2 __init__ called", "args=%s" % str(args))
+                KnockDaemonEvent.report_info("knockdaemon2 __init__ called", "args=%s" % str(args))
 
                 # Go
                 self.args = args
@@ -271,7 +271,7 @@ try:
                 if not D_PATH["LOCATED_CONFIG_FILE"]:
                     # Report a fatal warning
                     logger.error("Fatal : LOCATED_CONFIG_FILE not available, was using D_PATH=%s", D_PATH)
-                    knockdaemon2Event.report_error("Fatal : LOCATED_CONFIG_FILE not available, was using D_PATH=%s" % D_PATH)
+                    KnockDaemonEvent.report_error("Fatal : LOCATED_CONFIG_FILE not available, was using D_PATH=%s" % D_PATH)
                     sys.exit(-1)
 
                 # ------------------
@@ -284,7 +284,7 @@ try:
                 else:
                     # SERVICE START
                     logger.info("Starting as normal service, going to redirect logs to file=%s", D_PATH["LOG_FILE"])
-                    knockdaemon2Event.report_info("Starting as normal service, going to redirect logs to file=%s" % D_PATH["LOG_FILE"])
+                    KnockDaemonEvent.report_info("Starting as normal service, going to redirect logs to file=%s" % D_PATH["LOG_FILE"])
 
                     # Create dirs
                     logger.info("Checking and creating dir=%s", D_PATH["LOG_DIR"])
@@ -297,17 +297,17 @@ try:
                     # Check them
                     if not FileUtility.is_dir_exist(D_PATH["LOG_DIR"]):
                         logger.error("Fatal : LOG_DIR not available, was using D_PATH=%s", D_PATH)
-                        knockdaemon2Event.report_error("Fatal : LOG_DIR not available, was using D_PATH=%s" % D_PATH)
+                        KnockDaemonEvent.report_error("Fatal : LOG_DIR not available, was using D_PATH=%s" % D_PATH)
                         sys.exit(-1)
 
                     # Reset loggers
                     logger.info("Redirect logs, (using 'time_file', rotating 7 days, one log per day), file=%s", D_PATH["LOG_FILE"])
-                    knockdaemon2Event.report_info("Redirect logs (using 'time_file', rotating 7 days, one log per day), file=%s" % D_PATH["LOG_FILE"])
+                    KnockDaemonEvent.report_info("Redirect logs (using 'time_file', rotating 7 days, one log per day), file=%s" % D_PATH["LOG_FILE"])
 
                     SolBase.logging_init(log_level="INFO", force_reset=True, log_to_file=D_PATH["LOG_FILE"], log_to_syslog=False, log_to_console=False, log_to_file_mode="time_file")
 
                     logger.info("Redirect logs, file=%s", D_PATH["LOG_FILE"])
-                    knockdaemon2Event.report_info("Redirected logs, file=%s" % D_PATH["LOG_FILE"])
+                    KnockDaemonEvent.report_info("Redirected logs, file=%s" % D_PATH["LOG_FILE"])
 
                 # ------------------
                 # Logs all
@@ -337,7 +337,7 @@ try:
                 # noinspection PyShadowingNames
                 ex_str = SolBase.extostr(ex)
                 logger.error("Ex=%s", ex_str)
-                knockdaemon2Event.report_error("Exception", ex_str)
+                KnockDaemonEvent.report_error("Exception", ex_str)
 
         # noinspection PyPep8Naming
         def SvcDoRun(self):
@@ -351,13 +351,13 @@ try:
                 # Starting
                 # ---------------------------
                 logger.info("knockdaemon2 starting")
-                knockdaemon2Event.report_info("knockdaemon2 starting")
+                KnockDaemonEvent.report_info("knockdaemon2 starting")
 
                 if "KNOCK_UNITTEST" not in os.environ:
                     self.ReportServiceStatus(win32service.SERVICE_START_PENDING)
 
                 # Report paths
-                knockdaemon2Event.report_info("Starting using D_PATH=%s" % D_PATH)
+                KnockDaemonEvent.report_info("Starting using D_PATH=%s" % D_PATH)
 
                 # ---------------------------
                 # Fetch config
@@ -370,11 +370,11 @@ try:
                 logger.info("Checking config_file=%s", config_file)
                 if not FileUtility.is_file_exist(config_file):
                     logger.error("Fatal : config_file not available, was using D_PATH=%s", D_PATH)
-                    knockdaemon2Event.report_error("Fatal : config_file not available, was using D_PATH=%s" % D_PATH)
+                    KnockDaemonEvent.report_error("Fatal : config_file not available, was using D_PATH=%s" % D_PATH)
                     sys.exit(-1)
 
                 # Go
-                knockdaemon2Event.report_info("Found config_file", "Selected config_file=%s" % config_file)
+                KnockDaemonEvent.report_info("Found config_file", "Selected config_file=%s" % config_file)
                 logger.info("Found config_file=%s", config_file)
 
                 # Go
@@ -385,7 +385,7 @@ try:
                 self.k = KnockManager(config_file)
 
                 logger.info("Config loaded, signaling service up")
-                knockdaemon2Event.report_info("Config loaded, signaling service up")
+                KnockDaemonEvent.report_info("Config loaded, signaling service up")
 
                 # We signal running ASAP to avoid 30 sec timeout while starting due to hardcoded service manager timeout...
                 if "KNOCK_UNITTEST" not in os.environ:
@@ -394,7 +394,7 @@ try:
                 # Windows wmi start (will perform initial full fetch in blocking mode)
                 Wmi.wmi_start()
                 logger.info("Wmi started")
-                knockdaemon2Event.report_info("Wmi started")
+                KnockDaemonEvent.report_info("Wmi started")
 
                 # Fetch WMI to console
                 # noinspection PyProtectedMember
@@ -403,11 +403,11 @@ try:
                 # Start manager
                 self.k.start()
                 logger.info("Manager started")
-                knockdaemon2Event.report_info("Manager started")
+                KnockDaemonEvent.report_info("Manager started")
 
                 # Ok
                 logger.info("knockdaemon2 started")
-                knockdaemon2Event.report_info("knockdaemon2 started")
+                KnockDaemonEvent.report_info("knockdaemon2 started")
 
                 # ---------------------------
                 # Engage run forever loop (and flush to event log from time to time the manager status)
@@ -416,7 +416,7 @@ try:
                 start_ms = SolBase.mscurrent()
                 last_log_ms = SolBase.mscurrent()
                 logger.info("Writing initial manager status now")
-                knockdaemon2Event.write_manager_status(self.k)
+                KnockDaemonEvent.write_manager_status(self.k)
 
                 while self.is_running:
                     # Elapsed since start
@@ -435,7 +435,7 @@ try:
                     if last_log_elapsed >= log_interval_ms:
                         # LOG
                         logger.info("Writing manager status now, ms_elapsed=%s, last_log_elapsed=%s, log_interval_ms=%s", ms_elapsed, last_log_elapsed, log_interval_ms)
-                        knockdaemon2Event.write_manager_status(self.k)
+                        KnockDaemonEvent.write_manager_status(self.k)
                         last_log_ms = SolBase.mscurrent()
 
                     # Sleep
@@ -446,7 +446,7 @@ try:
                 # ---------------------------
 
                 logger.info("knockdaemon2 stopping")
-                knockdaemon2Event.report_info("knockdaemon2 stopping")
+                KnockDaemonEvent.report_info("knockdaemon2 stopping")
 
                 # Signal stop start
                 if "KNOCK_UNITTEST" not in os.environ:
@@ -455,28 +455,28 @@ try:
                 # Stop manager
                 self.k.stop()
                 logger.info("Manager stopped")
-                knockdaemon2Event.report_info("Manager stopped")
+                KnockDaemonEvent.report_info("Manager stopped")
 
                 # Stop wmi
                 Wmi.wmi_stop()
                 logger.info("Wmi stopped")
-                knockdaemon2Event.report_info("Wmi stopped")
+                KnockDaemonEvent.report_info("Wmi stopped")
 
                 # Signal stop event
                 self.start_loop_exited = True
 
                 # Log
                 logger.info("knockdaemon2 stopped")
-                knockdaemon2Event.report_info("knockdaemon2 stopped")
+                KnockDaemonEvent.report_info("knockdaemon2 stopped")
             except Exception as ex:
                 # noinspection PyShadowingNames
                 ex_str = SolBase.extostr(ex)
                 logger.error("Ex=%s", ex_str)
-                knockdaemon2Event.report_error("Exception", ex_str)
+                KnockDaemonEvent.report_error("Exception", ex_str)
                 sys.exit(-1)
             finally:
                 logger.info("Exiting method now")
-                knockdaemon2Event.report_info("Exiting method now")
+                KnockDaemonEvent.report_info("Exiting method now")
 
         # noinspection PyPep8Naming
         def SvcStop(self):
@@ -488,27 +488,27 @@ try:
             try:
 
                 logger.info("Stop received")
-                knockdaemon2Event.report_info("Stop received")
+                KnockDaemonEvent.report_info("Stop received")
 
                 # Signal our event for shutdown
                 logger.info("Signaling is_running")
-                knockdaemon2Event.report_info("Signaling is_running")
+                KnockDaemonEvent.report_info("Signaling is_running")
                 self.is_running = False
                 logger.info("Signaled is_running")
-                knockdaemon2Event.report_info("Signaled is_running")
+                KnockDaemonEvent.report_info("Signaled is_running")
 
                 # Over
                 logger.info("Stop signaled")
-                knockdaemon2Event.report_info("Stop signaled")
+                KnockDaemonEvent.report_info("Stop signaled")
             except Exception as e:
                 # noinspection PyShadowingNames
                 ex_str = SolBase.extostr(e)
                 logger.error("Ex=%s", ex_str)
-                knockdaemon2Event.report_error("Exception", ex_str)
+                KnockDaemonEvent.report_error("Exception", ex_str)
                 sys.exit(-1)
             finally:
                 logger.info("Exiting method now")
-                knockdaemon2Event.report_info("Exiting method now")
+                KnockDaemonEvent.report_info("Exiting method now")
 
         # noinspection PyPep8Naming
         def SvcInterrogate(self):
@@ -517,36 +517,36 @@ try:
             """
             try:
                 logger.info("Interrogate received")
-                # knockdaemon2Event.report_info("Interrogate received")
+                # KnockDaemonEvent.report_info("Interrogate received")
 
                 # Call base
                 if "KNOCK_UNITTEST" not in os.environ:
                     self.ReportServiceStatus(win32service.SERVICE_RUNNING)
 
                 logger.info("Interrogate processed")
-                # knockdaemon2Event.report_info("Interrogate processed")
+                # KnockDaemonEvent.report_info("Interrogate processed")
             finally:
                 logger.info("Exiting method now")
-                # knockdaemon2Event.report_info("Exiting method now")
+                # KnockDaemonEvent.report_info("Exiting method now")
 
 
     if __name__ == '__main__':
         try:
             if len(sys.argv) == 1:
                 servicemanager.Initialize()
-                servicemanager.PrepareToHostSingle(knockdaemon2Service)
+                servicemanager.PrepareToHostSingle(KnockDaemonService)
                 servicemanager.StartServiceCtrlDispatcher()
             else:
-                win32serviceutil.HandleCommandLine(knockdaemon2Service)
+                win32serviceutil.HandleCommandLine(KnockDaemonService)
         except Exception as e:
             ex_str = SolBase.extostr(e)
             logger.error("Main Ex=%s", ex_str)
-            knockdaemon2Event.report_error("Main Exception", ex_str)
+            KnockDaemonEvent.report_error("Main Exception", ex_str)
         finally:
             logger.info("Exiting main now")
 except Exception as e:
     # ===================
     # CRITICAL
     # ===================
-    knockdaemon2Event.report_error("CRITICAL Top Exception", e)
+    KnockDaemonEvent.report_error("CRITICAL Top Exception", e)
     print "CRITICAL Top Exception=" + str(e)

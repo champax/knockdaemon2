@@ -6,7 +6,7 @@ if [ -f ${UTILSCRIPT} ];
 then
     . ${UTILSCRIPT}
 else
-    echo "ERROR No util scipt found `pwd`/$UTILSCRIPT"
+    echo "ERROR No util script found `pwd`/$UTILSCRIPT"
     pwd
     exit 1
 fi
@@ -29,7 +29,7 @@ rmvirtualenv ${ENV}
 virtualenv ${ENV}
 source ${ENV}/bin/activate
 
-echo "###### Intall package dependency"
+echo "###### Install package dependency"
 # sudo /usr/bin/apt-get -y install cython
 
 # INSTALL REQ
@@ -52,15 +52,15 @@ devpi use --set-cfg ${REPO_URL}
 
 pip install setuptools --upgrade || true
 
-pip install $NOUSEWHEEL -r requirements.txt
+pip install ${NOUSEWHEEL} -r requirements.txt
 
 echo "###### Installing test requirements"
-pip install $NOUSEWHEEL -r requirements_test.txt
+pip install ${NOUSEWHEEL} -r requirements_test.txt
 
-echo "###### Intall package dependency"
+echo "###### Install package dependency"
 # sudo /usr/bin/apt-get -y install python-pip debhelper
 
-# changelog verion
+# changelog version
 sed  -i -e "/^p_version = / s/dev0/$BUILD_NUMBER/" setup.py
 sed -i "/BUILD_NUMBER/ s/BUILD_NUMBER/${BUILD_NUMBER}/"  debian/changelog
 

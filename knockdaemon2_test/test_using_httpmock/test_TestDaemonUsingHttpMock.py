@@ -22,19 +22,19 @@
 # ===============================================================================
 """
 import logging
-import os
 import sys
 import unittest
 from multiprocessing import Process
-from os.path import dirname, abspath
 from string import join
 
+import os
 import redis
-from pythonsol.FileUtility import FileUtility
-from pythonsol.SolBase import SolBase
+from os.path import dirname, abspath
+from pysolbase.FileUtility import FileUtility
+from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
-from knockdaemon2.Daemon.knockdaemon2 import knockdaemon2
+from knockdaemon2.Daemon.KnockDaemon import KnockDaemon
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 from knockdaemon2.Platform.PTools import PTools
 
@@ -276,7 +276,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
 
             # Launch
             logger.info("Firing main_helper, ar=%s", ar)
-            p = Process(target=knockdaemon2.main_helper, args=(ar, {}))
+            p = Process(target=KnockDaemon.main_helper, args=(ar, {}))
 
             logger.info("Start now")
             p.start()
@@ -328,7 +328,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
                 ar.append("status")
 
                 # Launch
-                p = Process(target=knockdaemon2.main_helper, args=(ar, {}))
+                p = Process(target=KnockDaemon.main_helper, args=(ar, {}))
                 p_list.append(p)
                 p.start()
                 p.join()
@@ -347,7 +347,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
                 ar.append("reload")
 
                 # Launch
-                p = Process(target=knockdaemon2.main_helper, args=(ar, {}))
+                p = Process(target=KnockDaemon.main_helper, args=(ar, {}))
                 p_list.append(p)
                 p.start()
                 p.join()
@@ -365,7 +365,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             ar.append("stop")
 
             # Launch
-            p = Process(target=knockdaemon2.main_helper, args=(ar, {}))
+            p = Process(target=KnockDaemon.main_helper, args=(ar, {}))
             p_list.append(p)
             p.start()
             p.join()

@@ -22,8 +22,10 @@
 # ===============================================================================
 """
 import logging
-from pythonsol.DelayToCount import DelayToCount
-from pythonsol.SolBase import SolBase
+
+from pysolbase.SolBase import SolBase
+from pysolmeters.DelayToCount import DelayToCount
+
 from knockdaemon2.Probes.Parser.BaseParser import BaseParser
 
 logger = logging.getLogger(__name__)

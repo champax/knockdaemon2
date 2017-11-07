@@ -22,23 +22,21 @@
 # ===============================================================================
 """
 
+import datetime
 import logging
+import random
+import time
 import unittest
 
 import os
-import datetime
-import random
-import time
-
 from gevent import Timeout
 from gevent.pool import Pool
 from influxdb import InfluxDBClient
 from influxdb.resultset import ResultSet
 from influxdb.tests.server_tests.base import SingleTestCaseWithServerMixin
+from pysolbase.SolBase import SolBase
 
-from pythonsol.SolBase import SolBase
-
-from knockdaemon2.Transport.InfluxAsyncTransport import InfluxAsyncTransport
+from knockdaemon2.Core.Tools import Tools
 
 SolBase.voodoo_init()
 SolBase.logging_init(log_level="INFO", force_reset=True, log_to_file=None,
@@ -126,6 +124,7 @@ class TestInflux(SingleTestCaseWithServerMixin, unittest.TestCase):
         account_hash = {'acc_key': 'tamereenshort',
                         'acc_namespace': 'unittest'}
         node_hash = {'host': 'klchgui01'}
+        # noinspection PyUnusedLocal
         notify_hash = {'test.dummy|TYPE|one': ('test.dummy', 'TYPE', 'one'),
                        'test.dummy|TYPE|all': ('test.dummy', 'TYPE', 'all'),
                        'test.dummy|TYPE|two': ('test.dummy', 'TYPE', 'two')}
@@ -137,9 +136,7 @@ class TestInflux(SingleTestCaseWithServerMixin, unittest.TestCase):
                          ('test.dummy.error', 'one', 3, 1503045097.626704),
                          ('test.dummy.error', 'two', 2, 1503045097.626728)]
 
-        ar_i = InfluxAsyncTransport.to_influx_format(account_hash, node_hash,
-                                                     notify_hash,
-                                                     notify_values)
+        ar_i = Tools.to_influx_format(account_hash, node_hash, notify_values)
         logger.info("ar_i=%s", ar_i)
 
         # TODO : Check multiple diso : k.dns.resolv

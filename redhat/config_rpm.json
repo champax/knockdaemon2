@@ -16,7 +16,8 @@
     "version": "0.1.1",
     "release": "BUILD_NUMBER",
     "requires": [
-      "smartmontools", "python"
+      "smartmontools",
+      "python"
     ]
   },
   "blocks": {

@@ -27,23 +27,22 @@ import platform
 import shutil
 import sys
 import unittest
+from datetime import datetime
 
 import os
 import psutil
-from datetime import datetime
 # noinspection PyPackageRequirements
 from dns.resolver import Resolver
-# noinspection PyPackageRequirements
+# noinspection PyPackageRequirements,PyUnresolvedReferences
 from nose.plugins.attrib import attr
 from os.path import dirname, abspath
-from pythonsol.FileUtility import FileUtility
-from pythonsol.SolBase import SolBase
-from pythonsol.meter.MeterManager import MeterManager
+from pysolbase.FileUtility import FileUtility
+from pysolbase.SolBase import SolBase
+from pysolmeters.Meters import Meters
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockHelpers import KnockHelpers
 from knockdaemon2.Core.KnockManager import KnockManager
-from knockdaemon2.Core.KnockStat import KnockStat
 from knockdaemon2.Platform.PTools import PTools
 from knockdaemon2.Probes.Apache.ApacheStat import ApacheStat
 from knockdaemon2.Probes.Inventory.Inventory import Inventory
@@ -115,13 +114,13 @@ class TestProbesDirect(unittest.TestCase):
             buf = buf.replace("/tmp", PTools.get_tmp_dir())
 
             # Write
-            FileUtility.append_text_tofile(dst, buf, "utf8", overwrite=True)
+            FileUtility.append_text_to_file(dst, buf, "utf8", overwrite=True)
 
         # Overwrite
         self.config_file = PTools.get_tmp_dir() + SolBase.get_pathseparator() + "knockdaemon2.ini"
 
         # Reset meter
-        MeterManager._hash_meter = dict()
+        Meters.reset()
 
         # Allocate, do not start
         self.k = KnockManager(self.config_file, auto_start=False)
@@ -145,9 +144,7 @@ class TestProbesDirect(unittest.TestCase):
         """
 
         if self.debug_stat:
-            ks = MeterManager.get(KnockStat)
-            for k, v in ks.to_dict().iteritems():
-                logger.info("stat, %s => %s", k, v)
+            Meters.write_to_logger()
 
     @unittest.skipIf(NginxStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % NginxStat())
     def test_NginxStat(self):

@@ -28,7 +28,7 @@ import unittest
 import os
 from influxdb import InfluxDBClient
 from influxdb.line_protocol import make_lines
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.Tools import Tools
 

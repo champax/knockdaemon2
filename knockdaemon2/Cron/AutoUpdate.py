@@ -22,10 +22,10 @@ Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
  ===============================================================================
 """
 import logging
+import sys
 from random import randint
 
-import sys
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Cron.AutoUpdateBase import ExitOnError
 from knockdaemon2.Cron.Debian.AutoUpdateDebian import AutoUpdateDebian

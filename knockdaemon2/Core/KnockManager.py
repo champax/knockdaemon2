@@ -24,27 +24,26 @@
 import glob
 import importlib
 import logging
+import platform
+import sys
 from collections import OrderedDict
+from datetime import datetime
 from threading import Lock
 from time import time
-from datetime import datetime
-import sys
-import anyconfig
-import platform
-import os
 
+import anyconfig
 import gevent
+import os
 from gevent.timeout import Timeout
 from os.path import dirname, abspath
-from pythonsol.FileUtility import FileUtility
-from pythonsol.SolBase import SolBase
-from pythonsol.meter.MeterManager import MeterManager
+from pysolbase.FileUtility import FileUtility
+from pysolbase.SolBase import SolBase
+from pysolmeters.Meters import Meters
 
-from knockdaemon2.Core.UDPServer import UDPServer
-from knockdaemon2.Kindly.Kindly import Kindly
 from knockdaemon2.Core.KnockProbe import KnockConfigurationKeys, KnockProbe
 from knockdaemon2.Core.KnockProbeContext import KnockProbeContext
-from knockdaemon2.Core.KnockStat import KnockStat
+from knockdaemon2.Core.UDPServer import UDPServer
+from knockdaemon2.Kindly.Kindly import Kindly
 from knockdaemon2.Platform.PTools import PTools
 from knockdaemon2.Transport.KnockTransport import KnockTransport
 
@@ -115,9 +114,6 @@ class KnockManager(object):
 
         # Timeout per probe
         self._exectimeout_ms = 10000
-
-        # Register counters
-        MeterManager.put(KnockStat())
 
         # Disco hash
         self._superv_notify_disco_hash = dict()
@@ -437,7 +433,7 @@ class KnockManager(object):
         except Exception as e:
             # This should NOT occur
             logger.error("Process exception, e=%s", SolBase.extostr(e))
-            MeterManager.get(KnockStat).exec_all_finally_exception.increment()
+            Meters.aii("knock_stat_exec_all_finally_exception")
         finally:
             # Check
             if not self._is_running:
@@ -468,25 +464,25 @@ class KnockManager(object):
                     self._try_execute_probe(p)
                 except Exception as e:
                     logger.warn("Inner exception, p=%s, ex=%s", p, SolBase.extostr(e))
-                    MeterManager.get(KnockStat).exec_all_inner_exception.increment()
+                    Meters.aii("knock_stat_exec_all_inner_exception")
                 finally:
                     SolBase.sleep(0)
         except Exception as e:
             logger.warn("Outer exception, ex=%s", SolBase.extostr(e))
-            MeterManager.get(KnockStat).exec_all_outer_exception.increment()
+            Meters.aii("knock_stat_exec_all_outer_exception")
         finally:
             ms_elapsed = SolBase.msdiff(ms)
             next_exec_start_at = self._get_next_dynamic_exec_ms()
             next_diff_ms = SolBase.msdiff(next_exec_start_at)
 
             logger.debug("All probes executed, ms_elapsed=%s", ms_elapsed)
-            MeterManager.get(KnockStat).exec_all_dtc.put(ms_elapsed)
-            MeterManager.get(KnockStat).exec_all_count.increment()
+            Meters.dtci("knock_stat_exec_all_dtc", ms_elapsed)
+            Meters.aii("knock_stat_exec_all_count")
 
             # Check execution time
             if next_diff_ms <= 0.0:
                 logger.warn("Execution to slow, next_diff_ms=%s, ms_elapsed=%s", next_diff_ms, ms_elapsed)
-                MeterManager.get(KnockStat).exec_all_too_slow.increment()
+                Meters.aii("knock_stat_exec_all_too_slow")
 
     def _try_execute_probe(self, p):
         """
@@ -499,7 +495,7 @@ class KnockManager(object):
         c = self._get_probe_context(p)
         if not self._need_exec(p, c):
             logger.debug("Bypass, _need_exec false, p=%s, c=%s", p, c)
-            MeterManager.get(KnockStat).exec_probe_bypass.increment()
+            Meters.aii("knock_stat_exec_probe_bypass")
             return
 
         # Exec
@@ -540,15 +536,15 @@ class KnockManager(object):
             logger.info("Exec done, ms=%s, p=%s", SolBase.msdiff(ms), p)
         except Timeout:
             logger.warn("Execute timeout, p=%s", p)
-            MeterManager.get(KnockStat).exec_probe_timeout.increment()
+            Meters.aii("knock_stat_exec_probe_timeout")
         except Exception as e:
             logger.warn("Execute exception, p=%s, ex=%s", p, SolBase.extostr(e))
-            MeterManager.get(KnockStat).exec_probe_exception.increment()
+            Meters.aii("knock_stat_exec_probe_exception")
         finally:
             ms_elapsed = SolBase.msdiff(ms)
             logger.debug("Over, p=%s, ms_elapsed=%s", p, ms_elapsed)
-            MeterManager.get(KnockStat).exec_probe_dtc.put(ms_elapsed)
-            MeterManager.get(KnockStat).exec_probe_count.increment()
+            Meters.dtci("knock_stat_exec_probe_dtc", ms_elapsed)
+            Meters.aii("knock_stat_exec_probe_count")
 
     # ==============================
     # SUPERV NOTIFY : DISCOVERY
@@ -586,7 +582,7 @@ class KnockManager(object):
             self._superv_notify_disco_hash[key] = tu
 
             # Stats
-            MeterManager.get(KnockStat).notify_disco.increment()
+            Meters.aii("knock_stat_notify_disco")
 
     # ==============================
     # SUPERV NOTIFY : VALUE
@@ -618,7 +614,7 @@ class KnockManager(object):
         assert counter_key.find(".discovery") == - 1, "counter_key : '.discovery' is not allowed, got counter_key={0}".format(counter_key)
 
         # Stat
-        MeterManager.get(KnockStat).notify_value.increment()
+        Meters.aii("knock_stat_notify_value")
 
         # Fix up value for Superv
         counter_value = self._to_superv_value(counter_value)
@@ -703,6 +699,7 @@ class KnockManager(object):
             if isinstance(t, transport_class):
                 return t
         raise Exception("Transport not found, transport_class={0}".format(transport_class))
+
     # ==============================
     # TOOLS
     # ==============================

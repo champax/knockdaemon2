@@ -21,11 +21,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
+import logging
+
 from os import listdir
 from os.path import isdir, join
-
-import logging
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Platform.PTools import PTools
@@ -76,6 +76,7 @@ class NumberOfProcesses(KnockProbe):
         except Exception as e:
             logger.warn("Ex=%s", SolBase.extostr(e))
 
+    # noinspection PyMethodMayBeStatic
     def _get_process_count(self):
         """
         Get

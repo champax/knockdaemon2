@@ -28,12 +28,11 @@ import unittest
 import os
 import re
 from os.path import dirname, abspath
-from pythonsol.FileUtility import FileUtility
-from pythonsol.SolBase import SolBase
-from pythonsol.meter.MeterManager import MeterManager
+from pysolbase.FileUtility import FileUtility
+from pysolbase.SolBase import SolBase
+from pysolmeters.Meters import Meters
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
-from knockdaemon2.Core.KnockStat import KnockStat
 from knockdaemon2.Cron.Debian.AutoUpdateDebian import AutoUpdateDebian
 from knockdaemon2.Cron.Redhat.AutoUpdateRedhat import AutoUpdateRedhat
 from knockdaemon2.HttpMock.HttpMock import HttpMock
@@ -108,7 +107,7 @@ class TestAutoupdate(unittest.TestCase):
         self.h = None
 
         # Reset meter
-        MeterManager._hash_meter = dict()
+        Meters.reset()
 
         # Debug stat on exit ?
         self.debug_stat = False
@@ -124,9 +123,7 @@ class TestAutoupdate(unittest.TestCase):
             self.h = None
 
         if self.debug_stat:
-            ks = MeterManager.get(KnockStat)
-            for k, v in ks.to_dict().iteritems():
-                logger.info("stat, %s => %s", k, v)
+            Meters.write_to_logger()
 
     # ===================================
     # DEBIAN

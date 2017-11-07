@@ -21,30 +21,26 @@ Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  ===============================================================================
 """
+import _socket
 import logging
 import socket
-
-import _socket
-from errno import EWOULDBLOCK
-
-import os
+import sys
 import ujson
 from collections import OrderedDict
+from errno import EWOULDBLOCK
 
 import gevent
-import sys
-
+import os
 from gevent.lock import RLock
 from gevent.server import DatagramServer
 from gevent.threading import Lock
-from pythonsol.AtomicFloat import AtomicFloatSafe
-from pythonsol.DelayToCount import DelayToCount
-from pythonsol.SolBase import SolBase
-from pythonsol.meter.MeterManager import MeterManager
-from pythonsol.tcpbase.TcpSocketManager import TcpSocketManager
+from pysolbase.SolBase import SolBase
+from pysolmeters.AtomicFloat import AtomicFloatSafe
+from pysolmeters.DelayToCount import DelayToCount
+from pysolmeters.Meters import Meters
+from pysoltcp.tcpbase.TcpSocketManager import TcpSocketManager
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
-from knockdaemon2.Core.KnockStat import KnockStat
 from knockdaemon2.Platform.PTools import PTools
 
 logger = logging.getLogger(__name__)
@@ -303,16 +299,16 @@ class BusinessServer(DatagramServer):
             for item, cur_type, value in data_json:
                 try:
                     if cur_type == BusinessServer.COUNTER:
-                        MeterManager.get(KnockStat).udp_recv_counter.increment()
+                        Meters.aii("knock_stat_udp_recv_counter")
                         self._process_increment(item, value)
                     elif cur_type == BusinessServer.GAUGE:
-                        MeterManager.get(KnockStat).udp_recv_gauge.increment()
+                        Meters.aii("knock_stat_udp_recv_gauge")
                         self._process_gauge(item, value)
                     elif cur_type == BusinessServer.DTC:
-                        MeterManager.get(KnockStat).udp_recv_dtc.increment()
+                        Meters.aii("knock_stat_udp_recv_dtc")
                         self._process_dtc(item, value)
                     else:
-                        MeterManager.get(KnockStat).udp_recv_unknown.increment()
+                        Meters.aii("knock_stat_udp_recv_unknown")
                         logger.warning("Unknown item type, item=%s, cur_type=s%, value=%s", item, cur_type, value)
                 except Exception as e:
                     logger.warning("Item exception, item=%s, cur_type=s%, value=%s, ex=%s", item, cur_type, value, SolBase.extostr(e))
@@ -322,7 +318,7 @@ class BusinessServer(DatagramServer):
                 self.socket.sendto(('Received %s bytes' % len(data)).encode('utf-8'), address)
 
             # Stats
-            MeterManager.get(KnockStat).udp_recv.increment()
+            Meters.aii("knock_stat_udp_recv")
         except Exception as e:
             # Log
             logger.warning('Cant decode, data_len=%s, data=%s, ex=%s', len(data), repr(data), SolBase.extostr(e))
@@ -332,10 +328,10 @@ class BusinessServer(DatagramServer):
                 self.socket.sendto(('KO-NR: Received %s bytes - cant decode' % len(data)).encode('utf-8'), address)
 
             # Stat
-            MeterManager.get(KnockStat).udp_recv_ex.increment()
+            Meters.aii("knock_stat_udp_recv_ex")
         finally:
             elapsed_ms = SolBase.msdiff(ms_start)
-            MeterManager.get(KnockStat).udp_recv_dtc_dtc.put(elapsed_ms)
+            Meters.dtci("knock_stat_udp_recv_dtc_dtc", elapsed_ms)
 
     # ------------------------------
     # UTILITIES / STATIC
@@ -482,7 +478,7 @@ class BusinessServer(DatagramServer):
             # Go in lock to avoid interactions with stop() mainly & reschedule races
             with self._notify_lock:
                 logger.info("Entering")
-                MeterManager.get(KnockStat).udp_notify_run.increment()
+                Meters.aii("knock_stat_udp_notify_run")
 
                 # Dtc
                 with self._dtc_lock:
@@ -523,8 +519,8 @@ class BusinessServer(DatagramServer):
                 self._notify_schedule_next()
         except Exception as e:
             logger.warn("Internal ex=%s", SolBase.extostr(e))
-            MeterManager.get(KnockStat).udp_notify_run_ex.increment()
+            Meters.aii("knock_stat_udp_notify_run_ex")
         finally:
             elapsed_ms = SolBase.msdiff(ms_start)
             logger.info("Exiting, ms=%s", elapsed_ms)
-            MeterManager.get(KnockStat).udp_notify_run_dtc.put(elapsed_ms)
+            Meters.dtci("knock_stat_udp_notify_run_dtc", elapsed_ms)

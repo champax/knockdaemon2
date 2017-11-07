@@ -23,19 +23,19 @@
 """
 
 import logging
-import os
 import shutil
 import unittest
-from os.path import dirname, abspath
 
+import os
 import redis
+# noinspection PyUnresolvedReferences,PyPackageRequirements
 from nose.plugins.attrib import attr
-from pythonsol.FileUtility import FileUtility
-from pythonsol.SolBase import SolBase
-from pythonsol.meter.MeterManager import MeterManager
+from os.path import dirname, abspath
+from pysolbase.FileUtility import FileUtility
+from pysolbase.SolBase import SolBase
+from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.KnockManager import KnockManager
-from knockdaemon2.Core.KnockStat import KnockStat
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 from knockdaemon2.Platform.PTools import PTools
 from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
@@ -59,7 +59,7 @@ class TestRealAllUsingHttpMock(unittest.TestCase):
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
         self.manager_config_file = \
             self.current_dir + "conf" + SolBase.get_pathseparator() + "realall" \
-            + SolBase.get_pathseparator() + "knockdaemon2.ini"        
+            + SolBase.get_pathseparator() + "knockdaemon2.ini"
         self.k = None
 
         # Config files
@@ -84,13 +84,13 @@ class TestRealAllUsingHttpMock(unittest.TestCase):
             buf = buf.replace("/tmp", PTools.get_tmp_dir())
 
             # Write
-            FileUtility.append_text_tofile(dst, buf, "utf8", overwrite=True)
+            FileUtility.append_text_to_file(dst, buf, "utf8", overwrite=True)
 
         # Overwrite
         self.manager_config_file = PTools.get_tmp_dir() + SolBase.get_pathseparator() + "knockdaemon2.ini"
 
         # Reset meter
-        MeterManager._hash_meter = dict()
+        Meters.reset()
 
         # Debug stat on exit ?
         self.debug_stat = False
@@ -121,9 +121,7 @@ class TestRealAllUsingHttpMock(unittest.TestCase):
             self.h = None
 
         if self.debug_stat:
-            ks = MeterManager.get(KnockStat)
-            for k, v in ks.to_dict().iteritems():
-                logger.info("stat, %s => %s", k, v)
+            Meters.write_to_logger()
 
     def _stop_all(self):
         """
@@ -143,7 +141,7 @@ class TestRealAllUsingHttpMock(unittest.TestCase):
         Test
         """
 
-        # MeterManager._hash_meter = dict()
+        # Meters.reset()
         self._start_http_mock()
         self._start_manager()
 
@@ -187,7 +185,7 @@ class TestRealAllUsingHttpMock(unittest.TestCase):
         ms_start = SolBase.mscurrent()
         while SolBase.msdiff(ms_start) < timeout_ms:
             # Transport
-            if MeterManager.get(KnockStat).transport_ok_count.get() >= 1 \
+            if Meters.aig("knock_stat_transport_ok_count") >= 1 \
                     and not self.k.get_transport_by_type(HttpAsyncTransport)._http_pending and len(self.k._superv_notify_value_list) == 0:
                 break
 
@@ -205,15 +203,15 @@ class TestRealAllUsingHttpMock(unittest.TestCase):
 
         # Validate k.business.dtc.discovery
         logger.info("*** VALIDATE")
-        ks = MeterManager.get(KnockStat)
-        self.assertEqual(ks.exec_probe_exception.get(), 0)
-        self.assertEqual(ks.exec_probe_bypass.get(), 0)
 
-        self.assertEqual(ks.exec_all_inner_exception.get(), 0)
-        self.assertEqual(ks.exec_all_outer_exception.get(), 0)
-        self.assertEqual(ks.exec_all_finally_exception.get(), 0)
-        self.assertGreaterEqual(ks.exec_all_count.get(), 0)
-        self.assertEqual(ks.exec_all_too_slow.get(), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_bypass"), 0)
+
+        self.assertEqual(Meters.aig("knock_stat_exec_all_inner_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_outer_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_finally_exception"), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
         # Validate discovery (must be empty since notified)
         self.assertEqual(len(self.k._superv_notify_disco_hash), 0)
@@ -221,8 +219,8 @@ class TestRealAllUsingHttpMock(unittest.TestCase):
         self.assertEqual(len(self.k._superv_notify_value_list), 0, self.k._superv_notify_value_list)
 
         # Validate to superv (critical)
-        self.assertGreater(ks.transport_spv_processed.get(), 0)
-        self.assertGreater(ks.transport_spv_total.get(), 0)
+        self.assertGreater(Meters.aig("knock_stat_transport_spv_processed"), 0)
+        self.assertGreater(Meters.aig("knock_stat_transport_spv_total"), 0)
 
         # Over
         self._stop_all()

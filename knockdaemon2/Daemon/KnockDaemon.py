@@ -23,8 +23,10 @@
 """
 import logging
 import sys
-from pythonsol.daemon.Daemon import Daemon
-from pythonsol.SolBase import SolBase
+
+from pysolbase.SolBase import SolBase
+from pysoldaemon.daemon.Daemon import Daemon
+
 from knockdaemon2.Core.KnockManager import KnockManager
 
 # Override logging to file (no syslog)
@@ -33,7 +35,7 @@ SolBase.logging_init(log_level="INFO", force_reset=True, log_to_file=None, log_t
 logger = logging.getLogger(__name__)
 
 
-class knockdaemon2(Daemon):
+class KnockDaemon(Daemon):
     """
     Test
     """
@@ -75,7 +77,7 @@ class knockdaemon2(Daemon):
         :return CustomDaemon
         :rtype CustomDaemon
         """
-        return knockdaemon2()
+        return KnockDaemon()
 
     @classmethod
     def initialize_arguments_parser(cls):
@@ -101,13 +103,14 @@ class knockdaemon2(Daemon):
 
         return arg_parser
 
-    # noinspection PyUnusedLocal
+    # noinspection PyUnusedLocal,PyMethodMayBeStatic
     def _on_reload(self, *args, **kwargs):
         """
         Test
         """
         logger.debug("Called")
 
+    # noinspection PyMethodMayBeStatic
     def _on_status(self):
         """
         Test
@@ -158,7 +161,7 @@ def run():
     Start bouzin
     """
     try:
-        knockdaemon2.main_helper(sys.argv, {})
+        KnockDaemon.main_helper(sys.argv, {})
     except Exception as e:
         logger.error("Exception, exiting -1, ex=%s", SolBase.extostr(e))
         sys.exit(-1)

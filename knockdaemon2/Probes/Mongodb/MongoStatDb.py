@@ -26,8 +26,8 @@ import glob
 import logging
 from datetime import datetime
 
-import re
 import pymongo
+import re
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
 

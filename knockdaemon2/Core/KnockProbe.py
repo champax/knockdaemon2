@@ -25,7 +25,7 @@
 import logging
 
 import os
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.KnockConfigurationKeys import KnockConfigurationKeys
 from knockdaemon2.Platform.PTools import PTools

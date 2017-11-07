@@ -25,7 +25,7 @@ import logging
 import platform
 import tempfile
 
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
 
 logger = logging.getLogger(__name__)
 

@@ -23,9 +23,11 @@
 """
 
 import logging
+
 from pymemcache.client.base import Client
-from pythonsol.FileUtility import FileUtility
-from pythonsol.SolBase import SolBase
+from pysolbase.FileUtility import FileUtility
+from pysolbase.SolBase import SolBase
+
 from knockdaemon2.Core.KnockProbe import KnockProbe
 
 logger = logging.getLogger(__name__)

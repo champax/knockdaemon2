@@ -23,10 +23,10 @@
 """
 import logging
 import socket
-
 import ujson
-from pythonsol.SolBase import SolBase
-from pythonsol.tcpbase.TcpSocketManager import TcpSocketManager
+
+from pysolbase.SolBase import SolBase
+from pysoltcp.tcpbase.TcpSocketManager import TcpSocketManager
 
 logger = logging.getLogger(__name__)
 

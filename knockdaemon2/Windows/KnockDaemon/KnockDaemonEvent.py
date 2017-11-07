@@ -21,28 +21,27 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
-import logging
 import inspect
-# noinspection PyUnresolvedReferences
-import win32evtlog
+import logging
+from greenlet import GreenletExit
+
 # noinspection PyUnresolvedReferences
 import win32api
 # noinspection PyUnresolvedReferences
-import win32security
-from greenlet import GreenletExit
-# noinspection PyUnresolvedReferences
 import win32con
 # noinspection PyUnresolvedReferences
+import win32evtlog
+# noinspection PyUnresolvedReferences
 import win32evtlogutil
-from pythonsol.SolBase import SolBase
-from pythonsol.meter.MeterManager import MeterManager
-
-from knockdaemon2.Core.KnockStat import KnockStat
+# noinspection PyUnresolvedReferences
+import win32security
+from pysolbase.SolBase import SolBase
+from pysolmeters.Meters import Meters
 
 logger = logging.getLogger(__name__)
 
 
-class knockdaemon2Event(object):
+class KnockDaemonEvent(object):
     """
     Knock daemon service event log wrappers
     """
@@ -60,11 +59,6 @@ class knockdaemon2Event(object):
 
         try:
             logger.info("Writing manager status")
-            # Flush stuff
-            ks = MeterManager.get(KnockStat)
-            if not ks:
-                logger.warning("ks none, potential race condition")
-                return
 
             # Caller
             # noinspection PyBroadException
@@ -89,28 +83,28 @@ class knockdaemon2Event(object):
                     "self=%s" % \
                     (
                         t._queue_to_send.qsize(),
-                        ks.transport_queue_max_size.get(),
-                        ks.transport_queue_discard.get(),
+                        Meters.aig("knock_stat_transport_queue_max_size"),
+                        Meters.aig("knock_stat_transport_queue_discard"),
 
-                        ks.transport_buffer_pending_length.get(),
+                        Meters.aig("knock_stat_transport_buffer_pending_length"),
                         t._http_send_max_bytes,
 
-                        ks.transport_buffer_last_length.get(),
-                        ks.transport_buffer_max_length.get(),
+                        Meters.aig("knock_stat_transport_buffer_last_length"),
+                        Meters.aig("knock_stat_transport_buffer_max_length"),
 
-                        ks.transport_wire_last_length.get(),
-                        ks.transport_wire_max_length.get(),
+                        Meters.aig("knock_stat_transport_wire_last_length"),
+                        Meters.aig("knock_stat_transport_wire_max_length"),
 
-                        ks.transport_wire_last_ms.get(),
-                        ks.transport_wire_max_ms.get(),
+                        Meters.aig("knock_stat_transport_wire_last_ms"),
+                        Meters.aig("knock_stat_transport_wire_max_ms"),
 
-                        ks.transport_call_count.get(),
-                        ks.transport_ok_count.get(),
-                        ks.transport_exception_count.get(),
-                        ks.transport_failed_count.get(),
+                        Meters.aig("knock_stat_transport_call_count"),
+                        Meters.aig("knock_stat_transport_ok_count"),
+                        Meters.aig("knock_stat_transport_exception_count"),
+                        Meters.aig("knock_stat_transport_failed_count"),
 
-                        ks.transport_client_spv_processed.get(),
-                        ks.transport_client_spv_failed.get(),
+                        Meters.aig("knock_stat_transport_client_spv_processed"),
+                        Meters.aig("knock_stat_transport_client_spv_failed"),
                         id(t),
                     )
 
@@ -125,14 +119,14 @@ class knockdaemon2Event(object):
                 "recv.unk/ex=%s/%s, " \
                 "notif.count/ex=%s/%s, " % \
                 (
-                    ks.udp_recv.get(),
-                    ks.udp_recv_counter.get(),
-                    ks.udp_recv_gauge.get(),
-                    ks.udp_recv_dtc.get(),
-                    ks.udp_recv_unknown.get(),
-                    ks.udp_recv_ex.get(),
-                    ks.udp_notify_run.get(),
-                    ks.udp_notify_run_ex.get(),
+                    Meters.aig("knock_stat_udp_recv"),
+                    Meters.aig("knock_stat_udp_recv_counter"),
+                    Meters.aig("knock_stat_udp_recv_gauge"),
+                    Meters.aig("knock_stat_udp_recv_dtc"),
+                    Meters.aig("knock_stat_udp_recv_unknown"),
+                    Meters.aig("knock_stat_udp_recv_ex"),
+                    Meters.aig("knock_stat_udp_notify_run"),
+                    Meters.aig("knock_stat_udp_notify_run_ex"),
                 )
 
             # Report
@@ -255,7 +249,7 @@ class knockdaemon2Event(object):
 
         # Append
         ar_msg.append(" ")
-        ar_msg.append("You may check log file=" + str(knockdaemon2Event.LOG_FILE) + " for details")
+        ar_msg.append("You may check log file=" + str(KnockDaemonEvent.LOG_FILE) + " for details")
 
         # Prepend by full message
         ar_temp = list()
@@ -273,7 +267,7 @@ class knockdaemon2Event(object):
         # Report
         win32evtlogutil.ReportEvent(
             # Application name
-            appName=knockdaemon2Event.APP_NAME,
+            appName=KnockDaemonEvent.APP_NAME,
             # EventID, we provide eventType (zzz)
             eventID=1,
             # EventCategory, source specific, provide 0

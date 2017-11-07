@@ -23,7 +23,7 @@
 """
 import logging
 
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Platform.PTools import PTools
@@ -304,6 +304,7 @@ class Memory(KnockProbe):
             if meminfo_file:
                 meminfo_file.close()
 
+    # noinspection PyMethodMayBeStatic
     def _get_value_from_line(self, line):
         """
         Get

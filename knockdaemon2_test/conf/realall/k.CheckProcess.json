@@ -1,23 +1,29 @@
 {
-    "dummy": {
-        "startup": "/etc/init.d/dummy",
-        "pid": "/var/run/dummy.pid"
-    },
-    "nginx": {
-        "os": "linux",
-        "startup": "/etc/nginx/nginx.conf",
-        "pid": "/var/run/nginx.pid"
-    },
-    "nginx_array": {
-        "startup": ["/etc/nginx/nginx.conf.invalid", "/etc/nginx/nginx.conf"],
-        "pid": "/var/run/nginx.pid"
-    },
-    "win_idle_process": {
-        "os": "windows",
-        "name": "System Idle Process"
-    },
-    "win_idle_process_array": {
-        "os": "windows",
-        "name": ["invalid", "System Idle Process"]
-    }
+  "dummy": {
+    "startup": "/etc/init.d/dummy",
+    "pid": "/var/run/dummy.pid"
+  },
+  "nginx": {
+    "os": "linux",
+    "startup": "/etc/nginx/nginx.conf",
+    "pid": "/var/run/nginx.pid"
+  },
+  "nginx_array": {
+    "startup": [
+      "/etc/nginx/nginx.conf.invalid",
+      "/etc/nginx/nginx.conf"
+    ],
+    "pid": "/var/run/nginx.pid"
+  },
+  "win_idle_process": {
+    "os": "windows",
+    "name": "System Idle Process"
+  },
+  "win_idle_process_array": {
+    "os": "windows",
+    "name": [
+      "invalid",
+      "System Idle Process"
+    ]
+  }
 }

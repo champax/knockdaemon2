@@ -12,7 +12,7 @@ if [ -f /etc/redhat-release ]
 elif [ -f /etc/debian_version ]
     then
 
-        # Fix dh-virtualenv 1.0 intall in /opt/venvs
+        # Fix dh-virtualenv 1.0 install in /opt/venvs
         export DH_VIRTUALENV_INSTALL_ROOT=/usr/share/python/
         sed -i -e  's@^--extra-index-url.*$@--extra-index-url https://pypi.knock.center/root/pypi/+simple/\n--no-use-wheel@' requirements.txt
         export NOUSEWHEEL='--no-use-wheel'

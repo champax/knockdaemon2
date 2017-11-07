@@ -34,10 +34,10 @@ devpi use --set-cfg ${REPO_URL}
 
 pip install setuptools --upgrade || true
 
-pip install $NOUSEWHEEL -r requirements.txt
+pip install ${NOUSEWHEEL} -r requirements.txt
 
 echo "###### Installing test requirements"
-pip install $NOUSEWHEEL -r requirements_test.txt
+pip install ${NOUSEWHEEL} -r requirements_test.txt
 sed  -i -e "/^p_version = / s/dev0/$BUILD_NUMBER/" setup.py
 sed -i "/BUILD_NUMBER/ s/BUILD_NUMBER/${BUILD_NUMBER}/"  redhat/config_rpm.json
 

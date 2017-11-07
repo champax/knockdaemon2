@@ -23,18 +23,19 @@
 """
 
 import logging
-import os
 import unittest
 import urllib
 
+import os
 import redis
+# noinspection PyUnresolvedReferences,PyPackageRequirements
 from nose.plugins.attrib import attr
-from pythonsol.SolBase import SolBase
-from pythonsol.meter.MeterManager import MeterManager
+from pysolbase.SolBase import SolBase
+from pysolhttpclient.Http.HttpClient import HttpClient
+from pysolhttpclient.Http.HttpRequest import HttpRequest
+from pysolhttpclient.Http.HttpResponse import HttpResponse
+from pysolmeters.Meters import Meters
 
-from knockdaemon2.Api.Http.HttpClient import HttpClient
-from knockdaemon2.Api.Http.HttpRequest import HttpRequest
-from knockdaemon2.Api.Http.HttpResponse import HttpResponse
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 
 SolBase.voodoo_init()
@@ -57,7 +58,7 @@ class TestApiHttpUsingHttpMock(unittest.TestCase):
         self.h = None
 
         # Reset meter
-        MeterManager._hash_meter = dict()
+        Meters.reset()
 
         # Debug stat on exit ?
         self.debug_stat = False

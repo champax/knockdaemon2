@@ -1,10 +1,10 @@
 {
-    "dummy": {
-        "startup": "/etc/init.d/dummy",
-        "pid": "/var/run/dummy.pid"
-    },
-    "nginx": {
-        "startup": "/etc/init.d/nginx",
-        "pid": "/var/run/nginx.pid"
-    }
+  "dummy": {
+    "startup": "/etc/init.d/dummy",
+    "pid": "/var/run/dummy.pid"
+  },
+  "nginx": {
+    "startup": "/etc/init.d/nginx",
+    "pid": "/var/run/nginx.pid"
+  }
 }

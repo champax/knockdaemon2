@@ -26,9 +26,10 @@ import glob
 import logging
 from collections import defaultdict
 from datetime import datetime
+
 import pymongo
 import yaml
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
 

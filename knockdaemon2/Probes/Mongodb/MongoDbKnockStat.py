@@ -22,9 +22,11 @@
 # ===============================================================================
 """
 
-from datetime import datetime
 import logging
+from datetime import datetime
+
 import pymongo
+
 from knockdaemon2.Core.KnockProbe import KnockProbe
 
 logger = logging.getLogger(__name__)

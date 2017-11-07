@@ -23,10 +23,9 @@ Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
 """
 import ctypes
 import logging
+import sys
 
 import os
-
-import sys
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +44,7 @@ class KnockHelpers(object):
     @staticmethod
     def admin():
         """
-        Determine whether this scrpt is running with administrative privilege.
+        Determine whether this script is running with administrative privilege.
 
         :return: True if running as an administrator, False otherwise.
         :rtype: bool
@@ -100,5 +99,3 @@ class KnockHelpers(object):
                 return delta_per_sec
             else:
                 return prev_value + delta_per_sec
-
-

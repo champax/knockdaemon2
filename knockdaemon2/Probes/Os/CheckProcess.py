@@ -24,12 +24,13 @@
 
 import json
 import logging
-import psutil
-import ntpath
-from pythonsol.SolBase import SolBase
-from knockdaemon2.Core.KnockProbe import KnockProbe
-from os.path import dirname, abspath
 
+import ntpath
+import psutil
+from os.path import dirname, abspath
+from pysolbase.SolBase import SolBase
+
+from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Platform.PTools import PTools
 
 if PTools.get_distribution_type() == "windows":

@@ -22,12 +22,11 @@
 # ===============================================================================
 """
 import logging
-
 import ujson
 
 import re
-from pythonsol.FileUtility import FileUtility
-from pythonsol.SolBase import SolBase
+from pysolbase.FileUtility import FileUtility
+from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockProbe import KnockProbe
@@ -163,6 +162,7 @@ class VarnishStat(KnockProbe):
         # Base
         KnockProbe.init_from_config(self, config_parser, section_name)
 
+    # noinspection PyMethodMayBeStatic
     def try_load_json(self):
         """
         Try to load varnishstat -j
@@ -193,6 +193,7 @@ class VarnishStat(KnockProbe):
             logger.warn("Ex=%s", SolBase.extostr(e))
             return None
 
+    # noinspection PyMethodMayBeStatic
     def try_load_text(self):
         """
         Try to load varnishstat -1

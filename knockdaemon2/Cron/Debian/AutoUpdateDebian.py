@@ -27,11 +27,11 @@ import sys
 import os
 import re
 from os.path import basename
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
+from pysolhttpclient.Http.HttpClient import HttpClient
+from pysolhttpclient.Http.HttpRequest import HttpRequest
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
-from knockdaemon2.Api.Http.HttpClient import HttpClient
-from knockdaemon2.Api.Http.HttpRequest import HttpRequest
 from knockdaemon2.Core.KnockHelpers import KnockHelpers
 from knockdaemon2.Cron.AutoUpdateBase import AutoUpdateBase, ExitOnError
 

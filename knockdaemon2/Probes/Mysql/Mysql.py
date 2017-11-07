@@ -24,12 +24,12 @@
 
 import logging
 
-from pythonsol.FileUtility import FileUtility
-from pythonsol.SolBase import SolBase
+from pysolbase.FileUtility import FileUtility
+from pysolbase.SolBase import SolBase
+from pysolmysql.Mysql.MysqlApi import MysqlApi
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockProbe import KnockProbe
-from knockdaemon2.Mysql.MysqlApi import MysqlApi
 
 logger = logging.getLogger(__name__)
 

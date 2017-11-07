@@ -1,16 +1,17 @@
 <?xml version="1.0"?>
 
-<!-- VARS -->
+<!-- VARS, XmlHighlighting -->
 <?define ProductVersion = "0.1.555.0"?>
 <?define ProductUpgradeCode = "40a4641e-56fe-4272-831a-d2711ae73c61"?>
 
-<!-- DO NOT REGEN GUID PLZ -->
+<!-- DO NOT REGEN GUID PLZ, XmlHighlighting -->
 <?define GUID1 = "40a4641e-56fe-4272-831a-d2711ae73c61"?>
 <?define GUID2 = "ff96f0ba-9693-4492-ba12-51386f689cd5"?>
 <?define GUID3 = "8842c2c2-13c2-417f-a639-5862a3e3edf8"?>
 
-<!-- XML -->
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+<!-- XML, XmlHighlighting -->
+<!--suppress ALL -->
+<Wix xmlns:util="http://schemas.microsoft.com/wix/UtilExtension" xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
     <Product Id="*" UpgradeCode="$(var.ProductUpgradeCode)" Name="Knock Daemon" Version="$(var.ProductVersion)" Manufacturer="Knock SAS" Language="1033">
         <Package InstallerVersion="200" Compressed="yes" Comments="Knock Windows Installer Package">

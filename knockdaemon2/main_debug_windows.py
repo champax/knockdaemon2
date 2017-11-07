@@ -25,7 +25,7 @@ from knockdaemon2.Platform.PTools import PTools
 
 if PTools.get_distribution_type() == "windows":
     import logging
-    from pythonsol.SolBase import SolBase
+    from pysolbase.SolBase import SolBase
     from knockdaemon2.Core.KnockManager import KnockManager
     from knockdaemon2.Core.UDPServer import UDPServer
 

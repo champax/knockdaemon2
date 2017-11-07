@@ -21,20 +21,20 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
-from greenlet import GreenletExit
 import logging
 import ujson
-import os
+from greenlet import GreenletExit
+
 import gevent
+import os
 from gevent.event import Event
 from gevent.queue import Queue, Empty
 from gevent.threading import Lock
-from pythonsol.meter.MeterManager import MeterManager
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
+from pysolhttpclient.Http.HttpClient import HttpClient
+from pysolhttpclient.Http.HttpRequest import HttpRequest
+from pysolmeters.Meters import Meters
 
-from knockdaemon2.Api.Http.HttpClient import HttpClient
-from knockdaemon2.Api.Http.HttpRequest import HttpRequest
-from knockdaemon2.Core.KnockStat import KnockStat
 from knockdaemon2.Transport.KnockTransport import KnockTransport
 
 logger = logging.getLogger(__name__)
@@ -109,10 +109,6 @@ class HttpAsyncTransport(KnockTransport):
 
         # Http client instance
         self.http_client = HttpClient()
-
-        # Register counters
-        if not MeterManager.get(KnockStat):
-            MeterManager.put(KnockStat())
 
     def init_from_config(self, config_parser, section_name, auto_start=True):
         """
@@ -242,7 +238,7 @@ class HttpAsyncTransport(KnockTransport):
             # Too much, kick
             logger.warning("Max queue reached, discarding older item")
             self._queue_to_send.get(block=True)
-            MeterManager.get(KnockStat).transport_queue_discard.increment()
+            Meters.aii("knock_stat_transport_queue_discard")
         elif self._queue_to_send.qsize() == 0:
             # We were empty, we add a new one.
             # To avoid firing http asap, override last send date now
@@ -253,9 +249,11 @@ class HttpAsyncTransport(KnockTransport):
         self._queue_to_send.put(buf)
 
         # Max queue size
-        MeterManager.get(KnockStat).transport_queue_max_size.set(
-            max(self._queue_to_send.qsize(),
-                MeterManager.get(KnockStat).transport_queue_max_size.get())
+        Meters.ai("knock_stat_transport_queue_max_size").set(
+            max(
+                self._queue_to_send.qsize(),
+                Meters.aig("knock_stat_transport_queue_max_size")
+            )
         )
 
         # Done
@@ -272,7 +270,7 @@ class HttpAsyncTransport(KnockTransport):
 
         ms = SolBase.mscurrent()
         try:
-            MeterManager.get(KnockStat).transport_call_count.increment()
+            Meters.aii("knock_stat_transport_call_count")
 
             # Data
             logger.debug("Buf length=%s", len(buf))
@@ -285,19 +283,22 @@ class HttpAsyncTransport(KnockTransport):
                 buf_to_send = buf
 
             # Stats (non zip)
-            MeterManager.get(KnockStat).transport_buffer_last_length.set(len(buf))
+            Meters.ai("knock_stat_transport_buffer_last_length").set(len(buf))
 
-            MeterManager.get(KnockStat).transport_buffer_max_length.set(
-                max(MeterManager.get(KnockStat).transport_buffer_last_length.get(),
-                    MeterManager.get(KnockStat).transport_buffer_max_length.get())
+            Meters.ai("knock_stat_transport_buffer_max_length").set(
+                max(
+                    Meters.aig("knock_stat_transport_buffer_last_length"),
+                    Meters.aig("knock_stat_transport_buffer_max_length"),
+                )
             )
 
             # Stats (zip)
-            MeterManager.get(KnockStat).transport_wire_last_length.set(len(buf_to_send))
-
-            MeterManager.get(KnockStat).transport_wire_max_length.set(
-                max(MeterManager.get(KnockStat).transport_wire_last_length.get(),
-                    MeterManager.get(KnockStat).transport_wire_max_length.get())
+            Meters.ai("knock_stat_transport_wire_last_length").set(len(buf_to_send))
+            Meters.ai("knock_stat_transport_wire_max_length").set(
+                max(
+                    Meters.aig("knock_stat_transport_wire_last_length"),
+                    Meters.aig("knock_stat_transport_wire_max_length"),
+                )
             )
 
             # ------------------------
@@ -351,20 +352,20 @@ class HttpAsyncTransport(KnockTransport):
                     logger.info("HTTP OK, req.buf.len/zip=%s/%s", len(buf), len(buf_to_send))
 
                     # Stats
-                    MeterManager.get(KnockStat).transport_ok_count.increment()
+                    Meters.aii("knock_stat_transport_ok_count")
 
                     # Stats
                     ok_count = rd["sp"]["ok"]
                     ko_count = rd["sp"]["ko"]
-                    MeterManager.get(KnockStat).transport_client_spv_processed.increment(ok_count)
-                    MeterManager.get(KnockStat).transport_client_spv_failed.increment(ko_count)
+                    Meters.aii("knock_stat_transport_client_spv_processed", ok_count)
+                    Meters.aii("knock_stat_transport_client_spv_failed", ko_count)
                     return True
                 else:
                     logger.warn("HTTP HS, r=%s", hresp)
-                    MeterManager.get(KnockStat).transport_failed_count.increment()
+                    Meters.aii("knock_stat_transport_failed_count")
             else:
                 logger.warn("HTTP KO, uri=%s, r=%s", self.http_uri, hresp)
-                MeterManager.get(KnockStat).transport_failed_count.increment()
+                Meters.aii("knock_stat_transport_failed_count")
 
             #
             #
@@ -394,35 +395,37 @@ class HttpAsyncTransport(KnockTransport):
             #         logger.info("HTTP OK, req.buf.len/zip=%s/%s", len(buf), len(buf_to_send))
             #
             #         # Stats
-            #         MeterManager.get(KnockStat).transport_ok_count.increment()
+            #         Meters.aii("knock_stat_transport_ok_count")
             #
             #         # Stats
             #         ok_count = rd["sp"]["ok"]
             #         ko_count = rd["sp"]["ko"]
-            #         MeterManager.get(KnockStat).transport_client_spv_processed.increment(ok_count)
-            #         MeterManager.get(KnockStat).transport_client_spv_failed.increment(ko_count)
+            #         Meters.aii("knock_stat_transport_client_spv_processed", ok_count)
+            #         Meters.aii("knock_stat_transport_client_spv_failed", ko_count)
             #         return True
             #     else:
             #         logger.warn("HTTP HS, r=%s", response)
-            #         MeterManager.get(KnockStat).transport_failed_count.increment()
+            #         Meters.aii("knock_stat_transport_failed_count")
             # else:
             #     logger.warn("HTTP KO, uri=%s, r=%s", self.http_uri, response)
-            #     MeterManager.get(KnockStat).transport_failed_count.increment()
+            #     Meters.aii("knock_stat_transport_failed_count")
 
             return False
         except Exception as e:
             logger.warn("Ex=%s", SolBase.extostr(e))
-            MeterManager.get(KnockStat).transport_exception_count.increment()
+            Meters.aii("knock_stat_transport_exception_count")
 
             # Here, HTTP not ok
             return False
         finally:
             ms_elapsed = int(SolBase.msdiff(ms))
-            MeterManager.get(KnockStat).transport_dtc.put(ms_elapsed)
-            MeterManager.get(KnockStat).transport_wire_last_ms.set(ms_elapsed)
-            MeterManager.get(KnockStat).transport_wire_max_ms.set(
-                max(MeterManager.get(KnockStat).transport_wire_last_ms.get(),
-                    MeterManager.get(KnockStat).transport_wire_max_ms.get())
+            Meters.dtci("knock_stat_transport_dtc", ms_elapsed)
+            Meters.ai("knock_stat_transport_wire_last_ms").set(ms_elapsed)
+            Meters.ai("knock_stat_transport_wire_max_ms").set(
+                max(
+                    Meters.aig("knock_stat_transport_wire_last_ms"),
+                    Meters.aig("knock_stat_transport_wire_max_ms"),
+                )
             )
 
             self._dt_last_send = SolBase.datecurrent()
@@ -550,7 +553,7 @@ class HttpAsyncTransport(KnockTransport):
             logger.debug("Extracted for send, ms=%s, len=%s, bytes=%s", SolBase.msdiff(ms_extract), len(buf_pending_array), buf_pending_length)
 
             # Stats
-            MeterManager.get(KnockStat).transport_buffer_pending_length.set(buf_pending_length)
+            Meters.ai("knock_stat_transport_buffer_pending_length").set(buf_pending_length)
 
             # -------------------
             # DETECT WHAT TO DO
@@ -638,7 +641,7 @@ class HttpAsyncTransport(KnockTransport):
             return retry_fast
         finally:
             self._http_pending = False
-            MeterManager.get(KnockStat).transport_buffer_pending_length.set(0)
+            Meters.ai("knock_stat_transport_buffer_pending_length").set(0)
 
     def greenlet_run(self):
         """
@@ -749,12 +752,7 @@ class HttpAsyncTransport(KnockTransport):
             while self._is_running:
                 try:
                     # Flush stuff
-                    ks = MeterManager.get(KnockStat)
-                    if not ks:
-                        logger.warning("ks none, potential race condition")
-                        if self._is_running:
-                            SolBase.sleep(self._lifecycle_interval_ms)
-                        continue
+                    Meters.write_to_logger()
 
                     lifecyclelogger.info(
                         "Running, HTTP, "
@@ -767,28 +765,28 @@ class HttpAsyncTransport(KnockTransport):
                         "s.ok/ko=%s/%s, "
                         "self=%s",
                         self._queue_to_send.qsize(),
-                        ks.transport_queue_max_size.get(),
-                        ks.transport_queue_discard.get(),
+                        Meters.aig("knock_stat_transport_queue_max_size"),
+                        Meters.aig("knock_stat_transport_queue_discard"),
 
-                        ks.transport_buffer_pending_length.get(),
+                        Meters.aig("knock_stat_transport_buffer_pending_length"),
                         self._http_send_max_bytes,
 
-                        ks.transport_buffer_last_length.get(),
-                        ks.transport_buffer_max_length.get(),
+                        Meters.aig("knock_stat_transport_buffer_last_length"),
+                        Meters.aig("knock_stat_transport_buffer_max_length"),
 
-                        ks.transport_wire_last_length.get(),
-                        ks.transport_wire_max_length.get(),
+                        Meters.aig("knock_stat_transport_wire_last_length"),
+                        Meters.aig("knock_stat_transport_wire_max_length"),
 
-                        ks.transport_wire_last_ms.get(),
-                        ks.transport_wire_max_ms.get(),
+                        Meters.aig("knock_stat_transport_wire_last_ms"),
+                        Meters.aig("knock_stat_transport_wire_max_ms"),
 
-                        ks.transport_call_count.get(),
-                        ks.transport_ok_count.get(),
-                        ks.transport_exception_count.get(),
-                        ks.transport_failed_count.get(),
+                        Meters.aig("knock_stat_transport_call_count"),
+                        Meters.aig("knock_stat_transport_ok_count"),
+                        Meters.aig("knock_stat_transport_exception_count"),
+                        Meters.aig("knock_stat_transport_failed_count"),
 
-                        ks.transport_client_spv_processed.get(),
-                        ks.transport_client_spv_failed.get(),
+                        Meters.aig("knock_stat_transport_client_spv_processed"),
+                        Meters.aig("knock_stat_transport_client_spv_failed"),
                         id(self),
                     )
 
@@ -800,14 +798,14 @@ class HttpAsyncTransport(KnockTransport):
                         "recv.unk/ex=%s/%s, "
                         "notif.count/ex=%s/%s, "
                         "self=%s",
-                        ks.udp_recv.get(),
-                        ks.udp_recv_counter.get(),
-                        ks.udp_recv_gauge.get(),
-                        ks.udp_recv_dtc.get(),
-                        ks.udp_recv_unknown.get(),
-                        ks.udp_recv_ex.get(),
-                        ks.udp_notify_run.get(),
-                        ks.udp_notify_run_ex.get(),
+                        Meters.aig("knock_stat_udp_recv"),
+                        Meters.aig("knock_stat_udp_recv_counter"),
+                        Meters.aig("knock_stat_udp_recv_gauge"),
+                        Meters.aig("knock_stat_udp_recv_dtc"),
+                        Meters.aig("knock_stat_udp_recv_unknown"),
+                        Meters.aig("knock_stat_udp_recv_ex"),
+                        Meters.aig("knock_stat_udp_notify_run"),
+                        Meters.aig("knock_stat_udp_notify_run_ex"),
                         id(self),
                     )
 

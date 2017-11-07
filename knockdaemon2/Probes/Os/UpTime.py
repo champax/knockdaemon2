@@ -24,7 +24,7 @@
 import logging
 from math import floor
 
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Platform.PTools import PTools
@@ -86,6 +86,7 @@ class Uptime(KnockProbe):
         except Exception as e:
             logger.warn("Exception while processing, ex=%s, d=%s", SolBase.extostr(e), d)
 
+    # noinspection PyMethodMayBeStatic
     def _get_uptime(self):
         """
         Get uptime in seconds

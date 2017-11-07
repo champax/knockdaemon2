@@ -23,28 +23,24 @@
 """
 
 import logging
-
+import ujson
+import urlparse
 # noinspection PyProtectedMember
 from collections import OrderedDict
-
-# noinspection PyProtectedMember
-from gevent.baseserver import _parse_address
-from os.path import abspath
-
-from os.path import dirname
 from threading import Lock
-import urlparse
-import ujson
 
 import gevent
-from gevent.pywsgi import WSGIServer
+# noinspection PyProtectedMember
+from gevent.baseserver import _parse_address
 from gevent.event import Event
-from pythonsol.FileUtility import FileUtility
-from pythonsol.meter.MeterManager import MeterManager
-from pythonsol.SolBase import SolBase
+from gevent.pywsgi import WSGIServer
+from os.path import abspath
+from os.path import dirname
+from pysolbase.FileUtility import FileUtility
+from pysolbase.SolBase import SolBase
+from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.KnockConfigurationKeys import KnockConfigurationKeys
-from knockdaemon2.Core.KnockStat import KnockStat
 
 SolBase.voodoo_init()
 
@@ -84,9 +80,6 @@ class HttpMock(object):
         self._lifecycle_locker = Lock()
         self._lifecycle_interval_ms = 30000
         self._lifecycle_last_log_ms = SolBase.mscurrent()
-
-        # Register counters
-        MeterManager.put(KnockStat())
 
     # ==============================
     # START / STOP
@@ -129,8 +122,7 @@ class HttpMock(object):
         self._is_running = False
 
         # Flush out logs
-        for k, v in MeterManager.get(KnockStat).to_dict().iteritems():
-            logger.debug("Stop kstat, %s = %s", k, v)
+        Meters.write_to_logger()
 
         with self._locker:
             try:
@@ -424,7 +416,7 @@ class HttpMock(object):
         deb_file = current_dir + "../../knockdaemon2_test/ForTest/knockdaemon2_mock.deb"
 
         # Load it (binary)
-        buf = FileUtility.file_to_byte_buffer(deb_file)
+        buf = FileUtility.file_to_binary(deb_file)
 
         # Send it
 
@@ -453,7 +445,7 @@ class HttpMock(object):
         rpm_file = current_dir + "../../knockdaemon2_test/ForTest/knockdaemon2_mock.rpm"
 
         # Load it (binary)
-        buf = FileUtility.file_to_byte_buffer(rpm_file)
+        buf = FileUtility.file_to_binary(rpm_file)
 
         # Send it
 
@@ -1025,9 +1017,9 @@ class HttpMock(object):
             raise
         finally:
             # required for unittest
-            MeterManager.get(KnockStat).transport_spv_processed.increment(r_ok)
-            MeterManager.get(KnockStat).transport_spv_failed.increment(r_ko)
-            MeterManager.get(KnockStat).transport_spv_total.increment(r_ok + r_ko)
+            Meters.aii("knock_stat_transport_spv_processed", r_ok)
+            Meters.aii("knock_stat_transport_spv_failed", r_ko)
+            Meters.aii("knock_stat_transport_spv_total", r_ok + r_ko)
             return r_is_ok, r_ok, r_ko
 
     # noinspection PyMethodMayBeStatic
@@ -1210,7 +1202,7 @@ class HttpMock(object):
             raise
         finally:
             # required for unittest
-            MeterManager.get(KnockStat).transport_spv_processed.increment(r_ok)
-            MeterManager.get(KnockStat).transport_spv_failed.increment(r_ko)
-            MeterManager.get(KnockStat).transport_spv_total.increment(r_ok + r_ko)
+            Meters.aii("knock_stat_transport_spv_processed", r_ok)
+            Meters.aii("knock_stat_transport_spv_failed", r_ko)
+            Meters.aii("knock_stat_transport_spv_total", r_ok + r_ko)
             return r_is_ok, r_ok, r_ko

@@ -22,16 +22,9 @@
 # ===============================================================================
 """
 import logging
-from pythonsol.SolBase import SolBase
 from threading import Lock
 
-# ===============================================================================
-# pyinstaller requires all dynamic loaded classes to be explicitly declared.
-# ===============================================================================
-
-# ===============================================================================
-# PROBES
-# ===============================================================================
+from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Probes.Apache.ApacheStat import ApacheStat
 from knockdaemon2.Probes.Inventory.Inventory import Inventory
@@ -56,17 +49,21 @@ from knockdaemon2.Probes.PhpFpm.PhpFpmStat import PhpFpmStat
 from knockdaemon2.Probes.Redis.RedisStat import RedisStat
 from knockdaemon2.Probes.Uwsgi.UwsgiStat import UwsgiStat
 from knockdaemon2.Probes.Varnish.VarnishStat import VarnishStat
-
-# ===============================================================================
-# TRANSPORT
-# ===============================================================================
-
 from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
-
 # ===============================================================================
 # SOME CODE USING THEM
 # ===============================================================================
 from knockdaemon2.Transport.InfluxAsyncTransport import InfluxAsyncTransport
+
+# ===============================================================================
+# pyinstaller requires all dynamic loaded classes to be explicitly declared.
+# ===============================================================================
+# ===============================================================================
+# PROBES
+# ===============================================================================
+# ===============================================================================
+# TRANSPORT
+# ===============================================================================
 
 SolBase.voodoo_init()
 logger = logging.getLogger(__name__)

@@ -26,10 +26,9 @@ import logging
 from gevent.queue import Empty
 from influxdb import InfluxDBClient
 from influxdb.line_protocol import make_lines
-from pythonsol.SolBase import SolBase
-from pythonsol.meter.MeterManager import MeterManager
+from pysolbase.SolBase import SolBase
+from pysolmeters.Meters import Meters
 
-from knockdaemon2.Core.KnockStat import KnockStat
 from knockdaemon2.Core.Tools import Tools
 from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
 
@@ -147,7 +146,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
             # Too much, kick
             logger.warning("Max queue reached, discarding older item")
             self._queue_to_send.get(block=True)
-            MeterManager.get(KnockStat).transport_queue_discard.increment()
+            Meters.aii("knock_stat_transport_queue_discard")
         elif self._queue_to_send.qsize() == 0:
             # We were empty, we add a new one.
             # To avoid firing http asap, override last send date now
@@ -158,10 +157,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         self._queue_to_send.put(buf)
 
         # Max queue size
-        MeterManager.get(KnockStat).transport_queue_max_size.set(
-            max(self._queue_to_send.qsize(),
-                MeterManager.get(KnockStat).transport_queue_max_size.get())
-        )
+        Meters.ai("knock_stat_transport_queue_max_size").set(max(self._queue_to_send.qsize(), Meters.aig("knock_stat_transport_queue_max_size")))
 
         # Done
         return True
@@ -210,7 +206,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
             logger.debug("Extracted for send, ms=%s, len=%s, bytes=%s", SolBase.msdiff(ms_extract), len(buf_pending_array), buf_pending_length)
 
             # Stats
-            MeterManager.get(KnockStat).transport_buffer_pending_length.set(buf_pending_length)
+            Meters.ai("knock_stat_transport_buffer_pending_length").set(buf_pending_length)
 
             # -------------------
             # DETECT WHAT TO DO
@@ -294,7 +290,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
             return retry_fast
         finally:
             self._http_pending = False
-            MeterManager.get(KnockStat).transport_buffer_pending_length.set(0)
+            Meters.ai("knock_stat_transport_buffer_pending_length").set(0)
 
     def _send_to_http_influx(self, ar_lines, total_len):
         """
@@ -309,7 +305,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
 
         ms = SolBase.mscurrent()
         try:
-            MeterManager.get(KnockStat).transport_call_count.increment()
+            Meters.aii("knock_stat_transport_call_count")
 
             # A) Client
             client = InfluxDBClient(
@@ -334,45 +330,50 @@ class InfluxAsyncTransport(HttpAsyncTransport):
             assert ri, "write_points returned false, ar_lines={0}".format(repr(ar_lines))
 
             # Stats (non zip)
-            MeterManager.get(KnockStat).transport_buffer_last_length.set(total_len)
-
-            MeterManager.get(KnockStat).transport_buffer_max_length.set(
-                max(MeterManager.get(KnockStat).transport_buffer_last_length.get(),
-                    MeterManager.get(KnockStat).transport_buffer_max_length.get())
+            Meters.ai("knock_stat_transport_buffer_last_length").set(total_len)
+            Meters.ai("knock_stat_transport_buffer_max_length").set(
+                max(
+                    Meters.aig("knock_stat_transport_buffer_last_length"),
+                    Meters.aig("knock_stat_transport_buffer_max_length"),
+                )
             )
 
             # Stats (zip) [do not apply, we hack]
-            MeterManager.get(KnockStat).transport_wire_last_length.set(total_len)
-            MeterManager.get(KnockStat).transport_wire_max_length.set(
-                max(MeterManager.get(KnockStat).transport_wire_last_length.get(),
-                    MeterManager.get(KnockStat).transport_wire_max_length.get())
+            Meters.ai("knock_stat_transport_wire_last_length").set(total_len)
+            Meters.ai("knock_stat_transport_wire_max_length").set(
+                max(
+                    Meters.aig("knock_stat_transport_wire_last_length"),
+                    Meters.aig("knock_stat_transport_wire_max_length"),
+                )
             )
 
             # Stats
-            MeterManager.get(KnockStat).transport_ok_count.increment()
+            Meters.aii("knock_stat_transport_ok_count")
 
             # Stats (we have no return from Influx client....)
             # We hack (may be slow and may be non accurate due to last \n)
             spv_processed = 0
             for cur_buf in ar_lines:
                 spv_processed += cur_buf.count("\n")
-            MeterManager.get(KnockStat).transport_client_spv_processed.increment(spv_processed)
-            MeterManager.get(KnockStat).transport_client_spv_failed.increment(0)
+            Meters.aii("knock_stat_transport_client_spv_processed", spv_processed)
+
             return True
 
         except Exception as e:
             logger.warn("Ex=%s", SolBase.extostr(e))
-            MeterManager.get(KnockStat).transport_exception_count.increment()
+            Meters.aii("knock_stat_transport_exception_count")
 
             # Here, HTTP not ok
             return False
         finally:
             ms_elapsed = int(SolBase.msdiff(ms))
-            MeterManager.get(KnockStat).transport_dtc.put(ms_elapsed)
-            MeterManager.get(KnockStat).transport_wire_last_ms.set(ms_elapsed)
-            MeterManager.get(KnockStat).transport_wire_max_ms.set(
-                max(MeterManager.get(KnockStat).transport_wire_last_ms.get(),
-                    MeterManager.get(KnockStat).transport_wire_max_ms.get())
+            Meters.dtci("knock_stat_transport_dtc", ms_elapsed)
+            Meters.ai("knock_stat_transport_wire_last_ms").set(ms_elapsed)
+            Meters.ai("knock_stat_transport_wire_max_ms").set(
+                max(
+                    Meters.aig("knock_stat_transport_wire_last_ms"),
+                    Meters.aig("knock_stat_transport_wire_max_ms"),
+                )
             )
 
             self._dt_last_send = SolBase.datecurrent()

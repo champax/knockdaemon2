@@ -23,12 +23,11 @@
 """
 import logging
 import time
-
-import os
 from datetime import datetime
 
+import os
 import pytz
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockProbe import KnockProbe
@@ -109,12 +108,13 @@ class Load(KnockProbe):
 
         self.notify_value_n("k.os.hostname", None, os.uname()[1])
         self.notify_value_n("k.os.localtime", None, int(time.time()))
-        
+
         sysctl = self.get_sysctl()
         self.notify_value_n("k.os.maxfiles", None, sysctl["max_open_files"])
         self.notify_value_n("k.os.maxproc", None, sysctl["max_proc"])
         self.notify_value_n("k.os.users.num", None, self.get_users_count())
 
+    # noinspection PyMethodMayBeStatic
     def get_sysctl(self):
         """
         Get
@@ -125,6 +125,7 @@ class Load(KnockProbe):
         result["max_proc"] = open("/proc/sys/kernel/pid_max").read().strip()
         return result
 
+    # noinspection PyMethodMayBeStatic
     def get_stat(self):
         """
         Get
@@ -180,6 +181,7 @@ class Load(KnockProbe):
             return
         self._cpu_count = self._linux_get_cpu_count_internal()
 
+    # noinspection PyMethodMayBeStatic
     def _linux_get_cpu_count_internal(self):
         """
         Internal method
@@ -267,6 +269,7 @@ class Load(KnockProbe):
 
         raise Exception("Can not determine number of CPUs on this system")
 
+    # noinspection PyMethodMayBeStatic
     def get_users_count(self):
         """
         Get
@@ -321,6 +324,7 @@ class Load(KnockProbe):
         self._cpu_count = total_core_count
         logger.info("Detected total_core_count=%s, assigned to _cpu_count", total_core_count)
 
+    # noinspection PyMethodMayBeStatic
     def _get_raw_proc_perf(self, d_wmi):
         """
         Get perf dict

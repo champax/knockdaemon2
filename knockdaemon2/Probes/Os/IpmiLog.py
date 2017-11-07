@@ -21,13 +21,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
-import os
+import logging
 
+import os
 from gevent import Timeout
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockProbe import KnockProbe
-import logging
 
 logger = logging.getLogger(__name__)
 

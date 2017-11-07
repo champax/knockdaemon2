@@ -22,17 +22,17 @@
 # ===============================================================================
 """
 
-import logging
 import glob
-
-import os
+import logging
+import struct
 from socket import AF_INET
 from socket import socket, SOCK_DGRAM
 
-from knockdaemon2.Platform.PTools import PTools
-import struct
-from pythonsol.SolBase import SolBase
+import os
+from pysolbase.SolBase import SolBase
+
 from knockdaemon2.Core.KnockProbe import KnockProbe
+from knockdaemon2.Platform.PTools import PTools
 
 if PTools.get_distribution_type() == "windows":
     from knockdaemon2.Windows.Wmi.Wmi import Wmi

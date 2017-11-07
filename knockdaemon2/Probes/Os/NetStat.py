@@ -24,7 +24,8 @@
 
 import logging
 
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
+
 from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Platform.PTools import PTools
 
@@ -34,6 +35,7 @@ if PTools.get_distribution_type() == "windows":
 logger = logging.getLogger(__name__)
 
 
+# noinspection PyMethodMayBeStatic
 class Netstat(KnockProbe):
     """
     Doc
@@ -128,6 +130,7 @@ class Netstat(KnockProbe):
             content.pop(0)
         return content
 
+    # noinspection PyMethodMayBeStatic
     def _remove_empty(self, array):
         """
         Doc
@@ -140,6 +143,7 @@ class Netstat(KnockProbe):
     # WINDOWS
     # =====================
 
+    # noinspection PyMethodMayBeStatic
     def _get_windows_count(self, ar, soc_state):
         """
         Get socket count for specified state

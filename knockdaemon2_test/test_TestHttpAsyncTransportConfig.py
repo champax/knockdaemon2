@@ -24,14 +24,15 @@
 import logging
 import unittest
 
-import os
-from os.path import dirname, abspath
 import anyconfig
+import os
+# noinspection PyUnresolvedReferences,PyPackageRequirements
 from nose.plugins.attrib import attr
-from pythonsol.SolBase import SolBase
+from os.path import dirname, abspath
+from pysolbase.SolBase import SolBase
 
-from knockdaemon2.Kindly.Kindly import Kindly
 from knockdaemon2.Core.KnockConfigurationKeys import KnockConfigurationKeys
+from knockdaemon2.Kindly.Kindly import Kindly
 from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
 
 SolBase.voodoo_init()

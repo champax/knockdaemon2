@@ -24,13 +24,16 @@
 import logging
 import socket
 import struct
+
 import os
 import re
+
 from knockdaemon2.Core.KnockProbe import KnockProbe
 
 logger = logging.getLogger(__name__)
 
 
+# noinspection PyMethodMayBeStatic
 class IpvsAdm(KnockProbe):
     """
     Doc

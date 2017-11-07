@@ -23,22 +23,20 @@
 """
 
 import logging
-import os
 import shutil
 import unittest
-from os.path import dirname, abspath
 
+import os
 import redis
+# noinspection PyUnresolvedReferences,PyPackageRequirements
 from nose.plugins.attrib import attr
-from pythonsol.FileUtility import FileUtility
-from pythonsol.MemoryCache import MemoryCacheStat
-from pythonsol.RedisCache import RedisCacheStat
-from pythonsol.SolBase import SolBase
-from pythonsol.meter.MeterManager import MeterManager
+from os.path import dirname, abspath
+from pysolbase.FileUtility import FileUtility
+from pysolbase.SolBase import SolBase
+from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.KnockConfigurationKeys import KnockConfigurationKeys
 from knockdaemon2.Core.KnockManager import KnockManager
-from knockdaemon2.Core.KnockStat import KnockStat
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 from knockdaemon2.Platform.PTools import PTools
 from knockdaemon2.Probes.Apache.ApacheStat import ApacheStat
@@ -105,13 +103,13 @@ class TestRealAll(unittest.TestCase):
             buf = buf.replace("/tmp", PTools.get_tmp_dir())
 
             # Write
-            FileUtility.append_text_tofile(dst, buf, "utf8", overwrite=True)
+            FileUtility.append_text_to_file(dst, buf, "utf8", overwrite=True)
 
         # Overwrite
         self.manager_config_file = PTools.get_tmp_dir() + SolBase.get_pathseparator() + "knockdaemon2.ini"
 
         # Reset meter
-        MeterManager._hash_meter = dict()
+        Meters.reset()
 
         # Debug stat on exit ?
         self.debug_stat = False
@@ -142,9 +140,7 @@ class TestRealAll(unittest.TestCase):
             self.h = None
 
         if self.debug_stat:
-            ks = MeterManager.get(KnockStat)
-            for k, v in ks.to_dict().iteritems():
-                logger.info("stat, %s => %s", k, v)
+            Meters.write_to_logger()
 
     def _stop_all(self):
         """
@@ -163,7 +159,7 @@ class TestRealAll(unittest.TestCase):
         Test
         """
 
-        # MeterManager._hash_meter = dict()
+        # Meters.reset()
         self._start_http_mock()
         self._start_manager()
 
@@ -232,10 +228,7 @@ class TestRealAll(unittest.TestCase):
             logger.info("***** EXEC PASS ONE [%s]", loop_idx)
 
             # Reset all counters
-            MeterManager._hash_meter = dict()
-            MeterManager.put(KnockStat())
-            MeterManager.put(MemoryCacheStat())
-            MeterManager.put(RedisCacheStat())
+            Meters.reset()
 
             # Execute
             p.execute()
@@ -261,7 +254,7 @@ class TestRealAll(unittest.TestCase):
                     SolBase.sleep(100)
 
             # If we got at least disco_count + 1 ok, we are fine
-            processed_ok = MeterManager.get(KnockStat).transport_spv_processed.get()
+            processed_ok = Meters.aig("knock_stat_transport_spv_processed")
             if processed_ok > disco_count:
                 logger.info(
                     "Success, having=%s, target=%s, delay=%s",
@@ -278,18 +271,15 @@ class TestRealAll(unittest.TestCase):
                 disco_count + 1
             )
 
-        self.assertGreaterEqual(MeterManager.get(KnockStat).transport_ok_count.get(), 1)
-        self.assertEqual(MeterManager.get(KnockStat).transport_exception_count.get(), 0)
-        self.assertEqual(MeterManager.get(KnockStat).transport_failed_count.get(), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_transport_ok_count"), 1)
+        self.assertEqual(Meters.aig("knock_stat_transport_exception_count"), 0)
+        self.assertEqual(Meters.aig("knock_stat_transport_failed_count"), 0)
         self.assertEqual(self.k.get_transport_by_type(HttpAsyncTransport)._queue_to_send.qsize(), 0)
         self.assertFalse(self.k.get_transport_by_type(HttpAsyncTransport)._http_pending)
 
         # Ok, here.... let's play... we reset ALL counters
         logger.info("***** EXEC PASS TWO")
-        MeterManager._hash_meter = dict()
-        MeterManager.put(KnockStat())
-        MeterManager.put(MemoryCacheStat())
-        MeterManager.put(RedisCacheStat())
+        Meters.reset()
 
         # Fire LAST execution
         p.execute()
@@ -300,7 +290,7 @@ class TestRealAll(unittest.TestCase):
         timeout_ms = timeout_ms
         ms_start = SolBase.mscurrent()
         while SolBase.msdiff(ms_start) < timeout_ms:
-            if MeterManager.get(KnockStat).transport_ok_count.get() == 1 \
+            if Meters.aig("knock_stat_transport_ok_count") == 1 \
                     and self.k.get_transport_by_type(HttpAsyncTransport)._queue_to_send.qsize() == 0 \
                     and not self.k.get_transport_by_type(HttpAsyncTransport)._http_pending:
                 break
@@ -308,21 +298,21 @@ class TestRealAll(unittest.TestCase):
                 SolBase.sleep(100)
 
         # Validate the stuff
-        self.assertEqual(MeterManager.get(KnockStat).transport_ok_count.get(), 1)
-        self.assertEqual(MeterManager.get(KnockStat).transport_exception_count.get(), 0)
-        self.assertEqual(MeterManager.get(KnockStat).transport_failed_count.get(), 0)
+        self.assertEqual(Meters.aig("knock_stat_transport_ok_count"), 1)
+        self.assertEqual(Meters.aig("knock_stat_transport_exception_count"), 0)
+        self.assertEqual(Meters.aig("knock_stat_transport_failed_count"), 0)
         self.assertEqual(self.k.get_transport_by_type(HttpAsyncTransport)._queue_to_send.qsize(), 0)
         self.assertFalse(self.k.get_transport_by_type(HttpAsyncTransport)._http_pending)
-        self.assertGreaterEqual(MeterManager.get(KnockStat).transport_spv_processed.get(), 1)
-        self.assertEqual(MeterManager.get(KnockStat).transport_spv_failed.get(), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_transport_spv_processed"), 1)
+        self.assertEqual(Meters.aig("knock_stat_transport_spv_failed"), 0)
         self.assertEqual(
-            MeterManager.get(KnockStat).transport_spv_total.get(),
-            MeterManager.get(KnockStat).transport_spv_processed.get())
+            Meters.aig("knock_stat_transport_spv_total"),
+            Meters.aig("knock_stat_transport_spv_processed"))
 
         self.assertGreaterEqual(
-            MeterManager.get(KnockStat).transport_spv_processed.get(),
-            MeterManager.get(KnockStat).notify_simple_value.get() +
-            MeterManager.get(KnockStat).notify_value.get()
+            Meters.aig("knock_stat_transport_spv_processed"),
+            Meters.aig("knock_stat_notify_simple_value") +
+            Meters.aig("knock_stat_notify_value")
         )
 
         logger.info("***** SUCCESS PASS TWO")

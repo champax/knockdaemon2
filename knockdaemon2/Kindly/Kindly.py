@@ -58,5 +58,3 @@ class Kindly(object):
                 d[k] = f
 
         return d
-
-

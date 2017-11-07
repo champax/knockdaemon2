@@ -23,26 +23,24 @@
 """
 
 import logging
-import os
 import ujson
 import unittest
-from os.path import dirname, abspath
 
 import gevent
+import os
 import redis
 from gevent.event import Event
-from pythonsol.AtomicInt import AtomicInt
-from pythonsol.SolBase import SolBase
-from pythonsol.meter.MeterManager import MeterManager
+from os.path import dirname, abspath
+from pysolbase.SolBase import SolBase
+from pysolmeters.AtomicInt import AtomicInt
+from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.KnockManager import KnockManager
-from knockdaemon2.Core.KnockStat import KnockStat
 from knockdaemon2.Core.UDPBusinessServer import BusinessServer
 from knockdaemon2.Core.UDPServer import UDPServer
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 from knockdaemon2.Platform.PTools import PTools
 from knockdaemon2.Tests.TestHelpers import expect_disco
-
 from knockdaemon2.Tests.TestHelpers import expect_value
 from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
 from knockdaemon2_test.ForTest.UdpClient import UdpClient
@@ -75,7 +73,7 @@ class TestUdp(unittest.TestCase):
         self.k = None
 
         # Reset meter
-        MeterManager._hash_meter = dict()
+        Meters.reset()
 
         # Debug stat on exit ?
         self.debug_stat = False
@@ -112,9 +110,7 @@ class TestUdp(unittest.TestCase):
             self.h = None
 
         if self.debug_stat:
-            ks = MeterManager.get(KnockStat)
-            for k, v in ks.to_dict().iteritems():
-                logger.info("stat, %s => %s", k, v)
+            Meters.write_to_logger()
 
         self._kick_host()
 
@@ -164,7 +160,7 @@ class TestUdp(unittest.TestCase):
         :param start_manager: Test
         """
 
-        # MeterManager._hash_meter = dict()
+        # Meters.reset()
         self._start_http_mock()
         self._start_manager(start_manager)
 
@@ -211,7 +207,7 @@ class TestUdp(unittest.TestCase):
 
         for _ in range(0, 5):
             # Reset meter
-            MeterManager._hash_meter = dict()
+            Meters.reset()
 
             # Alloc
             logger.info("*** ALLOC")
@@ -243,14 +239,14 @@ class TestUdp(unittest.TestCase):
             # Wait for at least ONE notify schedule (1000 ms) and check
             logger.info("*** SCHEDULE")
             SolBase.sleep(1250 - elapsed_ms)
-            self.assertEqual(MeterManager.get(KnockStat).udp_notify_run.get(), 1)
-            self.assertEqual(MeterManager.get(KnockStat).udp_notify_run_ex.get(), 0)
+            self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 1)
+            self.assertEqual(Meters.aig("knock_stat_udp_notify_run_ex"), 0)
 
             # Wait for a second ONE (ie check reschedule)
             logger.info("*** SCHEDULE")
             SolBase.sleep(1250)
-            self.assertEqual(MeterManager.get(KnockStat).udp_notify_run.get(), 2)
-            self.assertEqual(MeterManager.get(KnockStat).udp_notify_run_ex.get(), 0)
+            self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 2)
+            self.assertEqual(Meters.aig("knock_stat_udp_notify_run_ex"), 0)
 
             # Stop
             logger.info("*** STOP")
@@ -260,8 +256,8 @@ class TestUdp(unittest.TestCase):
 
             # Re-check (schedule stopped)
             SolBase.sleep(1250)
-            self.assertEqual(MeterManager.get(KnockStat).udp_notify_run.get(), 2)
-            self.assertEqual(MeterManager.get(KnockStat).udp_notify_run_ex.get(), 0)
+            self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 2)
+            self.assertEqual(Meters.aig("knock_stat_udp_notify_run_ex"), 0)
 
             logger.info("*** LOOP OVER")
 
@@ -299,14 +295,14 @@ class TestUdp(unittest.TestCase):
         # Wait for at least ONE notify schedule (5000 ms default) and check
         logger.info("*** SCHEDULE")
         SolBase.sleep(5250 - elapsed_ms)
-        self.assertEqual(MeterManager.get(KnockStat).udp_notify_run.get(), 1)
-        self.assertEqual(MeterManager.get(KnockStat).udp_notify_run_ex.get(), 0)
+        self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 1)
+        self.assertEqual(Meters.aig("knock_stat_udp_notify_run_ex"), 0)
 
         # Wait for a second ONE (ie check reschedule)
         logger.info("*** SCHEDULE")
         SolBase.sleep(5250)
-        self.assertEqual(MeterManager.get(KnockStat).udp_notify_run.get(), 2)
-        self.assertEqual(MeterManager.get(KnockStat).udp_notify_run_ex.get(), 0)
+        self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 2)
+        self.assertEqual(Meters.aig("knock_stat_udp_notify_run_ex"), 0)
 
         # Stop
         logger.info("*** STOP MANAGER")
@@ -315,8 +311,8 @@ class TestUdp(unittest.TestCase):
 
         # Re-check (schedule stopped)
         SolBase.sleep(5250)
-        self.assertEqual(MeterManager.get(KnockStat).udp_notify_run.get(), 2)
-        self.assertEqual(MeterManager.get(KnockStat).udp_notify_run_ex.get(), 0)
+        self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 2)
+        self.assertEqual(Meters.aig("knock_stat_udp_notify_run_ex"), 0)
 
         # OVER
         self._stop_all()
@@ -379,10 +375,10 @@ class TestUdp(unittest.TestCase):
         while SolBase.msdiff(ms_start) < 2500:
             # Check
             if (
-                MeterManager.get(KnockStat).udp_recv.get() >= 1 and
-                MeterManager.get(KnockStat).udp_recv_counter.get() == 1 and
-                MeterManager.get(KnockStat).udp_recv_gauge.get() == 1 and
-                MeterManager.get(KnockStat).udp_recv_dtc.get() == 1
+                                    Meters.aig("knock_stat_udp_recv") >= 1 and
+                                    Meters.aig("knock_stat_udp_recv_counter") == 1 and
+                                Meters.aig("knock_stat_udp_recv_gauge") == 1 and
+                            Meters.aig("knock_stat_udp_recv_dtc") == 1
             ):
                 # Ok
                 break
@@ -391,12 +387,12 @@ class TestUdp(unittest.TestCase):
             SolBase.sleep(100)
 
         # Check
-        self.assertGreaterEqual(MeterManager.get(KnockStat).udp_recv.get(), 0)
-        self.assertEqual(MeterManager.get(KnockStat).udp_recv_counter.get(), 1)
-        self.assertEqual(MeterManager.get(KnockStat).udp_recv_gauge.get(), 1)
-        self.assertEqual(MeterManager.get(KnockStat).udp_recv_dtc.get(), 1)
-        self.assertEqual(MeterManager.get(KnockStat).udp_recv_unknown.get(), 0)
-        self.assertEqual(MeterManager.get(KnockStat).udp_recv_ex.get(), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_udp_recv"), 0)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_counter"), 1)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_gauge"), 1)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_dtc"), 1)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_unknown"), 0)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_ex"), 0)
 
         # ----------------------
         # Wait for at least one UDP notify here
@@ -404,20 +400,20 @@ class TestUdp(unittest.TestCase):
 
         logger.info("*** WAIT NOTIFY")
 
-        target = MeterManager.get(KnockStat).udp_notify_run.get() + 2
+        target = Meters.aig("knock_stat_udp_notify_run") + 2
 
         ms_start = SolBase.mscurrent()
         while SolBase.msdiff(ms_start) < 11000:
             # Check
-            if MeterManager.get(KnockStat).udp_notify_run.get() >= target:
+            if Meters.aig("knock_stat_udp_notify_run") >= target:
                 break
 
             # Wait
             SolBase.sleep(100)
 
         # Check
-        self.assertGreaterEqual(MeterManager.get(KnockStat).udp_notify_run.get(), target)
-        self.assertEqual(MeterManager.get(KnockStat).udp_notify_run_ex.get(), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_udp_notify_run"), target)
+        self.assertEqual(Meters.aig("knock_stat_udp_notify_run_ex"), 0)
 
         # ----------------------
         # Check transport stuff
@@ -543,7 +539,7 @@ class TestUdp(unittest.TestCase):
 
             for item_count in [max_count]:
                 # Reset counters
-                MeterManager._hash_meter = dict()
+                Meters.reset()
 
                 # We do NOT autostart (we do not want the transport to be started)
                 self._start_all(start_manager=True)
@@ -581,11 +577,11 @@ class TestUdp(unittest.TestCase):
                 ms_start2 = SolBase.mscurrent()
                 while SolBase.msdiff(ms_start2) < 20000:
                     ok = True
-                    if MeterManager.get(KnockStat).udp_recv_counter.get() != item_count:
+                    if Meters.aig("knock_stat_udp_recv_counter") != item_count:
                         ok = False
-                    if MeterManager.get(KnockStat).udp_recv_gauge.get() != item_count:
+                    if Meters.aig("knock_stat_udp_recv_gauge") != item_count:
                         ok = False
-                    if MeterManager.get(KnockStat).udp_recv_dtc.get() != item_count:
+                    if Meters.aig("knock_stat_udp_recv_dtc") != item_count:
                         ok = False
                     if ok:
                         logger.info("Completion ok")
@@ -593,24 +589,24 @@ class TestUdp(unittest.TestCase):
                     else:
                         logger.info(
                             "Waiting...,  recv=%s:%s/%s/%s, ex=%s/%s, notif=%s/%s",
-                            MeterManager.get(KnockStat).udp_recv.get(),
-                            MeterManager.get(KnockStat).udp_recv_counter.get(),
-                            MeterManager.get(KnockStat).udp_recv_gauge.get(),
-                            MeterManager.get(KnockStat).udp_recv_dtc.get(),
-                            MeterManager.get(KnockStat).udp_recv_unknown.get(),
-                            MeterManager.get(KnockStat).udp_recv_ex.get(),
-                            MeterManager.get(KnockStat).udp_notify_run.get(),
-                            MeterManager.get(KnockStat).udp_notify_run_ex.get(),
+                            Meters.aig("knock_stat_udp_recv"),
+                            Meters.aig("knock_stat_udp_recv_counter"),
+                            Meters.aig("knock_stat_udp_recv_gauge"),
+                            Meters.aig("knock_stat_udp_recv_dtc"),
+                            Meters.aig("knock_stat_udp_recv_unknown"),
+                            Meters.aig("knock_stat_udp_recv_ex"),
+                            Meters.aig("knock_stat_udp_notify_run"),
+                            Meters.aig("knock_stat_udp_notify_run_ex"),
                         )
                         SolBase.sleep(1000)
 
                 # Check
-                self.assertGreaterEqual(MeterManager.get(KnockStat).udp_recv.get(), 0)
-                self.assertEqual(MeterManager.get(KnockStat).udp_recv_counter.get(), item_count, "udp_chunk=" + str(udp_chunk))
-                self.assertEqual(MeterManager.get(KnockStat).udp_recv_gauge.get(), item_count, "udp_chunk=" + str(udp_chunk))
-                self.assertEqual(MeterManager.get(KnockStat).udp_recv_dtc.get(), item_count, "udp_chunk=" + str(udp_chunk))
-                self.assertEqual(MeterManager.get(KnockStat).udp_recv_unknown.get(), 0, "udp_chunk=" + str(udp_chunk))
-                self.assertEqual(MeterManager.get(KnockStat).udp_recv_ex.get(), 0, "udp_chunk=" + str(udp_chunk))
+                self.assertGreaterEqual(Meters.aig("knock_stat_udp_recv"), 0)
+                self.assertEqual(Meters.aig("knock_stat_udp_recv_counter"), item_count, "udp_chunk=" + str(udp_chunk))
+                self.assertEqual(Meters.aig("knock_stat_udp_recv_gauge"), item_count, "udp_chunk=" + str(udp_chunk))
+                self.assertEqual(Meters.aig("knock_stat_udp_recv_dtc"), item_count, "udp_chunk=" + str(udp_chunk))
+                self.assertEqual(Meters.aig("knock_stat_udp_recv_unknown"), 0, "udp_chunk=" + str(udp_chunk))
+                self.assertEqual(Meters.aig("knock_stat_udp_recv_ex"), 0, "udp_chunk=" + str(udp_chunk))
                 self.assertEqual(self.bench_ex.get(), 0, "udp_chunk=" + str(udp_chunk))
 
                 # Stop
@@ -671,14 +667,14 @@ class TestUdp(unittest.TestCase):
         while SolBase.msdiff(ms_start) < ms_duration:
             logger.info("Running..., send=%s/%s/%s, ex=%s, recv=%s:%s/%s/%s, ex=%s/%s, notif=%s/%s",
                         self.bench_counter.get(), self.bench_gauge.get(), self.bench_dtc.get(), self.bench_ex.get(),
-                        MeterManager.get(KnockStat).udp_recv.get(),
-                        MeterManager.get(KnockStat).udp_recv_counter.get(),
-                        MeterManager.get(KnockStat).udp_recv_gauge.get(),
-                        MeterManager.get(KnockStat).udp_recv_dtc.get(),
-                        MeterManager.get(KnockStat).udp_recv_unknown.get(),
-                        MeterManager.get(KnockStat).udp_recv_ex.get(),
-                        MeterManager.get(KnockStat).udp_notify_run.get(),
-                        MeterManager.get(KnockStat).udp_notify_run_ex.get(),
+                        Meters.aig("knock_stat_udp_recv"),
+                        Meters.aig("knock_stat_udp_recv_counter"),
+                        Meters.aig("knock_stat_udp_recv_gauge"),
+                        Meters.aig("knock_stat_udp_recv_dtc"),
+                        Meters.aig("knock_stat_udp_recv_unknown"),
+                        Meters.aig("knock_stat_udp_recv_ex"),
+                        Meters.aig("knock_stat_udp_notify_run"),
+                        Meters.aig("knock_stat_udp_notify_run_ex"),
                         )
             self.assertEqual(self.bench_ex.get(), 0)
             SolBase.sleep(1000)
@@ -694,11 +690,11 @@ class TestUdp(unittest.TestCase):
         ms_start2 = SolBase.mscurrent()
         while SolBase.msdiff(ms_start2) < ms_duration:
             ok = True
-            if MeterManager.get(KnockStat).udp_recv_counter.get() != self.bench_counter.get():
+            if Meters.aig("knock_stat_udp_recv_counter") != self.bench_counter.get():
                 ok = False
-            if MeterManager.get(KnockStat).udp_recv_gauge.get() != self.bench_gauge.get():
+            if Meters.aig("knock_stat_udp_recv_gauge") != self.bench_gauge.get():
                 ok = False
-            if MeterManager.get(KnockStat).udp_recv_dtc.get() != self.bench_dtc.get():
+            if Meters.aig("knock_stat_udp_recv_dtc") != self.bench_dtc.get():
                 ok = False
             if ok:
                 logger.info("Completion ok")
@@ -707,29 +703,29 @@ class TestUdp(unittest.TestCase):
                 logger.info(
                     "Waiting..., send=%s/%s/%s, ex=%s, recv=%s:%s/%s/%s, ex=%s/%s, notif=%s/%s",
                     self.bench_counter.get(), self.bench_gauge.get(), self.bench_dtc.get(), self.bench_ex.get(),
-                    MeterManager.get(KnockStat).udp_recv.get(),
-                    MeterManager.get(KnockStat).udp_recv_counter.get(),
-                    MeterManager.get(KnockStat).udp_recv_gauge.get(),
-                    MeterManager.get(KnockStat).udp_recv_dtc.get(),
-                    MeterManager.get(KnockStat).udp_recv_unknown.get(),
-                    MeterManager.get(KnockStat).udp_recv_ex.get(),
-                    MeterManager.get(KnockStat).udp_notify_run.get(),
-                    MeterManager.get(KnockStat).udp_notify_run_ex.get(),
+                    Meters.aig("knock_stat_udp_recv"),
+                    Meters.aig("knock_stat_udp_recv_counter"),
+                    Meters.aig("knock_stat_udp_recv_gauge"),
+                    Meters.aig("knock_stat_udp_recv_dtc"),
+                    Meters.aig("knock_stat_udp_recv_unknown"),
+                    Meters.aig("knock_stat_udp_recv_ex"),
+                    Meters.aig("knock_stat_udp_notify_run"),
+                    Meters.aig("knock_stat_udp_notify_run_ex"),
                 )
                 SolBase.sleep(1000)
 
         # Check
-        self.assertGreaterEqual(MeterManager.get(KnockStat).udp_recv.get(), 0)
-        self.assertEqual(MeterManager.get(KnockStat).udp_recv_counter.get(), self.bench_counter.get())
-        self.assertEqual(MeterManager.get(KnockStat).udp_recv_gauge.get(), self.bench_gauge.get())
-        self.assertEqual(MeterManager.get(KnockStat).udp_recv_dtc.get(), self.bench_dtc.get())
-        self.assertEqual(MeterManager.get(KnockStat).udp_recv_unknown.get(), 0)
-        self.assertEqual(MeterManager.get(KnockStat).udp_recv_ex.get(), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_udp_recv"), 0)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_counter"), self.bench_counter.get())
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_gauge"), self.bench_gauge.get())
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_dtc"), self.bench_dtc.get())
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_unknown"), 0)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_ex"), 0)
         self.assertEqual(self.bench_ex.get(), 0)
 
-        per_sec_recv = float(MeterManager.get(KnockStat).udp_recv_counter.get() +
-                             MeterManager.get(KnockStat).udp_recv_gauge.get() +
-                             MeterManager.get(KnockStat).udp_recv_dtc.get()) / float(ms_elapsed / 1000.0)
+        per_sec_recv = float(Meters.aig("knock_stat_udp_recv_counter") +
+                             Meters.aig("knock_stat_udp_recv_gauge") +
+                             Meters.aig("knock_stat_udp_recv_dtc")) / float(ms_elapsed / 1000.0)
 
         logger.info("*** PERSEC send=%.2f, recv=%.2f", per_sec_send, per_sec_recv)
 
@@ -739,20 +735,20 @@ class TestUdp(unittest.TestCase):
 
         logger.info("*** WAIT NOTIFY")
 
-        target = MeterManager.get(KnockStat).udp_notify_run.get() + 2
+        target = Meters.aig("knock_stat_udp_notify_run") + 2
 
         ms_start = SolBase.mscurrent()
         while SolBase.msdiff(ms_start) < 11000:
             # Check
-            if MeterManager.get(KnockStat).udp_notify_run.get() >= target:
+            if Meters.aig("knock_stat_udp_notify_run") >= target:
                 break
 
             # Wait
             SolBase.sleep(100)
 
         # Check
-        self.assertGreaterEqual(MeterManager.get(KnockStat).udp_notify_run.get(), target)
-        self.assertEqual(MeterManager.get(KnockStat).udp_notify_run_ex.get(), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_udp_notify_run"), target)
+        self.assertEqual(Meters.aig("knock_stat_udp_notify_run_ex"), 0)
 
         # ----------------------
         # SEND OVER

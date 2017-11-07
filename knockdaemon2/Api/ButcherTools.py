@@ -26,7 +26,7 @@ import logging
 
 import gevent
 from gevent.subprocess import Popen, PIPE
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
 
 logger = logging.getLogger(__name__)
 
@@ -122,5 +122,3 @@ class ButcherTools:
                     del p
                 except Exception as e:
                     logger.warn("Exception in kill, ar=%s, ex=%s", ar_or_string, SolBase.extostr(e))
-
-

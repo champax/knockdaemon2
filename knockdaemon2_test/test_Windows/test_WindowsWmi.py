@@ -27,8 +27,9 @@ from collections import Sized
 from knockdaemon2.Platform.PTools import PTools
 
 if PTools.get_distribution_type() == "windows":
-    from pythonsol.SolBase import SolBase
+    from pysolbase.SolBase import SolBase
     from knockdaemon2.Windows.Helper.Netstat import get_netstat
+
     SolBase.voodoo_init()
 
     import logging

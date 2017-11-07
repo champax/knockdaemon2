@@ -24,8 +24,8 @@
 from knockdaemon2.Platform.PTools import PTools
 
 if PTools.get_distribution_type() == "windows":
-    from knockdaemon2.Windows.knockdaemon2.knockdaemon2Event import knockdaemon2Event
-    from pythonsol.SolBase import SolBase
+    from knockdaemon2.Windows.KnockDaemon.KnockDaemonEvent import KnockDaemonEvent
+    from pysolbase.SolBase import SolBase
 
     SolBase.voodoo_init()
 
@@ -36,11 +36,11 @@ if PTools.get_distribution_type() == "windows":
 
     import gevent
     import redis
-    from pythonsol.FileUtility import FileUtility
+    from pysolbase.FileUtility import FileUtility
 
     from knockdaemon2.HttpMock.HttpMock import HttpMock
     from knockdaemon2.Platform.PTools import PTools
-    from knockdaemon2.Windows.knockdaemon2.knockdaemon2 import knockdaemon2Service, D_PATH, set_default_paths
+    from knockdaemon2.Windows.KnockDaemon.KnockDaemon import KnockDaemonService, D_PATH, set_default_paths
 
     logger = logging.getLogger(__name__)
 
@@ -187,7 +187,7 @@ if PTools.get_distribution_type() == "windows":
 
             # Alloc
             logger.info("*** ALLOC")
-            k = knockdaemon2Service(args=["knockdaemon2"])
+            k = KnockDaemonService(args=["knockdaemon2"])
 
             # Start
             logger.info("*** RUN (BLOCKING, spawned)")
@@ -200,7 +200,7 @@ if PTools.get_distribution_type() == "windows":
                 SolBase.sleep(500)
 
             # Force write
-            knockdaemon2Event.write_manager_status(k)
+            KnockDaemonEvent.write_manager_status(k)
 
             # Stop
             logger.info("*** STOP")

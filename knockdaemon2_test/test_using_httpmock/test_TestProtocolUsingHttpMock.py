@@ -23,16 +23,15 @@
 """
 
 import logging
-import os
 import unittest
-from os.path import dirname, abspath
 
+import os
 import redis
-from pythonsol.SolBase import SolBase
-from pythonsol.meter.MeterManager import MeterManager
+from os.path import dirname, abspath
+from pysolbase.SolBase import SolBase
+from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.KnockManager import KnockManager
-from knockdaemon2.Core.KnockStat import KnockStat
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
 
@@ -61,7 +60,7 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
         self.k = None
 
         # Reset meter
-        MeterManager._hash_meter = dict()
+        Meters.reset()
 
         # Debug stat on exit ?
         self.debug_stat = False
@@ -91,10 +90,7 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
             self.h = None
 
         if self.debug_stat:
-            ks = MeterManager.get(KnockStat)
-            for k, v in ks.to_dict().iteritems():
-                logger.info("stat, %s => %s", k, v)
-
+            Meters.write_to_logger()
         self._kick_host()
 
     def _kick_host(self):
@@ -128,7 +124,7 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
         :param start_manager: Test
         """
 
-        # MeterManager._hash_meter = dict()
+        # Meters.reset()
         self._start_http_mock()
         self._start_manager(start_manager)
 
@@ -184,7 +180,7 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
                     ok = False
 
             # Transport
-            if MeterManager.get(KnockStat).transport_ok_count.get() < 2:
+            if Meters.aig("knock_stat_transport_ok_count") < 2:
                 ok = False
 
             # Check
@@ -204,15 +200,15 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
             self.assertGreater(c.initial_ms_start, 0)
 
         # Validate
-        ks = MeterManager.get(KnockStat)
-        self.assertEqual(ks.exec_probe_exception.get(), 0)
-        self.assertEqual(ks.exec_probe_bypass.get(), 0)
 
-        self.assertEqual(ks.exec_all_inner_exception.get(), 0)
-        self.assertEqual(ks.exec_all_outer_exception.get(), 0)
-        self.assertEqual(ks.exec_all_finally_exception.get(), 0)
-        self.assertGreaterEqual(ks.exec_all_count.get(), 2)
-        self.assertEqual(ks.exec_all_too_slow.get(), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_bypass"), 0)
+
+        self.assertEqual(Meters.aig("knock_stat_exec_all_inner_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_outer_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_finally_exception"), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), 2)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
         # Validate discovery (must be empty since notified)
         self.assertEqual(len(self.k._superv_notify_disco_hash), 0)
@@ -220,10 +216,10 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
         self.assertEqual(len(self.k._superv_notify_value_list), 0)
 
         # Check transport
-        self.assertGreaterEqual(MeterManager.get(KnockStat).transport_call_count.get(), 1)
-        self.assertGreaterEqual(MeterManager.get(KnockStat).transport_ok_count.get(), 1)
-        self.assertEqual(MeterManager.get(KnockStat).transport_exception_count.get(), 0)
-        self.assertEqual(MeterManager.get(KnockStat).transport_failed_count.get(), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_transport_call_count"), 1)
+        self.assertGreaterEqual(Meters.aig("knock_stat_transport_ok_count"), 1)
+        self.assertEqual(Meters.aig("knock_stat_transport_exception_count"), 0)
+        self.assertEqual(Meters.aig("knock_stat_transport_failed_count"), 0)
 
         # Over
         self._stop_all()
@@ -249,7 +245,7 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
                     ok = False
 
             # Transport
-            if MeterManager.get(KnockStat).transport_ok_count.get() < 2:
+            if Meters.aig("knock_stat_transport_ok_count") < 2:
                 ok = False
 
             # Check
@@ -269,15 +265,15 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
             self.assertGreater(c.initial_ms_start, 0)
 
         # Validate
-        ks = MeterManager.get(KnockStat)
-        self.assertEqual(ks.exec_probe_exception.get(), 0)
-        self.assertEqual(ks.exec_probe_bypass.get(), 0)
 
-        self.assertEqual(ks.exec_all_inner_exception.get(), 0)
-        self.assertEqual(ks.exec_all_outer_exception.get(), 0)
-        self.assertEqual(ks.exec_all_finally_exception.get(), 0)
-        self.assertGreaterEqual(ks.exec_all_count.get(), 2)
-        self.assertEqual(ks.exec_all_too_slow.get(), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_bypass"), 0)
+
+        self.assertEqual(Meters.aig("knock_stat_exec_all_inner_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_outer_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_finally_exception"), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), 2)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
         # Validate discovery (must be empty since notified)
         self.assertEqual(len(self.k._superv_notify_disco_hash), 0)
@@ -285,10 +281,10 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
         self.assertEqual(len(self.k._superv_notify_value_list), 0)
 
         # Check transport
-        self.assertGreaterEqual(MeterManager.get(KnockStat).transport_call_count.get(), 1)
-        self.assertGreaterEqual(MeterManager.get(KnockStat).transport_ok_count.get(), 1)
-        self.assertEqual(MeterManager.get(KnockStat).transport_exception_count.get(), 0)
-        self.assertEqual(MeterManager.get(KnockStat).transport_failed_count.get(), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_transport_call_count"), 1)
+        self.assertGreaterEqual(Meters.aig("knock_stat_transport_ok_count"), 1)
+        self.assertEqual(Meters.aig("knock_stat_transport_exception_count"), 0)
+        self.assertEqual(Meters.aig("knock_stat_transport_failed_count"), 0)
 
         # Over
         self._stop_all()

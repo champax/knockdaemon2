@@ -23,7 +23,9 @@
 """
 
 import logging
-from pythonsol.SolBase import SolBase
+
+from pysolbase.SolBase import SolBase
+
 from knockdaemon2.Core.KnockManager import KnockManager
 from knockdaemon2.Core.UDPServer import UDPServer
 

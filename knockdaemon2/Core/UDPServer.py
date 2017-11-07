@@ -22,11 +22,10 @@ Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
  ===============================================================================
 """
 import logging
+
 import os
 from gevent.pool import Pool
-from pythonsol.meter.MeterManager import MeterManager
 
-from knockdaemon2.Core.KnockStat import KnockStat
 from knockdaemon2.Core.UDPBusinessServer import BusinessServer
 
 logger = logging.getLogger(__name__)
@@ -132,9 +131,6 @@ class UDPServer(object):
         logger.info("_send_back_udp=%s", self._send_back_udp)
         logger.info("_notify_interval_ms=%s", self._notify_interval_ms)
 
-        # Register counter
-        MeterManager.put(KnockStat())
-
     def start(self):
         """
         Start (async)
@@ -179,5 +175,3 @@ class UDPServer(object):
             logger.info("Stopping BusinessServer")
             self._business_server.stop()
             self._business_server = None
-
-

@@ -27,8 +27,7 @@ import platform
 import unittest
 
 import os
-
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Platform.PTools import PTools
 

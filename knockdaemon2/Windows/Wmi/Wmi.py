@@ -30,7 +30,7 @@ import gevent
 import pythoncom
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 import wmi
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
 
 logger = logging.getLogger(__name__)
 

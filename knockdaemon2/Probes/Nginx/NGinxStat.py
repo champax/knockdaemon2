@@ -22,12 +22,13 @@
 # ===============================================================================
 """
 import logging
-import re
-from pythonsol.FileUtility import FileUtility
-from pythonsol.SolBase import SolBase
 
-from knockdaemon2.Api.Http.HttpClient import HttpClient
-from knockdaemon2.Api.Http.HttpRequest import HttpRequest
+import re
+from pysolbase.FileUtility import FileUtility
+from pysolbase.SolBase import SolBase
+from pysolhttpclient.Http.HttpClient import HttpClient
+from pysolhttpclient.Http.HttpRequest import HttpRequest
+
 from knockdaemon2.Core.KnockProbe import KnockProbe
 
 logger = logging.getLogger(__name__)

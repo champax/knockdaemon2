@@ -25,8 +25,7 @@ import logging
 
 import gevent
 import re
-
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockHelpers import KnockHelpers

@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-# Fix dh-virtualenv 1.0 intall in /opt/venvs
+# Fix dh-virtualenv 1.0 install in /opt/venvs
 export DH_VIRTUALENV_INSTALL_ROOT=/usr/share/python/
 
 

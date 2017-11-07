@@ -24,8 +24,10 @@
 
 import glob
 import logging
+
 import os
-from pythonsol.SolBase import SolBase
+from pysolbase.SolBase import SolBase
+
 from knockdaemon2.Core.KnockProbe import KnockProbe
 
 logger = logging.getLogger(__name__)

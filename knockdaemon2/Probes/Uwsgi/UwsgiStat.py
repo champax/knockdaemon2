@@ -25,9 +25,10 @@
 import glob
 import json
 import logging
+
 import re
-from pythonsol.FileUtility import FileUtility
-from pythonsol.SolBase import SolBase
+from pysolbase.FileUtility import FileUtility
+from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockProbe import KnockProbe
@@ -131,6 +132,7 @@ class UwsgiStat(KnockProbe):
         self._total_avg_rt = 0
         self._total_workers_count = 0
 
+    # noinspection PyMethodMayBeStatic
     def _get_stuff_from_file(self, file_name, stuff):
         """
         Get stats socket from file

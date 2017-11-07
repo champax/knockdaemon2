@@ -25,8 +25,8 @@
 import struct
 from ctypes import *
 from ctypes.wintypes import *
-from socket import inet_ntoa, htons
 from socket import AF_INET
+from socket import inet_ntoa, htons
 
 TCP_TABLE_BASIC_LISTENER = 0
 TCP_TABLE_BASIC_CONNECTIONS = 1

@@ -29,12 +29,13 @@ import urllib
 
 import os
 from geventhttpclient import HTTPClient, URL
+# noinspection PyUnresolvedReferences,PyPackageRequirements
 from nose.plugins.attrib import attr
-from pythonsol.meter.MeterManager import MeterManager
+from pysolbase.SolBase import SolBase
+from pysolmeters.Meters import Meters
 
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 
-from pythonsol.SolBase import SolBase
 SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ class TestHttp(unittest.TestCase):
         self.h = None
 
         # Reset meter
-        MeterManager._hash_meter = dict()
+        Meters.reset()
 
         # Debug stat on exit ?
         self.debug_stat = False

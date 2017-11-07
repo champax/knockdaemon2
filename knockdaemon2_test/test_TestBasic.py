@@ -29,17 +29,14 @@ import unittest
 import os
 import redis
 from os.path import dirname, abspath
-from pythonsol.SolBase import SolBase
-from pythonsol.meter.MeterManager import MeterManager
+from pysolbase.SolBase import SolBase
+from pysolmeters.Meters import Meters
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockManager import KnockManager
-from knockdaemon2.Core.KnockStat import KnockStat
 from knockdaemon2.Platform.PTools import PTools
 from knockdaemon2.Tests.TestHelpers import expect_disco
-
 from knockdaemon2.Tests.TestHelpers import expect_value
-from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
 from knockdaemon2_test.ForTest.TestTransport import TestTransport
 
 SolBase.voodoo_init()
@@ -65,7 +62,7 @@ class TestBasic(unittest.TestCase):
         self.k = None
 
         # Reset meter
-        MeterManager._hash_meter = dict()
+        Meters.reset()
 
         # Debug stat on exit ?
         self.debug_stat = False
@@ -91,9 +88,7 @@ class TestBasic(unittest.TestCase):
             self.k = None
 
         if self.debug_stat:
-            ks = MeterManager.get(KnockStat)
-            for k, v in ks.to_dict().iteritems():
-                logger.info("stat, %s => %s", k, v)
+            Meters.write_to_logger()
 
     def test_load_config(self):
         """
@@ -174,7 +169,7 @@ class TestBasic(unittest.TestCase):
         """
 
         # Reset meter
-        # MeterManager._hash_meter = dict()
+        # Meters.reset()
 
         # Init
         self.k = KnockManager(self.config_file)
@@ -203,19 +198,18 @@ class TestBasic(unittest.TestCase):
             self.assertEqual(p.exec_count, c.exec_count_so_far)
 
         # Validate
-        ks = MeterManager.get(KnockStat)
-        self.assertEqual(ks.exec_probe_exception.get(), 0)
-        self.assertEqual(ks.exec_probe_timeout.get(), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_timeout"), 0)
         # Windows scheduling is more variable, decrease check
-        self.assertGreaterEqual(ks.exec_probe_count.get(), run_count * len(self.k._probe_list) / 2)
-        self.assertGreaterEqual(ks.exec_probe_bypass.get(), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_count"), run_count * len(self.k._probe_list) / 2)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_bypass"), 0)
 
-        self.assertEqual(ks.exec_all_inner_exception.get(), 0)
-        self.assertEqual(ks.exec_all_outer_exception.get(), 0)
-        self.assertEqual(ks.exec_all_finally_exception.get(), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_inner_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_outer_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_finally_exception"), 0)
         # Windows scheduling is more variable, decrease check
-        self.assertGreaterEqual(ks.exec_all_count.get(), run_count / 2)
-        self.assertEqual(ks.exec_all_too_slow.get(), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), run_count / 2)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
         # Finish
         self.k = None
@@ -261,17 +255,17 @@ class TestBasic(unittest.TestCase):
             self.assertGreater(c.initial_ms_start, 0)
 
         # Validate
-        ks = MeterManager.get(KnockStat)
-        self.assertEqual(ks.exec_probe_exception.get(), 0)
-        self.assertGreaterEqual(ks.exec_probe_timeout.get(), len(self.k._probe_list))
-        self.assertGreaterEqual(ks.exec_probe_count.get(), len(self.k._probe_list))
-        self.assertEqual(ks.exec_probe_bypass.get(), 0)
 
-        self.assertEqual(ks.exec_all_inner_exception.get(), 0)
-        self.assertEqual(ks.exec_all_outer_exception.get(), 0)
-        self.assertEqual(ks.exec_all_finally_exception.get(), 0)
-        self.assertGreaterEqual(ks.exec_all_count.get(), 1)
-        self.assertEqual(ks.exec_all_too_slow.get(), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_exception"), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_timeout"), len(self.k._probe_list))
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_count"), len(self.k._probe_list))
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_bypass"), 0)
+
+        self.assertEqual(Meters.aig("knock_stat_exec_all_inner_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_outer_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_finally_exception"), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), 1)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
         # Finish
         self.k = None
@@ -358,17 +352,17 @@ class TestBasic(unittest.TestCase):
                 idx += 1
 
         # Validate
-        ks = MeterManager.get(KnockStat)
-        self.assertEqual(ks.exec_probe_exception.get(), 0)
-        self.assertGreaterEqual(ks.exec_probe_timeout.get(), 0)
-        self.assertGreaterEqual(ks.exec_probe_count.get(), len(self.k._probe_list) * target_count)
-        self.assertEqual(ks.exec_probe_bypass.get(), 0)
 
-        self.assertEqual(ks.exec_all_inner_exception.get(), 0)
-        self.assertEqual(ks.exec_all_outer_exception.get(), 0)
-        self.assertEqual(ks.exec_all_finally_exception.get(), 0)
-        self.assertGreaterEqual(ks.exec_all_count.get(), 1)
-        self.assertEqual(ks.exec_all_too_slow.get(), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_exception"), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_timeout"), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_count"), len(self.k._probe_list) * target_count)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_bypass"), 0)
+
+        self.assertEqual(Meters.aig("knock_stat_exec_all_inner_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_outer_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_finally_exception"), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), 1)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
         # Finish
         self.k = None
@@ -406,17 +400,17 @@ class TestBasic(unittest.TestCase):
             self.assertGreater(c.initial_ms_start, 0)
 
         # Validate
-        ks = MeterManager.get(KnockStat)
-        self.assertEqual(ks.exec_probe_exception.get(), 0)
-        self.assertGreaterEqual(ks.exec_probe_timeout.get(), 0)
-        self.assertGreaterEqual(ks.exec_probe_count.get(), len(self.k._probe_list))
-        self.assertEqual(ks.exec_probe_bypass.get(), 0)
 
-        self.assertEqual(ks.exec_all_inner_exception.get(), 0)
-        self.assertEqual(ks.exec_all_outer_exception.get(), 0)
-        self.assertEqual(ks.exec_all_finally_exception.get(), 0)
-        self.assertGreaterEqual(ks.exec_all_count.get(), 1)
-        self.assertEqual(ks.exec_all_too_slow.get(), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_exception"), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_timeout"), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_count"), len(self.k._probe_list))
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_bypass"), 0)
+
+        self.assertEqual(Meters.aig("knock_stat_exec_all_inner_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_outer_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_finally_exception"), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), 1)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
         # Finish
         self.k = None
@@ -457,17 +451,17 @@ class TestBasic(unittest.TestCase):
             self.assertGreater(c.initial_ms_start, 0)
 
         # Validate
-        ks = MeterManager.get(KnockStat)
-        self.assertEqual(ks.exec_probe_exception.get(), 0)
-        self.assertGreaterEqual(ks.exec_probe_timeout.get(), len(self.k._probe_list) * 2)
-        self.assertGreaterEqual(ks.exec_probe_count.get(), len(self.k._probe_list) * 2)
-        self.assertEqual(ks.exec_probe_bypass.get(), 0)
 
-        self.assertEqual(ks.exec_all_inner_exception.get(), 0)
-        self.assertEqual(ks.exec_all_outer_exception.get(), 0)
-        self.assertEqual(ks.exec_all_finally_exception.get(), 0)
-        self.assertGreaterEqual(ks.exec_all_count.get(), 2)
-        self.assertEqual(ks.exec_all_too_slow.get(), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_exception"), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_timeout"), len(self.k._probe_list) * 2)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_count"), len(self.k._probe_list) * 2)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_bypass"), 0)
+
+        self.assertEqual(Meters.aig("knock_stat_exec_all_inner_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_outer_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_finally_exception"), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), 2)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
         # Finish
         self.k = None
@@ -478,7 +472,7 @@ class TestBasic(unittest.TestCase):
         """
 
         # Reset meter
-        # MeterManager._hash_meter = dict()
+        # Meters.reset()
 
         # Init
         self.k = KnockManager(self.config_file)
@@ -508,15 +502,15 @@ class TestBasic(unittest.TestCase):
             self.assertEqual(c.exec_count_so_far, p.exec_count)
 
         # Validate
-        ks = MeterManager.get(KnockStat)
-        self.assertEqual(ks.exec_probe_exception.get(), 0)
-        self.assertEqual(ks.exec_probe_bypass.get(), 0)
 
-        self.assertEqual(ks.exec_all_inner_exception.get(), 0)
-        self.assertEqual(ks.exec_all_outer_exception.get(), 0)
-        self.assertEqual(ks.exec_all_finally_exception.get(), 0)
-        self.assertGreaterEqual(ks.exec_all_count.get(), 3)
-        self.assertEqual(ks.exec_all_too_slow.get(), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_probe_bypass"), 0)
+
+        self.assertEqual(Meters.aig("knock_stat_exec_all_inner_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_outer_exception"), 0)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_finally_exception"), 0)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), 3)
+        self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
         # Validate discovery
         self.assertEqual(len(self.k._superv_notify_disco_hash), 3)

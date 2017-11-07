@@ -22,14 +22,16 @@
 # ===============================================================================
 """
 # noinspection PyPackageRequirements
-from _socket import gaierror
+import logging
 import time
 # noinspection PyPackageRequirements
-import dns
+from _socket import gaierror
+
 # noinspection PyPackageRequirements
-import logging
+import dns
 from dns.resolver import NoAnswer, NXDOMAIN, Resolver
 from gevent import Timeout
+
 from knockdaemon2.Core.KnockProbe import KnockProbe
 
 logger = logging.getLogger(__name__)

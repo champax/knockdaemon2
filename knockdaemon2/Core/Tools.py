@@ -23,9 +23,9 @@
 """
 
 import logging
+from datetime import datetime
 
 import pytz
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -193,4 +193,3 @@ class Tools(object):
 
         # Over
         return ar_out
-
