@@ -2,11 +2,13 @@
 --extra-index-url https://pypi.knock.center/knock/dev/+simple/
 
 # pip / setup
-pip>=8.1.1
-setuptools>=20.10.1
+pip
+setuptools
 
 # pysol
 pysolbase
+pysolcache
+pysoldaemon
 pysolmysql
 pysolhttpclient
 pysolmeters
@@ -18,7 +20,7 @@ geventhttpclient
 greenlet
 
 # crypt
-pycrypto >= 2.6
+pycrypto
 
 # socks
 PySocks
