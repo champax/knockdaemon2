@@ -23,6 +23,7 @@
 """
 import logging
 import ujson
+from datetime import datetime
 from greenlet import GreenletExit
 
 import gevent
@@ -110,6 +111,12 @@ class HttpAsyncTransport(KnockTransport):
         # Http client instance
         self.http_client = HttpClient()
 
+        # Log tag
+        self.log_tag = " HttpAsynch "
+
+        # To rewrite
+        self.load_http_uri = True
+
     def init_from_config(self, config_parser, section_name, auto_start=True):
         """
         Initialize from configuration
@@ -120,7 +127,9 @@ class HttpAsyncTransport(KnockTransport):
         :param auto_start: bool
         :type auto_start: bool
         """
-        self.http_uri = config_parser[section_name][HttpAsyncTransport.HTTP_TARGET_URI]
+
+        if self.load_http_uri:
+            self.http_uri = config_parser[section_name][HttpAsyncTransport.HTTP_TARGET_URI]
 
         try:
             self._max_items_in_queue = \
@@ -225,12 +234,26 @@ class HttpAsyncTransport(KnockTransport):
             logger.warning("Not running, processing not possible")
             return False
 
+        # Fix value
+        ar_nv = list()
+        for k, tag, v, ts, categ in notify_values:
+            if isinstance(v, float):
+                v = str(v).upper()
+            elif isinstance(v, bool):
+                if v:
+                    v = 1
+                else:
+                    v = 0
+            elif isinstance(v, datetime):
+                v = int(v.strftime('%s'))
+            ar_nv.append((k, tag, v, ts, categ))
+
         # We serialize this block right now
         d = dict()
         d["a"] = account_hash
         d["n"] = node_hash
         d["h"] = notify_hash
-        d["v"] = notify_values
+        d["v"] = ar_nv
         buf = ujson.dumps(d)
 
         # Check max

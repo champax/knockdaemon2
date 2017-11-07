@@ -243,7 +243,7 @@ class Network(KnockProbe):
                 if local_type == 776:
                     self.notify_value_n("k.net.if.status.speed", {"IFNAME": d_in}, 1000)
                 else:
-                    self.notify_value_n("k.net.if.status.speed", {"IFNAME": d_in}, speed)
+                    self.notify_value_n("k.net.if.status.speed", {"IFNAME": d_in}, int(speed))
                 self.notify_value_n("k.net.if.type", {"IFNAME": d_in}, self.SUPPORTED_TYPES[local_type])
                 self.notify_value_n("k.net.if.status.mtu", {"IFNAME": d_in}, int(open(interface + "/mtu", "r").read().strip()))
                 # self.notify_value_n("k.net.if.status.address", {"IFNAME": d_in}, open(interface + "/address", "r").read().strip())

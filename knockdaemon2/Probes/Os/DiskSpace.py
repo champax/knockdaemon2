@@ -274,11 +274,11 @@ class DiskSpace(KnockProbe):
 
                     self.notify_value_n("k.vfs.dev.write.totalbytes", {"FSNAME": mountpoint}, int(temp_ar[9]) * 512)
 
-                    self.notify_value_n("k.vfs.dev.write.totalms", {"FSNAME": mountpoint}, temp_ar[10])
+                    self.notify_value_n("k.vfs.dev.write.totalms", {"FSNAME": mountpoint}, int(temp_ar[10]))
 
-                    self.notify_value_n("k.vfs.dev.io.currentcount", {"FSNAME": mountpoint}, temp_ar[11])
+                    self.notify_value_n("k.vfs.dev.io.currentcount", {"FSNAME": mountpoint}, int(temp_ar[11]))
 
-                    self.notify_value_n("k.vfs.dev.io.totalms", {"FSNAME": mountpoint}, temp_ar[12])
+                    self.notify_value_n("k.vfs.dev.io.totalms", {"FSNAME": mountpoint}, int(temp_ar[12]))
 
                     # ALL handling
                     self.add_to_hash(all_hash, 'k.vfs.dev.read.totalcount', int(temp_ar[3]))

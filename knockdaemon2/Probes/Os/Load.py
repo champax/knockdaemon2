@@ -110,8 +110,8 @@ class Load(KnockProbe):
         self.notify_value_n("k.os.localtime", None, int(time.time()))
 
         sysctl = self.get_sysctl()
-        self.notify_value_n("k.os.maxfiles", None, sysctl["max_open_files"])
-        self.notify_value_n("k.os.maxproc", None, sysctl["max_proc"])
+        self.notify_value_n("k.os.maxfiles", None, int(sysctl["max_open_files"]))
+        self.notify_value_n("k.os.maxproc", None, int(sysctl["max_proc"]))
         self.notify_value_n("k.os.users.num", None, self.get_users_count())
 
     # noinspection PyMethodMayBeStatic

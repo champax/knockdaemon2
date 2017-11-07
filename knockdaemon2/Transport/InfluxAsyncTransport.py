@@ -57,6 +57,10 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         # Call base
         HttpAsyncTransport.__init__(self)
 
+        # Override
+        self.log_tag = "InfluxAsynch"
+        self.load_http_uri = False
+
     def init_from_config(self, config_parser, section_name, auto_start=True):
         """
         Initialize from configuration

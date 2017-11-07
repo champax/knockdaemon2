@@ -64,6 +64,7 @@ from knockdaemon2.Probes.Os.ProcNum import NumberOfProcesses
 from knockdaemon2.Probes.Os.TimeDiff import TimeDiff
 from knockdaemon2.Probes.Os.UpTime import Uptime
 from knockdaemon2.Probes.PhpFpm.PhpFpmStat import PhpFpmStat
+from knockdaemon2.Probes.Rabbitmq.RabbitmqStat import RabbitmqStat
 from knockdaemon2.Probes.Redis.RedisStat import RedisStat
 from knockdaemon2.Probes.Uwsgi.UwsgiStat import UwsgiStat
 from knockdaemon2.Probes.Varnish.VarnishStat import VarnishStat
@@ -701,6 +702,27 @@ class TestProbesDirect(unittest.TestCase):
 
         # Discovery is fired outside this, do not check it here
         pass
+
+    @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
+    @attr('prov')
+    def test_Rabbitmq(self):
+        """
+        Test
+        """
+
+        # Exec it
+        _exec_helper(self, RabbitmqStat)
+
+        for _, knock_type, knock_key, _ in RabbitmqStat.KEYS:
+            dd = {"PORT": "default"}
+            if knock_type == "int":
+                expect_value(self, self.k, knock_key, 0, "gte", dd)
+            elif knock_type == "float":
+                expect_value(self, self.k, knock_key, 0.0, "gte", dd)
+            elif knock_type == "str":
+                expect_value(self, self.k, knock_key, 0, "exists", dd)
+
+            expect_disco(self, self.k, "k.rabbitmq.discovery", dd)
 
     @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
     @attr('prov')

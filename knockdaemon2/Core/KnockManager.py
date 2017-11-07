@@ -27,7 +27,6 @@ import logging
 import platform
 import sys
 from collections import OrderedDict
-from datetime import datetime
 from threading import Lock
 from time import time
 
@@ -104,7 +103,7 @@ class KnockManager(object):
         self._exec_greenlet = None
 
         # Transport list
-        self._ar_knock_transport = None
+        self._ar_knock_transport = list()
 
         # Probe list
         self._probe_list = list()
@@ -198,6 +197,7 @@ class KnockManager(object):
 
             # Init transport
             self._init_transport(KnockConfigurationKeys.INI_TRANSPORT_TAG)
+            self._init_transport(KnockConfigurationKeys.INI_TRANSPORT_INFLUX_TAG)
 
             # Init Udp Listener
             self._init_udp_server(KnockConfigurationKeys.INI_UDP_SERVER_TAG)
@@ -276,8 +276,19 @@ class KnockManager(object):
         :type section_name: str
         """
 
+
+        # Go
+        logger.info("Trying section_name=%s", section_name)
+
+        # Check we can load
+        if section_name not in self._config_parser:
+            logger.info("Bypassing transport due to non section_name _config_parser, section_name=%s", section_name)
+            return
+        elif KnockConfigurationKeys.INI_PROBE_CLASS not in self._config_parser[section_name]:
+            logger.info("Bypassing transport due to non class_name in section_action=%s", section_name)
+            return
+
         # Fetch class name and try to allocate
-        logger.debug("Trying section_name=%s", section_name)
         class_name = self._config_parser[section_name][KnockConfigurationKeys.INI_PROBE_CLASS]
 
         # Try alloc
@@ -292,7 +303,7 @@ class KnockManager(object):
         t.init_from_config(self._config_parser, section_name, auto_start=self.auto_start)
 
         # Ok, register it
-        self._ar_knock_transport = [t]
+        self._ar_knock_transport.append(t)
         logger.info("Transport registered, t=%s", t)
 
     # noinspection PyMethodMayBeStatic
@@ -616,9 +627,6 @@ class KnockManager(object):
         # Stat
         Meters.aii("knock_stat_notify_value")
 
-        # Fix up value for Superv
-        counter_value = self._to_superv_value(counter_value)
-
         # Sort
         if d_disco_id_tag:
             dd = OrderedDict(sorted(d_disco_id_tag.items(), key=lambda t: t[0]))
@@ -675,11 +683,11 @@ class KnockManager(object):
                 self._superv_notify_value_list)
             if not b:
                 if len(self._ar_knock_transport) == 1:
-                    # Only only one transport, do not clear the hashes
+                    # Only only one transport and failed, do not clear the hashes
                     logger.info("Got false from process_notify and only one transport, will not empty the hashes, t=%s", t)
                     clear_hash = False
                 else:
-                    # Several transport, we clear
+                    # Several transport, we clear in call cases
                     logger.warn("Got false from process_notify and multi transport, will empty the hashes, t=%s", t)
 
         # We reset if required
@@ -703,26 +711,6 @@ class KnockManager(object):
     # ==============================
     # TOOLS
     # ==============================
-
-    # noinspection PyMethodMayBeStatic
-    def _to_superv_value(self, v):
-        """
-        Convert a value suitable for Superv
-        :param v: value to convert
-        :return: value updated
-        """
-
-        if isinstance(v, float):
-            return str(v).upper()
-        elif isinstance(v, bool):
-            if v:
-                return 1
-            else:
-                return 0
-        elif isinstance(v, datetime):
-            return int(v.strftime('%s'))
-        else:
-            return v
 
     # noinspection PyMethodMayBeStatic
     def _need_exec_compute_next_start_ms(self, p, c):
