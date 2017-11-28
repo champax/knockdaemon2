@@ -36,7 +36,9 @@ class KnockTransport(object):
         """
         Constructor
         """
-        pass
+
+        # Meters prefix
+        self.meters_prefix = ""
 
     def init_from_config(self, d_yaml_config, d, auto_start=True):
         """
