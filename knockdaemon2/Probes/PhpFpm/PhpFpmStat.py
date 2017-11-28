@@ -142,7 +142,6 @@ class PhpFpmStat(KnockProbe):
 
         # Base
         KnockProbe.init_from_config(self, k, d_yaml_config, d)
-        
 
         # Load config
         # url0 = pool_name|uri

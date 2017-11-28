@@ -183,7 +183,7 @@ class TestUdp(unittest.TestCase):
 
         # Init manager
         self.k = KnockManager(self.manager_config_file, auto_start=start_manager)
-        self.k.get_transport_by_type(HttpAsyncTransport)._http_send_min_interval_ms = 5000
+        self.k.get_first_transport_by_type(HttpAsyncTransport)._http_send_min_interval_ms = 5000
 
         # Keep only one item (easier to test)
         self.k._probe_list.pop()
@@ -375,10 +375,10 @@ class TestUdp(unittest.TestCase):
         while SolBase.msdiff(ms_start) < 2500:
             # Check
             if (
-                                    Meters.aig("knock_stat_udp_recv") >= 1 and
-                                    Meters.aig("knock_stat_udp_recv_counter") == 1 and
-                                Meters.aig("knock_stat_udp_recv_gauge") == 1 and
-                            Meters.aig("knock_stat_udp_recv_dtc") == 1
+                Meters.aig("knock_stat_udp_recv") >= 1 and
+                Meters.aig("knock_stat_udp_recv_counter") == 1 and
+                Meters.aig("knock_stat_udp_recv_gauge") == 1 and
+                Meters.aig("knock_stat_udp_recv_dtc") == 1
             ):
                 # Ok
                 break

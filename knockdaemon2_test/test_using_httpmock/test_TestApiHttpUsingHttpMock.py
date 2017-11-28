@@ -33,7 +33,6 @@ from nose.plugins.attrib import attr
 from pysolbase.SolBase import SolBase
 from pysolhttpclient.Http.HttpClient import HttpClient
 from pysolhttpclient.Http.HttpRequest import HttpRequest
-from pysolhttpclient.Http.HttpResponse import HttpResponse
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.HttpMock.HttpMock import HttpMock

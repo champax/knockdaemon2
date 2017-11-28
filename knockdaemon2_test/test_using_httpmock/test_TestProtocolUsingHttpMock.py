@@ -147,7 +147,10 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
 
         # Init manager
         self.k = KnockManager(self.manager_config_file)
-        self.k.get_transport_by_type(HttpAsyncTransport)._http_send_min_interval_ms = 5000
+        self.k.get_first_transport_by_type(HttpAsyncTransport)._http_send_min_interval_ms = 5000
+
+        # Meters prefix, first transport
+        self.ft_meters_prefix = self.k.get_first_meters_prefix_by_type(HttpAsyncTransport)
 
         # Keep only one item (easier to test)
         self.k._probe_list.pop()
@@ -180,7 +183,7 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
                     ok = False
 
             # Transport
-            if Meters.aig("knock_stat_transport_ok_count") < 2:
+            if Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count") < 2:
                 ok = False
 
             # Check
@@ -216,10 +219,10 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
         self.assertEqual(len(self.k._superv_notify_value_list), 0)
 
         # Check transport
-        self.assertGreaterEqual(Meters.aig("knock_stat_transport_call_count"), 1)
-        self.assertGreaterEqual(Meters.aig("knock_stat_transport_ok_count"), 1)
-        self.assertEqual(Meters.aig("knock_stat_transport_exception_count"), 0)
-        self.assertEqual(Meters.aig("knock_stat_transport_failed_count"), 0)
+        self.assertGreaterEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_call_count"), 1)
+        self.assertGreaterEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count"), 1)
+        self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_exception_count"), 0)
+        self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_failed_count"), 0)
 
         # Over
         self._stop_all()
@@ -245,7 +248,7 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
                     ok = False
 
             # Transport
-            if Meters.aig("knock_stat_transport_ok_count") < 2:
+            if Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count") < 2:
                 ok = False
 
             # Check
@@ -281,10 +284,10 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
         self.assertEqual(len(self.k._superv_notify_value_list), 0)
 
         # Check transport
-        self.assertGreaterEqual(Meters.aig("knock_stat_transport_call_count"), 1)
-        self.assertGreaterEqual(Meters.aig("knock_stat_transport_ok_count"), 1)
-        self.assertEqual(Meters.aig("knock_stat_transport_exception_count"), 0)
-        self.assertEqual(Meters.aig("knock_stat_transport_failed_count"), 0)
+        self.assertGreaterEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_call_count"), 1)
+        self.assertGreaterEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count"), 1)
+        self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_exception_count"), 0)
+        self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_failed_count"), 0)
 
         # Over
         self._stop_all()

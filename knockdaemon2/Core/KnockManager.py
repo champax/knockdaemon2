@@ -27,7 +27,8 @@ import logging
 import platform
 import sys
 from collections import OrderedDict
-from threading import Lock
+from greenlet import GreenletExit
+from threading import Lock, Event
 from time import time
 
 import gevent
@@ -91,6 +92,14 @@ class KnockManager(object):
 
         # Auto
         self.auto_start = auto_start
+
+        # Lifecycle
+        self._lifecycle_greenlet = None
+        self._lifecycle_exit = Event()
+
+        # Lifecycle interval
+        self._lifecycle_last_ms = SolBase.mscurrent()
+        self._lifecycle_interval_ms = 5000
 
         # File name
         self._config_file_name = config_file_name
@@ -166,11 +175,49 @@ class KnockManager(object):
                 cur_d = yaml.load(yml_file)
 
             logger.info("Merging cur_d=%s", cur_d)
-            d_conf.update(cur_d)
+
+            # update will replace existing keys, this is not what we want...
+            d_conf = self.dict_merge(d_conf, cur_d)
 
         # Ok
         logger.info("Got effective d_conf=%s", d_conf)
         return d_conf
+
+    @classmethod
+    def dict_merge(cls, d1, d2):
+        """
+        Merge dict, without loosing existing values in d1
+        :param d1: dict (destination)
+        :type d1: dict
+        :param d2: dict (values to be added)
+        :type d2: dict
+        :return: dict
+        :rtype dict
+        """
+
+        assert isinstance(d1, dict), "need a dict"
+        assert isinstance(d2, dict), "need a dict"
+
+        for cur_k, cur_v in d2.iteritems():
+            if cur_k in d1:
+                # Need both dict to merge, otherwise d2 wins
+                if not isinstance(cur_v, dict) or not isinstance(d1[cur_k], dict):
+                    d1[cur_k] = cur_v
+                    continue
+
+                rec_d1 = d1[cur_k]
+                rec_d2 = d2[cur_k]
+                rec_merged = cls.dict_merge(rec_d1, rec_d2)
+                d1[cur_k] = rec_merged
+            else:
+                # Just assign
+                d1[cur_k] = cur_v
+
+        return d1
+
+
+
+
 
     def _init_from_config(self):
         """
@@ -179,6 +226,7 @@ class KnockManager(object):
 
         try:
             # Init
+            logger.info("Init now")
             self._d_yaml_config = self._init_config_yaml()
 
             # Init us
@@ -194,6 +242,14 @@ class KnockManager(object):
             # Check them
             assert len(self._account_hash["acc_namespace"]) > 0, "Invalid acc_namespace"
             assert len(self._account_hash["acc_key"]) > 0, "Invalid acc_key"
+
+            # Lifecycle
+            try:
+                self._lifecycle_interval_ms = self._d_yaml_config["knockd"]["lifecycle_interval_ms"]
+            except KeyError:
+                logger.info("Key lifecycle_interval_ms not present, using default=%s", self._lifecycle_interval_ms)
+
+            logger.info("_lifecycle_interval_ms=%s", self._lifecycle_interval_ms)
 
             # Init transport
             for k, d in self._d_yaml_config["transports"].iteritems():
@@ -351,6 +407,12 @@ class KnockManager(object):
                 # Start logs
                 lifecyclelogger.info("Start : _exectimeout_ms=%s", self._exectimeout_ms)
 
+                # Signal
+                self._is_running = True
+
+                # Start lifecycle
+                self.lifecycle_start()
+
                 # Schedule next write now
                 ms_to_next_execute = self._get_next_dynamic_exec_ms()
                 logger.info("Initial scheduling, ms_to_next_execute=%s", ms_to_next_execute)
@@ -358,8 +420,6 @@ class KnockManager(object):
                     ms_to_next_execute, self._on_scheduled_exec
                 )
 
-                # Signal
-                self._is_running = True
                 lifecyclelogger.info("Start : started")
             except Exception as e:
                 logger.error("Exception, e=%s", SolBase.extostr(e))
@@ -375,6 +435,10 @@ class KnockManager(object):
         with self._locker:
             try:
                 lifecyclelogger.info("Stop : stopping")
+
+                # Kill lifecycle
+                self.lifecycle_stop()
+
                 # Kill the greenlet
                 if self._exec_greenlet:
                     logger.info("_exec_greenlet.kill")
@@ -691,7 +755,7 @@ class KnockManager(object):
             self._superv_notify_disco_hash = dict()
             self._superv_notify_value_list = list()
 
-    def get_transport_by_type(self, transport_class):
+    def get_first_transport_by_type(self, transport_class):
         """
         Get transport by type
         :param transport_class: transport class to match
@@ -703,6 +767,16 @@ class KnockManager(object):
             if isinstance(t, transport_class):
                 return t
         raise Exception("Transport not found, transport_class={0}".format(transport_class))
+
+    def get_first_meters_prefix_by_type(self, transport_class):
+        """
+        Get transport meter prefix by type
+        :param transport_class: transport class to match
+        :return: str
+        :rtype str
+        """
+
+        return self.get_first_transport_by_type(transport_class).meters_prefix
 
     # ==============================
     # TOOLS
@@ -821,3 +895,149 @@ class KnockManager(object):
         if key not in self._hash_context:
             self._hash_context[key] = KnockProbeContext()
         return self._hash_context[key]
+
+    # =====================================
+    # LIFECYCLE
+    # =====================================
+
+    def lifecycle_start(self):
+        """
+        Start
+        """
+
+        # Signal
+        logger.info("Lifecycle greenlet : starting")
+
+        # Check
+        if self._lifecycle_greenlet:
+            logger.warn("_lifecycle_greenlet already set, doing nothing")
+            return
+
+        # Fire
+        self._lifecycle_exit.clear()
+        self._lifecycle_greenlet = gevent.spawn(self.lifecycle_run)
+        SolBase.sleep(0)
+        logger.info("Lifecycle greenlet : started")
+
+    def lifecycle_stop(self):
+        """
+        Stop
+        """
+
+        # Signal
+        logger.info("Lifecycle greenlet : stopping, self=%s", id(self))
+        self._is_running = False
+
+        # Check
+        if not self._lifecycle_greenlet:
+            logger.warn("_lifecycle_greenlet not set, doing nothing")
+            return
+
+        # Kill
+        logger.info("_lifecycle_greenlet.kill")
+        self._lifecycle_greenlet.kill()
+        SolBase.sleep(0)
+        logger.info("_lifecycle_greenlet.kill done")
+        # gevent.kill(self._lifecycle_greenlet)
+        self._lifecycle_greenlet = None
+
+        # Wait for completion
+        logger.info("Lifecycle greenlet : waiting")
+        SolBase.sleep(0)
+        self._lifecycle_exit.wait()
+        SolBase.sleep(0)
+        logger.info("Lifecycle greenlet : stopped")
+
+    def lifecycle_run(self):
+        """
+        Run
+        """
+        try:
+            logger.info("Entering loop")
+            while self._is_running:
+                try:
+                    # Check
+                    if SolBase.msdiff(self._lifecycle_last_ms) < self._lifecycle_interval_ms:
+                        SolBase.sleep(100)
+                        continue
+
+                    # Set
+                    self._lifecycle_last_ms = SolBase.mscurrent()
+
+                    # Flush stuff
+                    Meters.write_to_logger()
+
+                    # ---------------------
+                    # Loop over transports
+                    # ---------------------
+                    for cur_transport in self._ar_knock_transport:
+
+                        # noinspection PyProtectedMember
+                        lifecyclelogger.info(
+                            "Running, %s, "
+                            "q.cur/max/di=%s/%s/%s, "
+                            "pbuf.pend/limit=%s/%s, "
+                            "pbuf.last/max=%s/%s, "
+                            "wbuf.last/max=%s/%s, "
+                            "wms.last/max=%s/%s, "
+                            "http.count:ok/ex/fail=%s:%s/%s/%s, "
+                            "s.ok/ko=%s/%s, "
+                            "t=%s",
+                            cur_transport.meters_prefix,
+                            cur_transport._queue_to_send.qsize(),
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_queue_max_size"),
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_queue_discard"),
+
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_buffer_pending_length"),
+                            cur_transport._http_send_max_bytes,
+
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_buffer_last_length"),
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_buffer_max_length"),
+
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_wire_last_length"),
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_wire_max_length"),
+
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_wire_last_ms"),
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_wire_max_ms"),
+
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_call_count"),
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_ok_count"),
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_exception_count"),
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_failed_count"),
+
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_client_spv_processed"),
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_client_spv_failed"),
+                            id(cur_transport),
+                        )
+
+                    # UDP
+                    lifecyclelogger.info(
+                        "Running, UDP, "
+                        "recv.count:C/G/DTC=%s:%s/%s/%s, "
+                        "recv.unk/ex=%s/%s, "
+                        "notif.count/ex=%s/%s, "
+                        "self=%s",
+                        Meters.aig("knock_stat_udp_recv"),
+                        Meters.aig("knock_stat_udp_recv_counter"),
+                        Meters.aig("knock_stat_udp_recv_gauge"),
+                        Meters.aig("knock_stat_udp_recv_dtc"),
+                        Meters.aig("knock_stat_udp_recv_unknown"),
+                        Meters.aig("knock_stat_udp_recv_ex"),
+                        Meters.aig("knock_stat_udp_notify_run"),
+                        Meters.aig("knock_stat_udp_notify_run_ex"),
+                        id(self),
+                    )
+
+                except GreenletExit:
+                    logger.info("GreenletExit in loop2")
+                    self._lifecycle_exit.set()
+                    return
+                except Exception as e:
+                    logger.warn("Exception in loop2=%s", SolBase.extostr(e))
+        except GreenletExit:
+            logger.info("GreenletExit in loop1")
+            self._lifecycle_exit.set()
+        finally:
+            logger.info("Exiting loop")
+            self._lifecycle_exit.set()
+            SolBase.sleep(0)

@@ -1,5 +1,7 @@
 knockd:
   exectimeout_ms: 5000
+  lifecycle_interval_ms: 6
+
 
 transports:
   HttpAsyncTransport:
@@ -9,8 +11,6 @@ transports:
     http_send_min_interval_ms: 30000
     # Http max bytes : 128K
     http_send_max_bytes: 131072
-    # Lifecycle interval : 30 sec
-    lifecycle_interval_ms: 30000
 
 probes:
   # ============================

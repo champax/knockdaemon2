@@ -1015,9 +1015,9 @@ class HttpMock(object):
             raise
         finally:
             # required for unittest
-            Meters.aii("knock_stat_transport_spv_processed", r_ok)
-            Meters.aii("knock_stat_transport_spv_failed", r_ko)
-            Meters.aii("knock_stat_transport_spv_total", r_ok + r_ko)
+            Meters.aii("httpasync_" + "knock_stat_transport_spv_processed", r_ok)
+            Meters.aii("httpasync_" + "knock_stat_transport_spv_failed", r_ko)
+            Meters.aii("httpasync_" + "knock_stat_transport_spv_total", r_ok + r_ko)
             return r_is_ok, r_ok, r_ko
 
     # noinspection PyMethodMayBeStatic
@@ -1200,7 +1200,7 @@ class HttpMock(object):
             raise
         finally:
             # required for unittest
-            Meters.aii("knock_stat_transport_spv_processed", r_ok)
-            Meters.aii("knock_stat_transport_spv_failed", r_ko)
-            Meters.aii("knock_stat_transport_spv_total", r_ok + r_ko)
+            Meters.aii("httpasync_" + "knock_stat_transport_spv_processed", r_ok)
+            Meters.aii("httpasync_" + "knock_stat_transport_spv_failed", r_ko)
+            Meters.aii("httpasync_" + "knock_stat_transport_spv_total", r_ok + r_ko)
             return r_is_ok, r_ok, r_ko

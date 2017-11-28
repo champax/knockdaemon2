@@ -117,22 +117,20 @@ class TestInfluxLch(unittest.TestCase):
         > CREATE USER admin WITH PASSWORD [REDACTED] WITH ALL PRIVILEGES
         """
 
-        d_body = {"points":
-            [
-                {
-                    "measurement": "cpu_load_short_line",
-                    "tags": {"host": "server01", "region": "us-west"},
-                    "time": "2010-11-10T23:00:00Z",
-                    "fields": {"value": 0.64}
-                },
-                {
-                    "measurement": "cpu_load_short_line",
-                    "tags": {"host": "server01", "region": "us-west"},
-                    "time": "2012-11-10T23:00:00Z",
-                    "fields": {"value": 0.65}
-                }
-            ]
-        }
+        d_body = {"points": [
+            {
+                "measurement": "cpu_load_short_line",
+                "tags": {"host": "server01", "region": "us-west"},
+                "time": "2010-11-10T23:00:00Z",
+                "fields": {"value": 0.64}
+            },
+            {
+                "measurement": "cpu_load_short_line",
+                "tags": {"host": "server01", "region": "us-west"},
+                "time": "2012-11-10T23:00:00Z",
+                "fields": {"value": 0.65}
+            }
+        ]}
 
         client = InfluxDBClient(host='127.0.0.1', port=8286, username='admin', password='duchmol', database='zzz2', retries=0, )
 
@@ -178,7 +176,5 @@ class TestInfluxLch(unittest.TestCase):
                 self.assertEqual(v, d_influx["tags"][k])
             for k, v in cur_opt_tags.iteritems():
                 self.assertEqual(v, d_influx["tags"][k])
-
-
 
                 # TODO : Check multiple diso : k.dns.resolv

@@ -29,7 +29,6 @@ from greenlet import GreenletExit
 
 import gevent
 import os
-from gevent.event import Event
 from gevent.queue import Queue, Empty
 from gevent.threading import Lock
 from pysolbase.SolBase import SolBase
@@ -87,24 +86,19 @@ class HttpAsyncTransport(KnockTransport):
         # Timeout ms
         self._http_network_timeout_ms = 60000
 
-        # Lifecycle interval
-        self._lifecycle_interval_ms = 5000
-
         # Zip on
         self._zip_enabled = True
 
         # Run
         self._is_running = False
         self._greenlet = None
-        self._lifecycle_greenlet = None
         self._dt_last_send = SolBase.datecurrent()
-        self._lifecycle_exit = Event()
 
         # Http client instance
         self.http_client = HttpClient()
 
-        # Log tag
-        self.log_tag = " HttpAsynch "
+        # Meters prefix
+        self.meters_prefix = "httpasync_"
 
         # To rewrite
         self.load_http_uri = True
@@ -149,11 +143,6 @@ class HttpAsyncTransport(KnockTransport):
             logger.debug("Key http_send_bypass_wait_ms not present, using default, d=%s", d)
 
         try:
-            self._lifecycle_interval_ms = d["lifecycle_interval_ms"]
-        except KeyError:
-            logger.debug("Key lifecycle_interval_ms not present, using default, d=%s", d)
-
-        try:
             self._zip_enabled = d["zip_enabled"]
         except KeyError:
             logger.debug("Key zip_enabled not present, using default, d=%s", d)
@@ -167,13 +156,11 @@ class HttpAsyncTransport(KnockTransport):
         lifecyclelogger.info("_http_send_min_interval_ms=%s", self._http_send_min_interval_ms)
         lifecyclelogger.info("_http_send_max_bytes=%s", self._http_send_max_bytes)
         lifecyclelogger.info("_http_send_bypass_wait_ms=%s", self._http_send_bypass_wait_ms)
-        lifecyclelogger.info("_lifecycle_interval_ms=%s", self._lifecycle_interval_ms)
         lifecyclelogger.info("_zip_enabled=%s", self._zip_enabled)
 
         # Start
         if auto_start:
             self.greenlet_start()
-            self.lifecycle_start()
 
     def _check_and_fix_limits(self):
         """
@@ -239,7 +226,7 @@ class HttpAsyncTransport(KnockTransport):
             # Too much, kick
             logger.warn("Max queue reached, discarding older item")
             self._queue_to_send.get(block=True)
-            Meters.aii("knock_stat_transport_queue_discard")
+            Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard")
         elif self._queue_to_send.qsize() == 0:
             # We were empty, we add a new one.
             # To avoid firing http asap, override last send date now
@@ -250,10 +237,10 @@ class HttpAsyncTransport(KnockTransport):
         self._queue_to_send.put(buf)
 
         # Max queue size
-        Meters.ai("knock_stat_transport_queue_max_size").set(
+        Meters.ai(self.meters_prefix + "knock_stat_transport_queue_max_size").set(
             max(
                 self._queue_to_send.qsize(),
-                Meters.aig("knock_stat_transport_queue_max_size")
+                Meters.aig(self.meters_prefix + "knock_stat_transport_queue_max_size")
             )
         )
 
@@ -271,7 +258,7 @@ class HttpAsyncTransport(KnockTransport):
 
         ms = SolBase.mscurrent()
         try:
-            Meters.aii("knock_stat_transport_call_count")
+            Meters.aii(self.meters_prefix + "knock_stat_transport_call_count")
 
             # Data
             logger.debug("Buf length=%s", len(buf))
@@ -284,21 +271,21 @@ class HttpAsyncTransport(KnockTransport):
                 buf_to_send = buf
 
             # Stats (non zip)
-            Meters.ai("knock_stat_transport_buffer_last_length").set(len(buf))
+            Meters.ai(self.meters_prefix + "knock_stat_transport_buffer_last_length").set(len(buf))
 
-            Meters.ai("knock_stat_transport_buffer_max_length").set(
+            Meters.ai(self.meters_prefix + "knock_stat_transport_buffer_max_length").set(
                 max(
-                    Meters.aig("knock_stat_transport_buffer_last_length"),
-                    Meters.aig("knock_stat_transport_buffer_max_length"),
+                    Meters.aig(self.meters_prefix + "knock_stat_transport_buffer_last_length"),
+                    Meters.aig(self.meters_prefix + "knock_stat_transport_buffer_max_length"),
                 )
             )
 
             # Stats (zip)
-            Meters.ai("knock_stat_transport_wire_last_length").set(len(buf_to_send))
-            Meters.ai("knock_stat_transport_wire_max_length").set(
+            Meters.ai(self.meters_prefix + "knock_stat_transport_wire_last_length").set(len(buf_to_send))
+            Meters.ai(self.meters_prefix + "knock_stat_transport_wire_max_length").set(
                 max(
-                    Meters.aig("knock_stat_transport_wire_last_length"),
-                    Meters.aig("knock_stat_transport_wire_max_length"),
+                    Meters.aig(self.meters_prefix + "knock_stat_transport_wire_last_length"),
+                    Meters.aig(self.meters_prefix + "knock_stat_transport_wire_max_length"),
                 )
             )
 
@@ -353,79 +340,36 @@ class HttpAsyncTransport(KnockTransport):
                     logger.info("HTTP OK, req.buf.len/zip=%s/%s", len(buf), len(buf_to_send))
 
                     # Stats
-                    Meters.aii("knock_stat_transport_ok_count")
+                    Meters.aii(self.meters_prefix + "knock_stat_transport_ok_count")
 
                     # Stats
                     ok_count = rd["sp"]["ok"]
                     ko_count = rd["sp"]["ko"]
-                    Meters.aii("knock_stat_transport_client_spv_processed", ok_count)
-                    Meters.aii("knock_stat_transport_client_spv_failed", ko_count)
+                    Meters.aii(self.meters_prefix + "knock_stat_transport_client_spv_processed", ok_count)
+                    Meters.aii(self.meters_prefix + "knock_stat_transport_client_spv_failed", ko_count)
                     return True
                 else:
                     logger.warn("HTTP HS, r=%s", hresp)
-                    Meters.aii("knock_stat_transport_failed_count")
+                    Meters.aii(self.meters_prefix + "knock_stat_transport_failed_count")
             else:
                 logger.warn("HTTP KO, uri=%s, r=%s", self.http_uri, hresp)
-                Meters.aii("knock_stat_transport_failed_count")
-
-            #
-            #
-            # # ------------------------
-            # # Http post / OLD CODE
-            # # ------------------------
-            #
-            # url = URL(self.http_uri)
-            # http = HTTPClient.from_url(url, concurrency=10,
-            #                            network_timeout=self._http_network_timeout_ms / 1000)
-            # response = http.post(url.request_uri, buf_to_send)
-            #
-            # # Check
-            # if response.status_code == 200:
-            #     # Get post data
-            #     pd = response.read()
-            #     # Try zip
-            #     try:
-            #         pd = pd.decode("zlib")
-            #     except Exception as ex:
-            #         logger.debug("Unable to decode zlib, should be a normal buffer, ex=%s",
-            #                      SolBase.extostr(ex))
-            #     # Load
-            #     rd = ujson.loads(pd)
-            #     logger.debug("Http reply=%s", rd)
-            #     if "st" in rd and rd["st"] == 200:
-            #         logger.info("HTTP OK, req.buf.len/zip=%s/%s", len(buf), len(buf_to_send))
-            #
-            #         # Stats
-            #         Meters.aii("knock_stat_transport_ok_count")
-            #
-            #         # Stats
-            #         ok_count = rd["sp"]["ok"]
-            #         ko_count = rd["sp"]["ko"]
-            #         Meters.aii("knock_stat_transport_client_spv_processed", ok_count)
-            #         Meters.aii("knock_stat_transport_client_spv_failed", ko_count)
-            #         return True
-            #     else:
-            #         logger.warn("HTTP HS, r=%s", response)
-            #         Meters.aii("knock_stat_transport_failed_count")
-            # else:
-            #     logger.warn("HTTP KO, uri=%s, r=%s", self.http_uri, response)
-            #     Meters.aii("knock_stat_transport_failed_count")
+                Meters.aii(self.meters_prefix + "knock_stat_transport_failed_count")
 
             return False
         except Exception as e:
             logger.warn("Ex=%s", SolBase.extostr(e))
-            Meters.aii("knock_stat_transport_exception_count")
+            Meters.aii(self.meters_prefix + "knock_stat_transport_exception_count")
 
             # Here, HTTP not ok
             return False
         finally:
             ms_elapsed = int(SolBase.msdiff(ms))
-            Meters.dtci("knock_stat_transport_dtc", ms_elapsed)
-            Meters.ai("knock_stat_transport_wire_last_ms").set(ms_elapsed)
-            Meters.ai("knock_stat_transport_wire_max_ms").set(
+            Meters.dtci(self.meters_prefix + "knock_stat_transport_dtc", ms_elapsed)
+            Meters.ai(self.meters_prefix + "knock_stat_transport_wire_last_ms").set(ms_elapsed)
+            Meters.ai(self.meters_prefix + "knock_stat_transport_wire_max_ms").set(
                 max(
-                    Meters.aig("knock_stat_transport_wire_last_ms"),
-                    Meters.aig("knock_stat_transport_wire_max_ms"),
+                    Meters.aig(self.meters_prefix + "knock_stat_transport_wire_last_ms"),
+                    Meters.aig(self.meters_prefix + "knock_stat_transport_wire_max_ms"),
                 )
             )
 
@@ -554,7 +498,7 @@ class HttpAsyncTransport(KnockTransport):
             logger.debug("Extracted for send, ms=%s, len=%s, bytes=%s", SolBase.msdiff(ms_extract), len(buf_pending_array), buf_pending_length)
 
             # Stats
-            Meters.ai("knock_stat_transport_buffer_pending_length").set(buf_pending_length)
+            Meters.ai(self.meters_prefix + "knock_stat_transport_buffer_pending_length").set(buf_pending_length)
 
             # -------------------
             # DETECT WHAT TO DO
@@ -642,7 +586,7 @@ class HttpAsyncTransport(KnockTransport):
             return retry_fast
         finally:
             self._http_pending = False
-            Meters.ai("knock_stat_transport_buffer_pending_length").set(0)
+            Meters.ai(self.meters_prefix + "knock_stat_transport_buffer_pending_length").set(0)
 
     def greenlet_run(self):
         """
@@ -690,138 +634,5 @@ class HttpAsyncTransport(KnockTransport):
 
         # Stop
         self.greenlet_stop()
-        self.lifecycle_stop()
 
-    # =====================================
-    # LIFECYCLE
-    # =====================================
 
-    def lifecycle_start(self):
-        """
-        Start
-        """
-
-        with self._locker:
-            # Signal
-            logger.info("Lifecycle greenlet : starting")
-
-            # Check
-            if self._lifecycle_greenlet:
-                logger.warn("_lifecycle_greenlet already set, doing nothing")
-                return
-
-            # Fire
-            self._lifecycle_exit.clear()
-            self._lifecycle_greenlet = gevent.spawn(self.lifecycle_run)
-            logger.info("Lifecycle greenlet : started")
-
-    def lifecycle_stop(self):
-        """
-        Stop
-        """
-
-        with self._locker:
-            # Signal
-            logger.info("Lifecycle greenlet : stopping, self=%s", id(self))
-            self._is_running = False
-
-            # Check
-            if not self._lifecycle_greenlet:
-                logger.warn("_lifecycle_greenlet not set, doing nothing")
-                return
-
-            # Kill
-            logger.info("_lifecycle_greenlet.kill")
-            self._lifecycle_greenlet.kill()
-            SolBase.sleep(0)
-            logger.info("_lifecycle_greenlet.kill done")
-            # gevent.kill(self._lifecycle_greenlet)
-            self._lifecycle_greenlet = None
-
-            # Wait for completion
-            logger.info("Lifecycle greenlet : waiting")
-            SolBase.sleep(0)
-            self._lifecycle_exit.wait()
-            logger.info("Lifecycle greenlet : stopped")
-
-    def lifecycle_run(self):
-        """
-        Run
-        """
-        try:
-            logger.info("Entering loop")
-            while self._is_running:
-                try:
-                    # Flush stuff
-                    Meters.write_to_logger()
-
-                    lifecyclelogger.info(
-                        "Running, HTTP, "
-                        "q.cur/max/di=%s/%s/%s, "
-                        "pbuf.pend/limit=%s/%s, "
-                        "pbuf.last/max=%s/%s, "
-                        "wbuf.last/max=%s/%s, "
-                        "wms.last/max=%s/%s, "
-                        "http.count:ok/ex/fail=%s:%s/%s/%s, "
-                        "s.ok/ko=%s/%s, "
-                        "self=%s",
-                        self._queue_to_send.qsize(),
-                        Meters.aig("knock_stat_transport_queue_max_size"),
-                        Meters.aig("knock_stat_transport_queue_discard"),
-
-                        Meters.aig("knock_stat_transport_buffer_pending_length"),
-                        self._http_send_max_bytes,
-
-                        Meters.aig("knock_stat_transport_buffer_last_length"),
-                        Meters.aig("knock_stat_transport_buffer_max_length"),
-
-                        Meters.aig("knock_stat_transport_wire_last_length"),
-                        Meters.aig("knock_stat_transport_wire_max_length"),
-
-                        Meters.aig("knock_stat_transport_wire_last_ms"),
-                        Meters.aig("knock_stat_transport_wire_max_ms"),
-
-                        Meters.aig("knock_stat_transport_call_count"),
-                        Meters.aig("knock_stat_transport_ok_count"),
-                        Meters.aig("knock_stat_transport_exception_count"),
-                        Meters.aig("knock_stat_transport_failed_count"),
-
-                        Meters.aig("knock_stat_transport_client_spv_processed"),
-                        Meters.aig("knock_stat_transport_client_spv_failed"),
-                        id(self),
-                    )
-
-                    # Integrate UDP here, dirty but easier
-                    # We don't have access to KnockManager, and so don't have access to UDP server to flush out "_dict*" members #TODO : Additional UDP status logs
-                    lifecyclelogger.info(
-                        "Running, UDP, "
-                        "recv.count:C/G/DTC=%s:%s/%s/%s, "
-                        "recv.unk/ex=%s/%s, "
-                        "notif.count/ex=%s/%s, "
-                        "self=%s",
-                        Meters.aig("knock_stat_udp_recv"),
-                        Meters.aig("knock_stat_udp_recv_counter"),
-                        Meters.aig("knock_stat_udp_recv_gauge"),
-                        Meters.aig("knock_stat_udp_recv_dtc"),
-                        Meters.aig("knock_stat_udp_recv_unknown"),
-                        Meters.aig("knock_stat_udp_recv_ex"),
-                        Meters.aig("knock_stat_udp_notify_run"),
-                        Meters.aig("knock_stat_udp_notify_run_ex"),
-                        id(self),
-                    )
-
-                    SolBase.sleep(self._lifecycle_interval_ms)
-                except GreenletExit:
-                    logger.debug("GreenletExit in loop2")
-                    return
-                except Exception as e:
-                    logger.warn("Exception in loop2=%s", SolBase.extostr(e))
-                    if self._is_running:
-                        SolBase.sleep(self._lifecycle_interval_ms)
-                    continue
-        except GreenletExit:
-            logger.debug("GreenletExit in loop1")
-        finally:
-            logger.info("Exiting loop")
-            self._lifecycle_exit.set()
-            SolBase.sleep(0)

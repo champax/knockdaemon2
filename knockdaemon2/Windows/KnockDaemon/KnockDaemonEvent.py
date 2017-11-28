@@ -69,10 +69,10 @@ class KnockDaemonEvent(object):
 
             # Get transport
             # noinspection PyProtectedMember
-            for t in k._ar_knock_transport:
+            for cur_transport in k._ar_knock_transport:
                 # noinspection PyProtectedMember
                 http_buf = \
-                    "Running, HTTP, " \
+                    "Running, %s, " \
                     "q.cur/max/di=%s/%s/%s, " \
                     "pbuf.pend/limit=%s/%s, " \
                     "pbuf.last/max=%s/%s, " \
@@ -82,37 +82,37 @@ class KnockDaemonEvent(object):
                     "s.ok/ko=%s/%s, " \
                     "self=%s" % \
                     (
-                        t._queue_to_send.qsize(),
-                        Meters.aig("knock_stat_transport_queue_max_size"),
-                        Meters.aig("knock_stat_transport_queue_discard"),
+                        cur_transport.meters_prefix,
+                        cur_transport._queue_to_send.qsize(),
+                        Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_queue_max_size"),
+                        Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_queue_discard"),
 
-                        Meters.aig("knock_stat_transport_buffer_pending_length"),
-                        t._http_send_max_bytes,
+                        Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_buffer_pending_length"),
+                        cur_transport._http_send_max_bytes,
 
-                        Meters.aig("knock_stat_transport_buffer_last_length"),
-                        Meters.aig("knock_stat_transport_buffer_max_length"),
+                        Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_buffer_last_length"),
+                        Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_buffer_max_length"),
 
-                        Meters.aig("knock_stat_transport_wire_last_length"),
-                        Meters.aig("knock_stat_transport_wire_max_length"),
+                        Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_wire_last_length"),
+                        Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_wire_max_length"),
 
-                        Meters.aig("knock_stat_transport_wire_last_ms"),
-                        Meters.aig("knock_stat_transport_wire_max_ms"),
+                        Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_wire_last_ms"),
+                        Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_wire_max_ms"),
 
-                        Meters.aig("knock_stat_transport_call_count"),
-                        Meters.aig("knock_stat_transport_ok_count"),
-                        Meters.aig("knock_stat_transport_exception_count"),
-                        Meters.aig("knock_stat_transport_failed_count"),
+                        Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_call_count"),
+                        Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_ok_count"),
+                        Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_exception_count"),
+                        Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_failed_count"),
 
-                        Meters.aig("knock_stat_transport_client_spv_processed"),
-                        Meters.aig("knock_stat_transport_client_spv_failed"),
-                        id(t),
+                        Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_client_spv_processed"),
+                        Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_client_spv_failed"),
+                        id(cur_transport),
                     )
 
                 # Report
                 cls._report_event(win32evtlog.EVENTLOG_INFORMATION_TYPE, "Lifecycle", "", caller, [http_buf, ])
 
-            # Integrate UDP here, dirty but easier
-            # We don't have access to KnockManager, and so don't have access to UDP server to flush out "_dict*" members #TODO : Additional UDP status logs
+            # UDP
             udp_buf = \
                 "Running, UDP, " \
                 "recv.count:C/G/DTC=%s:%s/%s/%s, " \

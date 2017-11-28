@@ -214,6 +214,42 @@ class TestBasic(unittest.TestCase):
         # Finish
         self.k = None
 
+    def test_dict_merge(self):
+        """
+        Test
+        """
+
+        d1 = {
+            "knockd": {
+                "toto": "totov",
+                "tutu": "tutuv",
+                "zzz": {
+                    "xxx": "xxxv",
+                    "yyy": "yyyv"
+                }
+            }
+        }
+
+        d2 = {
+            "knockd": {
+                "tutu": "123",
+                "zzz": {
+                    "yyy": "456",
+                    "new": "newv"
+
+                },
+                "ttt": "999"
+            }
+        }
+
+        d1 = KnockManager.dict_merge(d1, d2)
+        self.assertEqual(d1["knockd"]["toto"], "totov")
+        self.assertEqual(d1["knockd"]["tutu"], "123")
+        self.assertEqual(d1["knockd"]["zzz"]["xxx"], "xxxv")
+        self.assertEqual(d1["knockd"]["zzz"]["yyy"], "456")
+        self.assertEqual(d1["knockd"]["zzz"]["new"], "newv")
+        self.assertEqual(d1["knockd"]["ttt"], "999")
+
     @unittest.skipIf(PTools.is_cpu_arm(), "disabled for arm (lagging)")
     def test_exec_basic(self):
         """
@@ -531,12 +567,12 @@ class TestBasic(unittest.TestCase):
         expect_value(self, self.k, "test.dummy.error", 2, "eq", {"TYPE": "two"}, target_count=3)
 
         # Validate node hash
-        self.assertEqual(self.k.get_transport_by_type(TestTransport).node_hash["host"], SolBase.get_machine_name())
+        self.assertEqual(self.k.get_first_transport_by_type(TestTransport).node_hash["host"], SolBase.get_machine_name())
 
         # Validate transport notify
-        self.assertEqual(self.k.get_transport_by_type(TestTransport).notify_call_count, 3)
-        self.assertEqual(self.k._superv_notify_disco_hash, self.k.get_transport_by_type(TestTransport).notify_hash)
-        self.assertEqual(self.k._superv_notify_value_list, self.k.get_transport_by_type(TestTransport).notify_values)
+        self.assertEqual(self.k.get_first_transport_by_type(TestTransport).notify_call_count, 3)
+        self.assertEqual(self.k._superv_notify_disco_hash, self.k.get_first_transport_by_type(TestTransport).notify_hash)
+        self.assertEqual(self.k._superv_notify_value_list, self.k.get_first_transport_by_type(TestTransport).notify_values)
 
         # Over
         self.k = None

@@ -58,7 +58,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         HttpAsyncTransport.__init__(self)
 
         # Override
-        self.log_tag = "InfluxAsynch"
+        self.meters_prefix = "influxasync_"
         self.load_http_uri = False
 
     def init_from_config(self, d_yaml_config, d, auto_start=True):
@@ -82,6 +82,9 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         self._influx_password = d["influx_password"]
         self._influx_database = d["influx_database"]
 
+        # Override meter prefix
+        self.meters_prefix = "influxasync_" + self._influx_host + "_" + str(self._influx_port) + "_"
+
         lifecyclelogger.info("_influx_host=%s", self._influx_host)
         lifecyclelogger.info("_influx_port=%s", self._influx_port)
         lifecyclelogger.info("_influx_login=%s", self._influx_login)
@@ -91,7 +94,6 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         # Autostart hack : finish him
         if auto_start:
             self.greenlet_start()
-            self.lifecycle_start()
 
     def process_notify(self, account_hash, node_hash, notify_hash, notify_values):
         """
@@ -150,7 +152,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
             # Too much, kick
             logger.warn("Max queue reached, discarding older item")
             self._queue_to_send.get(block=True)
-            Meters.aii("knock_stat_transport_queue_discard")
+            Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard")
         elif self._queue_to_send.qsize() == 0:
             # We were empty, we add a new one.
             # To avoid firing http asap, override last send date now
@@ -161,7 +163,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         self._queue_to_send.put(buf)
 
         # Max queue size
-        Meters.ai("knock_stat_transport_queue_max_size").set(max(self._queue_to_send.qsize(), Meters.aig("knock_stat_transport_queue_max_size")))
+        Meters.ai(self.meters_prefix + "knock_stat_transport_queue_max_size").set(max(self._queue_to_send.qsize(), Meters.aig(self.meters_prefix + "knock_stat_transport_queue_max_size")))
 
         # Done
         return True
@@ -210,7 +212,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
             logger.debug("Extracted for send, ms=%s, len=%s, bytes=%s", SolBase.msdiff(ms_extract), len(buf_pending_array), buf_pending_length)
 
             # Stats
-            Meters.ai("knock_stat_transport_buffer_pending_length").set(buf_pending_length)
+            Meters.ai(self.meters_prefix + "knock_stat_transport_buffer_pending_length").set(buf_pending_length)
 
             # -------------------
             # DETECT WHAT TO DO
@@ -294,7 +296,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
             return retry_fast
         finally:
             self._http_pending = False
-            Meters.ai("knock_stat_transport_buffer_pending_length").set(0)
+            Meters.ai(self.meters_prefix + "knock_stat_transport_buffer_pending_length").set(0)
 
     def _send_to_http_influx(self, ar_lines, total_len):
         """
@@ -309,7 +311,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
 
         ms = SolBase.mscurrent()
         try:
-            Meters.aii("knock_stat_transport_call_count")
+            Meters.aii(self.meters_prefix + "knock_stat_transport_call_count")
 
             # A) Client
             client = InfluxDBClient(
@@ -340,49 +342,49 @@ class InfluxAsyncTransport(HttpAsyncTransport):
             assert ri, "write_points returned false, ar_lines={0}".format(repr(ar_lines))
 
             # Stats (non zip)
-            Meters.ai("knock_stat_transport_buffer_last_length").set(total_len)
-            Meters.ai("knock_stat_transport_buffer_max_length").set(
+            Meters.ai(self.meters_prefix + "knock_stat_transport_buffer_last_length").set(total_len)
+            Meters.ai(self.meters_prefix + "knock_stat_transport_buffer_max_length").set(
                 max(
-                    Meters.aig("knock_stat_transport_buffer_last_length"),
-                    Meters.aig("knock_stat_transport_buffer_max_length"),
+                    Meters.aig(self.meters_prefix + "knock_stat_transport_buffer_last_length"),
+                    Meters.aig(self.meters_prefix + "knock_stat_transport_buffer_max_length"),
                 )
             )
 
             # Stats (zip) [do not apply, we hack]
-            Meters.ai("knock_stat_transport_wire_last_length").set(total_len)
-            Meters.ai("knock_stat_transport_wire_max_length").set(
+            Meters.ai(self.meters_prefix + "knock_stat_transport_wire_last_length").set(total_len)
+            Meters.ai(self.meters_prefix + "knock_stat_transport_wire_max_length").set(
                 max(
-                    Meters.aig("knock_stat_transport_wire_last_length"),
-                    Meters.aig("knock_stat_transport_wire_max_length"),
+                    Meters.aig(self.meters_prefix + "knock_stat_transport_wire_last_length"),
+                    Meters.aig(self.meters_prefix + "knock_stat_transport_wire_max_length"),
                 )
             )
 
             # Stats
-            Meters.aii("knock_stat_transport_ok_count")
+            Meters.aii(self.meters_prefix + "knock_stat_transport_ok_count")
 
             # Stats (we have no return from Influx client....)
             # We hack (may be slow and may be non accurate due to last \n)
             spv_processed = 0
             for cur_buf in ar_lines:
                 spv_processed += cur_buf.count("\n")
-            Meters.aii("knock_stat_transport_client_spv_processed", spv_processed)
+            Meters.aii(self.meters_prefix + "knock_stat_transport_client_spv_processed", spv_processed)
 
             return True
 
         except Exception as e:
             logger.warn("Ex=%s", SolBase.extostr(e))
-            Meters.aii("knock_stat_transport_exception_count")
+            Meters.aii(self.meters_prefix + "knock_stat_transport_exception_count")
 
             # Here, HTTP not ok
             return False
         finally:
             ms_elapsed = int(SolBase.msdiff(ms))
-            Meters.dtci("knock_stat_transport_dtc", ms_elapsed)
-            Meters.ai("knock_stat_transport_wire_last_ms").set(ms_elapsed)
-            Meters.ai("knock_stat_transport_wire_max_ms").set(
+            Meters.dtci(self.meters_prefix + "knock_stat_transport_dtc", ms_elapsed)
+            Meters.ai(self.meters_prefix + "knock_stat_transport_wire_last_ms").set(ms_elapsed)
+            Meters.ai(self.meters_prefix + "knock_stat_transport_wire_max_ms").set(
                 max(
-                    Meters.aig("knock_stat_transport_wire_last_ms"),
-                    Meters.aig("knock_stat_transport_wire_max_ms"),
+                    Meters.aig(self.meters_prefix + "knock_stat_transport_wire_last_ms"),
+                    Meters.aig(self.meters_prefix + "knock_stat_transport_wire_max_ms"),
                 )
             )
 

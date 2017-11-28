@@ -135,7 +135,10 @@ class TestRealUsingHttpMock(unittest.TestCase):
 
         # Init manager
         self.k = KnockManager(self.manager_config_file)
-        self.k.get_transport_by_type(HttpAsyncTransport)._http_send_min_interval_ms = 5000
+        self.k.get_first_transport_by_type(HttpAsyncTransport)._http_send_min_interval_ms = 5000
+
+        # Meters prefix, first transport
+        self.ft_meters_prefix = self.k.get_first_meters_prefix_by_type(HttpAsyncTransport)
 
         # Start
         self.k.start()
@@ -153,8 +156,8 @@ class TestRealUsingHttpMock(unittest.TestCase):
         ms_start = SolBase.mscurrent()
         while SolBase.msdiff(ms_start) < timeout_ms:
             # Transport
-            if Meters.aig("knock_stat_transport_ok_count") >= 2 \
-                    and not self.k.get_transport_by_type(HttpAsyncTransport)._http_pending:
+            if Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count") >= 2 \
+                    and not self.k.get_first_transport_by_type(HttpAsyncTransport)._http_pending:
                 break
 
             SolBase.sleep(50)
@@ -185,8 +188,8 @@ class TestRealUsingHttpMock(unittest.TestCase):
         self.assertEqual(len(self.k._superv_notify_value_list), 0)
 
         # Validate to superv (critical)
-        self.assertGreater(Meters.aig("knock_stat_transport_spv_processed"), 0)
-        self.assertGreater(Meters.aig("knock_stat_transport_spv_total"), 0)
+        self.assertGreater(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed"), 0)
+        self.assertGreater(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_total"), 0)
 
         self.k = None
 

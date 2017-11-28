@@ -204,8 +204,11 @@ class TestRealAll(unittest.TestCase):
         self._start_all()
         self.h._paranoid_enabled = True
         self.k._probe_list = list()
-        self.k.get_transport_by_type(HttpAsyncTransport)._http_send_min_interval_ms = 1000
-        self.k.get_transport_by_type(HttpAsyncTransport)._http_network_timeout_ms = 60000
+        self.k.get_first_transport_by_type(HttpAsyncTransport)._http_send_min_interval_ms = 1000
+        self.k.get_first_transport_by_type(HttpAsyncTransport)._http_network_timeout_ms = 60000
+
+        # Meters prefix, first transport
+        self.ft_meters_prefix = self.k.get_first_meters_prefix_by_type(HttpAsyncTransport)
 
         # Init our probes
         i_count = 0
@@ -245,14 +248,14 @@ class TestRealAll(unittest.TestCase):
             timeout_ms = timeout_ms
             ms_start = SolBase.mscurrent()
             while SolBase.msdiff(ms_start) < timeout_ms:
-                if self.k.get_transport_by_type(HttpAsyncTransport)._queue_to_send.qsize() == 0 \
-                        and not self.k.get_transport_by_type(HttpAsyncTransport)._http_pending:
+                if self.k.get_first_transport_by_type(HttpAsyncTransport)._queue_to_send.qsize() == 0 \
+                        and not self.k.get_first_transport_by_type(HttpAsyncTransport)._http_pending:
                     break
                 else:
                     SolBase.sleep(100)
 
             # If we got at least disco_count + 1 ok, we are fine
-            processed_ok = Meters.aig("knock_stat_transport_spv_processed")
+            processed_ok = Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed")
             if processed_ok > disco_count:
                 logger.info(
                     "Success, having=%s, target=%s, delay=%s",
@@ -269,11 +272,11 @@ class TestRealAll(unittest.TestCase):
                 disco_count + 1
             )
 
-        self.assertGreaterEqual(Meters.aig("knock_stat_transport_ok_count"), 1)
-        self.assertEqual(Meters.aig("knock_stat_transport_exception_count"), 0)
-        self.assertEqual(Meters.aig("knock_stat_transport_failed_count"), 0)
-        self.assertEqual(self.k.get_transport_by_type(HttpAsyncTransport)._queue_to_send.qsize(), 0)
-        self.assertFalse(self.k.get_transport_by_type(HttpAsyncTransport)._http_pending)
+        self.assertGreaterEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count"), 1)
+        self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_exception_count"), 0)
+        self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_failed_count"), 0)
+        self.assertEqual(self.k.get_first_transport_by_type(HttpAsyncTransport)._queue_to_send.qsize(), 0)
+        self.assertFalse(self.k.get_first_transport_by_type(HttpAsyncTransport)._http_pending)
 
         # Ok, here.... let's play... we reset ALL counters
         logger.info("***** EXEC PASS TWO")
@@ -288,29 +291,29 @@ class TestRealAll(unittest.TestCase):
         timeout_ms = timeout_ms
         ms_start = SolBase.mscurrent()
         while SolBase.msdiff(ms_start) < timeout_ms:
-            if Meters.aig("knock_stat_transport_ok_count") == 1 \
-                    and self.k.get_transport_by_type(HttpAsyncTransport)._queue_to_send.qsize() == 0 \
-                    and not self.k.get_transport_by_type(HttpAsyncTransport)._http_pending:
+            if Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count") == 1 \
+                    and self.k.get_first_transport_by_type(HttpAsyncTransport)._queue_to_send.qsize() == 0 \
+                    and not self.k.get_first_transport_by_type(HttpAsyncTransport)._http_pending:
                 break
             else:
                 SolBase.sleep(100)
 
         # Validate the stuff
-        self.assertEqual(Meters.aig("knock_stat_transport_ok_count"), 1)
-        self.assertEqual(Meters.aig("knock_stat_transport_exception_count"), 0)
-        self.assertEqual(Meters.aig("knock_stat_transport_failed_count"), 0)
-        self.assertEqual(self.k.get_transport_by_type(HttpAsyncTransport)._queue_to_send.qsize(), 0)
-        self.assertFalse(self.k.get_transport_by_type(HttpAsyncTransport)._http_pending)
-        self.assertGreaterEqual(Meters.aig("knock_stat_transport_spv_processed"), 1)
-        self.assertEqual(Meters.aig("knock_stat_transport_spv_failed"), 0)
+        self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count"), 1)
+        self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_exception_count"), 0)
+        self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_failed_count"), 0)
+        self.assertEqual(self.k.get_first_transport_by_type(HttpAsyncTransport)._queue_to_send.qsize(), 0)
+        self.assertFalse(self.k.get_first_transport_by_type(HttpAsyncTransport)._http_pending)
+        self.assertGreaterEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed"), 1)
+        self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_failed"), 0)
         self.assertEqual(
-            Meters.aig("knock_stat_transport_spv_total"),
-            Meters.aig("knock_stat_transport_spv_processed"))
+            Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_total"),
+            Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed"))
 
         self.assertGreaterEqual(
-            Meters.aig("knock_stat_transport_spv_processed"),
-            Meters.aig("knock_stat_notify_simple_value") +
-            Meters.aig("knock_stat_notify_value")
+            Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed"),
+            Meters.aig(self.ft_meters_prefix + "knock_stat_notify_simple_value") +
+            Meters.aig(self.ft_meters_prefix + "knock_stat_notify_value")
         )
 
         logger.info("***** SUCCESS PASS TWO")

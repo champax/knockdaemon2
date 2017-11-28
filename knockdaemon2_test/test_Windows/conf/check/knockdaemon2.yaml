@@ -1,5 +1,6 @@
 knockd:
   exectimeout_ms: 1000
+  lifecycle_interval_ms: 6
 
 transports:
   HttpAsyncTransport:
@@ -10,4 +11,3 @@ transports:
     http_send_min_interval_ms: 3
     http_send_max_bytes: 4
     http_send_bypass_wait_ms: 5
-    lifecycle_interval_ms: 6
