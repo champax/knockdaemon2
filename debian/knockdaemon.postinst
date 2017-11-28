@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Avoid a failing "python2.7 -m compileall /usr/share/python/ "
+# Avoid a failing "python2.7 -m compileall /opt/knock/ "
 echo "postinst: pass 1"
-if [ -f /usr/share/python/knockdaemon2/lib/python2.7/site-packages/gevent/_socket3.py ]
+if [ -f /opt/knock/knockdaemon2/lib/python2.7/site-packages/gevent/_socket3.py ]
 then
-    rm -f /usr/share/python/knockdaemon2/lib/python2.7/site-packages/gevent/_socket3.py
+    rm -f /opt/knock/knockdaemon2/lib/python2.7/site-packages/gevent/_socket3.py
 fi
 echo "postinst: pass 1 complete"
 

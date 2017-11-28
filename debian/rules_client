@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 
 # Fix dh-virtualenv 1.0 install in /opt/venvs
-export DH_VIRTUALENV_INSTALL_ROOT=/opt/knock/knockdaemon2/
+export DH_VIRTUALENV_INSTALL_ROOT=/opt/knock/
 
 
 %:

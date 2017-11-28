@@ -1,1 +1,1 @@
-/usr/share/python/knockdaemon2/bin/knockautoupdate    /usr/local/sbin/knockautoupdate
+/opt/knock/knockdaemon2/bin/knockautoupdate    /usr/local/sbin/knockautoupdate

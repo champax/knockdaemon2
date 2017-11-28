@@ -26,7 +26,7 @@ import logging
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.KnockManager import KnockManager
-# CMD : /usr/share/python/knockdaemon2/bin/python /usr/share/python/knockdaemon2/bin/knockdaemon2
+# CMD : /opt/knock/knockdaemon2/bin/python /opt/knock/knockdaemon2/bin/knockdaemon2
 # -pidfile=/var/run/knockdaemon2.pid -stderr=/var/log/knockdaemon2.err -stdout=/var/log/knockdaemon2.log -maxopenfiles=4096
 # -user=root
 # -c=/etc/knock/knockdaemon2/knockdaemon2.yaml start

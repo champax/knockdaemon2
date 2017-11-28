@@ -53,11 +53,11 @@
       },
       {
         "src": "redhat/libpython2.7.so.1.0",
-        "dest": "/usr/share/python/knockdaemon2/bin/libpython2.7.so.1.0"
+        "dest": "/opt/knock/knockdaemon2/bin/libpython2.7.so.1.0"
       },
       {
         "src": "redhat/lib/",
-        "dest": "/usr/share/python/knockdaemon2/lib/python2.7/"
+        "dest": "/opt/knock/knockdaemon2/lib/python2.7/"
       },
       {
         "src": "redhat/knockdaemon2.logrotate",
