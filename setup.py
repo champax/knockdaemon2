@@ -76,7 +76,7 @@ def entry_point_resolv():
     ep = {
         'console_scripts': [
             'knockdaemon2 = knockdaemon2.Daemon.knockdaemon2:run',
-            'knockautoupdate = knockdaemon2.Cron.AutoUpdate:cron'
+            'knockautoupdate2 = knockdaemon2.Cron.AutoUpdate:cron'
         ]
     }
 
