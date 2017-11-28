@@ -38,19 +38,3 @@ class P2(KnockProbe):
 
         KnockProbe.__init__(self)
         self.p2 = True
-
-
-# noinspection PyAbstractClass
-class P2A(P2):
-    """
-    A Knock executable probe.
-    You have to implement "execute" at higher level.
-    """
-
-    def __init__(self):
-        """
-        Constructor
-        """
-
-        P2.__init__(self)
-        self.p2a = True

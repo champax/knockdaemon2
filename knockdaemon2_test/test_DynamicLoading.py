@@ -33,6 +33,8 @@ from os.path import dirname, abspath
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 
+from knockdaemon2.Core.KnockProbe import KnockProbe
+
 SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
 
@@ -96,5 +98,32 @@ class TestDynamicLoading(unittest.TestCase):
             cur_module = importlib.import_module(module_name)
             # Browse
             for name, obj in inspect.getmembers(cur_module):
+                logger.debug("checking, name=%s", name)
                 if inspect.isclass(obj):
-                    logger.info("class_name=%s, name=%s, obj=%s, type=%s", module_name, name, obj, SolBase.get_classname(obj))
+                    logger.debug("module_name=%s, name=%s, obj=%s, cn=%s", module_name, name, obj, SolBase.get_classname(obj))
+                    # Bypass raw
+                    if obj == KnockProbe:
+                        continue
+                    # Check inheritance
+                    if issubclass(obj, KnockProbe):
+                        logger.info("Detected KnockProbe, module_name=%s, name=%s, obj=%s, cn=%s", module_name, name, obj, SolBase.get_classname(obj))
+
+                        # Mro (may be usefull later on when we will support multiple derivation in a single .py)
+                        mro = inspect.getmro(obj)
+                        logger.info("mro=%s", mro)
+
+                        # Try to allocate
+                        i_obj = obj()
+                        logger.info("Allocated, i_obj=%s", i_obj)
+
+                        # Check both
+                        if name == "P1":
+                            self.assertIn("c=P1", str(i_obj))
+                            # noinspection PyUnresolvedReferences
+                            self.assertTrue(i_obj.p1)
+                        elif name == "P2":
+                            self.assertIn("c=P2", str(i_obj))
+                            # noinspection PyUnresolvedReferences
+                            self.assertTrue(i_obj.p2)
+                        else:
+                            self.fail("Failed, need P1 or P2")
