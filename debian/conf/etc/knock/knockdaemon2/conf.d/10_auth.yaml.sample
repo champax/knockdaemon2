@@ -1,0 +1,3 @@
+knockd:
+    acc_namespace: User_namespace
+    acc_key: namespace_api_key

@@ -233,11 +233,18 @@ class KnockManager(object):
             if "exectimeout_ms" in self._d_yaml_config["knockd"]:
                 self._exectimeout_ms = self._d_yaml_config["knockd"]["exectimeout_ms"]
 
-            # Account
-            self._account_hash["acc_namespace"] = self._d_yaml_config["knockd"]["acc_namespace"]
-            self._account_hash["acc_key"] = self._d_yaml_config["knockd"]["acc_key"]
+            # Account for managed instance, which is optional now due to influx support
+            if "acc_namespace" in self._d_yaml_config["knockd"]:
+                self._account_hash["acc_namespace"] = self._d_yaml_config["knockd"]["acc_namespace"]
+                self._account_hash["acc_key"] = self._d_yaml_config["knockd"]["acc_key"]
 
-            logger.info("Account hash=%s", self._account_hash)
+                logger.info("Account hash=%s", self._account_hash)
+            else:
+                logger.warn("No acc_namespace defined in configuration, using default, HttpAsyncTransport will not be able to push datas to remote managed instance")
+                self._account_hash = {
+                    "acc_namespace": "unset",
+                    "acc_key": "unset"
+                }
 
             # Check them
             assert len(self._account_hash["acc_namespace"]) > 0, "Invalid acc_namespace"
