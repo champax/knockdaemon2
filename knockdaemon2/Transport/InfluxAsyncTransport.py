@@ -324,11 +324,14 @@ class InfluxAsyncTransport(HttpAsyncTransport):
 
             # B) Create DB
             if not self._influx_db_created:
-                # Create DB
-                client.create_database(self._influx_database)
-
-                # Assume success
-                self._influx_db_created = True
+                try:
+                    # Create DB
+                    client.create_database(self._influx_database)
+                except Exception as e:
+                    logger.warn("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
+                finally:
+                    # Assume success
+                    self._influx_db_created = True
 
             # Write lines
             try:
