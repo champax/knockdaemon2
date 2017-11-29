@@ -264,6 +264,10 @@ class KnockManager(object):
                 logger.info("Key _probes_d_dir not present, using default=%s", self._probes_d_dir)
             logger.info("_probes_d_dir=%s", self._probes_d_dir)
 
+            # Hack transports
+            if "transports" not in self._d_yaml_config:
+                self._d_yaml_config["transports"] = []
+
             # Init transports
             logger.info("Init transports")
             for k, d in self._d_yaml_config["transports"].iteritems():
