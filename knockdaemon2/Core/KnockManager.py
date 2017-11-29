@@ -996,6 +996,10 @@ class KnockManager(object):
                     # Flush stuff
                     Meters.write_to_logger()
 
+                    # Check transport
+                    if len(self._ar_knock_transport) == 0:
+                        logger.warn("No transport defined, daemon running in noop mode, please configure at least one transport")
+
                     # ---------------------
                     # Loop over transports
                     # ---------------------
