@@ -266,7 +266,7 @@ class KnockManager(object):
 
             # Hack transports
             if "transports" not in self._d_yaml_config:
-                self._d_yaml_config["transports"] = []
+                self._d_yaml_config["transports"] = {}
 
             # Init transports
             logger.info("Init transports")
