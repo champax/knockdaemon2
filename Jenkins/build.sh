@@ -101,6 +101,12 @@ if [ ${OUT} -eq 0 ]; then
         echo "REMOVE *.pyc"
         find -name '*.pyc' -type f -delete
 
+        echo "CUR DIR"
+        pwd
+
+        echo "CHECK *.pyc"
+        find -name '*.pyc'
+
         echo "###### building  package amd64"
         dpkg-buildpackage -b -k790D2DE0 -rfakeroot
     else
