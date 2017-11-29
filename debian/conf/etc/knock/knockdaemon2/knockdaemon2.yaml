@@ -10,7 +10,8 @@ knockd:
   # Lifecycle log interal in ms
   lifecycle_interval_ms: 30000
 
-transports:
+transports: {}
+
   # ============================
   # Managed instance transport
   # - requires knockd acc_namespace and acc_key provided
