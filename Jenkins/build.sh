@@ -98,6 +98,9 @@ if [ ${OUT} -eq 0 ]; then
         export DEBEMAIL="debian@knock.center"
         export DEBFULLNAME="Knock Center (GPG sign package key)"
 
+        echo "REMOVE *.pyc"
+        find -name '*.pyc' -type f -delete
+
         echo "###### building  package amd64"
         dpkg-buildpackage -b -k790D2DE0 -rfakeroot
     else
