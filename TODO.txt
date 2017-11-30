@@ -1,0 +1,5 @@
+# Rename k.hard.cpu.count => k.os.processes.total
+# Rename k.hard.cpu.count.run => k.os.processes.running
+# Rename k.os.users.num => k.os.users.total
+# Rabbit : get message rates (rabbitmqadmin list queues -f long -d 3)
+# Redis : add master_last_io_seconds_ago
