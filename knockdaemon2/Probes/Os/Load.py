@@ -104,7 +104,7 @@ class Load(KnockProbe):
         self.notify_value_n("k.os.cpu.switches", None, int(cpu["ctxt"]))
         self.notify_value_n("k.os.cpu.intr", None, int(cpu["softirqcount"]))
         self.notify_value_n("k.os.boottime", None, int(cpu["btime"]))
-        self.notify_value_n("k.hard.cpu.count.run", None, int(cpu["proc_running"]))
+        self.notify_value_n("k.os.processes.running", None, int(cpu["proc_running"]))
 
         self.notify_value_n("k.os.hostname", None, os.uname()[1])
         self.notify_value_n("k.os.localtime", None, int(time.time()))
@@ -112,7 +112,7 @@ class Load(KnockProbe):
         sysctl = self.get_sysctl()
         self.notify_value_n("k.os.maxfiles", None, int(sysctl["max_open_files"]))
         self.notify_value_n("k.os.maxproc", None, int(sysctl["max_proc"]))
-        self.notify_value_n("k.os.users.num", None, self.get_users_count())
+        self.notify_value_n("k.os.users.connected", None, self.get_users_count())
 
     # noinspection PyMethodMayBeStatic
     def get_sysctl(self):
@@ -409,10 +409,10 @@ class Load(KnockProbe):
             # 'k.os.cpu.switches' 96431364224       # cumulative, Context switches (sum)
             # 'k.os.cpu.intr' 9180015588            # cumulative, Interrupts (sum)
 
-            # 'k.hard.cpu.count[,,run]' 3           # Running process count (cur)
+            # 'k.os.processes.total[,,run]' 3           # Running process count (cur)
             # 'k.os.maxfiles' '1048576'             # Max open files (cur)
             # 'k.os.maxproc' '131072'               # Max process count (cur)
-            # 'k.os.users.num' 1                    # Connected users (cur)
+            # 'k.os.users.connected' 1                    # Connected users (cur)
 
             # ----------------------
             # Boot time and local time
@@ -547,8 +547,8 @@ class Load(KnockProbe):
             # Connected users (cur) => Win32_LogonSession, LogonType == 10
             # ===========================
 
-            d_cpu["k.hard.cpu.count[,,run]"] = d["WQL_RunningThreadCount"]
-            d_cpu["k.os.users.num"] = d["WQL_ConnectedUsers"]
+            d_cpu["k.os.processes.total[,,run]"] = d["WQL_RunningThreadCount"]
+            d_cpu["k.os.users.connected"] = d["WQL_ConnectedUsers"]
 
             # ===========================
             # MISC

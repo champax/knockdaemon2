@@ -372,12 +372,12 @@ class TestProbesDirect(unittest.TestCase):
             expect_value(self, self.k, "k.os.cpu.switches", None, "exists")
             expect_value(self, self.k, "k.os.cpu.intr", None, "exists")
             expect_value(self, self.k, "k.os.boottime", None, "exists")
-            expect_value(self, self.k, "k.hard.cpu.count.run", None, "exists")
+            expect_value(self, self.k, "k.os.processes.running", None, "exists")
             expect_value(self, self.k, "k.os.hostname", None, "exists")
             expect_value(self, self.k, "k.os.localtime", None, "exists")
             expect_value(self, self.k, "k.os.maxfiles", None, "exists")
             expect_value(self, self.k, "k.os.maxproc", None, "exists")
-            expect_value(self, self.k, "k.os.users.num", 0, "gte")
+            expect_value(self, self.k, "k.os.users.connected", 0, "gte")
 
     @unittest.skipIf(RedisStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % RedisStat())
     def test_RedisStat(self):
@@ -612,7 +612,7 @@ class TestProbesDirect(unittest.TestCase):
         # Exec it
         _exec_helper(self, NumberOfProcesses)
 
-        expect_value(self, self.k, "k.hard.cpu.count", 1, "gte")
+        expect_value(self, self.k, "k.os.processes.total", 1, "gte")
 
     @unittest.skipIf(Uptime().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Uptime())
     def test_Uptime(self):

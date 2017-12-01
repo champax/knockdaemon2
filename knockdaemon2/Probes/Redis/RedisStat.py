@@ -79,6 +79,7 @@ class RedisStat(KnockProbe):
 
         # Optional (if not present, link to master is up) (current)
         ("master_link_down_since_seconds", "int", "k.redis.master_link_down_since_seconds", "max"),
+        ("master_last_io_seconds_ago", "int", "k.redis.master_last_io_seconds_ago", "max"),
 
         # Keyspace : special processing (current)
         ("k.redis.db.key_count_with_ttl", "int", "k.redis.db.key_count_with_ttl", "sum"),
@@ -196,6 +197,8 @@ class RedisStat(KnockProbe):
             # 0) fix d_info
             if "master_link_down_since_seconds" not in d_info:
                 d_info["master_link_down_since_seconds"] = 0
+            if "master_last_io_seconds_ago" not in d_info:
+                d_info["master_last_io_seconds_ago"] = 0
 
             # a) dbX special processing : (keys, expires, avg_ttl)
             key_count = 0

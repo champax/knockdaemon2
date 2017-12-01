@@ -56,7 +56,7 @@ class NumberOfProcesses(KnockProbe):
         """
 
         # This is in fact the number of running processes
-        self.notify_value_n("k.hard.cpu.count", None, self._get_process_count())
+        self.notify_value_n("k.os.processes.total", None, self._get_process_count())
 
     def _execute_windows(self):
         """
@@ -71,7 +71,7 @@ class NumberOfProcesses(KnockProbe):
             th_total_count = int(d["WQL_RunningThreadCount"])
             logger.info("Got th_total_count=%s", th_total_count)
 
-            self.notify_value_n("k.hard.cpu.count", None, th_total_count)
+            self.notify_value_n("k.os.processes.total", None, th_total_count)
 
         except Exception as e:
             logger.warn("Ex=%s", SolBase.extostr(e))
