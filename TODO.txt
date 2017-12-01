@@ -1,5 +1,5 @@
 # DONE Rename k.os.processes.total => k.os.processes.total
 # DONE Rename k.os.processes.running => k.os.processes.running
 # DONE Rename k.os.users.connected => k.os.users.connected
-# Rabbit : get message rates (rabbitmqadmin list queues -f long -d 3)
-# Redis : add master_last_io_seconds_ago
+# DONE Rabbit : get message rates (rabbitmqadmin list queues -f long -d 3)
+# DONE Redis : add master_last_io_seconds_ago

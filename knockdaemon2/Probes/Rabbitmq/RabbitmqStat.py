@@ -52,6 +52,10 @@ class RabbitmqStat(KnockProbe):
         ("k.rabbitmq.queue.messages_unacknowledged", "int", "k.rabbitmq.queue.messages_unacknowledged", "sum"),
         ("k.rabbitmq.queue.slave_nodes", "int", "k.rabbitmq.queue.slave_nodes", "sum"),
         ("k.rabbitmq.queue.synchronised_slave_nodes", "int", "k.rabbitmq.queue.synchronised_slave_nodes", "sum"),
+
+        # Rates (copyright NASA?)
+
+
     ]
 
     def __init__(self):
@@ -61,7 +65,7 @@ class RabbitmqStat(KnockProbe):
 
         KnockProbe.__init__(self)
         self._d_aggregate = None
-        self.category = "/nosql/redis"
+        self.category = "/nosql/rabbitmq"
 
     def _execute_windows(self):
         """
@@ -119,7 +123,12 @@ class RabbitmqStat(KnockProbe):
         # ----------------
         # QUEUES
         # ----------------
-        ec, so, se = ButcherTools.invoke("rabbitmqadmin list queues vhost name auto_delete consumers durable idle_since messages message_ready messages_unacknowledged node slave_nodes synchronised_slave_nodes")
+        ec, so, se = ButcherTools.invoke(
+            "rabbitmqadmin list queues vhost name auto_delete consumers durable idle_since messages message_ready messages_unacknowledged node slave_nodes synchronised_slave_nodes "
+            "backing_queue_status.avg_ack_egress_rate backing_queue_status.avg_ack_ingress_rate backing_queue_status.avg_egress_rate backing_queue_status.avg_ingress_rate "
+            "message_stats.ack_details.rate message_stats.confirm_details.rate message_stats.deliver_details.rate message_stats.deliver_get_details.rate message_stats.deliver_no_ack_details.rate "
+            "message_stats.disk_reads_details.rate message_stats.disk_writes_details.rate message_stats.get_details.rate message_stats.get_no_ack_details.rate message_stats.publish_details.rate "
+            "message_stats.publish_in_details.rate message_stats.publish_out_details.rate message_stats.redeliver_details.rate message_stats.return_unroutable_details.rate messages_details.rate messages_ready_details.rate messages_unacknowledged_details.rate reductions_details.rate")
         if ec != 0:
             logger.error("Queues : invoke failed toward rabbitmqadmin (you may have to install it), signaling down, ec=%s, so=%s, se=%s", ec, repr(so), repr(so))
             self.notify_value_n("k.rabbitmq.started", {"PORT": "default"}, 0)
@@ -219,6 +228,30 @@ class RabbitmqStat(KnockProbe):
         d_global["slave_nodes"] = 0
         d_global["synchronised_slave_nodes"] = 0
 
+        # Global dict, rates
+        d_global["backing_queue_status.avg_ack_egress_rate"] = 0.0
+        d_global["backing_queue_status.avg_ack_ingress_rate"] = 0.0
+        d_global["backing_queue_status.avg_egress_rate"] = 0.0
+        d_global["backing_queue_status.avg_ingress_rate"] = 0.0
+        d_global["message_stats.ack_details.rate"] = 0.0
+        d_global["message_stats.confirm_details.rate"] = 0.0
+        d_global["message_stats.deliver_details.rate"] = 0.0
+        d_global["message_stats.deliver_get_details.rate"] = 0.0
+        d_global["message_stats.deliver_no_ack_details.rate"] = 0.0
+        d_global["message_stats.disk_reads_details.rate"] = 0.0
+        d_global["message_stats.disk_writes_details.rate"] = 0.0
+        d_global["message_stats.get_details.rate"] = 0.0
+        d_global["message_stats.get_no_ack_details.rate"] = 0.0
+        d_global["message_stats.publish_details.rate"] = 0.0
+        d_global["message_stats.publish_in_details.rate"] = 0.0
+        d_global["message_stats.publish_out_details.rate"] = 0.0
+        d_global["message_stats.redeliver_details.rate"] = 0.0
+        d_global["message_stats.return_unroutable_details.rate"] = 0.0
+        d_global["messages_details.rate"] = 0.0
+        d_global["messages_ready_details.rate"] = 0.0
+        d_global["messages_unacknowledged_details.rate"] = 0.0
+        d_global["reductions_details.rate"] = 0.0
+
         # Browse
         ar = s.split("\n")
         for cur_line in ar:
@@ -263,6 +296,38 @@ class RabbitmqStat(KnockProbe):
                 d["synchronised_slave_nodes"] = len(v_synchronised_slave_nodes.split(" "))
             else:
                 d["synchronised_slave_nodes"] = 0
+
+            # Rates (to float)
+            ar_tuple = [
+                ("backing_queue_status.avg_ack_egress_rate", 13),
+                ("backing_queue_status.avg_ack_ingress_rate", 14),
+                ("backing_queue_status.avg_egress_rate", 15),
+                ("backing_queue_status.avg_ingress_rate", 16),
+                ("message_stats.ack_details.rate", 17),
+                ("message_stats.confirm_details.rate", 18),
+                ("message_stats.deliver_details.rate", 19),
+                ("message_stats.deliver_get_details.rate", 20),
+                ("message_stats.deliver_no_ack_details.rate", 21),
+                ("message_stats.disk_reads_details.rate", 22),
+                ("message_stats.disk_writes_details.rate", 23),
+                ("message_stats.get_details.rate", 24),
+                ("message_stats.get_no_ack_details.rate", 25),
+                ("message_stats.publish_details.rate", 26),
+                ("message_stats.publish_in_details.rate", 27),
+                ("message_stats.publish_out_details.rate", 28),
+                ("message_stats.redeliver_details.rate", 29),
+                ("message_stats.return_unroutable_details.rate", 30),
+                ("messages_details.rate", 31),
+                ("messages_ready_details.rate", 32),
+                ("messages_unacknowledged_details.rate", 33),
+                ("reductions_details.rate", 34),
+            ]
+            for cur_name, cur_idx in ar_tuple:
+                cur_s = ar_temp[cur_idx].strip()
+                try:
+                    d[cur_name] = float(cur_s)
+                except:
+                    d[cur_name] = 0.0
 
             # Push to global
             for k, v in d.iteritems():
