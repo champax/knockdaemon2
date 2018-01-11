@@ -54,7 +54,6 @@ from knockdaemon2.Probes.Os.CheckDns import CheckDns
 from knockdaemon2.Probes.Os.CheckProcess import CheckProcess
 from knockdaemon2.Probes.Os.DiskSpace import DiskSpace
 from knockdaemon2.Probes.Os.HddStatus import HddStatus
-from knockdaemon2.Probes.Os.IpmiLog import IpmiLog
 from knockdaemon2.Probes.Os.IpvsAdm import IpvsAdm
 from knockdaemon2.Probes.Os.Load import Load
 from knockdaemon2.Probes.Os.Memory import Memory
@@ -463,17 +462,6 @@ class TestProbesDirect(unittest.TestCase):
             expect_value(self, self.k, "k.vfs.dev.io.currentcount", 0, "gte", dd)
             expect_value(self, self.k, "k.vfs.dev.io.totalms", 0, "gte", dd)
 
-    @unittest.skipIf(IpmiLog().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % IpmiLog())
-    def test_IpmiLog(self):
-        """
-        Test
-        """
-
-        # Exec it
-        _exec_helper(self, IpmiLog)
-
-        # TODO : check IpmiLog (need install)
-
     @unittest.skipIf(IpvsAdm().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % IpvsAdm())
     def test_IpvsAdm(self):
         """
@@ -482,8 +470,6 @@ class TestProbesDirect(unittest.TestCase):
 
         # Exec it
         _exec_helper(self, IpvsAdm)
-
-    # TODO : check IpmiLog (need install)
 
     @unittest.skipIf(Memory().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Memory())
     def test_Memory(self):

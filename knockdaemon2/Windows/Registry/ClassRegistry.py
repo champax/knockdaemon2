@@ -36,7 +36,6 @@ from knockdaemon2.Probes.Os.CheckDns import CheckDns
 from knockdaemon2.Probes.Os.CheckProcess import CheckProcess
 from knockdaemon2.Probes.Os.DiskSpace import DiskSpace
 from knockdaemon2.Probes.Os.HddStatus import HddStatus
-from knockdaemon2.Probes.Os.IpmiLog import IpmiLog
 from knockdaemon2.Probes.Os.IpvsAdm import IpvsAdm
 from knockdaemon2.Probes.Os.Load import Load
 from knockdaemon2.Probes.Os.Memory import Memory
@@ -117,7 +116,6 @@ class ClassRegistry(object):
             cls._register(CheckProcess)
             cls._register(DiskSpace)
             cls._register(HddStatus)
-            cls._register(IpmiLog)
             cls._register(IpvsAdm)
             cls._register(Load)
             cls._register(Memory)

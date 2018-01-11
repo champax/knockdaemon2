@@ -73,12 +73,7 @@ probes:
     class_name: knockdaemon2.Probes.Os.HddStatus.HddStatus
     exec_interval_sec: 3600
     exec_enabled: true
-  
-  IpmiLog:
-    class_name: knockdaemon2.Probes.Os.IpmiLog.IpmiLog
-    exec_interval_sec: 600
-    exec_enabled: true
-  
+
   Load:
     class_name: knockdaemon2.Probes.Os.Load.Load
     exec_interval_sec: 60
