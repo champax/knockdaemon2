@@ -243,7 +243,7 @@ class Memory(KnockProbe):
         if swap_total > 0:
             self.notify_value_n("k.os.swap.size.pfree", None, 100.1 * swap_free / swap_total)
         else:
-            self.notify_value_n("k.os.swap.size.pfree", None, 100)
+            self.notify_value_n("k.os.swap.size.pfree", None, 100.0)
         self.notify_value_n("k.os.memory.size.total", None, memory_total)
         self.notify_value_n("k.os.swap.size.total", None, swap_total)
         self.notify_value_n("k.os.memory.size.buffers", None, memory_buffers)
