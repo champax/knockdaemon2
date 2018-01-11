@@ -292,26 +292,67 @@ class BusinessServer(DatagramServer):
 
             # logger.info('Incoming, addr=%s, data=%s', address[0], repr(data))
 
+            # -----------------------------
+            # UDP Protocol V1 :
+            # -----------------------------
+            # json_list = [
+            #     # Counter
+            #     ["counter1", BusinessServer.COUNTER, 2.2],
+            #     # Gauge
+            #     ["gauge1", BusinessServer.GAUGE, 3.3],
+            #     # Dtc
+            #     ["dtc1", BusinessServer.DTC, 1]
+            # ]
+            # -----------------------------
+
+            # -----------------------------
+            # UDP Protocol V2 :
+            # -----------------------------
+            # json_list = [
+            #     [
+            #       counter_key (str),
+            #       d_disco_id_tag (dict str,str or None),
+            #       counter_value (int,float,str),
+            #       epoch (float or None),
+            #       d_opt_tags (dict str,str or None)
+            #     ]
+            # -----------------------------
+
             # Load json
             data_json = ujson.loads(data.strip())
 
             # Process
-            for item, cur_type, value in data_json:
+            for cur_tu in data_json:
                 try:
-                    if cur_type == BusinessServer.COUNTER:
-                        Meters.aii("knock_stat_udp_recv_counter")
-                        self._process_increment(item, value)
-                    elif cur_type == BusinessServer.GAUGE:
-                        Meters.aii("knock_stat_udp_recv_gauge")
-                        self._process_gauge(item, value)
-                    elif cur_type == BusinessServer.DTC:
-                        Meters.aii("knock_stat_udp_recv_dtc")
-                        self._process_dtc(item, value)
+                    if len(cur_tu) == 3:
+                        # -----------------------------
+                        # UDP Protocol V1
+                        # -----------------------------
+                        item, cur_type, value = cur_tu
+                        if cur_type == BusinessServer.COUNTER:
+                            Meters.aii("knock_stat_udp_recv_counter")
+                            self._process_increment(item, value)
+                        elif cur_type == BusinessServer.GAUGE:
+                            Meters.aii("knock_stat_udp_recv_gauge")
+                            self._process_gauge(item, value)
+                        elif cur_type == BusinessServer.DTC:
+                            Meters.aii("knock_stat_udp_recv_dtc")
+                            self._process_dtc(item, value)
+                        else:
+                            Meters.aii("knock_stat_udp_recv_unknown")
+                            logger.warning("Unknown item type, item=%s, cur_type=s%, value=%s", item, cur_type, value)
+                    elif len(cur_tu) == 5:
+                        # -----------------------------
+                        # UDP Protocol V2
+                        # -----------------------------
+                        counter_key, d_disco_id_tag, counter_value, epoch, d_opt_tags = cur_tu
+                        Meters.aii("knock_stat_udp_recv_v2")
+                        self._manager.notify_value_n(counter_key, d_disco_id_tag, counter_value, epoch, d_opt_tags)
                     else:
-                        Meters.aii("knock_stat_udp_recv_unknown")
-                        logger.warn("Unknown item type, item=%s, cur_type=s%, value=%s", item, cur_type, value)
+                        raise Exception("Invalid cur_tu={0}".format(cur_tu))
                 except Exception as e:
-                    logger.warn("Item exception, item=%s, cur_type=s%, value=%s, ex=%s", item, cur_type, value, SolBase.extostr(e))
+                    logger.warning("Item exception, tu=%s, ex=%s", cur_tu, SolBase.extostr(e))
+                    Meters.aii("knock_stat_udp_recv_tu_ex")
 
             # Send back udp
             if self._send_back_udp:
@@ -321,7 +362,7 @@ class BusinessServer(DatagramServer):
             Meters.aii("knock_stat_udp_recv")
         except Exception as e:
             # Log
-            logger.warn('Cant decode, data_len=%s, data=%s, ex=%s', len(data), repr(data), SolBase.extostr(e))
+            logger.warning('Cant decode, data_len=%s, data=%s, ex=%s', len(data), repr(data), SolBase.extostr(e))
 
             # Send back udp
             if self._send_back_udp:
@@ -416,7 +457,8 @@ class BusinessServer(DatagramServer):
         :type value: int|float
         """
         item, value = self._clean_value(item, value)
-        self._dict_gauge[item] = value
+        with self._gauge_lock:
+            self._dict_gauge[item] = value
 
     def _process_dtc(self, item, value):
         """

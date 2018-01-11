@@ -393,6 +393,9 @@ class TestUdp(unittest.TestCase):
         self.assertEqual(Meters.aig("knock_stat_udp_recv_dtc"), 1)
         self.assertEqual(Meters.aig("knock_stat_udp_recv_unknown"), 0)
         self.assertEqual(Meters.aig("knock_stat_udp_recv_ex"), 0)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_v2"), 0)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_tu_ex"), 0)
+
 
         # ----------------------
         # Wait for at least one UDP notify here
@@ -457,6 +460,110 @@ class TestUdp(unittest.TestCase):
 
         # OVER
         self._stop_all()
+
+    def test_udp_basic_send_simple_protocol_v2(self):
+        """
+        Test
+        """
+
+        logger.info("*** GO")
+
+        # We do NOT autostart (we do not want the transport to be started)
+        self._start_all(start_manager=False)
+
+        # Start udp server
+        self.k._udp_server.start()
+
+        # Check
+        self.assertTrue(self.k._udp_server._is_started)
+        self.assertIsNotNone(self.k._udp_server._manager)
+        self.assertIsNotNone(self.k._udp_server._business_server)
+        self.assertTrue(self.k._udp_server._business_server._is_started)
+        self.assertIsNotNone(self.k._udp_server._business_server._manager)
+
+        # Wait for start completion
+        logger.info("*** WAIT")
+        ms_start = SolBase.mscurrent()
+        while SolBase.msdiff(ms_start) < 5000:
+            if self.k._udp_server._business_server.started:
+                break
+            SolBase.sleep(100)
+        self.assertTrue(self.k._udp_server._business_server.started)
+        self.assertIsNotNone(self.k._udp_server._business_server._notify_greenlet)
+
+        # ----------------------
+        # OK, SEND
+        # ----------------------
+
+        udp_client = UdpClient()
+        self._udp_client_connect_helper(udp_client)
+
+        json_list = [
+            ["meters_v2_1", {"TAG1": "tag11", "TAG2": "tag21"}, 1.99, None, {"OPTTAG1": "opttag1"}],
+            ["meters_v2_2", {"TAG1": "tag12", "TAG2": "tag22"}, 2.99, None, {"OPTTAG1": "opttag2"}],
+        ]
+
+        udp_client.send_json(json_list)
+
+        udp_client.disconnect()
+
+        # ----------------------
+        # Wait for recv
+        # ----------------------
+        logger.info("*** WAIT RECV")
+        ms_start = SolBase.mscurrent()
+        while SolBase.msdiff(ms_start) < 2500:
+            # Check
+            if Meters.aig("knock_stat_udp_recv_v2") >= 2:
+                # Ok
+                break
+
+            # Wait
+            SolBase.sleep(100)
+
+        # Check
+        self.assertGreaterEqual(Meters.aig("knock_stat_udp_recv"), 0)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_counter"), 0)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_gauge"), 0)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_dtc"), 0)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_unknown"), 0)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_ex"), 0)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_v2"), 2)
+        self.assertEqual(Meters.aig("knock_stat_udp_recv_tu_ex"), 0)
+
+        # ----------------------
+        # We dont need to wait for notify, since we flush directly to manager when in protocol v2 mode
+        # ----------------------
+
+        logger.info("*** WAIT NOTIFY : USELESS FOR UDP V2")
+
+        # ----------------------
+        # Check transport stuff
+        # ----------------------
+        logger.info("*** CHECK NOTIFY")
+
+        logger.info("ZZZ=%s", self.k._superv_notify_value_list)
+
+        # check 1
+        dd = {"TAG1": "tag11", "TAG2": "tag21"}
+        expect_value(self, self.k, "meters_v2_1", 1.99, "eq", dd, cast_to_float=True)
+
+        # check 2
+        dd = {"TAG1": "tag12", "TAG2": "tag22"}
+        expect_value(self, self.k, "meters_v2_2", 2.99, "eq", dd, cast_to_float=True)
+
+        # ----------------------
+        # SEND OVER
+        # ----------------------
+
+        # Stop
+        logger.info("*** STOP MANAGER")
+        self.k.stop()
+        self.assertIsNone(self.k._udp_server)
+
+        # OVER
+        self._stop_all()
+
 
     def _send_callback(self, b_buf):
         """
