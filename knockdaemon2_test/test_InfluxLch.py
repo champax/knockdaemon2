@@ -37,6 +37,7 @@ SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
 
 
+# noinspection SqlNoDataSourceInspection
 class TestInfluxLch(unittest.TestCase):
     """
     Test description
@@ -213,6 +214,7 @@ class TestInfluxLch(unittest.TestCase):
         > CREATE USER admin WITH PASSWORD [REDACTED] WITH ALL PRIVILEGES
         """
 
+        db_name = "zzz2custom"
         d_body = {"points": [
             {
                 "measurement": "cpu_load_short_line",
@@ -232,15 +234,15 @@ class TestInfluxLch(unittest.TestCase):
         http_client = HttpClient()
 
         # Drop twice
-        http_rep = Tools.influx_drop_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database='zzz2')
+        http_rep = Tools.influx_drop_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, timeout_ms=10000)
         self.assertEqual(http_rep.status_code, 200)
-        http_rep = Tools.influx_drop_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database='zzz2')
+        http_rep = Tools.influx_drop_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, timeout_ms=10000)
         self.assertEqual(http_rep.status_code, 200)
 
         # Create twice
-        http_rep = Tools.influx_create_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database='zzz2')
+        http_rep = Tools.influx_create_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, timeout_ms=10000)
         self.assertEqual(http_rep.status_code, 200)
-        http_rep = Tools.influx_create_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database='zzz2')
+        http_rep = Tools.influx_create_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, timeout_ms=10000)
         self.assertEqual(http_rep.status_code, 200)
 
         # Build lines
@@ -248,13 +250,12 @@ class TestInfluxLch(unittest.TestCase):
         logger.info("line_buf=%s", repr(line_buf))
 
         # Insert
-        http_rep = Tools.influx_write_data(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database='zzz2', data=line_buf)
+        http_rep = Tools.influx_write_data(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, ar_data=[line_buf], timeout_ms=10000)
         self.assertIn(http_rep.status_code, [200, 204])
 
         # Re-read
-        client = InfluxDBClient(host='127.0.0.1', port=8286, username='admin', password='duchmol', database='zzz2', retries=0, )
+        client = InfluxDBClient(host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, retries=0, )
         result = client.query('select value from cpu_load_short_line;')
 
         logger.info("result=%s", result)
         self.assertEqual(len(result), 1)
-

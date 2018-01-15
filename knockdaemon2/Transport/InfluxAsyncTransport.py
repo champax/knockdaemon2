@@ -27,6 +27,7 @@ from gevent.queue import Empty
 from influxdb import InfluxDBClient
 from influxdb.line_protocol import make_lines
 from pysolbase.SolBase import SolBase
+from pysolhttpclient.Http.HttpClient import HttpClient
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.Tools import Tools
@@ -47,6 +48,10 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         Constructor
         """
 
+        self._http_client = HttpClient()
+
+        self._influx_mode = "knock"
+        self._influx_timeout_ms = 30000
         self._influx_host = None
         self._influx_port = None
         self._influx_login = None
@@ -82,9 +87,19 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         self._influx_password = d["influx_password"]
         self._influx_database = d["influx_database"]
 
+        # Mode : "knock" or "influx"
+        self._influx_mode = d.get("_influx_mode", "knock")
+        assert self._influx_mode in ["knock", "influx"], "Invalid _influx_mode={0}, need 'knock' or 'influx'".format(self._influx_mode)
+
+        # Timeout
+        self._influx_timeout_ms = int(d.get("influx_timeout_ms", 30000))
+
         # Override meter prefix
         self.meters_prefix = "influxasync_" + self._influx_host + "_" + str(self._influx_port) + "_"
 
+        # Logs
+        lifecyclelogger.info("_influx_mode=%s", self._influx_mode)
+        lifecyclelogger.info("_influx_timeout_ms=%s", self._influx_timeout_ms)
         lifecyclelogger.info("_influx_host=%s", self._influx_host)
         lifecyclelogger.info("_influx_port=%s", self._influx_port)
         lifecyclelogger.info("_influx_login=%s", self._influx_login)
@@ -313,36 +328,69 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         try:
             Meters.aii(self.meters_prefix + "knock_stat_transport_call_count")
 
-            # A) Client
-            client = InfluxDBClient(
-                host=self._influx_host,
-                port=self._influx_port,
-                username=self._influx_login,
-                password=self._influx_password,
-                database=self._influx_database,
-                retries=0, )
+            if self._influx_mode == "influx":
+                # --------------------
+                # INFLUX CLIENT
+                # --------------------
 
-            # B) Create DB
-            if not self._influx_db_created:
+                # A) Client
+                client = InfluxDBClient(
+                    host=self._influx_host,
+                    port=self._influx_port,
+                    username=self._influx_login,
+                    password=self._influx_password,
+                    database=self._influx_database,
+                    retries=0, )
+
+                # B) Create DB
+                if not self._influx_db_created:
+                    try:
+                        # Create DB
+                        client.create_database(self._influx_database)
+                    except Exception as e:
+                        logger.warn("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
+                    finally:
+                        # Assume success
+                        self._influx_db_created = True
+
+                # Write lines
                 try:
-                    # Create DB
-                    client.create_database(self._influx_database)
-                except Exception as e:
-                    logger.warn("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
+                    ms = SolBase.mscurrent()
+                    logger.info("Push now (influx), ar_lines=%s", ar_lines)
+                    ri = client.write_points(ar_lines, protocol="line")
                 finally:
-                    # Assume success
-                    self._influx_db_created = True
+                    logger.info("Push done (influx), ms=%s", SolBase.msdiff(ms))
 
-            # Write lines
-            try:
-                ms = SolBase.mscurrent()
-                logger.info("Push now, ar_lines=%s", ar_lines)
-                ri = client.write_points(ar_lines, protocol="line")
-            finally:
-                logger.info("Push done, ms=%s", SolBase.msdiff(ms))
+                # Check
+                assert ri, "write_points returned false, ar_lines={0}".format(repr(ar_lines))
+            elif self._influx_mode == "knock":
+                # --------------------
+                # KNOCK CLIENT
+                # --------------------
 
-            # Check
-            assert ri, "write_points returned false, ar_lines={0}".format(repr(ar_lines))
+                # DB
+                if not self._influx_db_created:
+                    try:
+                        http_rep = Tools.influx_create_database(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, timeout_ms=self._influx_timeout_ms)
+                        assert 200 <= http_rep.status_code < 300, "Need http 2xx, got http_req={0}".format(http_rep)
+                    except Exception as e:
+                        logger.warn("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
+                    finally:
+                        # Assume success
+                        self._influx_db_created = True
+
+                # PUSH
+                try:
+                    ms = SolBase.mscurrent()
+                    logger.info("Push now (knock), ar_lines=%s", ar_lines)
+                    http_rep = Tools.influx_write_data(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, ar_data=ar_lines, timeout_ms=self._influx_timeout_ms)
+                    assert 200 <= http_rep.status_code < 300, "Need http 2xx, got http_req={0}".format(http_rep)
+
+                finally:
+                    logger.info("Push done (knock), ms=%s", SolBase.msdiff(ms))
+            else:
+                # Invalid
+                raise Exception("Invalid _influx_mode={0}".format(self._influx_mode))
 
             # Stats (non zip)
             Meters.ai(self.meters_prefix + "knock_stat_transport_buffer_last_length").set(total_len)

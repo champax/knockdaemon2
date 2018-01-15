@@ -134,9 +134,9 @@ class Tools(object):
         }
 
     @classmethod
-    def influx_create_database(cls, http_client, host, port, username, password, database):
+    def influx_create_database(cls, http_client, host, port, username, password, database, timeout_ms):
         """
-        Influx drop database
+        Influx create database
         :param http_client: pysolhttpclient.Http.HttpClient.HttpClient
         :type http_client: pysolhttpclient.Http.HttpClient.HttpClient
         :param host: str
@@ -149,12 +149,17 @@ class Tools(object):
         :type password: str
         :param database: str
         :type database: str
+        :param timeout_ms: int
+        :type timeout_ms: int
         :return pysolhttpclient.Http.HttpResponse.HttpResponse
         :rtype pysolhttpclient.Http.HttpResponse.HttpResponse
         """
 
         # Build request
         http_req = HttpRequest()
+        http_req.general_timeout_ms = timeout_ms
+        http_req.connection_timeout_ms = timeout_ms
+        http_req.network_timeout_ms = timeout_ms
         http_req.headers = {
             "Accept-Encoding": "gzip",
             "Accept": "text / plain",
@@ -183,7 +188,7 @@ class Tools(object):
         return http_rep
 
     @classmethod
-    def influx_drop_database(cls, http_client, host, port, username, password, database):
+    def influx_drop_database(cls, http_client, host, port, username, password, database, timeout_ms):
         """
         Influx drop database
         :param http_client: pysolhttpclient.Http.HttpClient.HttpClient
@@ -198,12 +203,17 @@ class Tools(object):
         :type password: str
         :param database: str
         :type database: str
+        :param timeout_ms: int
+        :type timeout_ms: int
         :return pysolhttpclient.Http.HttpResponse.HttpResponse
         :rtype pysolhttpclient.Http.HttpResponse.HttpResponse
         """
 
         # Build request
         http_req = HttpRequest()
+        http_req.general_timeout_ms = timeout_ms
+        http_req.connection_timeout_ms = timeout_ms
+        http_req.network_timeout_ms = timeout_ms
         http_req.headers = {
             "Accept-Encoding": "gzip",
             "Accept": "text / plain",
@@ -232,7 +242,7 @@ class Tools(object):
         return http_rep
 
     @classmethod
-    def influx_write_data(cls, http_client, host, port, username, password, database, data):
+    def influx_write_data(cls, http_client, host, port, username, password, database, ar_data, timeout_ms):
         """
         Influx drop database
         :param http_client: pysolhttpclient.Http.HttpClient.HttpClient
@@ -247,14 +257,19 @@ class Tools(object):
         :type password: str
         :param database: str
         :type database: str
-        :param data: str, post data, \n terminated (method add another \n)
-        :type data: str
+        :param ar_data: list of str
+        :type ar_data: list
+        :param timeout_ms: int
+        :type timeout_ms: int
         :return pysolhttpclient.Http.HttpResponse.HttpResponse
         :rtype pysolhttpclient.Http.HttpResponse.HttpResponse
         """
 
         # Build request
         http_req = HttpRequest()
+        http_req.general_timeout_ms = timeout_ms
+        http_req.connection_timeout_ms = timeout_ms
+        http_req.network_timeout_ms = timeout_ms
         http_req.headers = {
             "Accept-Encoding": "gzip",
             "Accept": "text / plain",
@@ -270,7 +285,7 @@ class Tools(object):
         s_qs = urlencode(d_qs)
         http_req.uri = "http://{0}:{1}/write?{2}".format(host, port, s_qs)
         http_req.method = "POST"
-        http_req.post_data = data + "\n"
+        http_req.post_data = ('\n'.join(ar_data) + '\n').encode('utf-8')
         assert http_req.post_data.endswith("\n\n"), "Need \n\n ended post_data, got={0}".format(http_req.post_data[:-16])
 
         # Go
