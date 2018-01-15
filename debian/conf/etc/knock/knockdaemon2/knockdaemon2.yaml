@@ -36,6 +36,8 @@ transports: {}
   #  # Send max bytes
   #  http_send_max_bytes: 131072
   #  # Influx connection
+  #  influx_timeout_ms: 20000 (default)
+  #  influx_mode: knock (default)|influx (official client)
   #  influx_host: 127.0.0.1
   #  influx_port: 8086
   #  influx_login: login

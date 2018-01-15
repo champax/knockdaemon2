@@ -51,7 +51,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         self._http_client = HttpClient()
 
         self._influx_mode = "knock"
-        self._influx_timeout_ms = 30000
+        self._influx_timeout_ms = 20000
         self._influx_host = None
         self._influx_port = None
         self._influx_login = None
@@ -88,11 +88,11 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         self._influx_database = d["influx_database"]
 
         # Mode : "knock" or "influx"
-        self._influx_mode = d.get("_influx_mode", "knock")
+        self._influx_mode = d.get("influx_mode", "knock")
         assert self._influx_mode in ["knock", "influx"], "Invalid _influx_mode={0}, need 'knock' or 'influx'".format(self._influx_mode)
 
         # Timeout
-        self._influx_timeout_ms = int(d.get("influx_timeout_ms", 30000))
+        self._influx_timeout_ms = int(d.get("influx_timeout_ms", 20000))
 
         # Override meter prefix
         self.meters_prefix = "influxasync_" + self._influx_host + "_" + str(self._influx_port) + "_"
