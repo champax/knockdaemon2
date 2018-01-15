@@ -23,8 +23,11 @@
 """
 
 import logging
+from base64 import b64encode
+from urllib import urlencode
 
 from pysolbase.SolBase import SolBase
+from pysolhttpclient.Http.HttpRequest import HttpRequest
 
 logger = logging.getLogger(__name__)
 
@@ -113,3 +116,178 @@ class Tools(object):
 
         # Over
         return ar_out
+
+    @classmethod
+    def influx_get_auth_header(cls, username, password):
+        """
+        Get auth header
+        :param username: str
+        :type username: str
+        :param password: str
+        :type password: str
+        :return dict "Authorization" : "Basic ..."
+        :rtype dict
+        """
+
+        return {
+            "Authorization": "Basic " + b64encode(b':'.join((username, password)))
+        }
+
+    @classmethod
+    def influx_create_database(cls, http_client, host, port, username, password, database):
+        """
+        Influx drop database
+        :param http_client: pysolhttpclient.Http.HttpClient.HttpClient
+        :type http_client: pysolhttpclient.Http.HttpClient.HttpClient
+        :param host: str
+        :type host: str
+        :param port: int
+        :type port: int
+        :param username: str
+        :type username: str
+        :param password: str
+        :type password: str
+        :param database: str
+        :type database: str
+        :return pysolhttpclient.Http.HttpResponse.HttpResponse
+        :rtype pysolhttpclient.Http.HttpResponse.HttpResponse
+        """
+
+        # Build request
+        http_req = HttpRequest()
+        http_req.headers = {
+            "Accept-Encoding": "gzip",
+            "Accept": "text / plain",
+            'Content-type': u'application/json'
+        }
+        d_auth = cls.influx_get_auth_header(username, password)
+        http_req.headers.update(d_auth)
+
+        # Need 'http://127.0.0.1:8286/query?q=CREATE+DATABASE+%22zzz2%22&db=zzz2'
+        d_qs = {
+            "q": "CREATE DATABASE " + database,
+            "db": database
+        }
+        s_qs = urlencode(d_qs)
+        http_req.uri = "http://{0}:{1}/query?{2}".format(host, port, s_qs)
+        http_req.method = "POST"
+
+        # Go
+        logger.info("Influx, http go, req=%s", http_req)
+        logger.info("Influx, http go, post_data=%s", repr(http_req.post_data))
+        http_rep = http_client.go_http(http_req)
+
+        # Ok
+        logger.info("Influx, http reply, rep=%s", http_rep)
+        logger.info("Influx, http reply, buf=%s", repr(http_rep.buffer))
+        return http_rep
+
+    @classmethod
+    def influx_drop_database(cls, http_client, host, port, username, password, database):
+        """
+        Influx drop database
+        :param http_client: pysolhttpclient.Http.HttpClient.HttpClient
+        :type http_client: pysolhttpclient.Http.HttpClient.HttpClient
+        :param host: str
+        :type host: str
+        :param port: int
+        :type port: int
+        :param username: str
+        :type username: str
+        :param password: str
+        :type password: str
+        :param database: str
+        :type database: str
+        :return pysolhttpclient.Http.HttpResponse.HttpResponse
+        :rtype pysolhttpclient.Http.HttpResponse.HttpResponse
+        """
+
+        # Build request
+        http_req = HttpRequest()
+        http_req.headers = {
+            "Accept-Encoding": "gzip",
+            "Accept": "text / plain",
+            'Content-type': u'application/json'
+        }
+        d_auth = cls.influx_get_auth_header(username, password)
+        http_req.headers.update(d_auth)
+
+        # Need 'http://127.0.0.1:8286/query?q=DROP+DATABASE+%22zzz2%22&db=zzz2'
+        d_qs = {
+            "q": "DROP DATABASE " + database,
+            "db": database
+        }
+        s_qs = urlencode(d_qs)
+        http_req.uri = "http://{0}:{1}/query?{2}".format(host, port, s_qs)
+        http_req.method = "POST"
+
+        # Go
+        logger.info("Influx, http go, req=%s", http_req)
+        logger.info("Influx, http go, post_data=%s", repr(http_req.post_data))
+        http_rep = http_client.go_http(http_req)
+
+        # Ok
+        logger.info("Influx, http reply, rep=%s", http_rep)
+        logger.info("Influx, http reply, buf=%s", repr(http_rep.buffer))
+        return http_rep
+
+    @classmethod
+    def influx_write_data(cls, http_client, host, port, username, password, database, data):
+        """
+        Influx drop database
+        :param http_client: pysolhttpclient.Http.HttpClient.HttpClient
+        :type http_client: pysolhttpclient.Http.HttpClient.HttpClient
+        :param host: str
+        :type host: str
+        :param port: int
+        :type port: int
+        :param username: str
+        :type username: str
+        :param password: str
+        :type password: str
+        :param database: str
+        :type database: str
+        :param data: str, post data, \n terminated (method add another \n)
+        :type data: str
+        :return pysolhttpclient.Http.HttpResponse.HttpResponse
+        :rtype pysolhttpclient.Http.HttpResponse.HttpResponse
+        """
+
+        # Build request
+        http_req = HttpRequest()
+        http_req.headers = {
+            "Accept-Encoding": "gzip",
+            "Accept": "text / plain",
+            'Content-type': u'application/octet-stream'
+        }
+        d_auth = cls.influx_get_auth_header(username, password)
+        http_req.headers.update(d_auth)
+
+        # Need 'http://127.0.0.1:8286/write?db=zzz2'
+        d_qs = {
+            "db": database
+        }
+        s_qs = urlencode(d_qs)
+        http_req.uri = "http://{0}:{1}/write?{2}".format(host, port, s_qs)
+        http_req.method = "POST"
+        http_req.post_data = data + "\n"
+        assert http_req.post_data.endswith("\n\n"), "Need \n\n ended post_data, got={0}".format(http_req.post_data[:-16])
+
+        # Go
+        logger.info("Influx, http go, req=%s", http_req)
+        logger.info("Influx, http go, post_data=%s", repr(http_req.post_data))
+        http_rep = http_client.go_http(http_req)
+
+        # Ok
+        logger.info("Influx, http reply, rep=%s", http_rep)
+        logger.info("Influx, http reply, buf=%s", repr(http_rep.buffer))
+        return http_rep
+
+
+
+
+
+
+
+
+

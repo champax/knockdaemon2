@@ -396,7 +396,6 @@ class TestUdp(unittest.TestCase):
         self.assertEqual(Meters.aig("knock_stat_udp_recv_v2"), 0)
         self.assertEqual(Meters.aig("knock_stat_udp_recv_tu_ex"), 0)
 
-
         # ----------------------
         # Wait for at least one UDP notify here
         # ----------------------
@@ -563,7 +562,6 @@ class TestUdp(unittest.TestCase):
 
         # OVER
         self._stop_all()
-
 
     def _send_callback(self, b_buf):
         """

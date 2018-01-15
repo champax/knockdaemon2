@@ -324,6 +324,7 @@ class RabbitmqStat(KnockProbe):
             ]
             for cur_name, cur_idx in ar_tuple:
                 cur_s = ar_temp[cur_idx].strip()
+                # noinspection PyBroadException
                 try:
                     d[cur_name] = float(cur_s)
                 except:
