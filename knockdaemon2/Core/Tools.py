@@ -27,6 +27,7 @@ from base64 import b64encode
 from urllib import urlencode
 
 from pysolbase.SolBase import SolBase
+from pysolhttpclient.Http.HttpClient import HttpClient
 from pysolhttpclient.Http.HttpRequest import HttpRequest
 
 logger = logging.getLogger(__name__)
@@ -157,6 +158,7 @@ class Tools(object):
 
         # Build request
         http_req = HttpRequest()
+        http_req.force_http_implementation = HttpClient.HTTP_IMPL_GEVENT
         http_req.general_timeout_ms = timeout_ms
         http_req.connection_timeout_ms = timeout_ms
         http_req.network_timeout_ms = timeout_ms
@@ -211,6 +213,7 @@ class Tools(object):
 
         # Build request
         http_req = HttpRequest()
+        http_req.force_http_implementation = HttpClient.HTTP_IMPL_GEVENT
         http_req.general_timeout_ms = timeout_ms
         http_req.connection_timeout_ms = timeout_ms
         http_req.network_timeout_ms = timeout_ms
@@ -244,7 +247,7 @@ class Tools(object):
     @classmethod
     def influx_write_data(cls, http_client, host, port, username, password, database, ar_data, timeout_ms):
         """
-        Influx drop database
+        Influx write data
         :param http_client: pysolhttpclient.Http.HttpClient.HttpClient
         :type http_client: pysolhttpclient.Http.HttpClient.HttpClient
         :param host: str
@@ -267,6 +270,7 @@ class Tools(object):
 
         # Build request
         http_req = HttpRequest()
+        http_req.force_http_implementation = HttpClient.HTTP_IMPL_GEVENT
         http_req.general_timeout_ms = timeout_ms
         http_req.connection_timeout_ms = timeout_ms
         http_req.network_timeout_ms = timeout_ms
