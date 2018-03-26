@@ -99,6 +99,8 @@ class Load(KnockProbe):
         for key, value in cpu.items():
             if isinstance(value, (long, int, float)):
                 if key not in "total,guest":
+                    if value < 0:
+                        value = 0
                     self.notify_value_n("k.os.cpu.util." + key, None, value / cpu_count)
 
         self.notify_value_n("k.os.cpu.switches", None, int(cpu["ctxt"]))
