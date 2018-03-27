@@ -22,6 +22,7 @@
 # ===============================================================================
 """
 import logging
+from Queue import Queue
 
 logger = logging.getLogger(__name__)
 lifecyclelogger = logging.getLogger("LifeCycle")
@@ -39,6 +40,12 @@ class KnockTransport(object):
 
         # Meters prefix
         self.meters_prefix = ""
+
+        # Queue
+        self._queue_to_send = Queue()
+
+        # Max
+        self._http_send_max_bytes = 64000
 
     def init_from_config(self, d_yaml_config, d, auto_start=True):
         """

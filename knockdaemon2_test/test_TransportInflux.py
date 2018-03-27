@@ -28,7 +28,9 @@ import unittest
 import os
 from influxdb import InfluxDBClient
 from pysolbase.SolBase import SolBase
+from pysolmeters.Meters import Meters
 
+from knockdaemon2.Transport.Dedup import Dedup
 from knockdaemon2.Transport.InfluxAsyncTransport import InfluxAsyncTransport
 
 SolBase.voodoo_init()
@@ -48,6 +50,7 @@ class TestTransportInflux(unittest.TestCase):
         os.environ.setdefault("KNOCK_UNITTEST", "yes")
         client = InfluxDBClient(host='127.0.0.1', port=8286, username='admin', password='duchmol', database='zzz', retries=0, )
         client.drop_database("zzz")
+        Meters.reset()
 
     def tearDown(self):
         """
@@ -55,6 +58,52 @@ class TestTransportInflux(unittest.TestCase):
         """
 
         pass
+
+    def test_dedup(self):
+        """
+        Test
+        """
+
+        dd = Dedup()
+
+        # Build our stuff
+        ar_notify_values = [
+            ("probe_a", {"tag1": "tagv1", "tag2": "tagv2"}, 100, SolBase.dt_to_epoch(SolBase.datecurrent()), {"otagz": "vtagz", "otagx": "vtagx"}),
+            ("probe_b", {"tag1": "tagv1", "tag2": "tagv2"}, 100, SolBase.dt_to_epoch(SolBase.datecurrent()), {"otagz": "vtagz", "otagx": "vtagx"}),
+        ]
+
+        # Dedup and check (BYPASS purge)
+        ar_check = dd.dedup(notify_values=ar_notify_values, limit_ms=SolBase.mscurrent() - 60000)
+        self.assertEqual(ar_notify_values, ar_check)
+        self.assertEqual(len(dd.d_dedup), 2)
+        for probe_name, d_tags, value, timestamp, d_opt_tags in ar_notify_values:
+            in_dedup_key = Dedup.get_dedup_key(probe_name, d_tags, d_opt_tags)
+            in_window = Dedup.epoch_to_dt_without_sec(timestamp)
+            self.assertIn(in_dedup_key, dd.d_dedup)
+            self.assertIn(in_window, dd.d_dedup[in_dedup_key])
+
+        # Dedup and check (FULL purge)
+        ar_check = dd.dedup(notify_values=ar_notify_values, limit_ms=SolBase.mscurrent() + 60000)
+        self.assertEqual(ar_notify_values, ar_check)
+        self.assertEqual(len(dd.d_dedup), 2)
+        for probe_name, d_tags, value, timestamp, d_opt_tags in ar_notify_values:
+            in_dedup_key = Dedup.get_dedup_key(probe_name, d_tags, d_opt_tags)
+            in_window = Dedup.epoch_to_dt_without_sec(timestamp)
+            self.assertIn(in_dedup_key, dd.d_dedup)
+            self.assertIn(in_window, dd.d_dedup[in_dedup_key])
+
+        # Call purge
+        dd._purge(SolBase.mscurrent() + 60000)
+        self.assertEqual(len(dd.d_dedup), 0)
+
+        # Dedup check (no purge, so dedup ON)
+        ar_check = dd.dedup(notify_values=ar_notify_values, limit_ms=SolBase.mscurrent() - 60000)
+        self.assertEqual(ar_notify_values, ar_check)
+        ar_check = dd.dedup(notify_values=ar_notify_values, limit_ms=SolBase.mscurrent() - 60000)
+        self.assertEqual(len(ar_check), 0)
+
+        # Logs
+        Meters.write_to_logger()
 
     @unittest.skipIf(SolBase.get_machine_name().find("lchgui") < 0, "lchgui pc")
     def test_base(self):

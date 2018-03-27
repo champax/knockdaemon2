@@ -301,12 +301,3 @@ class Tools(object):
         logger.info("Influx, http reply, rep=%s", http_rep)
         logger.info("Influx, http reply, buf=%s", repr(http_rep.buffer))
         return http_rep
-
-
-
-
-
-
-
-
-

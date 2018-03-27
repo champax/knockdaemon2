@@ -31,6 +31,7 @@ from pysolhttpclient.Http.HttpClient import HttpClient
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.Tools import Tools
+from knockdaemon2.Transport.Dedup import Dedup
 from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,10 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         self._influx_password = None
         self._influx_database = None
         self._influx_db_created = False
+
+        # Dedup
+        self.dedup_instance = Dedup()
+        self.last_http_ok_ms = SolBase.mscurrent()
 
         # Call base
         HttpAsyncTransport.__init__(self)
@@ -153,8 +158,22 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         #     {....}
         # ]
 
+        # ---------------------------
+        # DEDUP
+        # ---------------------------
+
+        # Compute limit ms (we keep margin, so we got on the past, based on last http ok and http interval)
+        limit_ms = self.last_http_ok_ms - (self._http_send_min_interval_ms * 2)
+
+        # Dedup incoming
+        remaining_notify_values = self.dedup_instance.dedup(notify_values=notify_values, limit_ms=limit_ms)
+
+        # ---------------------------
+        # PROCESS NORMALLY
+        # ---------------------------
+
         # We build influx format
-        ar_influx = Tools.to_influx_format(account_hash, node_hash, notify_values)
+        ar_influx = Tools.to_influx_format(account_hash, node_hash, remaining_notify_values)
 
         # Influxdb python client do not support firing pre-serialized json
         # So we use the line protocol
@@ -358,6 +377,9 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                     ms = SolBase.mscurrent()
                     logger.info("Push now (influx), ar_lines=%s", ar_lines)
                     ri = client.write_points(ar_lines, protocol="line")
+
+                    # Call ok, store
+                    self.last_http_ok_ms = SolBase.mscurrent()
                 finally:
                     logger.info("Push done (influx), ms=%s", SolBase.msdiff(ms))
 
@@ -386,6 +408,8 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                     http_rep = Tools.influx_write_data(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, ar_data=ar_lines, timeout_ms=self._influx_timeout_ms)
                     assert 200 <= http_rep.status_code < 300, "Need http 2xx, got http_req={0}".format(http_rep)
 
+                    # Call ok, store
+                    self.last_http_ok_ms = SolBase.mscurrent()
                 finally:
                     logger.info("Push done (knock), ms=%s", SolBase.msdiff(ms))
             else:
