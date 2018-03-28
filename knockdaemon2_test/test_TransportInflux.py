@@ -48,8 +48,6 @@ class TestTransportInflux(unittest.TestCase):
         """
 
         os.environ.setdefault("KNOCK_UNITTEST", "yes")
-        client = InfluxDBClient(host='127.0.0.1', port=8286, username='admin', password='duchmol', database='zzz', retries=0, )
-        client.drop_database("zzz")
         Meters.reset()
 
     def tearDown(self):
@@ -126,6 +124,9 @@ class TestTransportInflux(unittest.TestCase):
         InfluxDB shell version: 1.3.2
         > CREATE USER admin WITH PASSWORD [REDACTED] WITH ALL PRIVILEGES
         """
+
+        client = InfluxDBClient(host='127.0.0.1', port=8286, username='admin', password='duchmol', database='zzz', retries=0, )
+        client.drop_database("zzz")
 
         # Transport
         ti = InfluxAsyncTransport()
