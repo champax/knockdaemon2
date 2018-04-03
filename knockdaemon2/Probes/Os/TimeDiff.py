@@ -81,7 +81,7 @@ class TimeDiff(KnockProbe):
         try:
             ntp = ntplib.NTPClient()
             response = ntp.request(self.serverhost, version=2, timeout=3)
-            value = round(response.offset, ndigits=3)
+            value = round(response.offset, ndigits=6)
         except ntplib.NTPException as e:
             logger.debug(SolBase.extostr(e))
             value = self.get_time_from_http()
@@ -116,6 +116,6 @@ class TimeDiff(KnockProbe):
                 remote_date = hresp.headers["Date"]
                 remote_date = datetime(*eut.parsedate(remote_date)[:6])
                 timediff = (remote_date - datetime.utcnow()).total_seconds()
-                return timediff
+                return float(timediff)
             except Exception as e:
                 logger.debug("Ex=%s", SolBase.extostr(e))
