@@ -59,6 +59,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         self._influx_password = None
         self._influx_database = None
         self._influx_db_created = False
+        self._influx_dedup = True
 
         # Dedup
         self.dedup_instance = Dedup()
@@ -98,6 +99,9 @@ class InfluxAsyncTransport(HttpAsyncTransport):
 
         # Timeout
         self._influx_timeout_ms = int(d.get("influx_timeout_ms", 20000))
+
+        # Dedup
+        self._influx_dedup = bool(d.get("influx_dedup", True))
 
         # Override meter prefix
         self.meters_prefix = "influxasync_" + self._influx_host + "_" + str(self._influx_port) + "_"
@@ -162,11 +166,16 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         # DEDUP
         # ---------------------------
 
-        # Compute limit ms (we keep margin, so we got on the past, based on last http ok and http interval)
-        limit_ms = self.last_http_ok_ms - (self._http_send_min_interval_ms * 2)
+        if self._influx_dedup:
+            logger.warn("dedup on (this is experimental")
+            # Compute limit ms (we keep margin, so we got on the past, based on last http ok and http interval)
+            limit_ms = self.last_http_ok_ms - (self._http_send_min_interval_ms * 2)
 
-        # Dedup incoming
-        remaining_notify_values = self.dedup_instance.dedup(notify_values=notify_values, limit_ms=limit_ms)
+            # Dedup incoming
+            remaining_notify_values = self.dedup_instance.dedup(notify_values=notify_values, limit_ms=limit_ms)
+        else:
+            logger.info("dedup off")
+            remaining_notify_values = notify_values
 
         # ---------------------------
         # PROCESS NORMALLY
