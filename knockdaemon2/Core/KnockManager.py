@@ -290,7 +290,13 @@ class KnockManager(object):
                 # Need a key for this one, we use the and id
                 k = "custom_probes_" + str(idx)
                 logger.info("Initializing custom probes, k=%s, p=%s", k, p)
-                self._init_probe(k, p)
+
+                d_local_conf = {
+                    "class_name": SolBase.get_classname(p),
+                    "exec_enabled": True,
+                    "exec_interval_sec": 60000,
+                }
+                self._init_probe_internal(k, d_local_conf, p)
 
             # Over
             logger.info("Completed")
@@ -425,7 +431,7 @@ class KnockManager(object):
 
     def start(self):
         """
-        Start        
+        Start
         """
 
         with self._locker:

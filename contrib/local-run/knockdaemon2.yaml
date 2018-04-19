@@ -94,6 +94,14 @@ transports:
     url: "http://127.0.0.1/status"
 
   # ============================
+  # HAPROXY
+  # ============================
+  Haproxy:
+    class_name: knockdaemon2.Probes.Haproxy.Haproxy.Haproxy
+    exec_interval_sec: 60
+    exec_enabled: true
+
+  # ============================
   # PHP-FPM
   # ============================
   PhpFpm:

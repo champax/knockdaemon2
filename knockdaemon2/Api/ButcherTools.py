@@ -40,7 +40,7 @@ class InvokeTimeout(Exception):
 
 
 # noinspection PyClassHasNoInit
-class ButcherTools:
+class ButcherTools(object):
     """
     Tools
     """

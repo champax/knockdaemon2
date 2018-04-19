@@ -165,7 +165,7 @@ def _exec_helper(self, exec_class):
 
     count = 0
     for p in self.k._probe_list:
-        if isinstance(p, exec_class):
+        if isinstance(p, exec_class) or exec_class.__name__ == p.__class__.__name__:
             for k, v in self.conf_probe_override.iteritems():
                 setattr(p, k, v)
             # Category must be set and no "undef"

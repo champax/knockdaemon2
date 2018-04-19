@@ -130,6 +130,14 @@ probes:
     url: http://127.0.0.1:8090/nginx_status|http://127.0.0.1:80/nginx_status
 
   # ============================
+  # HAPROXY
+  # ============================
+  Haproxy:
+    class_name: knockdaemon2.Probes.Haproxy.Haproxy.Haproxy
+    exec_interval_sec: 60
+    exec_enabled: true
+
+  # ============================
   # VARNISH 4
   # ============================
   Varnish:

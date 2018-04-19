@@ -45,6 +45,7 @@ from knockdaemon2.Core.KnockHelpers import KnockHelpers
 from knockdaemon2.Core.KnockManager import KnockManager
 from knockdaemon2.Platform.PTools import PTools
 from knockdaemon2.Probes.Apache.ApacheStat import ApacheStat
+from knockdaemon2.Probes.Haproxy.Haproxy import Haproxy
 from knockdaemon2.Probes.Inventory.Inventory import Inventory
 from knockdaemon2.Probes.MemCached.MemCachedStat import MemCachedStat
 from knockdaemon2.Probes.Mongodb.MongoDbStat import MongoDbStat
@@ -171,6 +172,41 @@ class TestProbesDirect(unittest.TestCase):
         expect_value(self, self.k, "k.nginx.waiting", 0, "gte", dd)
         expect_value(self, self.k, "k.nginx.requests", 1, "gte", dd)
         expect_value(self, self.k, "k.nginx.accepted", 1, "gte", dd)
+
+    @unittest.skipIf(Haproxy().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % NginxStat())
+    def test_Haproxy(self):
+        """
+        Test
+        """
+
+        # Exec it
+        _exec_helper(self, Haproxy)
+
+        # Validate results - disco
+        dd = {"PROXY": "ALL"}
+
+        # Validate results - data
+        expect_value(self, self.k, "k.haproxy.started", 1, "eq", dd)
+
+        expect_value(self, self.k, "k.haproxy.session_cur", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.session_limit", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.denied_req", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.denied_resp", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.err_req", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.err_conn", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.err_resp", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.hrsp_1xx", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.hrsp_2xx", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.hrsp_3xx", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.hrsp_4xx", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.hrsp_5xx", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.hrsp_other", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.avg_time_queue_ms", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.avg_time_connect_ms", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.avg_time_resp_ms", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.avg_time_session_ms", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.status_ok", 0.0, "gte", dd)
+        expect_value(self, self.k, "k.haproxy.status_ko", 0.0, "gte", dd)
 
     @unittest.skipIf(CheckDns().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % CheckDns())
     def test_CheckDns(self):
