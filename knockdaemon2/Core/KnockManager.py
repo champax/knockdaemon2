@@ -294,7 +294,7 @@ class KnockManager(object):
                 d_local_conf = {
                     "class_name": SolBase.get_classname(p),
                     "exec_enabled": True,
-                    "exec_interval_sec": 60000,
+                    "exec_interval_sec": 60,
                 }
                 self._init_probe_internal(k, d_local_conf, p)
 
