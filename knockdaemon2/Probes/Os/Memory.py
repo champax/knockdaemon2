@@ -58,7 +58,9 @@ class Memory(KnockProbe):
         """
 
         # Fetch
+        logger.info("Getting memory now")
         memory_total, memory_used, swap_total, swap_used, memory_free, swap_free, memory_buffers, memory_cached = self._get_mem_info()
+        logger.info("Getting memory done")
 
         # Notify
         self._notify_data(
@@ -71,6 +73,7 @@ class Memory(KnockProbe):
             swap_used=swap_used,
             swap_free=swap_free,
         )
+        logger.info("Notify memory done")
 
     def _execute_windows(self):
         """
@@ -266,7 +269,9 @@ class Memory(KnockProbe):
 
         meminfo_file = None
         try:
+            logger.info("Opening mem_info=%s", self.mem_info)
             meminfo_file = open(self.mem_info)
+            logger.info("Opened mem_info=%s", self.mem_info)
             for line in meminfo_file:
                 if line.startswith('MemTotal'):
                     memory_total = self._get_value_from_line(line)
@@ -282,6 +287,7 @@ class Memory(KnockProbe):
                     swap_free = self._get_value_from_line(line)
 
             # Finish it
+            logger.info("Parsed mem_info")
             memory_used = memory_total - memory_free - memory_buffers - memory_cached
             swap_used = swap_total - swap_free
             return memory_total, memory_used, swap_total, swap_used, memory_free, swap_free, memory_buffers, memory_cached
