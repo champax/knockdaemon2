@@ -26,6 +26,7 @@ import logging
 
 import os
 from pysolbase.SolBase import SolBase
+from pysolmeters.Meters import Meters
 
 from knockdaemon2.Platform.PTools import PTools
 
@@ -68,6 +69,11 @@ class KnockProbe(object):
 
         # Timeout override (can be usefull for some slow probes that are executed not often)
         self.exec_timeout_override_ms = None
+
+        # Probes timestamp override
+        # If set (by KnockManager), notify timestamp will be this one
+        # NEVER override this in probe implementation, KnockManager handle this (configuration based)
+        self.notify_ts_override = None
 
     def set_manager(self, knock_manager):
         """
@@ -192,6 +198,15 @@ class KnockProbe(object):
         :type ts: None, float
         """
 
+        # Timestamp to use
+        if ts is None:
+            # Use override if set, else use provided value (None or set)
+            if self.notify_ts_override is not None:
+                logger.debug("Using notify_ts_override, ts=%s, notify_ts_override=%s", ts, self.notify_ts_override)
+                Meters.aii("knock_stat_ts_override")
+                ts = self.notify_ts_override
+
+        # Notify manager
         self._knock_manager.notify_value_n(counter_key, d_disco_id_tag, counter_value, ts, {"category": self.category})
 
     def __str__(self):
@@ -201,7 +216,7 @@ class KnockProbe(object):
         :rtype string
         """
 
-        return "kprobe:ms={0}*s={1}*c={2}*on={3}*ux={4}*win={5}*pl={6}*sup={7}*k={8}".format(
+        return "kprobe:ms={0}*s={1}*c={2}*on={3}*ux={4}*win={5}*pl={6}*sup={7}*k={8}*ntso={9}".format(
             self.exec_interval_ms,
             self.probe_class,
             self.class_name,
@@ -210,5 +225,6 @@ class KnockProbe(object):
             self.windows_support,
             self.platform,
             self.platform_supported,
-            self.key
+            self.key,
+            self.notify_ts_override,
         )

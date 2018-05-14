@@ -167,7 +167,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         # ---------------------------
 
         if self._influx_dedup:
-            logger.warn("dedup on (this is experimental")
+            logger.warn("dedup on (this is experimental)")
             # Compute limit ms (we keep margin, so we got on the past, based on last http ok and http interval)
             limit_ms = self.last_http_ok_ms - (self._http_send_min_interval_ms * 2)
 

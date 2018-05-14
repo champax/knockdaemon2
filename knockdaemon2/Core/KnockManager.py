@@ -126,6 +126,10 @@ class KnockManager(object):
         # Timeout per probe
         self._exectimeout_ms = 10000
 
+        # Timestamp override
+        self._timestamp_override = True
+        self._timestamp_override_use_expected = True
+
         # Disco hash
         self._superv_notify_disco_hash = dict()
 
@@ -232,6 +236,16 @@ class KnockManager(object):
             # Init us
             if "exectimeout_ms" in self._d_yaml_config["knockd"]:
                 self._exectimeout_ms = self._d_yaml_config["knockd"]["exectimeout_ms"]
+
+            if "timestamp_override" in self._d_yaml_config["knockd"]:
+                self._timestamp_override = self._d_yaml_config["knockd"]["timestamp_override"]
+            if self._timestamp_override:
+                logger.warn("_timestamp_override enabled (this is experimental)")
+
+            if "timestamp_override_use_expected" in self._d_yaml_config["knockd"]:
+                self._timestamp_override_use_expected = self._d_yaml_config["knockd"]["timestamp_override"]
+            if self._timestamp_override_use_expected:
+                logger.warn("_timestamp_override_use_expected enabled (this is experimental)")
 
             # Account for managed instance, which is optional now due to influx support
             if "acc_namespace" in self._d_yaml_config["knockd"]:
@@ -629,6 +643,11 @@ class KnockManager(object):
         # Register last exec start and first exec start and exec count
         if c.initial_ms_start == 0.0:
             c.initial_ms_start = SolBase.mscurrent()
+
+        # Get expected ms
+        expected_ms = self._need_exec_compute_next_start_ms(p, c)
+
+        # Increment
         c.exec_count_so_far += 1.0
 
         # Go
@@ -638,6 +657,13 @@ class KnockManager(object):
             if p.exec_timeout_override_ms:
                 exec_timeout_ms = p.exec_timeout_override_ms
                 logger.info("Exec timeout override set at probe end, using exec_timeout_ms=%s", exec_timeout_ms)
+
+            # If config specify to use timestamp override by manager, we force
+            if self._timestamp_override:
+                if self._timestamp_override_use_expected:
+                    p.notify_ts_override = float(expected_ms / 1000.0)
+                else:
+                    p.notify_ts_override = time()
 
             # FIRE
             logger.info("Exec now, exec_timeout_ms=%s, p=%s", exec_timeout_ms, p)
