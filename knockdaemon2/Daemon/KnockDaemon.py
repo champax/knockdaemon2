@@ -23,6 +23,7 @@
 """
 import logging
 import sys
+from logging.handlers import SysLogHandler
 
 from pysolbase.SolBase import SolBase
 from pysoldaemon.daemon.Daemon import Daemon
@@ -56,7 +57,12 @@ class KnockDaemon(Daemon):
                        on_start_exit_zero,
                        max_open_files,
                        change_dir,
-                       timeout_ms):
+                       timeout_ms,
+                       logtosyslog=True,
+                       logtosyslog_facility=SysLogHandler.LOG_LOCAL0,
+                       logtoconsole=False,
+                       app_name="knockdaemon2"
+                       ):
 
         # Us
         self.is_running = True
@@ -65,7 +71,8 @@ class KnockDaemon(Daemon):
         # Base
         # noinspection PyProtectedMember
         Daemon._internal_init(self, pidfile, stdin, stdout, stderr, logfile, loglevel,
-                              on_start_exit_zero, max_open_files, change_dir, timeout_ms)
+                              on_start_exit_zero, max_open_files, change_dir, timeout_ms,
+                              logtosyslog, logtosyslog_facility, logtoconsole, app_name)
 
         # Log
         logger.debug("Done, self.class=%s", SolBase.get_classname(self))

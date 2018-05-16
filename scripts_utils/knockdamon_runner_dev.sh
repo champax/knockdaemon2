@@ -3,11 +3,11 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
 
 PIDFILE="/tmp/knockdaemon2_dev.pid"
-LOGFILE="/tmp/knockdaemon2_dev"
+LOGFILE=""
 
 RUNAS="root"
 CONFIGFILE="$DIR/scripts_utils/knockdaemon2_runner_dev.ini"
-DAEMON_OPTS="-pidfile=$PIDFILE -stderr=$LOGFILE.err -stdout=/dev/null -logfile=$LOGFILE.log -loglevel=INFO -maxopenfiles=4096 -user=$RUNAS -c=${CONFIGFILE}"
+DAEMON_OPTS="-pidfile=$PIDFILE -stderr=$LOGFILE.err -stdout=/dev/null -logfile=$LOGFILE -logconsole=false -logsyslog=true -logsyslog_facility=16 -appname=knockdaemon2 -loglevel=INFO -maxopenfiles=4096 -user=$RUNAS -c=${CONFIGFILE}"
 DAEMON="$DIR/knockdaemon2/Daemon/knockdaemon2.py"
 PYTHON_BIN="/home/llabatut/.virtualenvs/knockdaemon2/bin/python"
 

@@ -11,9 +11,9 @@
 RUNAS=root
 NAME=knockdaemon2
 PIDFILE=/var/run/$NAME.pid
-LOGFILE=/var/log/$NAME
+LOGFILE=''
 CONFIGFILE=/etc/knock/knockdaemon2/knockdaemon2.yaml
-DAEMON_OPTS="-pidfile=$PIDFILE -stderr=$LOGFILE.err -stdout=/dev/null -logfile=$LOGFILE.log -loglevel=INFO -maxopenfiles=4096 -user=$RUNAS -c=${CONFIGFILE}"
+DAEMON_OPTS="-pidfile=$PIDFILE -stderr=$LOGFILE.err -stdout=/dev/null -logfile=$LOGFILE -logconsole=false -logsyslog=true -logsyslog_facility=16 -appname=knockdaemon2 -loglevel=INFO -maxopenfiles=4096 -user=$RUNAS -c=${CONFIGFILE}"
 BINARY="/opt/knock/knockdaemon2/bin/knockdaemon2"
 SCRIPT="$BINARY $DAEMON_OPTS"
 
