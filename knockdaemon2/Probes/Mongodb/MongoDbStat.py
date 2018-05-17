@@ -187,10 +187,11 @@ class MongoDbStat(KnockProbe):
             v = abs(v)
         if MongodDbStatKeys.Key[key] is not None:
             v = MongodDbStatKeys.Key[key](v)
-
-        # For influx, we cast float in all cases for numeric
-        if not isinstance(v, (datetime, str, unicode, basestring)):
-            v = float(v)
+        else:
+            # NO EXPLICIT CASTING
+            # For influx, we cast int in all cases for numeric
+            if not isinstance(v, (datetime, str, unicode, basestring)):
+                v = int(v)
 
         return v
 
