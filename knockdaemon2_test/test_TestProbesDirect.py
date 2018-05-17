@@ -945,7 +945,7 @@ class TestProbesDirect(unittest.TestCase):
             expect_disco(self, self.k, "k.mysql.discovery", dd)
 
     @unittest.skipIf(MongoDbStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % MongoDbStat())
-    @unittest.skip("zzz")
+    # @unittest.skip("zzz")
     @attr('prov')
     def test_MongoDbStat(self):
         """
