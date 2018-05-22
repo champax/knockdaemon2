@@ -159,7 +159,7 @@ class DiskSpace(KnockProbe):
         for line in mount.readlines():
             # noinspection PyUnusedLocal
             device, mountpoint, fstype, options, order, prio = line.split()
-            if fstype in ('ext2', 'ext3', 'ext4', 'zfs', 'xfs'):
+            if fstype in ('ext2', 'ext3', 'ext4', 'zfs', 'xfs', 'btrfs'):
                 logger.info('processing device=%s mountpoint=%s fstype=%s', device, mountpoint, fstype)
                 if mountpoint.startswith('/mnt/') or \
                         mountpoint.startswith('/tmp/') or \
@@ -340,7 +340,10 @@ class DiskSpace(KnockProbe):
         total = st.f_blocks * st.f_frsize
         used = (st.f_blocks - st.f_bfree) * st.f_frsize
         pfree = round(100.0 * free / total, 2)
-        inodepfree = 100.0 * st.f_ffree / st.f_files
+        if st.f_files == 0:
+            inodepfree = 100.0
+        else:
+            inodepfree = 100.0 * st.f_ffree / st.f_files
 
         self.notify_discovery_n("k.vfs.fs.discovery", {"FSNAME": path})
 
