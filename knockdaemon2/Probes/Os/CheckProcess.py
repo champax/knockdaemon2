@@ -196,7 +196,7 @@ class CheckProcess(KnockProbe):
                     p = psutil.Process(process._pid)
 
                     d = p.as_dict()
-                    logger.info("as_dict=%s", d)
+                    logger.debug("as_dict=%s", d)
 
                     # as_dict :
                     #

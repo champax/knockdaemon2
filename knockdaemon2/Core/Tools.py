@@ -294,7 +294,7 @@ class Tools(object):
 
         # Go
         logger.info("Influx, http go, req=%s", http_req)
-        logger.info("Influx, http go, post_data=%s", repr(http_req.post_data))
+        logger.debug("Influx, http go, post_data=%s", repr(http_req.post_data))
         http_rep = http_client.go_http(http_req)
 
         # Ok

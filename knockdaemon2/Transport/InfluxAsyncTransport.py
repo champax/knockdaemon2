@@ -413,7 +413,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                 # PUSH
                 try:
                     ms = SolBase.mscurrent()
-                    logger.info("Push now (knock), ar_lines=%s", ar_lines)
+                    logger.info("Push now (knock), ar_lines.len=%s", len(ar_lines))
                     http_rep = Tools.influx_write_data(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, ar_data=ar_lines, timeout_ms=self._influx_timeout_ms)
                     assert 200 <= http_rep.status_code < 300, "Need http 2xx, got http_req={0}".format(http_rep)
 
