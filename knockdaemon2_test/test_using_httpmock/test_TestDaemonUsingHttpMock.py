@@ -187,7 +187,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
         except:
             ret = None
         finally:
-            if SolBase.is_string_not_empty(ret):
+            if ret and len(ret)>0:
                 return ret.split(sep)
             else:
                 return list()

@@ -197,7 +197,7 @@ class Haproxy(KnockProbe):
                     logger.info("Recv (over) socket, soc_name=%s", soc_name)
                 finally:
                     logger.info("Closing socket, soc_name=%s", soc_name)
-                    TcpSocketManager.safe_close_socket(soc)
+                    SolBase.safe_close_socket(soc)
                     SolBase.sleep(0)
             except Exception as e:
                 logger.warn("Exception, ex=%s", SolBase.extostr(e))

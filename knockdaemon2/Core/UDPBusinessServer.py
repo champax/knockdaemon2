@@ -244,7 +244,7 @@ class BusinessServer(DatagramServer):
         self._notify_schedule_cancel()
 
         # Close socket
-        TcpSocketManager.safe_close_socket(self._soc)
+        SolBase.safe_close_socket(self._soc)
 
         # Remove socket
         try:

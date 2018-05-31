@@ -8,14 +8,14 @@ setuptools
 # pysol
 pysolbase
 pysolcache
-pysoldaemon >= 1.0.2
+pysoldaemon
 pysolmysql
 pysolhttpclient
 pysolmeters
 pysoltcp
 
 # gevent
-gevent
+gevent == 1.2.2
 geventhttpclient
 greenlet
 

@@ -84,7 +84,7 @@ class UdpClient(object):
         """
 
         if self._soc:
-            TcpSocketManager.safe_close_socket(self._soc)
+            SolBase.safe_close_socket(self._soc)
             self._soc = None
 
     def send_json(self, json_list):
