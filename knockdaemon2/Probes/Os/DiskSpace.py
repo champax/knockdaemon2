@@ -212,24 +212,24 @@ class DiskSpace(KnockProbe):
                         self.previous_stat[mountpoint]['cumulative_wait_rtime_ms'] = cumulative_wait_rtime_ms
                         self.previous_stat[mountpoint]['current_time_ms'] = current_time_ms
 
-                        self.notify_value_n("k.vfs.dev.read.totalcount", {"FSNAME": mountpoint}, reads)
-                        self.notify_value_n("k.vfs.dev.read.totalbytes", {"FSNAME": mountpoint}, nread)
+                        self.notify_value_n("k.vfs.dev.read.totalcount", {"FSNAME": mountpoint}, int(reads))
+                        self.notify_value_n("k.vfs.dev.read.totalbytes", {"FSNAME": mountpoint}, int(nread))
 
-                        self.notify_value_n("k.vfs.dev.write.totalcount", {"FSNAME": mountpoint}, writes)
-                        self.notify_value_n("k.vfs.dev.write.totalbytes", {"FSNAME": mountpoint}, nwritten)
+                        self.notify_value_n("k.vfs.dev.write.totalcount", {"FSNAME": mountpoint}, int(writes))
+                        self.notify_value_n("k.vfs.dev.write.totalbytes", {"FSNAME": mountpoint}, int(nwritten))
 
-                        self.notify_value_n("k.vfs.dev.io.currentcount", {"FSNAME": mountpoint}, rcnt)
-                        self.notify_value_n("k.vfs.dev.io.totalms", {"FSNAME": mountpoint}, cumulative_wait_rtime_ms)
+                        self.notify_value_n("k.vfs.dev.io.currentcount", {"FSNAME": mountpoint}, int(rcnt))
+                        self.notify_value_n("k.vfs.dev.io.totalms", {"FSNAME": mountpoint}, int(cumulative_wait_rtime_ms))
 
                         # All
-                        self.add_to_hash(all_hash, 'k.vfs.dev.read.totalcount', reads)
-                        self.add_to_hash(all_hash, 'k.vfs.dev.read.totalbytes', nread)
+                        self.add_to_hash(all_hash, 'k.vfs.dev.read.totalcount', int(reads))
+                        self.add_to_hash(all_hash, 'k.vfs.dev.read.totalbytes', int(nread))
 
-                        self.add_to_hash(all_hash, 'k.vfs.dev.write.totalcount', writes)
-                        self.add_to_hash(all_hash, 'k.vfs.dev.write.totalbytes', nwritten)
+                        self.add_to_hash(all_hash, 'k.vfs.dev.write.totalcount', int(writes))
+                        self.add_to_hash(all_hash, 'k.vfs.dev.write.totalbytes', int(nwritten))
 
-                        self.add_to_hash(all_hash, 'k.vfs.dev.io.currentcount', rcnt)
-                        self.add_to_hash(all_hash, 'k.vfs.dev.io.totalms', cumulative_wait_rtime_ms)
+                        self.add_to_hash(all_hash, 'k.vfs.dev.io.currentcount', int(rcnt))
+                        self.add_to_hash(all_hash, 'k.vfs.dev.io.totalms', int(cumulative_wait_rtime_ms))
 
                     except Exception as e:
                         logger.warn(SolBase.extostr(e))
