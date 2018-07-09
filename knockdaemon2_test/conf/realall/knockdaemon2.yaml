@@ -184,6 +184,16 @@ probes:
     exec_interval_sec: 60
     exec_enabled: true
 
+  # ============================
+  # Service
+  # ============================
+  Service:
+    class_name: knockdaemon2.Probes.Os.Service.Service
+    exec_interval_sec: 60
+    exec_enabled: true
+    patern:
+      - cro.*
+      - rsyslog
 
 
 

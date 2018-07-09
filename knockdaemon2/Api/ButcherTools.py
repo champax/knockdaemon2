@@ -23,6 +23,7 @@
 """
 
 import logging
+import re
 
 import gevent
 from gevent.subprocess import Popen, PIPE
@@ -122,3 +123,32 @@ class ButcherTools(object):
                     del p
                 except Exception as e:
                     logger.warn("Exception in kill, ar=%s, ex=%s", ar_or_string, SolBase.extostr(e))
+
+    @classmethod
+    def split(cls, orig, sep=None):
+        """
+        Generator function for iterating through large strings, particularly useful
+        as a replacement for str.splitlines().
+
+        See http://stackoverflow.com/a/3865367
+        :param orig:
+        :param sep:
+        :return:
+        """
+        exp = re.compile(r'\s+' if sep is None else re.escape(sep))
+        pos = 0
+        length = len(orig)
+        while True:
+            match = exp.search(orig, pos)
+            if not match:
+                if pos < length or sep is not None:
+                    val = orig[pos:]
+                    if val:
+                        # Only yield a value if the slice was not an empty string,
+                        # because if it is then we've reached the end. This keeps
+                        # us from yielding an extra blank value at the end.
+                        yield val
+                break
+            if pos < match.start() or sep is not None:
+                yield orig[pos:match.start()]
+            pos = match.end()

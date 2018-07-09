@@ -61,6 +61,7 @@ from knockdaemon2.Probes.Os.Memory import Memory
 from knockdaemon2.Probes.Os.NetStat import Netstat
 from knockdaemon2.Probes.Os.Network import Network
 from knockdaemon2.Probes.Os.ProcNum import NumberOfProcesses
+from knockdaemon2.Probes.Os.Service import Service
 from knockdaemon2.Probes.Os.TimeDiff import TimeDiff
 from knockdaemon2.Probes.Os.UpTime import Uptime
 from knockdaemon2.Probes.PhpFpm.PhpFpmStat import PhpFpmStat
@@ -172,6 +173,21 @@ class TestProbesDirect(unittest.TestCase):
         expect_value(self, self.k, "k.nginx.waiting", 0, "gte", dd)
         expect_value(self, self.k, "k.nginx.requests", 1, "gte", dd)
         expect_value(self, self.k, "k.nginx.accepted", 1, "gte", dd)
+
+    @unittest.skipIf(Service().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Service())
+    def test_Service(self):
+        """
+        Test
+        """
+
+        # Exec it
+        _exec_helper(self, Service)
+
+        # Validate results - disco
+
+        expect_value(self, self.k, "k.os.service.running", 1, 'eq', {"SERVICE": "rsyslog"})
+        expect_value(self, self.k, "k.os.service.running", 1, 'eq', {"SERVICE": "cron"})
+        expect_value(self, self.k, "k.os.service.running_count", 2,'eq', None)
 
     @unittest.skipIf(Haproxy().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % NginxStat())
     def test_Haproxy(self):
