@@ -7,5 +7,5 @@ Standards-Version: 3.9.5
 
 Package: knockdaemon2
 Architecture: i386 amd64 armhf
-Depends: ${python:Depends}, ${misc:Depends}, python, file, smartmontools, freeipmi, dmidecode
+Depends: ${python:Depends}, ${misc:Depends}, python, file, smartmontools, dmidecode
 Description: supervision daemon
