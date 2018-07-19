@@ -174,6 +174,7 @@ class TestProbesDirect(unittest.TestCase):
         expect_value(self, self.k, "k.nginx.requests", 1, "gte", dd)
         expect_value(self, self.k, "k.nginx.accepted", 1, "gte", dd)
 
+    @unittest.skipIf(SolBase.get_machine_name() == 'admin', 'Not compatible jessie')
     @unittest.skipIf(Service().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Service())
     def test_Service(self):
         """

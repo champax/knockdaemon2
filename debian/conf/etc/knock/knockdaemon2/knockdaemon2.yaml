@@ -226,4 +226,4 @@ probes:
     exec_enabled: true
     patern:
       - ssh
-      - rsyslog
+

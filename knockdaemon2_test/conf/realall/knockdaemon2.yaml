@@ -193,7 +193,7 @@ probes:
     exec_enabled: true
     patern:
       - cro.*
-
+      - rsyslog
 
 
 
