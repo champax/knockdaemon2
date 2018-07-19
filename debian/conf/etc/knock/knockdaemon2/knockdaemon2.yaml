@@ -225,5 +225,5 @@ probes:
     exec_interval_sec: 60
     exec_enabled: true
     patern:
-      - ssh
+      - knockdaemon2
 
