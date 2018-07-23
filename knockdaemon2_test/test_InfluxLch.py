@@ -234,15 +234,15 @@ class TestInfluxLch(unittest.TestCase):
         http_client = HttpClient()
 
         # Drop twice
-        http_rep = Tools.influx_drop_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, timeout_ms=10000)
+        http_rep = Tools.influx_drop_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, timeout_ms=10000, ssl=False, verify_ssl=False)
         self.assertEqual(http_rep.status_code, 200)
-        http_rep = Tools.influx_drop_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, timeout_ms=10000)
+        http_rep = Tools.influx_drop_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, timeout_ms=10000, ssl=False, verify_ssl=False)
         self.assertEqual(http_rep.status_code, 200)
 
         # Create twice
-        http_rep = Tools.influx_create_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, timeout_ms=10000)
+        http_rep = Tools.influx_create_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, timeout_ms=10000, ssl=False, verify_ssl=False)
         self.assertEqual(http_rep.status_code, 200)
-        http_rep = Tools.influx_create_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, timeout_ms=10000)
+        http_rep = Tools.influx_create_database(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, timeout_ms=10000, ssl=False, verify_ssl=False)
         self.assertEqual(http_rep.status_code, 200)
 
         # Build lines
@@ -250,7 +250,7 @@ class TestInfluxLch(unittest.TestCase):
         logger.info("line_buf=%s", repr(line_buf))
 
         # Insert
-        http_rep = Tools.influx_write_data(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, ar_data=[line_buf], timeout_ms=10000)
+        http_rep = Tools.influx_write_data(http_client, host='127.0.0.1', port=8286, username='admin', password='duchmol', database=db_name, ar_data=[line_buf], timeout_ms=10000, ssl=False, verify_ssl=False)
         self.assertIn(http_rep.status_code, [200, 204])
 
         # Re-read

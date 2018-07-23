@@ -58,6 +58,8 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         self._influx_login = None
         self._influx_password = None
         self._influx_database = None
+        self._influx_ssl = False
+        self._influx_ssl_verify = False
         self._influx_db_created = False
         self._influx_dedup = True
 
@@ -92,6 +94,8 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         self._influx_login = d["influx_login"]
         self._influx_password = d["influx_password"]
         self._influx_database = d["influx_database"]
+        self._influx_ssl = d["influx_ssl"]
+        self._influx_ssl_verify = d["influx_ssl_verify"]
 
         # Mode : "knock" or "influx"
         self._influx_mode = d.get("influx_mode", "knock")
@@ -106,6 +110,9 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         # Override meter prefix
         self.meters_prefix = "influxasync_" + self._influx_host + "_" + str(self._influx_port) + "_"
 
+        logger.info("influx_ssl: %s", self._influx_ssl)
+        logger.info("influx_host: %s", self._influx_host)
+
         # Logs
         lifecyclelogger.info("_influx_mode=%s", self._influx_mode)
         lifecyclelogger.info("_influx_timeout_ms=%s", self._influx_timeout_ms)
@@ -114,6 +121,8 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         lifecyclelogger.info("_influx_login=%s", self._influx_login)
         lifecyclelogger.info("_influx_password=%s", self._influx_password)
         lifecyclelogger.info("_influx_database=%s", self._influx_database)
+        lifecyclelogger.info("_influx_ssl=%s", self._influx_ssl)
+        lifecyclelogger.info("_influx_ssl_verify=%s", self._influx_ssl_verify)
 
         # Autostart hack : finish him
         if auto_start:
@@ -368,6 +377,8 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                     username=self._influx_login,
                     password=self._influx_password,
                     database=self._influx_database,
+                    ssl=self._influx_ssl,
+                    verify_ssl=self._influx_ssl_verify,
                     retries=0, )
 
                 # B) Create DB
@@ -402,7 +413,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                 # DB
                 if not self._influx_db_created:
                     try:
-                        http_rep = Tools.influx_create_database(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, timeout_ms=self._influx_timeout_ms)
+                        http_rep = Tools.influx_create_database(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, timeout_ms=self._influx_timeout_ms, ssl=self._influx_ssl, verify_ssl=self._influx_ssl_verify)
                         assert 200 <= http_rep.status_code < 300, "Need http 2xx, got http_req={0}".format(http_rep)
                     except Exception as e:
                         logger.warn("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
@@ -414,7 +425,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                 try:
                     ms = SolBase.mscurrent()
                     logger.info("Push now (knock), ar_lines.len=%s", len(ar_lines))
-                    http_rep = Tools.influx_write_data(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, ar_data=ar_lines, timeout_ms=self._influx_timeout_ms)
+                    http_rep = Tools.influx_write_data(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, ar_data=ar_lines, timeout_ms=self._influx_timeout_ms, ssl=self._influx_ssl, verify_ssl=self._influx_ssl_verify)
                     assert 200 <= http_rep.status_code < 300, "Need http 2xx, got http_req={0}".format(http_rep)
 
                     # Call ok, store

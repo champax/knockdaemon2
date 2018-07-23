@@ -135,7 +135,7 @@ class Tools(object):
         }
 
     @classmethod
-    def influx_create_database(cls, http_client, host, port, username, password, database, timeout_ms):
+    def influx_create_database(cls, http_client, host, port, username, password, database, timeout_ms, ssl, verify_ssl):
         """
         Influx create database
         :param http_client: pysolhttpclient.Http.HttpClient.HttpClient
@@ -152,6 +152,10 @@ class Tools(object):
         :type database: str
         :param timeout_ms: int
         :type timeout_ms: int
+        :param ssl: bool
+        :type ssl: bool
+        :param verify_ssl: bool
+        :type verify_ssl: bool
         :return pysolhttpclient.Http.HttpResponse.HttpResponse
         :rtype pysolhttpclient.Http.HttpResponse.HttpResponse
         """
@@ -176,7 +180,14 @@ class Tools(object):
             "db": database
         }
         s_qs = urlencode(d_qs)
-        http_req.uri = "http://{0}:{1}/query?{2}".format(host, port, s_qs)
+        if ssl:
+            http_req.uri = "https://{0}:{1}/query?{2}".format(host, port, s_qs)
+            if verify_ssl:
+                http_req.https_insecure = True
+            else:
+                http_req.https_insecure = False
+        else:
+            http_req.uri = "http://{0}:{1}/query?{2}".format(host, port, s_qs)
         http_req.method = "POST"
 
         # Go
@@ -190,7 +201,7 @@ class Tools(object):
         return http_rep
 
     @classmethod
-    def influx_drop_database(cls, http_client, host, port, username, password, database, timeout_ms):
+    def influx_drop_database(cls, http_client, host, port, username, password, database, timeout_ms, ssl, verify_ssl):
         """
         Influx drop database
         :param http_client: pysolhttpclient.Http.HttpClient.HttpClient
@@ -207,6 +218,10 @@ class Tools(object):
         :type database: str
         :param timeout_ms: int
         :type timeout_ms: int
+        :param ssl: bool
+        :type ssl: bool
+        :param verify_ssl: bool
+        :type verify_ssl: bool
         :return pysolhttpclient.Http.HttpResponse.HttpResponse
         :rtype pysolhttpclient.Http.HttpResponse.HttpResponse
         """
@@ -231,7 +246,14 @@ class Tools(object):
             "db": database
         }
         s_qs = urlencode(d_qs)
-        http_req.uri = "http://{0}:{1}/query?{2}".format(host, port, s_qs)
+        if ssl:
+            http_req.uri = "https://{0}:{1}/query?{2}".format(host, port, s_qs)
+            if verify_ssl:
+                http_req.https_insecure = True
+            else:
+                http_req.https_insecure = False
+        else:
+            http_req.uri = "http://{0}:{1}/query?{2}".format(host, port, s_qs)
         http_req.method = "POST"
 
         # Go
@@ -245,7 +267,7 @@ class Tools(object):
         return http_rep
 
     @classmethod
-    def influx_write_data(cls, http_client, host, port, username, password, database, ar_data, timeout_ms):
+    def influx_write_data(cls, http_client, host, port, username, password, database, ar_data, timeout_ms, ssl, verify_ssl):
         """
         Influx write data
         :param http_client: pysolhttpclient.Http.HttpClient.HttpClient
@@ -264,6 +286,10 @@ class Tools(object):
         :type ar_data: list
         :param timeout_ms: int
         :type timeout_ms: int
+        :param ssl: bool
+        :type ssl: bool
+        :param verify_ssl: bool
+        :type verify_ssl: bool
         :return pysolhttpclient.Http.HttpResponse.HttpResponse
         :rtype pysolhttpclient.Http.HttpResponse.HttpResponse
         """
@@ -287,7 +313,14 @@ class Tools(object):
             "db": database
         }
         s_qs = urlencode(d_qs)
-        http_req.uri = "http://{0}:{1}/write?{2}".format(host, port, s_qs)
+        if ssl:
+            http_req.uri = "https://{0}:{1}/write?{2}".format(host, port, s_qs)
+            if verify_ssl:
+                http_req.https_insecure = True
+            else:
+                http_req.https_insecure = False
+        else:
+            http_req.uri = "http://{0}:{1}/write?{2}".format(host, port, s_qs)
         http_req.method = "POST"
         http_req.post_data = ('\n'.join(ar_data) + '\n').encode('utf-8')
         assert http_req.post_data.endswith("\n\n"), "Need \n\n ended post_data, got={0}".format(http_req.post_data[:-16])
