@@ -167,19 +167,22 @@ class HttpAsyncTransport(KnockTransport):
         Check and set limits
         """
 
-        # If unittest, do nothing
-        if "KNOCK_UNITTEST" in os.environ.data:
-            return
+        # Disable this
+        pass
 
-        # Lower limits for important stuff
-        if self._http_send_min_interval_ms < 30000:
-            self._http_send_min_interval_ms = 30000
-
-        if self._http_ko_interval_ms < 10000:
-            self._http_ko_interval_ms = 10000
-
-        if self._http_send_bypass_wait_ms < 1000:
-            self._http_send_bypass_wait_ms = 1000
+        # # If unittest, do nothing
+        # if "KNOCK_UNITTEST" in os.environ.data:
+        #     return
+        #
+        # # Lower limits for important stuff
+        # if self._http_send_min_interval_ms < 30000:
+        #     self._http_send_min_interval_ms = 30000
+        #
+        # if self._http_ko_interval_ms < 10000:
+        #     self._http_ko_interval_ms = 10000
+        #
+        # if self._http_send_bypass_wait_ms < 1000:
+        #     self._http_send_bypass_wait_ms = 1000
 
     def process_notify(self, account_hash, node_hash, notify_hash, notify_values):
         """
