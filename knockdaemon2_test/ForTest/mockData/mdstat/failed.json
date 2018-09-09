@@ -1,0 +1,81 @@
+{
+  "unused_devices": [],
+  "personalities": [
+    "raid1",
+    "linear",
+    "multipath",
+    "raid0",
+    "raid6",
+    "raid5",
+    "raid4",
+    "raid10"
+  ],
+  "devices": {
+    "md0": {
+      "read_only": false,
+      "status": {
+        "synced": [
+          false,
+          true
+        ],
+        "super": "1.2",
+        "blocks": 33536000,
+        "raid_disks": 2,
+        "non_degraded_disks": 1
+      },
+      "bitmap": null,
+      "resync": null,
+      "active": true,
+      "disks": {
+        "sdd1": {
+          "spare": false,
+          "faulty": false,
+          "write_mostly": false,
+          "number": 1,
+          "replacement": false
+        },
+        "sda1": {
+          "spare": false,
+          "faulty": true,
+          "write_mostly": false,
+          "number": 0,
+          "replacement": false
+        }
+      },
+      "personality": "raid1"
+    },
+    "md127": {
+      "read_only": false,
+      "status": {
+        "synced": [
+          false,
+          true
+        ],
+        "super": "1.2",
+        "blocks": 104791040,
+        "raid_disks": 2,
+        "non_degraded_disks": 1
+      },
+      "bitmap": null,
+      "resync": null,
+      "active": true,
+      "disks": {
+        "sdc1": {
+          "spare": false,
+          "faulty": true,
+          "write_mostly": false,
+          "number": 0,
+          "replacement": false
+        },
+        "sdb1": {
+          "spare": false,
+          "faulty": false,
+          "write_mostly": false,
+          "number": 1,
+          "replacement": false
+        }
+      },
+      "personality": "raid1"
+    }
+  }
+}

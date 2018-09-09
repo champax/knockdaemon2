@@ -57,6 +57,7 @@ from knockdaemon2.Probes.Os.DiskSpace import DiskSpace
 from knockdaemon2.Probes.Os.HddStatus import HddStatus
 from knockdaemon2.Probes.Os.IpvsAdm import IpvsAdm
 from knockdaemon2.Probes.Os.Load import Load
+from knockdaemon2.Probes.Os.Mdstat import Mdstat
 from knockdaemon2.Probes.Os.Memory import Memory
 from knockdaemon2.Probes.Os.NetStat import Netstat
 from knockdaemon2.Probes.Os.Network import Network
@@ -189,6 +190,18 @@ class TestProbesDirect(unittest.TestCase):
         expect_value(self, self.k, "k.os.service.running", 1, 'eq', {"SERVICE": "rsyslog"})
         expect_value(self, self.k, "k.os.service.running", 1, 'eq', {"SERVICE": "cron"})
         expect_value(self, self.k, "k.os.service.running_count", 2,'eq', None)
+
+    @unittest.skipIf(Service().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Service())
+    def test_Mdstat(self):
+        """
+        Test
+        """
+
+        # Exec it
+        _exec_helper(self, Mdstat)
+
+        # Validate results - disco
+        pass
 
     @unittest.skipIf(Haproxy().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % NginxStat())
     def test_Haproxy(self):

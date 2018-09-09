@@ -1,0 +1,101 @@
+{
+  "unused_devices": [],
+  "personalities": [
+    "raid1",
+    "linear",
+    "multipath",
+    "raid0",
+    "raid6",
+    "raid5",
+    "raid4",
+    "raid10"
+  ],
+  "devices": {
+    "md0": {
+      "read_only": false,
+      "status": {
+        "synced": [
+          true,
+          true
+        ],
+        "super": "1.2",
+        "blocks": 67091456,
+        "raid_disks": 2,
+        "non_degraded_disks": 2
+      },
+      "bitmap": null,
+      "resync": {
+        "finish": "5223.1min",
+        "resynced": 44370688,
+        "progress": "66.1%",
+        "operation": "check",
+        "total": 67091456,
+        "speed": "72K/sec"
+      },
+      "active": true,
+      "disks": {
+        "sdd1": {
+          "spare": false,
+          "faulty": false,
+          "write_mostly": false,
+          "number": 2,
+          "replacement": false
+        },
+        "sda1": {
+          "spare": false,
+          "faulty": false,
+          "write_mostly": false,
+          "number": 3,
+          "replacement": false
+        }
+      },
+      "personality": "raid1"
+    },
+    "md127": {
+      "read_only": false,
+      "status": {
+        "synced": [
+          true,
+          true
+        ],
+        "super": "1.2",
+        "blocks": 134151168,
+        "raid_disks": 2,
+        "non_degraded_disks": 2
+      },
+      "bitmap": {
+        "existing_pages": 1,
+        "total_pages": 1,
+        "file": null,
+        "pages_size": "4KB",
+        "chunk_size": "65536KB"
+      },
+      "resync": {
+        "finish": "21874.1min",
+        "resynced": 44248448,
+        "progress": "32.9%",
+        "operation": "check",
+        "total": 134151168,
+        "speed": "68K/sec"
+      },
+      "active": true,
+      "disks": {
+        "sdc1": {
+          "spare": false,
+          "faulty": false,
+          "write_mostly": false,
+          "number": 0,
+          "replacement": false
+        },
+        "sdb1": {
+          "spare": false,
+          "faulty": false,
+          "write_mostly": false,
+          "number": 1,
+          "replacement": false
+        }
+      },
+      "personality": "raid1"
+    }
+  }
+}

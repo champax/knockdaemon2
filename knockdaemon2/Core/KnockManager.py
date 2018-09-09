@@ -749,7 +749,7 @@ class KnockManager(object):
         assert counter_key.find(".discovery") == - 1, "counter_key : '.discovery' is not allowed, got counter_key={0}".format(counter_key)
 
         # Value must NOT be a tuple or a list, it must an int,float,bool,string
-        assert isinstance(counter_value, (int, float, bool, basestring)), "counter_value must be an int, float, bool, basestring"
+        assert isinstance(counter_value, (int, long, float, bool, basestring)), "counter_value must be an int, float, bool, basestring k=%s, v=%s type=%s" % (counter_key, counter_value, type(counter_value))
 
         # Stat
         Meters.aii("knock_stat_notify_value")

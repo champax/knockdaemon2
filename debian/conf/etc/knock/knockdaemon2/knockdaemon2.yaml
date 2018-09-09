@@ -227,3 +227,11 @@ probes:
     patern:
       - knockdaemon2
 
+
+  # ============================
+  # Mdstat
+  # ============================
+  Mdstat:
+    class_name: knockdaemon2.Probes.Os.Mdstat.Mdstat
+    exec_interval_sec: 60
+    exec_enabled: true
