@@ -15,7 +15,7 @@ pysolmeters
 pysoltcp
 
 # gevent
-gevent == 1.2.2
+gevent
 geventhttpclient
 greenlet
 

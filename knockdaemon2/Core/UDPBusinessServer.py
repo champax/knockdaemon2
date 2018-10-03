@@ -38,7 +38,6 @@ from pysolbase.SolBase import SolBase
 from pysolmeters.AtomicFloat import AtomicFloatSafe
 from pysolmeters.DelayToCount import DelayToCount
 from pysolmeters.Meters import Meters
-from pysoltcp.tcpbase.TcpSocketManager import TcpSocketManager
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Platform.PTools import PTools

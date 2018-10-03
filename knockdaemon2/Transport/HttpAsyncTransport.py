@@ -28,7 +28,6 @@ from datetime import datetime
 from greenlet import GreenletExit
 
 import gevent
-import os
 from gevent.queue import Queue, Empty
 from gevent.threading import Lock
 from pysolbase.SolBase import SolBase

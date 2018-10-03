@@ -146,7 +146,7 @@ if PTools.get_distribution_type() == "windows":
             except:
                 ret = None
             finally:
-                if SolBase.is_string_not_empty(ret):
+                if ret:
                     return ret.split(sep)
                 else:
                     return list()

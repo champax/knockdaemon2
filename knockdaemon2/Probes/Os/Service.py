@@ -58,7 +58,7 @@ class Service(KnockProbe):
         """
         KnockProbe.__init__(self, linux_support=True, windows_support=False)
 
-        self.patern_list= list()
+        self.patern_list = list()
         self.category = "/os/services"
 
     def init_from_config(self, k, d_yaml_config, d):

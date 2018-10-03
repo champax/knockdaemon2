@@ -26,7 +26,6 @@ import socket
 
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
-from pysoltcp.tcpbase.TcpSocketManager import TcpSocketManager
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
 

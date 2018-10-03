@@ -26,7 +26,6 @@ import socket
 import ujson
 
 from pysolbase.SolBase import SolBase
-from pysoltcp.tcpbase.TcpSocketManager import TcpSocketManager
 
 logger = logging.getLogger(__name__)
 

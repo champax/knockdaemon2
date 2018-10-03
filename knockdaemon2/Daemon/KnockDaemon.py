@@ -25,6 +25,7 @@ import logging
 import sys
 from logging.handlers import SysLogHandler
 
+from gevent import util
 from pysolbase.SolBase import SolBase
 from pysoldaemon.daemon.Daemon import Daemon
 
@@ -123,6 +124,20 @@ class KnockDaemon(Daemon):
         Test
         """
         logger.debug("Called")
+
+        # Flush out all call stacks
+        try:
+            with open("/tmp/knockdaemon2.run_info.txt", "w") as outfile:
+                util.print_run_info(
+                    thread_stacks=True,
+                    greenlet_stacks=True,
+                    limit=None,
+                    file=outfile,
+                )
+        except Exception as e:
+            s = SolBase.extostr(e)
+            print(s)
+            logger.warn("Ex=%s", s)
 
     def _on_start(self):
         """

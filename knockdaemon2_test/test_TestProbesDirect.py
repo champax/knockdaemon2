@@ -189,7 +189,7 @@ class TestProbesDirect(unittest.TestCase):
 
         expect_value(self, self.k, "k.os.service.running", 1, 'eq', {"SERVICE": "rsyslog"})
         expect_value(self, self.k, "k.os.service.running", 1, 'eq', {"SERVICE": "cron"})
-        expect_value(self, self.k, "k.os.service.running_count", 2,'eq', None)
+        expect_value(self, self.k, "k.os.service.running_count", 2, 'eq', None)
 
     @unittest.skipIf(Service().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Service())
     def test_Mdstat(self):
