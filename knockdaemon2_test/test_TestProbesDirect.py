@@ -441,6 +441,7 @@ class TestProbesDirect(unittest.TestCase):
             expect_value(self, self.k, "k.os.hostname", None, "exists")
             expect_value(self, self.k, "k.os.localtime", None, "exists")
             expect_value(self, self.k, "k.os.maxfiles", None, "exists")
+            expect_value(self, self.k, "k.os.openfiles", None, "exists")
             expect_value(self, self.k, "k.os.maxproc", None, "exists")
             expect_value(self, self.k, "k.os.users.connected", 0, "gte")
 

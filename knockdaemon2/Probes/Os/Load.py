@@ -114,6 +114,7 @@ class Load(KnockProbe):
         sysctl = self.get_sysctl()
         self.notify_value_n("k.os.maxfiles", None, int(sysctl["max_open_files"]))
         self.notify_value_n("k.os.maxproc", None, int(sysctl["max_proc"]))
+        self.notify_value_n("k.os.openfiles", None, int(sysctl["open_file"]))
         self.notify_value_n("k.os.users.connected", None, self.get_users_count())
 
     # noinspection PyMethodMayBeStatic
@@ -125,6 +126,8 @@ class Load(KnockProbe):
         result = dict()
         result["max_open_files"] = open("/proc/sys/fs/file-max").read().strip()
         result["max_proc"] = open("/proc/sys/kernel/pid_max").read().strip()
+        result["open_file"] = open("/proc/sys/fs/file-nr").read().strip().split()[0]
+
         return result
 
     # noinspection PyMethodMayBeStatic

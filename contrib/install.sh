@@ -11,7 +11,7 @@ export PIP_RESPECT_VIRTUALENV=true
 
 # Packages
 aptitude update
-aptitude install -y virtualenvwrapper build-essential python-dev file smartmontools ipmitool dmidecode sudo
+aptitude install -y virtualenvwrapper build-essential python-dev file smartmontools dmidecode sudo
 
 # make home dir
 mkdir -p ${WORKON_HOME}
