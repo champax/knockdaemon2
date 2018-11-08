@@ -26,9 +26,11 @@ import logging
 import os
 import re
 
+import psutil
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
+from knockdaemon2.Core.KnockHelpers import KnockHelpers
 from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Platform.PTools import PTools
 
@@ -51,12 +53,14 @@ class Service(KnockProbe):
     Doc
     """
     SERVICE_PATERNS = list()
+    regex_find_pid = re.compile(r' Main PID: ([0-9]+)')
 
     def __init__(self):
         """
         Init
         """
         KnockProbe.__init__(self, linux_support=True, windows_support=False)
+        self.helpers = KnockHelpers()
 
         self.patern_list = list()
         self.category = "/os/services"
@@ -108,6 +112,7 @@ class Service(KnockProbe):
             self.notify_value_n("k.os.service.running", {"SERVICE": s}, 0)
         for s in running_checked:
             self.notify_value_n("k.os.service.running", {"SERVICE": s}, 1)
+            self._service_meters(s)
 
         self.notify_value_n("k.os.service.running_count", None, len(running_checked))
 
@@ -231,3 +236,68 @@ class Service(KnockProbe):
                     continue
                 ret.append(sysv_service)
         return ret
+
+    def _service_meters(self, s):
+        """
+        notif file open, memory
+
+        :param s: Service name
+        :type s: str
+        :return:
+        """
+        # get pid
+
+        cmd = self.helpers.sudoize('service %s status' % s)
+        logger.info("going invoke, cmd=%s", cmd)
+        ec, so, se = ButcherTools.invoke(cmd)
+        if ec != 0:
+            logger.warn("invoke failed, give up,  ec=%s, so=%s, se=%s", ec, so, se)
+            return
+        for line in so.split('\n'):
+            matches = self.regex_find_pid.match(line)
+            if matches:
+                pid = matches.groups()[0]
+                self._notify_process(int(pid, 10), s)
+                continue
+
+    def _notify_process(self, pid, service):
+        """
+
+        :param pid:
+        :type pid: int
+        :param service: service name
+        :type service: str
+        :return:
+        """
+        p = psutil.Process(pid)
+        try:
+            io_stat = p.io_counters()
+            read_bytes = io_stat[2]
+            write_bytes = io_stat[3]
+            self.notify_value_n("k.proc.io.read_bytes", {"PROCNAME": service}, read_bytes)
+            self.notify_value_n("k.proc.io.write_bytes", {"PROCNAME": service}, write_bytes)
+
+        except psutil.AccessDenied as e:
+            logger.warn(
+                "io_counters failed, pid=%s, e=%s",
+                pid,
+                SolBase.extostr(e))
+        except NotImplementedError:
+            # patch rapsberry NotImplementedError: couldn't find /proc/xxxx/io (kernel too old?)
+            logger.info("Couldn't find /proc/xxxx/io (possible kernel too old), discarding k.proc.io.read_bytes / k.proc.io.write_bytes")
+
+        d = p.as_dict()
+        cpu_user = d["cpu_times"].user
+        cpu_system = d["cpu_times"].system
+
+        rss_memory = d["memory_info"].rss
+
+        v = d.get("num_fds")
+        if v:
+            self.notify_value_n("k.proc.io.num_fds", {"PROCNAME": service}, v)
+        else:
+            logger.warn("num_fds None")
+
+        cpu_used = cpu_system + cpu_user
+        self.notify_value_n("k.proc.memory_used", {"PROCNAME": service}, rss_memory)
+        self.notify_value_n("k.proc.cpu_used", {"PROCNAME": service}, cpu_used)
