@@ -270,10 +270,18 @@ class Service(KnockProbe):
         :return:
         """
         p = psutil.Process(pid)
+        children = p.children(recursive=True)
+
         try:
             io_stat = p.io_counters()
             read_bytes = io_stat[2]
             write_bytes = io_stat[3]
+
+            for c in children:
+                c_io_stat = c.io_counters()
+                read_bytes += c_io_stat[2]
+                write_bytes += c_io_stat[3]
+
             self.notify_value_n("k.proc.io.read_bytes", {"PROCNAME": service}, read_bytes)
             self.notify_value_n("k.proc.io.write_bytes", {"PROCNAME": service}, write_bytes)
 
@@ -287,17 +295,27 @@ class Service(KnockProbe):
             logger.info("Couldn't find /proc/xxxx/io (possible kernel too old), discarding k.proc.io.read_bytes / k.proc.io.write_bytes")
 
         d = p.as_dict()
+
         cpu_user = d["cpu_times"].user
         cpu_system = d["cpu_times"].system
 
         rss_memory = d["memory_info"].rss
 
-        v = d.get("num_fds")
-        if v:
-            self.notify_value_n("k.proc.io.num_fds", {"PROCNAME": service}, v)
-        else:
-            logger.warn("num_fds None")
+        num_fds = d.get("num_fds")
+        if num_fds is None:
+            num_fds = 0
+        for c in children:
+            d = c.as_dict()
+            cpu_user += d["cpu_times"].user
+            cpu_system += d["cpu_times"].system
+
+            rss_memory += d["memory_info"].rss
+
+            c_num_fds = d.get("num_fds")
+            if c_num_fds is not None:
+                num_fds += c_num_fds
 
         cpu_used = cpu_system + cpu_user
+        self.notify_value_n("k.proc.io.num_fds", {"PROCNAME": service}, num_fds)
         self.notify_value_n("k.proc.memory_used", {"PROCNAME": service}, rss_memory)
         self.notify_value_n("k.proc.cpu_used", {"PROCNAME": service}, cpu_used)
