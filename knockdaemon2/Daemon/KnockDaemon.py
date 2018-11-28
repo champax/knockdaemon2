@@ -123,7 +123,7 @@ class KnockDaemon(Daemon):
         """
         Test
         """
-        logger.debug("Called")
+        logger.info("Called")
 
         # Flush out all call stacks
         try:
