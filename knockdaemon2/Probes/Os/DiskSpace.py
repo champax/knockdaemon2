@@ -163,7 +163,8 @@ class DiskSpace(KnockProbe):
                 logger.info('processing device=%s mountpoint=%s fstype=%s', device, mountpoint, fstype)
                 if mountpoint.startswith('/mnt/') or \
                         mountpoint.startswith('/tmp/') or \
-                        mountpoint.startswith('/media/'):
+                        mountpoint.startswith('/media/') or \
+                        "/.zfs/snapshot/" in mountpoint:
                     continue
 
                 # Disco
