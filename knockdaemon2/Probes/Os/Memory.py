@@ -59,13 +59,14 @@ class Memory(KnockProbe):
 
         # Fetch
         logger.info("Getting memory now")
-        memory_total, memory_used, swap_total, swap_used, memory_free, swap_free, memory_buffers, memory_cached = self._get_mem_info()
+        memory_total, memory_used, swap_total, swap_used, memory_free, swap_free, memory_buffers, memory_cached, memory_available = self._get_mem_info()
         logger.info("Getting memory done")
 
         # Notify
         self._notify_data(
             memory_total=memory_total,
             memory_used=memory_used,
+            memory_available=memory_available,
             memory_cached=memory_cached,
             memory_buffers=memory_buffers,
             memory_free=memory_free,
@@ -220,7 +221,7 @@ class Memory(KnockProbe):
         except Exception as e:
             logger.warn("Exception while processing, ex=%s, d=%s", SolBase.extostr(e), d)
 
-    def _notify_data(self, memory_total, memory_used, memory_cached, memory_buffers, memory_free, swap_total, swap_used, swap_free):
+    def _notify_data(self, memory_total, memory_used, memory_cached, memory_buffers, memory_free, swap_total, swap_used, swap_free, memory_available=None):
         """
         Notify
         :param memory_total: int
@@ -241,7 +242,9 @@ class Memory(KnockProbe):
         :type swap_free: int
 
         """
-        self.notify_value_n("k.os.memory.size.available", None, memory_free)
+        self.notify_value_n("k.os.memory.size.free", None, memory_free)
+        if memory_available is not None:
+            self.notify_value_n("k.os.memory.size.available", None, memory_available)
         self.notify_value_n("k.os.swap.size.free", None, swap_free)
         if swap_total > 0:
             self.notify_value_n("k.os.swap.size.pfree", None, 100.1 * swap_free / swap_total)
@@ -266,6 +269,7 @@ class Memory(KnockProbe):
         memory_cached = 0
         swap_total = 0
         swap_free = 0
+        memory_available = 0
 
         meminfo_file = None
         try:
@@ -277,6 +281,8 @@ class Memory(KnockProbe):
                     memory_total = self._get_value_from_line(line)
                 elif line.startswith('MemFree'):
                     memory_free = self._get_value_from_line(line)
+                elif line.startswith('MemAvailable'):
+                    memory_available = self._get_value_from_line(line)
                 elif line.startswith('Buffers'):
                     memory_buffers = self._get_value_from_line(line)
                 elif line.startswith('Cached'):
@@ -290,7 +296,7 @@ class Memory(KnockProbe):
             logger.info("Parsed mem_info")
             memory_used = memory_total - memory_free - memory_buffers - memory_cached
             swap_used = swap_total - swap_free
-            return memory_total, memory_used, swap_total, swap_used, memory_free, swap_free, memory_buffers, memory_cached
+            return memory_total, memory_used, swap_total, swap_used, memory_free, swap_free, memory_buffers, memory_cached, memory_available
         finally:
             if meminfo_file:
                 meminfo_file.close()
