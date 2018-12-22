@@ -130,6 +130,10 @@ class Service(KnockProbe):
         """
         ret = self._get_systemd_services()
         ret.update(set(self._get_sysv_services(systemd_services=ret)))
+        
+        # Filter .dpkg-new service
+        ret = [ service for service in ret if not service.find(".dpkg-new") > 0 ]
+
         return sorted(ret)
 
     def _get_running(self):
