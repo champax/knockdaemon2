@@ -94,6 +94,7 @@ if [ ${OUT} -eq 0 ]; then
     then
         ./Jenkins/clean2client.sh
 
+        deactivate
         export GPGKEY=0x790D2DE0
         export DEBEMAIL="debian@knock.center"
         export DEBFULLNAME="Knock Center (GPG sign package key)"

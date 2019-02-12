@@ -1,8 +1,13 @@
 #!/usr/bin/make -f
 
+# Ignore some files
+export DH_ALWAYS_EXCLUDE=PYC:.pyc
+
 # Fix dh-virtualenv 1.0 install in /opt/venvs
 export DH_VIRTUALENV_INSTALL_ROOT=/opt/knock/
 
+# FIX Symlink in deb file
+export DH_VIRTUALENV_ARGUMENTS="--no-site-packages --always-copy"
 
 %:
 	dh $@ --with python-virtualenv --preinstall pip==8.1.2 --with=systemd
