@@ -40,7 +40,6 @@ function finish {
     echo "###### Cleaning env"
     if isset ${ENV}
     then
-        deactivate
         rmvirtualenv ${ENV}
     fi
 }
