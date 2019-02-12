@@ -88,7 +88,13 @@ class MongoDbStat(KnockProbe):
         self.strport = str(port)
 
         try:
-            mongo_connection = pymongo.MongoClient(host, port)
+            username = None
+            password = None
+            if self.d_local_conf.get('username', False):
+                username = self.d_local_conf.get('username', False)
+                password = self.d_local_conf.get('password', False)
+            mongo_connection = pymongo.MongoClient(host, port, username=username, password=password)
+
         except Exception as e:
             logger.warn(SolBase.extostr(e))
             self.notify_value_n("k.mongodb.ok", {"PORT": self.strport}, "0")
