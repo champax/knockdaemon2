@@ -129,6 +129,9 @@ class RedisStat(KnockProbe):
             # Read
             buf = FileUtility.file_to_textbuffer(conf, "utf-8")
 
+            if buf is None:
+                continue
+
             # Sentinel bypass # TODO : regex detection of "sentinel monitor"
             if "sentinel monitor" in buf:
                 continue

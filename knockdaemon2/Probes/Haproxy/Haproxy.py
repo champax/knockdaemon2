@@ -63,7 +63,7 @@ class Haproxy(KnockProbe):
         ar_buf = buf.split("\n")
         ar_fields = None
         for cur_line in ar_buf:
-            logger.info("Parsing, cur_line=%s", cur_line)
+            logger.debug("Parsing, cur_line=%s", cur_line)
             # Clean
             cur_line = cur_line.strip()
             if len(cur_line) == 0:
@@ -108,7 +108,7 @@ class Haproxy(KnockProbe):
                 cur_d[cur_field] = cur_val
 
             # Append
-            logger.info("Got cur_d=%s", cur_d)
+            logger.debug("Got cur_d=%s", cur_d)
             ar_out.append(cur_d)
 
         # Over
