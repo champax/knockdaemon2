@@ -317,6 +317,8 @@ class Haproxy(KnockProbe):
                 # -----------------------
                 # LOCAL : PUSH each proxy
                 # -----------------------
+                if len(cur_d['msg']) == 0:
+                    cur_d['msg'] = 'OK'
 
                 self.notify_value_n(
                     counter_key="k.haproxy.%s" % cur_d['type'],
