@@ -15,7 +15,7 @@ echo "postinst: pass 2 complete"
 
 
 echo "POSTINSTALL : Compile all py to pyc"
-find /opt/knock/knockdaemon2/bin/ -name '*.pyc' -delete
+find /opt/knock/knockdaemon2/ -name '*.pyc' -delete
 /opt/knock/knockdaemon2/bin/python -m compileall /opt/knock/knockdaemon2
 
 
