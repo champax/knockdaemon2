@@ -137,7 +137,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         :type node_hash; dict
         :param notify_hash: Hash str to (disco_key, disco_id, tag). Cleared upon success. UNUSED HERE.
         :type notify_hash; dict
-        :param notify_values: List of (superv_key, tag, value). Cleared upon success.
+        :param notify_values: List of (superv_key, tag, value, additional_fields). Cleared upon success.
         :type notify_values; list
         """
 
@@ -176,7 +176,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         # ---------------------------
 
         if self._influx_dedup:
-            logger.warn("dedup on (this is experimental)")
+            logger.info("dedup on (this is experimental)")
             # Compute limit ms (we keep margin, so we got on the past, based on last http ok and http interval)
             limit_ms = self.last_http_ok_ms - (self._http_send_min_interval_ms * 2)
 

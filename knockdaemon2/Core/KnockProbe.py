@@ -181,7 +181,7 @@ class KnockProbe(object):
 
         self._knock_manager.notify_discovery_n(disco_key, d_disco_id_tag)
 
-    def notify_value_n(self, counter_key, d_disco_id_tag, counter_value, ts=None):
+    def notify_value_n(self, counter_key, d_disco_id_tag, counter_value, ts=None, additional_fields=None):
         """
         Notify value
 
@@ -196,6 +196,9 @@ class KnockProbe(object):
         :type counter_value: object
         :param ts: timestamp (epoch), or None to use current
         :type ts: None, float
+        :param additional_fields: dict
+        :type additional_fields: dict
+
         """
 
         # Timestamp to use
@@ -207,7 +210,7 @@ class KnockProbe(object):
                 ts = self.notify_ts_override
 
         # Notify manager
-        self._knock_manager.notify_value_n(counter_key, d_disco_id_tag, counter_value, ts, {"category": self.category})
+        self._knock_manager.notify_value_n(counter_key, d_disco_id_tag, counter_value, ts, {"category": self.category}, additional_fields)
 
     def __str__(self):
         """

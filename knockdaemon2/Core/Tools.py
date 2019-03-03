@@ -88,7 +88,7 @@ class Tools(object):
 
         # Process data and build output dict
         ar_out = list()
-        for probe_name, dd, value, timestamp, d_opt_tags in notify_values:
+        for probe_name, dd, value, timestamp, d_opt_tags, additional_fields in notify_values:
             # We got a unix timestamp (1503045097.626604)
             # Convert it to required date format
             dt_temp = SolBase.dt_ensure_utc_naive(SolBase.epoch_to_dt(timestamp))
@@ -105,12 +105,15 @@ class Tools(object):
             if d_opt_tags:
                 d_tags.update(d_opt_tags)
 
+            f_dict = {"value": value}
+            f_dict.update(additional_fields)
+
             # Build
             d_temp = {
                 "measurement": probe_name,
                 "tags": d_tags,
                 "time": s_dt_temp,
-                "fields": {"value": value}
+                "fields": f_dict
             }
             logger.debug("Built, d_temp=%s", d_temp)
             ar_out.append(d_temp)

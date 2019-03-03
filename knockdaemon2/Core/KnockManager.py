@@ -723,7 +723,7 @@ class KnockManager(object):
     # SUPERV NOTIFY : VALUE
     # ==============================
 
-    def notify_value_n(self, counter_key, d_disco_id_tag, counter_value, ts=None, d_opt_tags=None):
+    def notify_value_n(self, counter_key, d_disco_id_tag, counter_value, ts=None, d_opt_tags=None, additional_fields=None):
         """
         Notify value
 
@@ -740,6 +740,8 @@ class KnockManager(object):
         :type ts: None, float
         :param d_opt_tags: None,dict (additional tags)
         :type d_opt_tags: None,dict
+        :param additional_fields: dict
+        :type additional_fields: dict
 
         """
 
@@ -751,6 +753,8 @@ class KnockManager(object):
         # Value must NOT be a tuple or a list, it must an int,float,bool,string
         assert isinstance(counter_value, (int, long, float, bool, basestring)), "counter_value must be an int, float, bool, basestring k=%s, v=%s type=%s" % (counter_key, counter_value, type(counter_value))
 
+        if additional_fields is None:
+            additional_fields = {}
         # Stat
         Meters.aii("knock_stat_notify_value")
 
@@ -769,7 +773,7 @@ class KnockManager(object):
         if not ts:
             ts = time()
 
-        self._superv_notify_value_list.append((counter_key, dd, counter_value, ts, d_opt_tags))
+        self._superv_notify_value_list.append((counter_key, dd, counter_value, ts, d_opt_tags, additional_fields))
 
     # ==============================
     # SUPERV : TOOLS

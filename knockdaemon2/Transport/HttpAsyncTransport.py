@@ -185,7 +185,7 @@ class HttpAsyncTransport(KnockTransport):
 
     def process_notify(self, account_hash, node_hash, notify_hash, notify_values):
         """
-        Process notify
+        Process notify TODO need server implementation of multiseries time series
         :param account_hash: Hash str to value
         :type account_hash; dict
         :param node_hash: Hash str to value

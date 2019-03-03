@@ -169,7 +169,7 @@ class Dedup(object):
         out_list = list()
 
         # Browse incoming
-        for probe_name, dd, value, timestamp, d_opt_tags in notify_values:
+        for probe_name, dd, value, timestamp, d_opt_tags, additional_fields in notify_values:
             # Get key
             in_dedup_key = self.get_dedup_key(probe_name, dd, d_opt_tags)
 
@@ -183,14 +183,14 @@ class Dedup(object):
                     Meters.aii("dedup.discard_window_hit")
                 else:
                     # We have a miss, we keep this one
-                    out_list.append((probe_name, dd, value, timestamp, d_opt_tags))
+                    out_list.append((probe_name, dd, value, timestamp, d_opt_tags,additional_fields))
 
                     # We register (add)
                     Meters.aii("dedup.keep_window_miss")
                     self.d_dedup[in_dedup_key][in_window] = SolBase.mscurrent()
             else:
                 # We have a miss, we keep this one
-                out_list.append((probe_name, dd, value, timestamp, d_opt_tags))
+                out_list.append((probe_name, dd, value, timestamp, d_opt_tags,additional_fields))
 
                 # We register (init)
                 Meters.aii("dedup.keep_key_miss")

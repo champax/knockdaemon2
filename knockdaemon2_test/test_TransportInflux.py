@@ -66,15 +66,15 @@ class TestTransportInflux(unittest.TestCase):
 
         # Build our stuff
         ar_notify_values = [
-            ("probe_a", {"tag1": "tagv1", "tag2": "tagv2"}, 100, SolBase.dt_to_epoch(SolBase.datecurrent()), {"otagz": "vtagz", "otagx": "vtagx"}),
-            ("probe_b", {"tag1": "tagv1", "tag2": "tagv2"}, 100, SolBase.dt_to_epoch(SolBase.datecurrent()), {"otagz": "vtagz", "otagx": "vtagx"}),
+            ("probe_a", {"tag1": "tagv1", "tag2": "tagv2"}, 100, SolBase.dt_to_epoch(SolBase.datecurrent()), {"otagz": "vtagz", "otagx": "vtagx"}, {'v': 1}),
+            ("probe_b", {"tag1": "tagv1", "tag2": "tagv2"}, 100, SolBase.dt_to_epoch(SolBase.datecurrent()), {"otagz": "vtagz", "otagx": "vtagx"}, {'v': 2}),
         ]
 
         # Dedup and check (BYPASS purge)
         ar_check = dd.dedup(notify_values=ar_notify_values, limit_ms=SolBase.mscurrent() - 60000)
         self.assertEqual(ar_notify_values, ar_check)
         self.assertEqual(len(dd.d_dedup), 2)
-        for probe_name, d_tags, value, timestamp, d_opt_tags in ar_notify_values:
+        for probe_name, d_tags, value, timestamp, d_opt_tags, _ in ar_notify_values:
             in_dedup_key = Dedup.get_dedup_key(probe_name, d_tags, d_opt_tags)
             in_window = Dedup.epoch_to_dt_without_sec(timestamp)
             self.assertIn(in_dedup_key, dd.d_dedup)
@@ -84,7 +84,7 @@ class TestTransportInflux(unittest.TestCase):
         ar_check = dd.dedup(notify_values=ar_notify_values, limit_ms=SolBase.mscurrent() + 60000)
         self.assertEqual(ar_notify_values, ar_check)
         self.assertEqual(len(dd.d_dedup), 2)
-        for probe_name, d_tags, value, timestamp, d_opt_tags in ar_notify_values:
+        for probe_name, d_tags, value, timestamp, d_opt_tags, _ in ar_notify_values:
             in_dedup_key = Dedup.get_dedup_key(probe_name, d_tags, d_opt_tags)
             in_window = Dedup.epoch_to_dt_without_sec(timestamp)
             self.assertIn(in_dedup_key, dd.d_dedup)
@@ -149,8 +149,8 @@ class TestTransportInflux(unittest.TestCase):
             node_hash={'host': 'ut_host'},
             notify_hash={"we_dont": "care"},
             notify_values=[
-                ("dummy.count", {"TYPE": "type1"}, 10, 1503045097.626604, {"opt_key": "va"}),
-                ("dummy.count", {"TYPE": "type1"}, 20, 1503045197.626629, {"opt_key": "vb"}),
+                ("dummy.count", {"TYPE": "type1"}, 10, 1503045097.626604, {"opt_key": "va"}, {"value2": 1}),
+                ("dummy.count", {"TYPE": "type1"}, 20, 1503045197.626629, {"opt_key": "vb"}, {"value2": 1}),
             ]
         )
 

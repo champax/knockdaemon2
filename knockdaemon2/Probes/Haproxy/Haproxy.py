@@ -21,8 +21,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
+import csv
 import logging
 import socket
+from StringIO import StringIO
 
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
@@ -173,31 +175,8 @@ class Haproxy(KnockProbe):
             # Open socket, send and readall
             # -------------------------------
 
-            ha_buf = ""
             try:
-                soc = None
-                try:
-                    logger.info("Alloc socket, soc_name=%s", soc_name)
-                    soc = socket.socket(socket.AF_UNIX, type=socket.SOCK_STREAM)
-                    logger.info("Connect socket, soc_name=%s", soc_name)
-                    soc.connect(soc_name)
-                    SolBase.sleep(0)
-                    logger.info("Send socket, soc_name=%s", soc_name)
-                    soc.sendall("show stat\n")
-                    SolBase.sleep(0)
-
-                    logger.info("Recv (start) socket, soc_name=%s", soc_name)
-                    buf = soc.recv(1024)
-                    while buf:
-                        ha_buf += buf
-                        logger.info("Recv (loop) socket, soc_name=%s", soc_name)
-                        buf = soc.recv(1024)
-
-                    logger.info("Recv (over) socket, soc_name=%s", soc_name)
-                finally:
-                    logger.info("Closing socket, soc_name=%s", soc_name)
-                    SolBase.safe_close_socket(soc)
-                    SolBase.sleep(0)
+                ha_buf = self.read_soc(soc_name)
             except Exception as e:
                 logger.warn("Exception, ex=%s", SolBase.extostr(e))
                 raise
@@ -207,7 +186,7 @@ class Haproxy(KnockProbe):
             # -------------------------------
 
             # Parse
-            ar_ha = self.parse_buffer(ha_buf)
+            csv_dict = self.csv_parse(ha_buf)
 
             # Name mapping
             d_map = {
@@ -255,12 +234,15 @@ class Haproxy(KnockProbe):
                 "ttime": 0.0,
             }
 
+            # initialize output dict
+            agregated_dict = {}
             # Lets rock
-            for cur_d in ar_ha:
+            for cur_d in csv_dict:
                 # String
-                proxy_name = cur_d["pxname"]
+                proxy_name = cur_d["# pxname"]
                 service_name = cur_d["svname"]
                 status = cur_d["status"]
+
 
                 # -----------------------
                 # BYPASS STATS
@@ -270,18 +252,29 @@ class Haproxy(KnockProbe):
                     continue
 
                 # -----------------------
+                # Initialize aggregated record
+                # -----------------------
+                if proxy_name not in agregated_dict:
+                    agregated_dict[service_name] = dict()
+
+                # initialize cur_d
+                for k in ["status_ok", "status_ko", "server_ok", "server_ko"]:
+                    if k not in agregated_dict[service_name]:
+                        agregated_dict[service_name][k] = 0
+                    if "msg" not in agregated_dict[service_name]:
+                        agregated_dict[service_name]['msg'] = ""
+
+                # -----------------------
                 # GLOBAL
                 # -----------------------
 
                 # Global stuff
                 if status in ["OPEN", "UP"]:
                     d_global["status_ok"] += 1.0
-                    cur_d["status_ok"] = 1.0
-                    cur_d["status_ko"] = 0.0
+                    agregated_dict[proxy_name]["status_ok"] += 1.0
                 else:
                     d_global["status_ko"] += 1.0
-                    cur_d["status_ok"] = 0.0
-                    cur_d["status_ko"] = 1.0
+                    agregated_dict[proxy_name]["status_ko"] = 1.0
 
                 # Global stuff
                 for s in [
@@ -297,14 +290,26 @@ class Haproxy(KnockProbe):
                     d_global[s] = max(d_global[s], cur_d[s])
 
                 # -----------------------
-                # BYPASS REAL SERVERS
+                # Server , frontend, backend
                 # -----------------------
-                if service_name not in ["FRONTEND", "BACKEND"]:
-                    continue
+                if service_name not in ["FRONTEND", "BACKEND"]: # real server
+                    if cur_d['status'] == 'UP':
+                        agregated_dict[proxy_name]['server_ok'] +=1
+                    else:
+                        agregated_dict[proxy_name]['server_ko'] += 1
+                        agregated_dict[proxy_name]['msg'] += ";%s %s-%s" % (service_name, cur_d['check_status'], cur_d['check_code'])
 
+                else: # proxy
+                    for k, v in cur_d:
+                        agregated_dict[proxy_name]['type'] = service_name
+                        if not k in agregated_dict[proxy_name]:
+                            agregated_dict[proxy_name][k] = v
+            for proxy_name, cur_d in agregated_dict.items():
                 # -----------------------
                 # LOCAL : PUSH
                 # -----------------------
+                # Tag
+
                 for s in [
                     "scur", "slim", "dreq", "dresp", "ereq", "econ", "eresp",
                     "hrsp_1xx", "hrsp_2xx", "hrsp_3xx", "hrsp_4xx", "hrsp_5xx", "hrsp_other",
@@ -317,9 +322,8 @@ class Haproxy(KnockProbe):
                     # Key
                     s_key = "k.haproxy." + s_map
 
-                    # Tag
                     d_tag = {
-                        "PROXY": service_name + "." + proxy_name,
+                        "PROXY": cur_d['service_name'] + "." + proxy_name,
                     }
 
                     # Push
@@ -327,7 +331,13 @@ class Haproxy(KnockProbe):
                         counter_key=s_key,
                         d_disco_id_tag=d_tag,
                         counter_value=cur_d[s],
-                    )
+                )
+                self.notify_value_n(
+                    counter_key="k.haproxy.%s" % cur_d['type'],
+                    d_disco_id_tag=None,
+                    counter_value=cur_d["status_ok"],
+                    additional_fields={}
+                )
             # -----------------------
             # GLOBAL : PUSH
             # -----------------------
@@ -365,3 +375,53 @@ class Haproxy(KnockProbe):
                 d_disco_id_tag={"PROXY": "ALL"},
                 counter_value=0,
             )
+
+    def read_soc(self, soc_name):
+        """
+        Open socket, send and readall
+
+        :param soc_name: Socket path
+        :type soc_name: str
+        :return:
+        :rtype str
+        """
+        ha_buf = ""
+        soc = None
+        try:
+            logger.info("Alloc socket, soc_name=%s", soc_name)
+            soc = socket.socket(socket.AF_UNIX, type=socket.SOCK_STREAM)
+            logger.info("Connect socket, soc_name=%s", soc_name)
+            soc.connect(soc_name)
+            SolBase.sleep(0)
+            logger.info("Send socket, soc_name=%s", soc_name)
+            soc.sendall("show stat\n")
+            SolBase.sleep(0)
+
+            logger.info("Recv (start) socket, soc_name=%s", soc_name)
+            buf = soc.recv(1024)
+            while buf:
+                ha_buf += buf
+                logger.info("Recv (loop) socket, soc_name=%s", soc_name)
+                buf = soc.recv(1024)
+
+            logger.info("Recv (over) socket, soc_name=%s", soc_name)
+        finally:
+            logger.info("Closing socket, soc_name=%s", soc_name)
+            SolBase.safe_close_socket(soc)
+            SolBase.sleep(0)
+        return ha_buf
+
+    @classmethod
+    def csv_parse(cls, ha_buf):
+        """
+
+        :param ha_buf: buffer to parse
+        :type ha_buf: str
+        :return:
+        :rtype: csv.DictReader
+        """
+        f = StringIO()
+        f.write(ha_buf)
+        f.seek(0)
+
+        return csv.DictReader(f)
