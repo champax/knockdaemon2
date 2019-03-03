@@ -243,7 +243,6 @@ class Haproxy(KnockProbe):
                 service_name = cur_d["svname"]
                 status = cur_d["status"]
 
-
                 # -----------------------
                 # BYPASS STATS
                 # -----------------------
@@ -292,14 +291,14 @@ class Haproxy(KnockProbe):
                 # -----------------------
                 # Server , frontend, backend
                 # -----------------------
-                if service_name not in ["FRONTEND", "BACKEND"]: # real server
+                if service_name not in ["FRONTEND", "BACKEND"]:  # real server
                     if cur_d['status'] == 'UP':
-                        agregated_dict[proxy_name]['server_ok'] +=1
+                        agregated_dict[proxy_name]['server_ok'] += 1
                     else:
                         agregated_dict[proxy_name]['server_ko'] += 1
                         agregated_dict[proxy_name]['msg'] += ";%s %s-%s" % (service_name, cur_d['check_status'], cur_d['check_code'])
 
-                else: # proxy
+                else:  # proxy
                     for k, v in cur_d:
                         agregated_dict[proxy_name]['type'] = service_name.lower()
                         if not k in agregated_dict[proxy_name]:
@@ -311,13 +310,13 @@ class Haproxy(KnockProbe):
                 # -----------------------
 
                 self.notify_value_n(
-                    counter_key="k.haproxy.%s" %  cur_d['type'],
+                    counter_key="k.haproxy.%s" % cur_d['type'],
                     d_disco_id_tag=None,
                     counter_value=cur_d["status_ok"],
                     additional_fields={
-                        'server_ok' : cur_d['server_ok'],
-                        'server_ko' : cur_d['server_ko'],
-                        'msg' : cur_d['msg'],
+                        'server_ok': cur_d['server_ok'],
+                        'server_ko': cur_d['server_ko'],
+                        'msg': cur_d['msg'],
                     }
                 )
 
