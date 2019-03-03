@@ -320,16 +320,6 @@ class Haproxy(KnockProbe):
                 if len(cur_d['msg']) == 0:
                     cur_d['msg'] = 'OK'
 
-                self.notify_value_n(
-                    counter_key="k.haproxy.%s" % cur_d['type'],
-                    d_disco_id_tag={"PROXY": proxy_name},
-                    counter_value=cur_d["status_ok"],
-                    additional_fields={
-                        'server_ok': cur_d['server_ok'],
-                        'server_ko': cur_d['server_ko'],
-                        'msg': cur_d['msg'],
-                    }
-                )
 
                 # -----------------------
                 # LOCAL : PUSH
@@ -362,6 +352,7 @@ class Haproxy(KnockProbe):
                         'server_ko': cur_d['server_ko'],
                         'msg': cur_d['msg'],
                     })
+
                 self.notify_value_n(
                     counter_key="k.haproxy.%s" % cur_d['type'],
                     d_disco_id_tag={"PROXY": proxy_name},
