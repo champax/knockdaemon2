@@ -335,7 +335,7 @@ class Haproxy(KnockProbe):
                 # LOCAL : PUSH
                 # -----------------------
                 # Tag
-
+                additional_fields = {}
                 for s in [
                     "scur", "slim", "dreq", "dresp", "ereq", "econ", "eresp",
                     "hrsp_1xx", "hrsp_2xx", "hrsp_3xx", "hrsp_4xx", "hrsp_5xx", "hrsp_other",
@@ -351,13 +351,24 @@ class Haproxy(KnockProbe):
                     d_tag = {
                         "PROXY": cur_d['svname'] + "." + proxy_name,
                     }
-
                     # Push
                     self.notify_value_n(
                         counter_key=s_key,
                         d_disco_id_tag=d_tag,
                         counter_value=float(cur_d[s]),
                     )
+                additional_fields.update({
+                        'server_ok': cur_d['server_ok'],
+                        'server_ko': cur_d['server_ko'],
+                        'msg': cur_d['msg'],
+                    })
+                self.notify_value_n(
+                    counter_key="k.haproxy.%s" % cur_d['type'],
+                    d_disco_id_tag={"PROXY": proxy_name},
+                    counter_value=cur_d["status_ok"],
+                    additional_fields=additional_fields
+                )
+
             # -----------------------
             # GLOBAL : PUSH
             # -----------------------
