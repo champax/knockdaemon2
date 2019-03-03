@@ -256,7 +256,7 @@ class Haproxy(KnockProbe):
                 if proxy_name not in agregated_dict:
                     agregated_dict[proxy_name] = dict()
 
-                # initialize cur_d
+                # initialize agregated_dict
                 for k in ["status_ok", "status_ko", "server_ok", "server_ko"]:
                     if k not in agregated_dict[proxy_name]:
                         agregated_dict[proxy_name][k] = 0
@@ -280,7 +280,8 @@ class Haproxy(KnockProbe):
                     "scur", "slim", "dreq", "dresp", "ereq", "econ", "eresp",
                     "hrsp_1xx", "hrsp_2xx", "hrsp_3xx", "hrsp_4xx", "hrsp_5xx", "hrsp_other",
                 ]:
-                    d_global[s] += cur_d[s]
+                    if isinstance(cur_d[s], (int, long, float, complex)):
+                        d_global[s] += cur_d[s]
 
                 # Global stuff
                 for s in [
@@ -299,7 +300,7 @@ class Haproxy(KnockProbe):
                         agregated_dict[proxy_name]['msg'] += ";%s %s-%s" % (service_name, cur_d['check_status'], cur_d['check_code'])
 
                 else:  # proxy
-                    for k, v in cur_d:
+                    for k, v in cur_d.items():
                         agregated_dict[proxy_name]['type'] = service_name.lower()
                         if not k in agregated_dict[proxy_name]:
                             agregated_dict[proxy_name][k] = v
@@ -338,7 +339,7 @@ class Haproxy(KnockProbe):
                     s_key = "k.haproxy." + s_map
 
                     d_tag = {
-                        "PROXY": cur_d['service_name'] + "." + proxy_name,
+                        "PROXY": cur_d['svname'] + "." + proxy_name,
                     }
 
                     # Push
