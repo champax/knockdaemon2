@@ -88,11 +88,14 @@ class Tools(object):
 
         # Process data and build output dict
         ar_out = list()
-        # additional_fields : default value {}
-        if len(notify_values) == 5:
-            notify_values = set(list(notify_values).append({}))
+        for item in notify_values:
+            # additional_fields : default value {}
+            if len(item) == 5:
+                probe_name, dd, value, timestamp, d_opt_tags = item
+                additional_fields = {}
+            else:
+                probe_name, dd, value, timestamp, d_opt_tags, additional_fields = item
 
-        for probe_name, dd, value, timestamp, d_opt_tags, additional_fields in notify_values:
             # We got a unix timestamp (1503045097.626604)
             # Convert it to required date format
             dt_temp = SolBase.dt_ensure_utc_naive(SolBase.epoch_to_dt(timestamp))
