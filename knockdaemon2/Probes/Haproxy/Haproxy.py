@@ -254,14 +254,14 @@ class Haproxy(KnockProbe):
                 # Initialize aggregated record
                 # -----------------------
                 if proxy_name not in agregated_dict:
-                    agregated_dict[service_name] = dict()
+                    agregated_dict[proxy_name] = dict()
 
                 # initialize cur_d
                 for k in ["status_ok", "status_ko", "server_ok", "server_ko"]:
-                    if k not in agregated_dict[service_name]:
-                        agregated_dict[service_name][k] = 0
-                    if "msg" not in agregated_dict[service_name]:
-                        agregated_dict[service_name]['msg'] = ""
+                    if k not in agregated_dict[proxy_name]:
+                        agregated_dict[proxy_name][k] = 0
+                    if "msg" not in agregated_dict[proxy_name]:
+                        agregated_dict[proxy_name]['msg'] = ""
 
                 # -----------------------
                 # GLOBAL
