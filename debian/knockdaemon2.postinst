@@ -13,6 +13,11 @@ echo "postinst: pass 2 complete"
 update-rc.d -f knockdaemon2 defaults
 echo "postinst: pass 2 complete"
 
+
+echo "POSTINSTALL : Compile all py to pyc"
+/opt/knock/knockdaemon2/bin/python -m compileall /opt/knock/knockdaemon2
+
+
 # Restart
 echo "postinst: pass 3"
 service knockdaemon2 restart
