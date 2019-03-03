@@ -301,11 +301,26 @@ class Haproxy(KnockProbe):
 
                 else: # proxy
                     for k, v in cur_d:
-                        agregated_dict[proxy_name]['type'] = service_name
+                        agregated_dict[proxy_name]['type'] = service_name.lower()
                         if not k in agregated_dict[proxy_name]:
                             agregated_dict[proxy_name][k] = v
 
             for proxy_name, cur_d in agregated_dict.items():
+                # -----------------------
+                # LOCAL : PUSH each proxy
+                # -----------------------
+
+                self.notify_value_n(
+                    counter_key="k.haproxy.%s" %  cur_d['type'],
+                    d_disco_id_tag=None,
+                    counter_value=cur_d["status_ok"],
+                    additional_fields={
+                        'server_ok' : cur_d['server_ok'],
+                        'server_ko' : cur_d['server_ko'],
+                        'msg' : cur_d['msg'],
+                    }
+                )
+
                 # -----------------------
                 # LOCAL : PUSH
                 # -----------------------
@@ -333,16 +348,6 @@ class Haproxy(KnockProbe):
                         d_disco_id_tag=d_tag,
                         counter_value=cur_d[s],
                     )
-                self.notify_value_n(
-                    counter_key="k.haproxy.%s" % cur_d['type'],
-                    d_disco_id_tag=None,
-                    counter_value=cur_d["status_ok"],
-                    additional_fields={
-                        'server_ok' : cur_d['server_ok'],
-                        'server_ko' : cur_d['server_ko'],
-                        'msg' : cur_d['msg'],
-                    }
-                )
             # -----------------------
             # GLOBAL : PUSH
             # -----------------------
