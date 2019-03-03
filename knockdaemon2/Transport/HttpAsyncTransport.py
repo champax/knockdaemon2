@@ -203,7 +203,12 @@ class HttpAsyncTransport(KnockTransport):
 
         # Fix value
         ar_nv = list()
-        for k, tag, v, ts, categ in notify_values:
+
+        for notify_value in notify_values:
+            if len(notify_value) == 5:
+                k, tag, v, ts, categ = notify_value
+            else:
+                k, tag, v, ts, categ, _ = notify_value
             if isinstance(v, float):
                 v = str(v).upper()
             elif isinstance(v, bool):
