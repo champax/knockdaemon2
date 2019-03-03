@@ -280,14 +280,22 @@ class Haproxy(KnockProbe):
                     "scur", "slim", "dreq", "dresp", "ereq", "econ", "eresp",
                     "hrsp_1xx", "hrsp_2xx", "hrsp_3xx", "hrsp_4xx", "hrsp_5xx", "hrsp_other",
                 ]:
-                    if isinstance(cur_d[s], (int, long, float, complex)):
-                        d_global[s] += cur_d[s]
-
+                    if cur_d[s] == '':
+                        cur_d[s] = 0
+                    try:
+                        d_global[s] += float(cur_d[s])
+                    except ValueError:
+                        logger.warning("Can not converst to float %s in %s", cur_d[s], cur_d)
                 # Global stuff
                 for s in [
                     "qtime", "ctime", "rtime", "ttime",
                 ]:
-                    d_global[s] = max(d_global[s], cur_d[s])
+                    if cur_d[s] == '':
+                        cur_d[s] = 0
+                    try:
+                        d_global[s] = max(d_global[s], float(cur_d[s]))
+                    except ValueError:
+                        logger.warning("Can not converst to float %s in %s", cur_d[s], cur_d)
 
                 # -----------------------
                 # Server , frontend, backend
@@ -346,7 +354,7 @@ class Haproxy(KnockProbe):
                     self.notify_value_n(
                         counter_key=s_key,
                         d_disco_id_tag=d_tag,
-                        counter_value=cur_d[s],
+                        counter_value=float(cur_d[s]),
                     )
             # -----------------------
             # GLOBAL : PUSH
@@ -398,23 +406,23 @@ class Haproxy(KnockProbe):
         ha_buf = ""
         soc = None
         try:
-            logger.info("Alloc socket, soc_name=%s", soc_name)
+            logger.debug("Alloc socket, soc_name=%s", soc_name)
             soc = socket.socket(socket.AF_UNIX, type=socket.SOCK_STREAM)
-            logger.info("Connect socket, soc_name=%s", soc_name)
+            logger.debug("Connect socket, soc_name=%s", soc_name)
             soc.connect(soc_name)
             SolBase.sleep(0)
-            logger.info("Send socket, soc_name=%s", soc_name)
+            logger.debug("Send socket, soc_name=%s", soc_name)
             soc.sendall("show stat\n")
             SolBase.sleep(0)
 
-            logger.info("Recv (start) socket, soc_name=%s", soc_name)
+            logger.debug("Recv (start) socket, soc_name=%s", soc_name)
             buf = soc.recv(1024)
             while buf:
                 ha_buf += buf
-                logger.info("Recv (loop) socket, soc_name=%s", soc_name)
+                logger.debug("Recv (loop) socket, soc_name=%s", soc_name)
                 buf = soc.recv(1024)
 
-            logger.info("Recv (over) socket, soc_name=%s", soc_name)
+            logger.debug("Recv (over) socket, soc_name=%s", soc_name)
         finally:
             logger.info("Closing socket, soc_name=%s", soc_name)
             SolBase.safe_close_socket(soc)
