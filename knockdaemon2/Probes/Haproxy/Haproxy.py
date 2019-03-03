@@ -312,7 +312,7 @@ class Haproxy(KnockProbe):
 
                 self.notify_value_n(
                     counter_key="k.haproxy.%s" % cur_d['type'],
-                    d_disco_id_tag={"PROXY": cur_d['svname'] + "." + proxy_name},
+                    d_disco_id_tag={"PROXY": proxy_name},
                     counter_value=cur_d["status_ok"],
                     additional_fields={
                         'server_ok': cur_d['server_ok'],
