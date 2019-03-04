@@ -52,6 +52,8 @@ class Haproxy(KnockProbe):
     def parse_buffer(cls, buf):
         """
         Parse haproxy buffer and return a list of dict.
+        Not used
+
         :param buf: str
         :type buf: str
         :return list of dict
@@ -179,7 +181,7 @@ class Haproxy(KnockProbe):
                 ha_buf = self.read_soc(soc_name)
             except Exception as e:
                 logger.warn("Exception, ex=%s", SolBase.extostr(e))
-                raise
+                raise e
 
             # -------------------------------
             # Parse
@@ -256,24 +258,14 @@ class Haproxy(KnockProbe):
                 if proxy_name not in agregated_dict:
                     agregated_dict[proxy_name] = dict()
 
-                # initialize agregated_dict
-                for k in ["status_ok", "status_ko", "server_ok", "server_ko"]:
-                    if k not in agregated_dict[proxy_name]:
+                    # initialize agregated_dict
+                    agregated_dict[proxy_name]['msg'] = ""
+                    for k in ["status_ok", "status_ko", "server_ok", "server_ko"]:
                         agregated_dict[proxy_name][k] = 0
-                    if "msg" not in agregated_dict[proxy_name]:
-                        agregated_dict[proxy_name]['msg'] = ""
 
                 # -----------------------
                 # GLOBAL
                 # -----------------------
-
-                # Global stuff
-                if status in ["OPEN", "UP"]:
-                    d_global["status_ok"] += 1.0
-                    agregated_dict[proxy_name]["status_ok"] += 1.0
-                else:
-                    d_global["status_ko"] += 1.0
-                    agregated_dict[proxy_name]["status_ko"] = 1.0
 
                 # Global stuff
                 for s in [
@@ -295,73 +287,53 @@ class Haproxy(KnockProbe):
                     try:
                         d_global[s] = max(d_global[s], float(cur_d[s]))
                     except ValueError:
-                        logger.warning("Can not converst to float %s in %s", cur_d[s], cur_d)
+                        logger.warning("Can not convert to float %s in %s", cur_d[s], cur_d)
 
                 # -----------------------
                 # Server , frontend, backend
                 # -----------------------
                 if service_name not in ["FRONTEND", "BACKEND"]:  # real server
-                    if cur_d['status'] == 'UP':
+                    if cur_d['status'] in ["OPEN", "UP"]:
                         agregated_dict[proxy_name]['server_ok'] += 1
+                        agregated_dict[proxy_name]['status_ok'] += 1
+                        d_global["status_ok"] += 1.0
+
+
                     else:
                         agregated_dict[proxy_name]['server_ko'] += 1
+                        agregated_dict[proxy_name]['status_ko'] += 1
                         agregated_dict[proxy_name]['msg'] += ";%s %s-%s" % (service_name, cur_d['check_status'], cur_d['check_code'])
+                        d_global["status_ko"] += 1.0
 
                 else:  # proxy
-                    for k, v in cur_d.items():
-                        agregated_dict[proxy_name]['type'] = service_name.lower()
-                        if not k in agregated_dict[proxy_name]:
-                            agregated_dict[proxy_name][k] = v
+                    agregated_dict[proxy_name]['type'] = service_name.lower()
+                    # -----------------------
+                    # get needed data
+                    # -----------------------
+                    for s in [
+                        "scur", "slim", "dreq", "dresp", "ereq", "econ", "eresp",
+                        "hrsp_1xx", "hrsp_2xx", "hrsp_3xx", "hrsp_4xx", "hrsp_5xx", "hrsp_other",
+                        "qtime", "ctime", "rtime", "ttime",
 
-            for proxy_name, cur_d in agregated_dict.items():
+                    ]:
+                        # Name mapping
+                        s_map = d_map[s]
+                        v = cur_d[s] or 0
+                        agregated_dict[proxy_name][s_map] = float(v)
+
+            for proxy_name, proxy_detail_d in agregated_dict.items():
                 # -----------------------
                 # LOCAL : PUSH each proxy
                 # -----------------------
-                if len(cur_d['msg']) == 0:
-                    cur_d['msg'] = 'OK'
-
-                # -----------------------
-                # LOCAL : PUSH
-                # -----------------------
-                # Tag
-                additional_fields = {}
-                for s in [
-                    "scur", "slim", "dreq", "dresp", "ereq", "econ", "eresp",
-                    "hrsp_1xx", "hrsp_2xx", "hrsp_3xx", "hrsp_4xx", "hrsp_5xx", "hrsp_other",
-                    "qtime", "ctime", "rtime", "ttime",
-                    "status_ok", "status_ko",
-                ]:
-                    # Name mapping
-                    s_map = d_map[s]
-
-                    # Key
-                    s_key = "k.haproxy." + s_map
-
-                    d_tag = {
-                        "PROXY": cur_d['svname'] + "." + proxy_name,
-                    }
-                    # Push
-                    self.notify_value_n(
-                        counter_key=s_key,
-                        d_disco_id_tag=d_tag,
-                        counter_value=float(cur_d[s]),
-                    )
-
-                    additional_fields[s_map] = float(cur_d[s])
-
-                additional_fields.update({
-                    'server_ok': cur_d['server_ok'],
-                    'server_ko': cur_d['server_ko'],
-                    'msg': cur_d['msg'],
-                })
+                if len(proxy_detail_d['msg']) == 0:
+                    proxy_detail_d['msg'] = 'OK'
 
                 self.notify_value_n(
-                    counter_key="k.haproxy.%s" % cur_d['type'],
+                    counter_key="k.haproxy.%s" % proxy_detail_d['type'],
                     d_disco_id_tag={"PROXY": proxy_name},
-                    counter_value=cur_d["status_ok"],
-                    additional_fields=additional_fields
+                    counter_value=proxy_detail_d["status_ok"],
+                    additional_fields=proxy_detail_d
                 )
-
             # -----------------------
             # GLOBAL : PUSH
             # -----------------------
@@ -391,6 +363,7 @@ class Haproxy(KnockProbe):
                 d_disco_id_tag={"PROXY": "ALL"},
                 counter_value=1,
             )
+
         except Exception as e:
             logger.warn("Exception (signaling down), ex=%s", SolBase.extostr(e))
             # Failed

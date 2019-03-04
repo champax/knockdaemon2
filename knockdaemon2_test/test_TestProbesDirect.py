@@ -26,6 +26,7 @@ import logging
 import platform
 import shutil
 import sys
+import ujson
 import unittest
 from datetime import datetime
 
@@ -237,6 +238,10 @@ class TestProbesDirect(unittest.TestCase):
         expect_value(self, self.k, "k.haproxy.avg_time_session_ms", 0.0, "gte", dd)
         expect_value(self, self.k, "k.haproxy.status_ok", 0.0, "gte", dd)
         expect_value(self, self.k, "k.haproxy.status_ko", 0.0, "gte", dd)
+        logger.info('self.k._superv_notify_value_list=%s', ujson.dumps(self.k._superv_notify_value_list))
+
+        # expect_value(self, self.k, "k.haproxy.backend", 0.0, "exists", {"PROXY": "nodes"})
+        # expect_value(self, self.k, "k.haproxy.frontend", 0.0, "exists", {"PROXY": "localnodes"})
 
     @unittest.skipIf(CheckDns().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % CheckDns())
     def test_CheckDns(self):
