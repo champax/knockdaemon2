@@ -261,7 +261,7 @@ class Haproxy(KnockProbe):
                     # initialize agregated_dict
                     agregated_dict[proxy_name]['msg'] = ""
                     for k in ["status_ok", "status_ko", "server_ok", "server_ko"]:
-                        agregated_dict[proxy_name][k] = 0
+                        agregated_dict[proxy_name][k] = 0.0
 
                 # -----------------------
                 # GLOBAL
@@ -300,8 +300,8 @@ class Haproxy(KnockProbe):
 
 
                     else:
-                        agregated_dict[proxy_name]['server_ko'] += 1
-                        agregated_dict[proxy_name]['status_ko'] += 1
+                        agregated_dict[proxy_name]['server_ko'] += 1.0
+                        agregated_dict[proxy_name]['status_ko'] += 1.0
                         agregated_dict[proxy_name]['msg'] += ";%s %s-%s" % (service_name, cur_d['check_status'], cur_d['check_code'])
                         d_global["status_ko"] += 1.0
 
