@@ -23,14 +23,13 @@ Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
 """
 import _socket
 import logging
-import socket
+import os
 import sys
 import ujson
 from collections import OrderedDict
 from errno import EWOULDBLOCK
 
 import gevent
-import os
 from gevent.lock import RLock
 from gevent.server import DatagramServer
 from gevent.threading import Lock
@@ -40,12 +39,11 @@ from pysolmeters.DelayToCount import DelayToCount
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
-from knockdaemon2.Platform.PTools import PTools
 
 logger = logging.getLogger(__name__)
 
 
-class BusinessServer(DatagramServer):
+class UDPBusinessServerBase(DatagramServer):
     """
     Business server
     """
@@ -55,7 +53,7 @@ class BusinessServer(DatagramServer):
     DTC = 'DTC'
     KNOCK_PREFIX_KEY = 'k.business.'
 
-    def __init__(self, manager, socket_name, windows_host, windows_port, send_back_udp, notify_interval_ms, *args, **kwargs):
+    def __init__(self, manager, socket_name, ip_host, ip_port, send_back_udp, notify_interval_ms, *args, **kwargs):
         """
         Init
         :param manager: KnockManager
@@ -66,10 +64,10 @@ class BusinessServer(DatagramServer):
         :param notify_interval_ms: int
         :param socket_name: str
         :type socket_name: str
-        :param windows_host: str
-        :type windows_host: str
-        :param windows_port: int
-        :type windows_port: int
+        :param ip_host: str
+        :type ip_host: str
+        :param ip_port: int
+        :type ip_port: int
         :param args:
         :param kwargs:
         """
@@ -78,8 +76,8 @@ class BusinessServer(DatagramServer):
         self._send_back_udp = send_back_udp
 
         # Windows
-        self._windows_host = windows_host
-        self._windows_port = windows_port
+        self._ip_host = ip_host
+        self._ip_port = ip_port
 
         # Lock
         self._increment_lock = Lock()
@@ -130,66 +128,14 @@ class BusinessServer(DatagramServer):
         self._create_socket_and_bind()
 
         # Call base
-        super(BusinessServer, self).__init__(self._soc, *args, **kwargs)
+        super(UDPBusinessServerBase, self).__init__(self._soc, *args, **kwargs)
 
     def _create_socket_and_bind(self):
         """
         Create socket
         """
 
-        if self._soc:
-            logger.info("Bypass, _soc set")
-            return
-
-        # Listen
-        logger.info("Binding")
-
-        # Alloc
-        if PTools.get_distribution_type() == "windows":
-            # ==========================
-            # Ahah, no support for domain socket on Windows
-            # ==========================
-            # Will not go for pipes
-            # So we target local host (dirty)
-            logger.warn("Windows detected, using UDP toward %s:%s (lacks of domain socket support)", self._windows_host, self._windows_port)
-            logger.warn("You may (will) experience performance issues over the UDP channel (possible lost of packets)")
-            logger.warn("If you are using client library, please be sure to NOT target the unix domain socket on this machine.")
-            self._soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-            # Switch to non blocking
-            self._soc.setblocking(0)
-
-            # Bind
-            self._soc.bind((self._windows_host, self._windows_port))
-        else:
-            # ==========================
-            # Linux rocks (and debian rocks more)
-            # ==========================
-
-            # noinspection PyUnresolvedReferences
-            self._soc = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-            if os.path.exists(self._socket_name):
-                os.remove(self._socket_name)
-
-            # Switch to non blocking
-            self._soc.setblocking(0)
-
-            # Bind
-            self._soc.bind(self._socket_name)
-
-        # Buffer
-        logger.info("Recv buf=%s", self._soc.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF))
-        logger.info("Send buf=%s", self._soc.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF))
-
-        # Increase recv
-        try:
-            self._soc.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 1024 * 1024)
-        except Exception as e:
-            logger.info("SO_RCVBUF increased failed, ex=%s", SolBase.extostr(e))
-
-        # Buffer
-        logger.info("Recv buf=%s", self._soc.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF))
-        logger.info("Send buf=%s", self._soc.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF))
+        raise NotImplemented()
 
     # ------------------------------
     # START / STOP OVERRIDE
@@ -208,7 +154,7 @@ class BusinessServer(DatagramServer):
         logger.info("Starting")
 
         # Spawn async
-        self._server_greenlet = gevent.spawn(super(BusinessServer, self).start)
+        self._server_greenlet = gevent.spawn(super(UDPBusinessServerBase, self).start)
         logger.info("Started")
 
         # Signal started
@@ -229,7 +175,7 @@ class BusinessServer(DatagramServer):
 
         # Base stop
         logger.info("Stopping")
-        super(BusinessServer, self).stop(timeout=timeout)
+        super(UDPBusinessServerBase, self).stop(timeout=timeout)
         logger.info("Stopped")
 
         # Greenlet stop
@@ -296,11 +242,11 @@ class BusinessServer(DatagramServer):
             # -----------------------------
             # json_list = [
             #     # Counter
-            #     ["counter1", BusinessServer.COUNTER, 2.2],
+            #     ["counter1", UDPBusinessServerDomainLinux.COUNTER, 2.2],
             #     # Gauge
-            #     ["gauge1", BusinessServer.GAUGE, 3.3],
+            #     ["gauge1", UDPBusinessServerDomainLinux.GAUGE, 3.3],
             #     # Dtc
-            #     ["dtc1", BusinessServer.DTC, 1]
+            #     ["dtc1", UDPBusinessServerDomainLinux.DTC, 1]
             # ]
             # -----------------------------
 
@@ -333,13 +279,13 @@ class BusinessServer(DatagramServer):
                         # UDP Protocol V1
                         # -----------------------------
                         item, cur_type, value = cur_tu
-                        if cur_type == BusinessServer.COUNTER:
+                        if cur_type == UDPBusinessServerBase.COUNTER:
                             Meters.aii("knock_stat_udp_recv_counter")
                             self._process_increment(item, value)
-                        elif cur_type == BusinessServer.GAUGE:
+                        elif cur_type == UDPBusinessServerBase.GAUGE:
                             Meters.aii("knock_stat_udp_recv_gauge")
                             self._process_gauge(item, value)
-                        elif cur_type == BusinessServer.DTC:
+                        elif cur_type == UDPBusinessServerBase.DTC:
                             Meters.aii("knock_stat_udp_recv_dtc")
                             self._process_dtc(item, value)
                         else:
@@ -539,7 +485,7 @@ class BusinessServer(DatagramServer):
                             for k, v in d.iteritems():
                                 # k : 0xxxx-0xxxx
                                 logger.debug('item=%s k=%s v=%s', item, k, v)
-                                k_dtc = BusinessServer.KNOCK_PREFIX_KEY + "dtc." + k
+                                k_dtc = UDPBusinessServerBase.KNOCK_PREFIX_KEY + "dtc." + k
                                 logger.debug('item=%s k_dtc=%s v=%s', item, k_dtc, v)
                                 self._probe_dtc.notify_value_n(k_dtc, {"ITEM": item}, v)
 
@@ -550,7 +496,7 @@ class BusinessServer(DatagramServer):
                             logger.debug('item=%s value=%s', item, value.get())
 
                             self._probe_inc.notify_discovery_n("k.business.inc.discovery", {"ITEM": item})
-                            self._probe_inc.notify_value_n(BusinessServer.KNOCK_PREFIX_KEY + "inc", {"ITEM": item}, value.get())
+                            self._probe_inc.notify_value_n(UDPBusinessServerBase.KNOCK_PREFIX_KEY + "inc", {"ITEM": item}, value.get())
 
                 # gauge
                 with self._gauge_lock:
@@ -559,7 +505,7 @@ class BusinessServer(DatagramServer):
                             logger.debug('item=%s value=%s', item, value)
 
                             self._probe_inc.notify_discovery_n("k.business.gauge.discovery", {"ITEM": item})
-                            self._probe_inc.notify_value_n(BusinessServer.KNOCK_PREFIX_KEY + "gauge", {"ITEM": item}, value)
+                            self._probe_inc.notify_value_n(UDPBusinessServerBase.KNOCK_PREFIX_KEY + "gauge", {"ITEM": item}, value)
 
                 # Next schedule (in lock, re-entrant)
                 self._notify_schedule_next()

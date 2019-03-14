@@ -36,7 +36,7 @@ from pysolmeters.AtomicInt import AtomicInt
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.KnockManager import KnockManager
-from knockdaemon2.Core.UDPBusinessServer import BusinessServer
+from knockdaemon2.Core.UDPBusinessServerBase import UDPBusinessServerBase
 from knockdaemon2.Core.UDPServer import UDPServer
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 from knockdaemon2.Platform.PTools import PTools
@@ -124,7 +124,7 @@ class TestUdp(unittest.TestCase):
 
         if PTools.get_distribution_type() == "windows":
             # Use ip port
-            uc.connect_windows(UDPServer.UDP_WINDOWS_UNITTEST_SOCKET_HOST, UDPServer.UDP_WINDOWS_UNITTEST_SOCKET_PORT)
+            uc.connect_windows(UDPServer.UDP_IP_UNITTEST_SOCKET_HOST, UDPServer.UDP_IP_UNITTEST_SOCKET_PORT)
         else:
             # Use domain
             uc.connect(UDPServer.UDP_UNITTEST_SOCKET_NAME)
@@ -214,49 +214,51 @@ class TestUdp(unittest.TestCase):
             u = UDPServer(self.k, notify_interval_ms=1000)
             self.assertFalse(u._is_started)
             self.assertIsNotNone(u._manager)
-            self.assertIsNone(u._business_server)
+            self.assertIsNone(u._business_server_domain_linux)
 
             # Start
             logger.info("*** START")
             u.start()
             self.assertTrue(u._is_started)
             self.assertIsNotNone(u._manager)
-            self.assertIsNotNone(u._business_server)
-            self.assertTrue(u._business_server._is_started)
-            self.assertIsNotNone(u._business_server._manager)
+            self.assertIsNotNone(u._business_server_domain_linux)
+            self.assertTrue(u._business_server_domain_linux._is_started)
+            self.assertIsNotNone(u._business_server_domain_linux._manager)
 
             # Wait for start completion
             logger.info("*** WAIT")
             ms_start = SolBase.mscurrent()
             while SolBase.msdiff(ms_start) < 5000:
-                if u._business_server.started:
+                if u._business_server_domain_linux.started:
                     break
                 SolBase.sleep(100)
-            self.assertTrue(u._business_server.started)
-            self.assertIsNotNone(u._business_server._notify_greenlet)
+            self.assertTrue(u._business_server_domain_linux.started)
+            self.assertIsNotNone(u._business_server_domain_linux._notify_greenlet)
             elapsed_ms = SolBase.msdiff(ms_start)
+
+            # We have the 2 listener (domain and ip) now running : *2 on all meters.
 
             # Wait for at least ONE notify schedule (1000 ms) and check
             logger.info("*** SCHEDULE")
             SolBase.sleep(1250 - elapsed_ms)
-            self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 1)
+            self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 1 * 2)
             self.assertEqual(Meters.aig("knock_stat_udp_notify_run_ex"), 0)
 
             # Wait for a second ONE (ie check reschedule)
             logger.info("*** SCHEDULE")
             SolBase.sleep(1250)
-            self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 2)
+            self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 2 * 2)
             self.assertEqual(Meters.aig("knock_stat_udp_notify_run_ex"), 0)
 
             # Stop
             logger.info("*** STOP")
             u.stop()
             self.assertFalse(u._is_started)
-            self.assertIsNone(u._business_server)
+            self.assertIsNone(u._business_server_domain_linux)
 
             # Re-check (schedule stopped)
             SolBase.sleep(1250)
-            self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 2)
+            self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 2 * 2)
             self.assertEqual(Meters.aig("knock_stat_udp_notify_run_ex"), 0)
 
             logger.info("*** LOOP OVER")
@@ -277,31 +279,33 @@ class TestUdp(unittest.TestCase):
         # Check
         self.assertTrue(self.k._udp_server._is_started)
         self.assertIsNotNone(self.k._udp_server._manager)
-        self.assertIsNotNone(self.k._udp_server._business_server)
-        self.assertTrue(self.k._udp_server._business_server._is_started)
-        self.assertIsNotNone(self.k._udp_server._business_server._manager)
+        self.assertIsNotNone(self.k._udp_server._business_server_domain_linux)
+        self.assertTrue(self.k._udp_server._business_server_domain_linux._is_started)
+        self.assertIsNotNone(self.k._udp_server._business_server_domain_linux._manager)
 
         # Wait for start completion
         logger.info("*** WAIT")
         ms_start = SolBase.mscurrent()
         while SolBase.msdiff(ms_start) < 5000:
-            if self.k._udp_server._business_server.started:
+            if self.k._udp_server._business_server_domain_linux.started:
                 break
             SolBase.sleep(100)
-        self.assertTrue(self.k._udp_server._business_server.started)
-        self.assertIsNotNone(self.k._udp_server._business_server._notify_greenlet)
+        self.assertTrue(self.k._udp_server._business_server_domain_linux.started)
+        self.assertIsNotNone(self.k._udp_server._business_server_domain_linux._notify_greenlet)
         elapsed_ms = SolBase.msdiff(ms_start)
+
+        # We have the 2 listener (domain and ip) now running : *2 on all meters.
 
         # Wait for at least ONE notify schedule (5000 ms default) and check
         logger.info("*** SCHEDULE")
         SolBase.sleep(5250 - elapsed_ms)
-        self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 1)
+        self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 1 * 2)
         self.assertEqual(Meters.aig("knock_stat_udp_notify_run_ex"), 0)
 
         # Wait for a second ONE (ie check reschedule)
         logger.info("*** SCHEDULE")
         SolBase.sleep(5250)
-        self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 2)
+        self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 2 * 2)
         self.assertEqual(Meters.aig("knock_stat_udp_notify_run_ex"), 0)
 
         # Stop
@@ -311,7 +315,7 @@ class TestUdp(unittest.TestCase):
 
         # Re-check (schedule stopped)
         SolBase.sleep(5250)
-        self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 2)
+        self.assertEqual(Meters.aig("knock_stat_udp_notify_run"), 2 * 2)
         self.assertEqual(Meters.aig("knock_stat_udp_notify_run_ex"), 0)
 
         # OVER
@@ -333,19 +337,19 @@ class TestUdp(unittest.TestCase):
         # Check
         self.assertTrue(self.k._udp_server._is_started)
         self.assertIsNotNone(self.k._udp_server._manager)
-        self.assertIsNotNone(self.k._udp_server._business_server)
-        self.assertTrue(self.k._udp_server._business_server._is_started)
-        self.assertIsNotNone(self.k._udp_server._business_server._manager)
+        self.assertIsNotNone(self.k._udp_server._business_server_domain_linux)
+        self.assertTrue(self.k._udp_server._business_server_domain_linux._is_started)
+        self.assertIsNotNone(self.k._udp_server._business_server_domain_linux._manager)
 
         # Wait for start completion
         logger.info("*** WAIT")
         ms_start = SolBase.mscurrent()
         while SolBase.msdiff(ms_start) < 5000:
-            if self.k._udp_server._business_server.started:
+            if self.k._udp_server._business_server_domain_linux.started:
                 break
             SolBase.sleep(100)
-        self.assertTrue(self.k._udp_server._business_server.started)
-        self.assertIsNotNone(self.k._udp_server._business_server._notify_greenlet)
+        self.assertTrue(self.k._udp_server._business_server_domain_linux.started)
+        self.assertIsNotNone(self.k._udp_server._business_server_domain_linux._notify_greenlet)
 
         # ----------------------
         # OK, SEND
@@ -356,11 +360,11 @@ class TestUdp(unittest.TestCase):
 
         json_list = [
             # Counter
-            ["counter1", BusinessServer.COUNTER, 2.2],
+            ["counter1", UDPBusinessServerBase.COUNTER, 2.2],
             # Gauge
-            ["gauge1", BusinessServer.GAUGE, 3.3],
+            ["gauge1", UDPBusinessServerBase.GAUGE, 3.3],
             # Dtc
-            ["dtc1", BusinessServer.DTC, 1]
+            ["dtc1", UDPBusinessServerBase.DTC, 1]
         ]
 
         udp_client.send_json(json_list)
@@ -375,10 +379,10 @@ class TestUdp(unittest.TestCase):
         while SolBase.msdiff(ms_start) < 2500:
             # Check
             if (
-                Meters.aig("knock_stat_udp_recv") >= 1 and
-                Meters.aig("knock_stat_udp_recv_counter") == 1 and
-                Meters.aig("knock_stat_udp_recv_gauge") == 1 and
-                Meters.aig("knock_stat_udp_recv_dtc") == 1
+                    Meters.aig("knock_stat_udp_recv") >= 1 and
+                    Meters.aig("knock_stat_udp_recv_counter") == 1 and
+                    Meters.aig("knock_stat_udp_recv_gauge") == 1 and
+                    Meters.aig("knock_stat_udp_recv_dtc") == 1
             ):
                 # Ok
                 break
@@ -476,19 +480,19 @@ class TestUdp(unittest.TestCase):
         # Check
         self.assertTrue(self.k._udp_server._is_started)
         self.assertIsNotNone(self.k._udp_server._manager)
-        self.assertIsNotNone(self.k._udp_server._business_server)
-        self.assertTrue(self.k._udp_server._business_server._is_started)
-        self.assertIsNotNone(self.k._udp_server._business_server._manager)
+        self.assertIsNotNone(self.k._udp_server._business_server_domain_linux)
+        self.assertTrue(self.k._udp_server._business_server_domain_linux._is_started)
+        self.assertIsNotNone(self.k._udp_server._business_server_domain_linux._manager)
 
         # Wait for start completion
         logger.info("*** WAIT")
         ms_start = SolBase.mscurrent()
         while SolBase.msdiff(ms_start) < 5000:
-            if self.k._udp_server._business_server.started:
+            if self.k._udp_server._business_server_domain_linux.started:
                 break
             SolBase.sleep(100)
-        self.assertTrue(self.k._udp_server._business_server.started)
-        self.assertIsNotNone(self.k._udp_server._business_server._notify_greenlet)
+        self.assertTrue(self.k._udp_server._business_server_domain_linux.started)
+        self.assertIsNotNone(self.k._udp_server._business_server_domain_linux._notify_greenlet)
 
         # ----------------------
         # OK, SEND
@@ -738,25 +742,25 @@ class TestUdp(unittest.TestCase):
         # Check
         self.assertTrue(self.k._udp_server._is_started)
         self.assertIsNotNone(self.k._udp_server._manager)
-        self.assertIsNotNone(self.k._udp_server._business_server)
-        self.assertTrue(self.k._udp_server._business_server._is_started)
-        self.assertIsNotNone(self.k._udp_server._business_server._manager)
+        self.assertIsNotNone(self.k._udp_server._business_server_domain_linux)
+        self.assertTrue(self.k._udp_server._business_server_domain_linux._is_started)
+        self.assertIsNotNone(self.k._udp_server._business_server_domain_linux._manager)
 
         # Wait for start completion
         logger.info("*** WAIT")
         ms_start = SolBase.mscurrent()
         while SolBase.msdiff(ms_start) < 5000:
-            if self.k._udp_server._business_server.started:
+            if self.k._udp_server._business_server_domain_linux.started:
                 break
             SolBase.sleep(100)
-        self.assertTrue(self.k._udp_server._business_server.started)
-        self.assertIsNotNone(self.k._udp_server._business_server._notify_greenlet)
+        self.assertTrue(self.k._udp_server._business_server_domain_linux.started)
+        self.assertIsNotNone(self.k._udp_server._business_server_domain_linux._notify_greenlet)
 
         # ----------------------
         # OK, SEND
         # ----------------------
 
-        ms_duration = 60000
+        ms_duration = 10000
         run_event = Event()
 
         # Start
@@ -881,11 +885,11 @@ class TestUdp(unittest.TestCase):
             while not run_event.is_set():
                 json_list = [
                     # Counter
-                    ["counter1", BusinessServer.COUNTER, 2.2],
+                    ["counter1", UDPBusinessServerBase.COUNTER, 2.2],
                     # Gauge
-                    ["gauge1", BusinessServer.GAUGE, 3.3],
+                    ["gauge1", UDPBusinessServerBase.GAUGE, 3.3],
                     # Dtc
-                    ["dtc1", BusinessServer.DTC, 1]
+                    ["dtc1", UDPBusinessServerBase.DTC, 1]
                 ]
 
                 SolBase.sleep(0)
@@ -904,3 +908,22 @@ class TestUdp(unittest.TestCase):
         finally:
             logger.info("Exiting")
             udp_client.disconnect()
+
+    @unittest.skip("This will not exit")
+    @unittest.skipIf(SolBase.get_machine_name().find("lchdebhome") < 0, "Need champax pc")
+    def test_run_forever_domain_and_ip(self):
+        """
+        Test domain run
+        """
+
+        logger.warn("*** GO, THIS WILL NOT EXIT")
+
+        # We do NOT autostart (we do not want the transport to be started)
+        self._start_all(start_manager=False)
+
+        # Start udp server
+        self.k._udp_server.start()
+
+        # Keep forever
+        while True:
+            SolBase.sleep(500)

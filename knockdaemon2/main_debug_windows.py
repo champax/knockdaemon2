@@ -50,7 +50,7 @@ if PTools.get_distribution_type() == "windows":
             # TODO : Rewrite this later on
             # -------------------------------
             if SolBase.get_machine_name().lower().find("klchwin") >= 0:
-                UDPServer.UDP_WINDOWS_SOCKET_PORT = UDPServer.UDP_WINDOWS_UNITTEST_SOCKET_PORT
+                UDPServer.UDP_IP_SOCKET_PORT = UDPServer.UDP_IP_UNITTEST_SOCKET_PORT
 
             # Fetch config
             config_file = SolBase.get_pathseparator().join(["C:", "champax", "kd_conf_local", "knockdaemon2", "knockdaemon2.yaml"])
