@@ -317,6 +317,11 @@ class BusinessServer(DatagramServer):
             #     ]
             # -----------------------------
 
+            # TODO : Protocol V3
+            # MAGIC
+            # SIZE
+            # Json buffer
+
             # Load json
             data_json = ujson.loads(data.strip())
 
