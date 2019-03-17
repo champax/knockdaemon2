@@ -26,7 +26,8 @@ import logging
 import os
 from gevent.pool import Pool
 
-from knockdaemon2.Core.UDPBusinessServer import BusinessServer
+from knockdaemon2.Core.UDPBusinessServerDomainLinux import UDPBusinessServerDomainLinux
+from knockdaemon2.Core.UDPBusinessServerIpPort import UDPBusinessServerIpPort
 
 logger = logging.getLogger(__name__)
 
@@ -43,13 +44,13 @@ class UDPServer(object):
     UDP_UNITTEST_SOCKET_NAME = "/tmp/knockdaemon2.udp.socket"
 
     # --------------------------
-    # WINDOWS SOCKET (WINDOWS ONLY)
+    # IP SOCKET
     # --------------------------
-    UDP_WINDOWS_SOCKET_HOST = "localhost"
-    UDP_WINDOWS_SOCKET_PORT = "63184"
+    UDP_IP_SOCKET_HOST = "localhost"
+    UDP_IP_SOCKET_PORT = "10040"
 
-    UDP_WINDOWS_UNITTEST_SOCKET_HOST = "localhost"
-    UDP_WINDOWS_UNITTEST_SOCKET_PORT = "63999"
+    UDP_IP_UNITTEST_SOCKET_HOST = "localhost"
+    UDP_IP_UNITTEST_SOCKET_PORT = "63999"
 
     # --------------------------
     # NOTIFY
@@ -57,7 +58,7 @@ class UDPServer(object):
     NOTIFY_INTERVAL = 59000
     NOTIFY_UNITTEST_INTERVAL = 5000
 
-    def __init__(self, manager, pool_size=128, socket_name=None, windows_host=None, windows_port=None, send_back_udp=False, notify_interval_ms=None):
+    def __init__(self, manager, pool_size=128, socket_name=None, ip_host=None, ip_port=None, send_back_udp=False, notify_interval_ms=None):
         """
         Init
         :param manager: KnockManager
@@ -66,10 +67,10 @@ class UDPServer(object):
         :type pool_size: int
         :param socket_name: str,None
         :type socket_name: str,None
-        :param windows_host: str,None
-        :type windows_host: str,None
-        :param windows_port: int,None
-        :type windows_port: int,None
+        :param ip_host: str,None
+        :type ip_host: str,None
+        :param ip_port: int,None
+        :type ip_port: int,None
         :param send_back_udp: bool
         :type send_back_udp: bool
         :param notify_interval_ms: int,None
@@ -77,7 +78,8 @@ class UDPServer(object):
         """
         self._manager = manager
         self._pool = Pool(pool_size)
-        self._business_server = None
+        self._business_server_domain_linux = None
+        self._business_server_ip_port = None
 
         # NAME
         if socket_name:
@@ -90,24 +92,24 @@ class UDPServer(object):
                 self._socket_name = UDPServer.UDP_SOCKET_NAME
 
         # WINDOWS HOST
-        if windows_host:
-            self._windows_host = windows_host
+        if ip_host:
+            self._ip_host = ip_host
         else:
             # If UNITTEST, force
             if "KNOCK_UNITTEST" in os.environ:
-                self._windows_host = UDPServer.UDP_WINDOWS_UNITTEST_SOCKET_HOST
+                self._ip_host = UDPServer.UDP_IP_UNITTEST_SOCKET_HOST
             else:
-                self._windows_host = UDPServer.UDP_WINDOWS_SOCKET_HOST
+                self._ip_host = UDPServer.UDP_IP_SOCKET_HOST
 
         # WINDOWS PORT
-        if windows_port:
-            self._windows_port = windows_port
+        if ip_port:
+            self._ip_port = ip_port
         else:
             # If UNITTEST, force
             if "KNOCK_UNITTEST" in os.environ:
-                self._windows_port = UDPServer.UDP_WINDOWS_UNITTEST_SOCKET_PORT
+                self._ip_port = UDPServer.UDP_IP_UNITTEST_SOCKET_PORT
             else:
-                self._windows_port = UDPServer.UDP_WINDOWS_SOCKET_PORT
+                self._ip_port = UDPServer.UDP_IP_SOCKET_PORT
 
         # NOTIFY
         if notify_interval_ms:
@@ -126,8 +128,8 @@ class UDPServer(object):
 
         logger.info("pool_size=%s", pool_size)
         logger.info("_socket_name=%s", self._socket_name)
-        logger.info("_windows_host=%s", self._windows_host)
-        logger.info("_windows_port=%s", self._windows_port)
+        logger.info("_ip_host=%s", self._ip_host)
+        logger.info("_ip_port=%s", self._ip_port)
         logger.info("_send_back_udp=%s", self._send_back_udp)
         logger.info("_notify_interval_ms=%s", self._notify_interval_ms)
 
@@ -142,18 +144,31 @@ class UDPServer(object):
             return
 
         # Start
-        logger.info("Starting BusinessServer")
-        self._business_server = BusinessServer(
+        logger.info("Starting UDPBusinessServerDomainLinux")
+        self._business_server_domain_linux = UDPBusinessServerDomainLinux(
             self._manager,
             self._socket_name,
-            self._windows_host,
-            int(self._windows_port),
+            self._ip_host,
+            int(self._ip_port),
             self._send_back_udp,
             self._notify_interval_ms,
             spawn=self._pool)
 
         # Listen
-        self._business_server.start()
+        self._business_server_domain_linux.start()
+
+        # Start
+        self._business_server_ip_port = UDPBusinessServerIpPort(
+            self._manager,
+            self._socket_name,
+            self._ip_host,
+            int(self._ip_port),
+            self._send_back_udp,
+            self._notify_interval_ms,
+            spawn=self._pool)
+
+        # Listen
+        self._business_server_ip_port.start()
 
         # Ok
         self._is_started = True
@@ -170,8 +185,15 @@ class UDPServer(object):
 
         # Stop
         self._is_started = False
+
         # noinspection PyProtectedMember
-        if self._business_server._is_started:
-            logger.info("Stopping BusinessServer")
-            self._business_server.stop()
-            self._business_server = None
+        if self._business_server_domain_linux._is_started:
+            logger.info("Stopping _business_server_domain_linux")
+            self._business_server_domain_linux.stop()
+            self._business_server_domain_linux = None
+
+        # noinspection PyProtectedMember
+        if self._business_server_ip_port._is_started:
+            logger.info("Stopping _business_server_ip_port")
+            self._business_server_ip_port.stop()
+            self._business_server_ip_port = None
