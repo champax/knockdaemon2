@@ -112,6 +112,18 @@ class Netstat(KnockProbe):
         self.notify_value_n("k.net.netstat.ESTABLISHED", None, self._get_counter_value("ESTABLISHED"))
         self.notify_value_n("k.net.netstat.CLOSING", None, self._get_counter_value("CLOSING"))
 
+        # parse connection Tracker
+        try:
+            nf_conntrack_count = float(open('/proc/sys/net/netfilter/nf_conntrack_count').readline())
+            nf_conntrack_max = float(open('/proc/sys/net/netfilter/nf_conntrack_max').readline())
+            self.notify_value_n("k.net.conntrack.count", None, nf_conntrack_count)
+            self.notify_value_n("k.net.conntrack.max", None, nf_conntrack_max)
+            # Ration
+            self.notify_value_n("k.net.conntrack.used", None, 100.0 * nf_conntrack_count / nf_conntrack_max)
+
+        except Exception as e:
+            logger.warning(SolBase.extostr(e))
+
     def _get_counter_value(self, state):
         """
         Get
