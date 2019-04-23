@@ -22,7 +22,7 @@ then
         ./Jenkins/server_build.sh
         exit 0
     fi
-    if [[ ${JOB_NAME} == "knockdaemon2*" ]]
+    if [[ ${JOB_NAME} == knockdaemon2* ]]
     then
         # build client only
         set -x
