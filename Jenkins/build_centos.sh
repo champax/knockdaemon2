@@ -28,8 +28,8 @@ rmvirtualenv ${ENV}
 virtualenv ${ENV}
 source ${ENV}/bin/activate
 # test U
-pip install devpi-client pip==8.1.2
-devpi use --set-cfg ${REPO_URL}
+# pip install devpi-client pip==8.1.2
+# devpi use --set-cfg ${REPO_URL}
 
 
 pip install setuptools --upgrade || true

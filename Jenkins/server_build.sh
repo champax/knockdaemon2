@@ -3,7 +3,7 @@
 # initialise Env
 export SETUPMODE=INTERNAL
 export DISABLE_TEST_PROV=NO
-export REPO_URL=https://pypi.knock.center/knock/dev
+# export REPO_URL=https://pypi.knock.center/knock/dev
 # test
 # build
 cp debian/rules_server debian/rules

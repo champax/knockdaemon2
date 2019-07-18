@@ -46,8 +46,8 @@ if [ "XX$JD" == "XXjenkins-wheezy" ]; then
 fi
 # INSTALL REQ
 echo "###### Installing requirements"
-pip install devpi-client pip==8.1.2
-devpi use --set-cfg ${REPO_URL}
+# pip install devpi-client pip==8.1.2
+# devpi use --set-cfg ${REPO_URL}
 
 
 pip install setuptools --upgrade || true
@@ -111,11 +111,11 @@ if [ ${OUT} -eq 0 ]; then
         echo "###### building  package amd64"
         dpkg-buildpackage -b -k790D2DE0 -rfakeroot
     else
-        pip install pip==8.1.1
-        pip install devpi-client
+        pip install pip --upgrade
+        # pip install devpi-client
         sleep 1
-        devpi login knock --password knock
-        devpi upload
+        # devpi login knock --password knock
+        # devpi upload
     fi
 
 fi
