@@ -55,7 +55,6 @@ class RabbitmqStat(KnockProbe):
 
         # Rates (copyright NASA?)
 
-
     ]
 
     def __init__(self):
@@ -133,9 +132,12 @@ class RabbitmqStat(KnockProbe):
             logger.error("Queues : invoke failed toward rabbitmqadmin (you may have to install it), signaling down, ec=%s, so=%s, se=%s", ec, repr(so), repr(so))
             self.notify_value_n("k.rabbitmq.started", {"PORT": "default"}, 0)
         else:
-            d = self._process_queues_buffer(so)
-            for k, v in d.iteritems():
+            d_global, d_perqueue = self._process_queues_buffer(so)
+            for k, v in d_global.iteritems():
                 self.notify_value_n("k.rabbitmq.queue." + k, {"PORT": "default"}, v)
+            for queue, counters in d_perqueue.items():
+                for k in ('messages', ):
+                    self.notify_value_n("k.rabbitmq.per_queue." + k, {"PORT": "default", 'QUEUE': queue}, counters[k])
 
         # ----------------
         # Signal started
@@ -178,7 +180,7 @@ class RabbitmqStat(KnockProbe):
 
             # Ok split
             ar_temp = cur_line.split("|")
-            logger.info("Processing ar_temp=%s", ar_temp)
+            logger.debug("Processing ar_temp=%s", ar_temp)
 
             # If we have "name", its the header, we bypass
             if ar_temp[1].strip() == "name":
@@ -196,13 +198,13 @@ class RabbitmqStat(KnockProbe):
         return node_count, node_running_count
 
     # noinspection PyMethodMayBeStatic
-    def _process_queues_buffer(self, s):
+    def _process_queues_buffer(self, output_rabbitmq_admin):
         """
         Process queues buffers
-        :param s: str
-        :type s: str
+        :param output_rabbitmq_admin: str
+        :type output_rabbitmq_admin: str
         :return dict
-        :rtype dict
+        :rtype dict, dict
         """
 
         """
@@ -218,6 +220,9 @@ class RabbitmqStat(KnockProbe):
         | /     | knock.queue.wakeup.voda    | False       | 2         | True    | 2017-10-17 7:27:26 | 0        |               | 0                       | rabbit@SVR-001-1a | rabbit@SVR-002-1b rabbit@SVR-003-1c | rabbit@SVR-003-1c rabbit@SVR-002-1b |
         +-------+----------------------------+-------------+-----------+---------+--------------------+----------+---------------+-------------------------+-----------------------------+---------------------------------------------------------+---------------------------------------------------------+
         """
+
+        # per queue
+        d_per_queue = dict()
 
         # Global dict
         d_global = dict()
@@ -252,9 +257,8 @@ class RabbitmqStat(KnockProbe):
         d_global["messages_unacknowledged_details.rate"] = 0.0
         d_global["reductions_details.rate"] = 0.0
 
-        # Browse
-        ar = s.split("\n")
-        for cur_line in ar:
+        # Parse line by line
+        for cur_line in output_rabbitmq_admin.split("\n"):
             # Clean and check
             cur_line = cur_line.strip()
             if len(cur_line) == 0:
@@ -264,7 +268,7 @@ class RabbitmqStat(KnockProbe):
 
             # Ok split
             ar_temp = cur_line.split("|")
-            logger.info("Processing ar_temp=%s", ar_temp)
+            logger.debug("Processing ar_temp=%s", ar_temp)
 
             # If we have "vhost", its the header, we bypass
             if ar_temp[1].strip() == "vhost":
@@ -272,10 +276,14 @@ class RabbitmqStat(KnockProbe):
 
             # Consumers and messages
             d = dict()
+            queue = ar_temp[2].strip()
+
             d["consumers"] = ar_temp[4].strip()
-            d["messages"] = ar_temp[7].strip()
+            d["messages"] =  ar_temp[7].strip()
             d["message_ready"] = ar_temp[8].strip()
             d["messages_unacknowledged"] = ar_temp[9].strip()
+            d_per_queue[queue] = dict()
+
 
             # Cast to int
             for k, v in d.iteritems():
@@ -296,6 +304,7 @@ class RabbitmqStat(KnockProbe):
                 d["synchronised_slave_nodes"] = len(v_synchronised_slave_nodes.split(" "))
             else:
                 d["synchronised_slave_nodes"] = 0
+
 
             # Rates (to float)
             ar_tuple = [
@@ -334,5 +343,7 @@ class RabbitmqStat(KnockProbe):
             for k, v in d.iteritems():
                 d_global[k] += v
 
+            d_per_queue[queue] = d
+
         # Over
-        return d_global
+        return d_global, d_per_queue

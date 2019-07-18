@@ -21,16 +21,11 @@ Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  ===============================================================================
 """
-import glob
 import logging
-import os
-import ujson
 import unittest
-from os.path import dirname, abspath
 
 from pysolbase.SolBase import SolBase
 
-from knockdaemon2.Probes.Os.Mdstat import Mdstat
 from knockdaemon2.Probes.Haproxy.Haproxy import Haproxy
 
 logger = logging.getLogger(__name__)
