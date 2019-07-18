@@ -1,5 +1,5 @@
 # Private Pip Url
---extra-index-url https://pypi.knock.center/knock/dev/+simple/
+# --extra-index-url https://pypi.knock.center/knock/dev/+simple/
 
 # pip / setup
 pip

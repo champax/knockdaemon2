@@ -60,7 +60,7 @@ pip install devpi-client pip
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 echo ### Config devpi
-devpi use --set-cfg https://pypi.knock.center/root/pypi
+:: devpi use --set-cfg https://pypi.knock.center/root/pypi
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 echo ### Install requirements
