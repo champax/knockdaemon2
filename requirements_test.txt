@@ -1,6 +1,5 @@
 unittest-xml-reporting
 nosexcover
-pylint
 nose
 
 
