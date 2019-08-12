@@ -160,7 +160,7 @@ class DiskSpace(KnockProbe):
             # noinspection PyUnusedLocal
             device, mountpoint, fstype, options, order, prio = line.split()
             if fstype in ('ext2', 'ext3', 'ext4', 'zfs', 'xfs', 'btrfs'):
-                logger.info('processing device=%s mountpoint=%s fstype=%s', device, mountpoint, fstype)
+                logger.debug('processing device=%s mountpoint=%s fstype=%s', device, mountpoint, fstype)
                 if mountpoint.startswith('/mnt/') or \
                         mountpoint.startswith('/tmp/') or \
                         mountpoint.startswith('/media/') or \
@@ -307,7 +307,7 @@ class DiskSpace(KnockProbe):
                         last_time_used = cumulative_wait_time_ms - self.previous_stat[mountpoint]['cumulative_wait_time_ms']
                         last_time_elapsed = current_time_ms - self.previous_stat[mountpoint]['current_time_ms']
 
-                        logger.info("calculating percent_io_used_time, mountpoint=%s  last_time_elapsed=%s , self.previous_stat[mountpoint]=%s", mountpoint, last_time_elapsed, self.previous_stat[mountpoint])
+                        logger.debug("calculating percent_io_used_time, mountpoint=%s  last_time_elapsed=%s , self.previous_stat[mountpoint]=%s", mountpoint, last_time_elapsed, self.previous_stat[mountpoint])
                         percent_io_used_time = last_time_used / last_time_elapsed * 100
 
                         self.notify_value_n("k.vfs.dev.io.percentused", {"FSNAME": mountpoint}, percent_io_used_time)

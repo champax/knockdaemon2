@@ -49,10 +49,10 @@ def get_resolv():
     ar_out = list()
     for r in ar:
         if ar in ["0.0.0.0"]:
-            logger.info("Skipping resolver=%s", r)
+            logger.debug("Skipping resolver=%s", r)
             continue
         else:
-            logger.info("Keeping resolver=%s", r)
+            logger.debug("Keeping resolver=%s", r)
             ar_out.append(r)
     return ar_out
 

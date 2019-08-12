@@ -74,7 +74,8 @@ class ButcherTools(object):
     @classmethod
     def _invoke_internal(cls, ar_or_string, timeout_ms=10000, shell=False):
         """
-        Invoke a command line with timeout handling, sending back exit code, stdout & stderr buffers
+        Invoke a command line with timeout handling, sending back exit code, stdout & stderr buffers.
+
         :param ar_or_string: command line array, or str if shell=True
         :type ar_or_string: list, tuple, str
         :param timeout_ms: timeout in millis (will return exit code -999 if it occurs). Also return a -998 if an exception occurs.
@@ -89,7 +90,7 @@ class ButcherTools(object):
 
         so = ""
         se = ""
-        logger.info("invoke type=%s, ar_or_string=%s, timeout=%s", type(ar_or_string), ar_or_string, timeout_ms)
+        logger.debug("invoke type=%s, ar_or_string=%s, timeout=%s", type(ar_or_string), ar_or_string, timeout_ms)
 
         ms = SolBase.mscurrent()
         p = None

@@ -25,18 +25,18 @@ import glob
 import importlib
 import inspect
 import logging
+import os
 import platform
 import sys
 from collections import OrderedDict
-from greenlet import GreenletExit
+from os.path import dirname, abspath
 from threading import Lock, Event
 from time import time
 
 import gevent
-import os
 import yaml
 from gevent.timeout import Timeout
-from os.path import dirname, abspath
+from greenlet import GreenletExit
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
@@ -666,9 +666,12 @@ class KnockManager(object):
                     p.notify_ts_override = time()
 
             # FIRE
-            logger.info("Exec now, exec_timeout_ms=%s, p=%s", exec_timeout_ms, p)
-            gevent.with_timeout(exec_timeout_ms * 0.001, p.execute)
-            logger.info("Exec done, ms=%s, p=%s", SolBase.msdiff(ms), p)
+            with Timeout(exec_timeout_ms * 1000):
+                ms_elapsed = None
+                logger.debug("Exec now, exec_timeout_ms=%s, p=%s", exec_timeout_ms, p)
+                p.execute()
+                ms_elapsed = SolBase.msdiff(ms)
+                logger.debug("Exec done, ms=%s, p=%s", ms_elapsed, p)
         except Timeout:
             logger.warn("Execute timeout, p=%s", p)
             Meters.aii("knock_stat_exec_probe_timeout")
@@ -676,8 +679,9 @@ class KnockManager(object):
             logger.warn("Execute exception, p=%s, ex=%s", p, SolBase.extostr(e))
             Meters.aii("knock_stat_exec_probe_exception")
         finally:
-            ms_elapsed = SolBase.msdiff(ms)
-            logger.debug("Over, p=%s, ms_elapsed=%s", p, ms_elapsed)
+            if ms_elapsed is None:
+                ms_elapsed = SolBase.msdiff(ms)
+            # noinspection PyUnboundLocalVariable
             Meters.dtci("knock_stat_exec_probe_dtc", ms_elapsed)
             Meters.aii("knock_stat_exec_probe_count")
 
@@ -1046,7 +1050,6 @@ class KnockManager(object):
                     # Loop over transports
                     # ---------------------
                     for cur_transport in self._ar_knock_transport:
-
                         # noinspection PyProtectedMember
                         lifecyclelogger.info(
                             "Running, %s, "
