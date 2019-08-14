@@ -32,6 +32,7 @@ from pysolbase.SolBase import SolBase
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockHelpers import KnockHelpers
 from knockdaemon2.Core.KnockProbe import KnockProbe
+from knockdaemon2.Core.systemd import SystemdManager
 from knockdaemon2.Platform.PTools import PTools
 
 if PTools.get_distribution_type() == "windows":
@@ -250,19 +251,13 @@ class Service(KnockProbe):
         :return:
         """
         # get pid
+        manager = SystemdManager()
 
-        cmd = self.helpers.sudoize('service %s status' % s)
-        logger.info("going invoke, cmd=%s", cmd)
-        ec, so, se = ButcherTools.invoke(cmd)
-        if ec != 0:
-            logger.warn("invoke failed, give up,  ec=%s, so=%s, se=%s", ec, so, se)
+        if not manager.is_active("%s.service" % s):
+            logger.warn("service %s is not active", s)
             return
-        for line in so.split('\n'):
-            matches = self.regex_find_pid.match(line)
-            if matches:
-                pid = matches.groups()[0]
-                self._notify_process(int(pid, 10), s)
-                continue
+        pid = manager.get_pid("%s.service" % s)
+        self._notify_process(int(pid, 10), s)
 
     def _notify_process(self, pid, service):
         """
