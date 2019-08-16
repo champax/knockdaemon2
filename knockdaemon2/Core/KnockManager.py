@@ -666,7 +666,7 @@ class KnockManager(object):
                     p.notify_ts_override = time()
 
             # FIRE
-            with Timeout(exec_timeout_ms * 1000):
+            with Timeout(exec_timeout_ms * 0.001):
                 ms_elapsed = None
                 logger.debug("Exec now, exec_timeout_ms=%s, p=%s", exec_timeout_ms, p)
                 p.execute()
