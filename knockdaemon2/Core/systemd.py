@@ -143,6 +143,10 @@ class SystemdManager(object):
 
     def get_pid(self, unit_name):
         pid = self._get_unit_property(unit_name, self.SERVICE_UNIT_INTERFACE, 'MainPID')
+        if isinstance(pid, bytes):
+            pid = int(pid.decode('utf-8'), 10)
+        elif isinstance(pid, str):
+            pid = int(pid, 10)
         return pid
 
 

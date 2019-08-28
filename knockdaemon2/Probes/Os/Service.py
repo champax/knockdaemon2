@@ -257,7 +257,7 @@ class Service(KnockProbe):
             logger.warn("service %s is not active", s)
             return
         pid = manager.get_pid("%s.service" % s)
-        self._notify_process(int(pid, 10), s)
+        self._notify_process(pid, s)
 
     def _notify_process(self, pid, service):
         """

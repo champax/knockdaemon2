@@ -560,7 +560,7 @@ class Mysql(KnockProbe):
                 # Try
                 if k not in d_out:
                     if k.find("k.mysql.") != 0:
-                        logger.warn("Unable to locate k=%s in d_out", k)
+                        logger.debug("Unable to locate k=%s in d_out", k)
                     continue
 
                 # Ok, fetch and cast
