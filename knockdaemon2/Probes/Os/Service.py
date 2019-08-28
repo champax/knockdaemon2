@@ -119,7 +119,6 @@ class Service(KnockProbe):
                 # Low level log.
                 pass
 
-
         self.notify_value_n("k.os.service.running_count", None, len(running_checked))
 
     def _execute_windows(self):
@@ -136,9 +135,9 @@ class Service(KnockProbe):
         """
         ret = self._get_systemd_services()
         ret.update(set(self._get_sysv_services(systemd_services=ret)))
-        
+
         # Filter .dpkg-new service
-        ret = [ service for service in ret if not service.find(".dpkg-new") > 0 ]
+        ret = [service for service in ret if not service.find(".dpkg-new") > 0]
 
         return sorted(ret)
 
@@ -263,6 +262,7 @@ class Service(KnockProbe):
             return
 
         pid = manager.get_pid("%s.service" % s)
+        logger.debug("notify process %s pid %s", s, pid)
         self._notify_process(pid, s)
 
     def _notify_process(self, pid, service):
@@ -289,6 +289,7 @@ class Service(KnockProbe):
 
             self.notify_value_n("k.proc.io.read_bytes", {"PROCNAME": service}, read_bytes)
             self.notify_value_n("k.proc.io.write_bytes", {"PROCNAME": service}, write_bytes)
+            logger.debug("notify read/write %s/%s service %s", read_bytes, write_bytes, service)
 
         except psutil.AccessDenied as e:
             logger.warn(
