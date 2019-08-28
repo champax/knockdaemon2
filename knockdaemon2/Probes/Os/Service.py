@@ -113,7 +113,12 @@ class Service(KnockProbe):
             self.notify_value_n("k.os.service.running", {"SERVICE": s}, 0)
         for s in running_checked:
             self.notify_value_n("k.os.service.running", {"SERVICE": s}, 1)
-            self._service_meters(s)
+            try:
+                self._service_meters(s)
+            except Exception:
+                # Low level log.
+                pass
+
 
         self.notify_value_n("k.os.service.running_count", None, len(running_checked))
 
@@ -256,6 +261,7 @@ class Service(KnockProbe):
         if not manager.is_active("%s.service" % s):
             logger.warn("service %s is not active", s)
             return
+
         pid = manager.get_pid("%s.service" % s)
         self._notify_process(pid, s)
 

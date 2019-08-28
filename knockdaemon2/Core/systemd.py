@@ -5,7 +5,6 @@
 # ===============================================================================
 """
 
-
 # Written by Aleksandr Aleksandrov <aleksandr.aleksandrov@emlid.com>
 #
 # Copyright (c) 2016, Emlid Limited
@@ -39,13 +38,14 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+import logging
 
 import dbus
 
+logger = logging.getLogger(__name__)
+
 
 class SystemdManager(object):
-
     UNIT_INTERFACE = "org.freedesktop.systemd1.Unit"
     SERVICE_UNIT_INTERFACE = "org.freedesktop.systemd1.Service"
 
@@ -143,12 +143,15 @@ class SystemdManager(object):
 
     def get_pid(self, unit_name):
         pid = self._get_unit_property(unit_name, self.SERVICE_UNIT_INTERFACE, 'MainPID')
-        if isinstance(pid, bytes):
-            pid = int(pid.decode('utf-8'), 10)
-        elif isinstance(pid, str):
-            pid = int(pid, 10)
-        return pid
-
+        try:
+            if isinstance(pid, bytes):
+                pid = int(pid.decode('utf-8'), 10)
+            elif isinstance(pid, str):
+                pid = int(pid, 10)
+            return pid
+        except Exception as e:
+            logger.warning("Cant cast to int %s:%s", type(pid), pid)
+            raise e
 
     def get_active_state(self, unit_name):
         properties = self._get_unit_properties(unit_name, self.UNIT_INTERFACE)
