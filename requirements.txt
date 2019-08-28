@@ -46,6 +46,5 @@ pytz
 
 mdstat
 # services check
-# aptitude install libdbus-1-dev
 # aptitude install libdbus-1-dev libglib2.0-dev
 dbus-python

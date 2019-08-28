@@ -95,10 +95,11 @@ if [ ${OUT} -eq 0 ]; then
         ./Jenkins/clean2client.sh
 
         deactivate
-        export GPGKEY=0x790D2DE0
-        export DEBEMAIL="debian@knock.center"
-        export DEBFULLNAME="Knock Center (GPG sign package key)"
-
+        if [[ -z "GPGKEY" ]]; then
+            export GPGKEY=0x790D2DE0
+            export DEBEMAIL="debian@knock.center"
+            export DEBFULLNAME="Knock Center (GPG sign package key)"
+        fi
         echo "REMOVE *.pyc"
         find -name '*.pyc' -type f -delete
 
@@ -109,7 +110,7 @@ if [ ${OUT} -eq 0 ]; then
         find -name '*.pyc'
 
         echo "###### building  package amd64"
-        dpkg-buildpackage -b -k790D2DE0 -rfakeroot
+        dpkg-buildpackage -b -rfakeroot
     else
         pip install pip --upgrade
         # pip install devpi-client

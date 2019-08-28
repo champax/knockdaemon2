@@ -45,7 +45,8 @@ class Kindly(object):
     @classmethod
     def kindly_anyconfig_fix_ta_shitasse(cls, d):
         """
-        kindly_anyconfig_fix_ta_shitasse
+        kindly_anyconfig_fix_ta_shitasse.
+
         :param d: dict
         :type d: dict
         """
