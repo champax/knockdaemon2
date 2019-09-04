@@ -29,6 +29,7 @@ from datetime import datetime
 
 import pymongo
 import yaml
+from pymongo.errors import OperationFailure
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
@@ -90,16 +91,16 @@ class MongoDbStat(KnockProbe):
         try:
             username = None
             password = None
-            if self.d_local_conf.get('username', False):
-                username = self.d_local_conf.get('username', False)
-                password = self.d_local_conf.get('password', False)
+            if 'username' in self.d_local_conf and 'password' in self.d_local_conf:
+                username = self.d_local_conf['username']
+                password = self.d_local_conf['password']
 
             db_auth = self.d_local_conf.get('db_auth', "admin")
 
-            if username:
+            if username is not None:
                 cnx_string = 'mongodb://%s:%s@%s:%s/%s' % (username, password, host, port, db_auth)
             else:
-                cnx_string = 'mongodb://%s:%s/%s' % ( host, port, db_auth)
+                cnx_string = 'mongodb://%s:%s/%s' % (host, port, db_auth)
 
             mongo_connection = pymongo.MongoClient(cnx_string)
 
@@ -111,9 +112,12 @@ class MongoDbStat(KnockProbe):
         # -----------------------------
         # Get server statistics
         # -----------------------------
-        mongo_db_handle = mongo_connection["config"]
-
-        server_status = mongo_db_handle.command("serverStatus")
+        mongo_db_handle = mongo_connection["admin"]
+        try:
+            server_status = mongo_db_handle.command("serverStatus")
+        except OperationFailure as e:
+            logger.warning('OperationFailure on %s %s', cnx_string, SolBase.extostr(e))
+            return
 
         if not server_status['ok'] and not server_status['ok'] == 1.0:
             logger.warn("server_status Failed")
