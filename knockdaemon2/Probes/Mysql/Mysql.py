@@ -582,5 +582,5 @@ class Mysql(KnockProbe):
         except Exception as e:
             # Notify instance down (type : 0)
             logger.warn("Execute failed, signaling instance down, started=0, ex=%s", SolBase.extostr(e))
-            self.notify_value_n("k.mysql.started", {"ID": id_mysql}, 1)
+            self.notify_value_n("k.mysql.started", {"ID": id_mysql}, 0)
             return

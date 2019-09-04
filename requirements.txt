@@ -9,7 +9,7 @@ setuptools
 pysolbase
 pysolcache
 pysoldaemon
-pysolmysql
+pysolmysql>=1.1.5
 pysolhttpclient
 pysolmeters
 pysoltcp
