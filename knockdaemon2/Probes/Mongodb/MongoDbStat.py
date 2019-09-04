@@ -93,7 +93,15 @@ class MongoDbStat(KnockProbe):
             if self.d_local_conf.get('username', False):
                 username = self.d_local_conf.get('username', False)
                 password = self.d_local_conf.get('password', False)
-            mongo_connection = pymongo.MongoClient(host, port, username=username, password=password)
+
+            db_auth = self.d_local_conf.get('db_auth', "admin")
+
+            if username:
+                cnx_string = 'mongodb://%s:%s@%s:%s/%s' % (username, password, host, port, db_auth)
+            else:
+                cnx_string = 'mongodb://%s:%s/%s' % ( host, port, db_auth)
+
+            mongo_connection = pymongo.MongoClient(cnx_string)
 
         except Exception as e:
             logger.warn(SolBase.extostr(e))
