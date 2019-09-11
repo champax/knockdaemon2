@@ -23,6 +23,7 @@
 """
 
 import logging
+import re
 
 from pysolbase.FileUtility import FileUtility
 
@@ -36,6 +37,7 @@ class RabbitmqStat(KnockProbe):
     """
     Probe
     """
+    FILTER_COUNTER_PER_QUEUE = re.compile(r'^message_stats\.(.*)_details\.rate$')
 
     KEYS = [
         # INTERNAL
@@ -136,8 +138,16 @@ class RabbitmqStat(KnockProbe):
             for k, v in d_global.iteritems():
                 self.notify_value_n("k.rabbitmq.queue." + k, {"PORT": "default"}, v)
             for queue, counters in d_perqueue.items():
+                additional_fields={}
+                for k in counters.keys():
+                    matches = self.FILTER_COUNTER_PER_QUEUE.match(k)
+                    if matches:
+                        knock_key = "m.%s.persec" % matches.groups()[0]
+                        additional_fields[knock_key] = counters[k]
                 for k in ('messages', ):
-                    self.notify_value_n("k.rabbitmq.per_queue." + k, {"PORT": "default", 'QUEUE': queue}, counters[k])
+                    self.notify_value_n("k.rabbitmq.per_queue." + k, {"PORT": "default", 'QUEUE': queue}, counters[k], additional_fields=additional_fields)
+
+
 
         # ----------------
         # Signal started
