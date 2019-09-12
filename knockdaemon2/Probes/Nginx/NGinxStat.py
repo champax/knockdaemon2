@@ -28,6 +28,7 @@ from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolhttpclient.Http.HttpClient import HttpClient
 from pysolhttpclient.Http.HttpRequest import HttpRequest
+from urllib3.exceptions import MaxRetryError
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
 
@@ -154,7 +155,10 @@ class NginxStat(KnockProbe):
 
             # Fetch
             ms_http_start = SolBase.mscurrent()
-            d_nginx = self.fetch_url(u)
+            try:
+                d_nginx = self.fetch_url(u)
+            except MaxRetryError:
+                d_nginx = None
             ms_http = SolBase.msdiff(ms_http_start)
 
             # Check
