@@ -52,7 +52,7 @@ def run():
         # IF machine is lchgui : force UDP socket name
         # TODO : Rewrite this later on
         # -------------------------------
-        if SolBase.get_machine_name().find("klchgui") >= 0:
+        if SolBase.get_machine_name().find("klchgui") or SolBase.get_machine_name().find("lch") >= 0:
             UDPServer.UDP_SOCKET_NAME = UDPServer.UDP_UNITTEST_SOCKET_NAME
 
         # Fetch config
