@@ -88,6 +88,7 @@ class Service(KnockProbe):
         """
         Exec
         """
+
         if len(Service.SERVICE_PATERNS) == 0:
             for p in self.patern_list:
                 try:
@@ -120,6 +121,17 @@ class Service(KnockProbe):
                 pass
 
         self.notify_value_n("k.os.service.running_count", None, len(running_checked))
+
+        # -----------------------------
+        # Handle uwsgi
+        # -----------------------------
+        # TODO : handle not running uwsgi process based on app-enabled configurations files versus processes enumerated
+        d_uwsgi = self.uwsgi_get_processes()
+        for uwsgi_type, uwsgi_pid in d_uwsgi.items():
+            # Notify running
+            self.notify_value_n("k.os.service.running", {"SERVICE": uwsgi_type}, 1)
+            # Notify processes
+            self._notify_process(pid=uwsgi_pid, service=uwsgi_type)
 
     def _execute_windows(self):
         """
@@ -264,6 +276,78 @@ class Service(KnockProbe):
         pid = manager.get_pid("%s.service" % s)
         logger.debug("notify process %s pid %s", s, pid)
         self._notify_process(pid, s)
+
+    @classmethod
+    def uwsgi_get_processes(cls):
+        """
+        Process uwsgi processes (parent processes only as underlying process probe act recursively)
+        :return dict, uwsgi_type => PID (parent pid ONLY)
+        :rtype dict
+        """
+
+        # We are logging for uwsgi command line formatted as :
+        # /usr/bin/uwsgi --ini /usr/share/uwsgi/conf/default.ini --ini /etc/uwsgi/apps-enabled/vulogboapi.ini --daemonize /var/log/uwsgi/app/vulogboapi.log
+
+        # We store a dict : uwsgi_type => PARENT PID (only)
+        d_uwsgi = dict()
+
+        # Enumerate all processes
+        for proc in psutil.process_iter():
+            # Command line
+            cmd_line = proc.cmdline()
+
+            # Process uwsgi ONLY
+            if len(cmd_line) == 0:
+                continue
+            elif not cmd_line[0].endswith("/uwsgi"):
+                continue
+
+            # Parent only
+            c_ppid = proc.ppid()
+            if not c_ppid == 1:
+                # Not a parent
+                continue
+
+            # From command line, get uwsgi init block as string
+            s_type = cls.uwsgi_get_type(cmd_line)
+
+            # Add process id
+            c_pid = proc.pid
+            d_uwsgi[s_type] = c_pid
+
+            logger.info("Uwsgi detected, s_type=%s, pid=%s")
+
+        # Ok
+        logger.info("Got d_uwsgi.keys=%s", d_uwsgi.keys())
+        return d_uwsgi
+
+    @classmethod
+    def uwsgi_get_type(cls, ar_uwsgi_cmd):
+        """
+        From a uwsgi cmd_line list, extract "--ini" .ini items and return them as string
+        return "na" if nothing matches
+        :param ar_uwsgi_cmd: list
+        :type ar_uwsgi_cmd: list
+        :return str
+        :rtype str
+        """
+
+        ar_out = list()
+        is_ini = False
+        for s in ar_uwsgi_cmd:
+            if s == "--ini":
+                is_ini = True
+                continue
+            if is_ini:
+                is_ini = False
+                # Got /usr/share/uwsgi/conf/default.ini
+                s_ini = s.split("/")[-1].replace(".ini", "")
+                ar_out.append(s_ini)
+
+        if len(ar_out) > 0:
+            return "uwsgi_" + "_".join(ar_out)
+        else:
+            return "uwsgi_na"
 
     def _notify_process(self, pid, service):
         """
