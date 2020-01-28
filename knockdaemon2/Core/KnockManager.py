@@ -1132,7 +1132,7 @@ class KnockManager(object):
 
         # If we are in test, we do not load
         if "KNOCK_UNITTEST" in os.environ:
-            return
+            return [], []
 
         ar_files = list()
         ar_probes = list()
