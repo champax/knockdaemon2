@@ -10,7 +10,7 @@ export DH_VIRTUALENV_INSTALL_ROOT=/opt/knock/
 export DH_VIRTUALENV_ARGUMENTS="--no-site-packages --always-copy"
 
 %:
-	dh $@ --with python-virtualenv --preinstall pip --with=systemd
+	dh $@ --with python-virtualenv --preinstall pip==19.3.1 --preinstall setuptools==42.0.2 --with=systemd --extra-virtualenv-arg="--no-setuptools"
 
 override_dh_installinit:
 	dh_installinit  --name=knockdaemon2 -- defaults 91 09
