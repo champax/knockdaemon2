@@ -194,6 +194,36 @@ class TestProbesDirect(unittest.TestCase):
         expect_value(self, self.k, "k.os.service.running", 1, 'eq', {"SERVICE": "cron"})
         expect_value(self, self.k, "k.os.service.running_count", 2, 'eq', None)
 
+    def test_uwsgi_get_type(self):
+        """
+        Test
+        """
+
+        ar = "/usr/bin/uwsgi --ini /usr/share/uwsgi/conf/default.ini --ini /etc/uwsgi/apps-enabled/toto.ini --daemonize /var/log/uwsgi/app/toto.log".split(" ")
+        s_uwsgi = Service.uwsgi_get_type(ar)
+        self.assertEquals(s_uwsgi, "uwsgi_default_toto")
+
+        ar = "/usr/bin/uwsgi".split(" ")
+        s_uwsgi = Service.uwsgi_get_type(ar)
+        self.assertEquals(s_uwsgi, "uwsgi_na")
+
+    def test_uwsgi_get_processes(self):
+        """
+        Test
+        """
+
+        d = Service.uwsgi_get_processes()
+        for k, v in d.items():
+            logger.info("Got %s=%s", k, v)
+        self.assertIsNotNone(d)
+        if len(d) > 0:
+            for k, v in d.items():
+                self.assertIsNotNone(k)
+                self.assertIsNotNone(v)
+                self.assertIsInstance(k, basestring)
+                self.assertTrue(k.startswith("uwsgi_"))
+                self.assertIsInstance(v, int)
+
     @unittest.skipIf(Service().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Service())
     def test_Mdstat(self):
         """
