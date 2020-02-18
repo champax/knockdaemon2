@@ -1129,6 +1129,11 @@ class KnockManager(object):
         :return: tuple (list of KnockProbes allocated, list of files created)
         :rtype tuple
         """
+
+        # If we are in test, we do not load
+        if "KNOCK_UNITTEST" in os.environ:
+            return [], []
+
         ar_files = list()
         ar_probes = list()
 

@@ -26,7 +26,7 @@ echo "###### Creating virtualenv ${WORKSPACE}"
 ENV=.env
 rm -fr .env
 rmvirtualenv ${ENV}
-virtualenv ${ENV}
+virtualenv ${ENV} --no-setuptools
 source ${ENV}/bin/activate
 
 echo "###### Install package dependency"
@@ -49,8 +49,11 @@ echo "###### Installing requirements"
 # pip install devpi-client pip==8.1.2
 # devpi use --set-cfg ${REPO_URL}
 
+pip install pip==19.3.1 --upgrade --no-cache-dir
 
-pip install setuptools --upgrade || true
+pip install setuptools==42.0.2 --upgrade --no-cache-dir || true
+
+pip install wheel --upgrade --no-cache-dir
 
 pip install ${NOUSEWHEEL} -r requirements.txt
 
