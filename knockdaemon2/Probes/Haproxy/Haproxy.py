@@ -23,6 +23,7 @@
 """
 import csv
 import logging
+import re
 import socket
 from StringIO import StringIO
 
@@ -178,7 +179,7 @@ class Haproxy(KnockProbe):
             # -------------------------------
 
             try:
-                ha_buf = self.read_soc(soc_name)
+                ha_buf = self.read_soc(soc_name, "show stat")
             except Exception as e:
                 logger.warn("Exception, ex=%s", SolBase.extostr(e))
                 raise e
@@ -373,12 +374,16 @@ class Haproxy(KnockProbe):
                 counter_value=0,
             )
 
-    def read_soc(self, soc_name):
+        self.read_table(soc_name)
+
+    def read_soc(self, soc_name, cmd):
         """
         Open socket, send and readall
 
         :param soc_name: Socket path
         :type soc_name: str
+        :param cmd:
+        :type cmd: str
         :return:
         :rtype str
         """
@@ -391,7 +396,7 @@ class Haproxy(KnockProbe):
             soc.connect(soc_name)
             SolBase.sleep(0)
             logger.debug("Send socket, soc_name=%s", soc_name)
-            soc.sendall("show stat\n")
+            soc.sendall("%s \n" % cmd)
             SolBase.sleep(0)
 
             logger.debug("Recv (start) socket, soc_name=%s", soc_name)
@@ -422,3 +427,40 @@ class Haproxy(KnockProbe):
         f.seek(0)
 
         return csv.DictReader(f)
+
+    def read_table(self, soc_name):
+        """
+         echo "show table" | socat stdio tcp4-connect:127.0.0.1:2000
+        # table: http-front-httpssl, type: binary, size:2097152, used:0
+        # table: http_backend_backend_vulogauth_11295, type: ip, size:2097152, used:1
+
+        :param soc_name: str
+        :type soc_name: str
+        :return:
+        """
+        regex = r"# table: ([-a-zA-Z0-9_]+), type: (\w+), size:(\d+), used:(\d+)"
+
+        try:
+            ha_buf = self.read_soc(soc_name, "show table")
+        except Exception as e:
+            logger.warn("Exception, ex=%s", SolBase.extostr(e))
+            raise e
+
+        matches = re.finditer(regex, ha_buf, re.MULTILINE)
+        for matchNum, match in enumerate(matches, start=1):
+
+            logger.debug("Match {matchNum} was found at {start}-{end}: {match}".format(matchNum=matchNum, start=match.start(), end=match.end(), match=match.group()))
+
+            try:
+                table_name, table_type, table_size, used = match.groups()
+                self.notify_value_n(
+                    counter_key="k.haproxy.table" ,
+                    d_disco_id_tag={"TABLE": table_name,
+                                    "TYPE": table_type},
+                    counter_value=used,
+                    additional_fields={"size": table_size}
+                )
+            except Exception as e:
+                logger.warning(SolBase.extostr(e))
+                continue
+
