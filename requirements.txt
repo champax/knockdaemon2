@@ -3,7 +3,7 @@
 
 # pip / setup
 pip
-setuptools
+setuptools==42.0.2
 
 # pysol
 pysolbase >= 1.1.2

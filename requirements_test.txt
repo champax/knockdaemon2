@@ -1,4 +1,4 @@
-unittest-xml-reporting
+unittest-xml-reporting==2.2.0
 nosexcover
 nose
 
