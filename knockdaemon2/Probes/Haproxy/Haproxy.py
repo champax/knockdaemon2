@@ -457,8 +457,8 @@ class Haproxy(KnockProbe):
                     counter_key="k.haproxy.table" ,
                     d_disco_id_tag={"TABLE": table_name,
                                     "TYPE": table_type},
-                    counter_value=used,
-                    additional_fields={"size": table_size}
+                    counter_value=int(used),
+                    additional_fields={"size": int(table_size)}
                 )
             except Exception as e:
                 logger.warning(SolBase.extostr(e))
