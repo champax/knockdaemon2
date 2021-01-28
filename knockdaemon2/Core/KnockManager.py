@@ -746,7 +746,6 @@ class KnockManager(object):
         :type d_opt_tags: None,dict
         :param additional_fields: dict
         :type additional_fields: dict
-
         """
 
         # Strict mode : we refuse keys with [ or ] or with .discovery
@@ -762,8 +761,21 @@ class KnockManager(object):
         # Stat
         Meters.aii("knock_stat_notify_value")
 
+        # PID : d_opt_tags : we may receive "PID" in this dict from client libs
+        # This will put pressure on supervision backends
+        # If we have it, we remove it
+        if d_opt_tags and "PID" in d_opt_tags:
+            del d_opt_tags["PID"]
+
         # Sort
         if d_disco_id_tag:
+            # PID : d_disco_id_tag : we may receive "PID" in this dict from client libs
+            # This will put pressure on supervision backends
+            # If we have it, we remove it
+            if "PID" in d_disco_id_tag:
+                del d_disco_id_tag["PID"]
+
+            # Ordered
             dd = OrderedDict(sorted(d_disco_id_tag.items(), key=lambda t: t[0]))
 
             # Validate
