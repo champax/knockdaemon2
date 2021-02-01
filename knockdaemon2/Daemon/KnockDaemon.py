@@ -171,10 +171,7 @@ class KnockDaemon(Daemon):
         # Signal
         self.is_running = False
 
-        # Wait for completion
-        while not self.start_loop_exited:
-            SolBase.sleep(10)
-
+        # We cannot wait (https://github.com/gevent/gevent/issues/799)
         logger.info("knockdaemon2 stopped")
 
 
