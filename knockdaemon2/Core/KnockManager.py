@@ -686,44 +686,6 @@ class KnockManager(object):
             Meters.aii("knock_stat_exec_probe_count")
 
     # ==============================
-    # SUPERV NOTIFY : DISCOVERY
-    # ==============================
-
-    def notify_discovery_n(self, disco_key, d_disco_id_tag):
-        """
-        Notify discovery (1..n)
-
-        Sample:
-        - notify_discovery_n("k.dns", {"HOST": "my_host", "SERVER": "my_server"})
-        :param disco_key: discovery key
-        :type disco_key: str
-        :param d_disco_id_tag: dict {"disco_tag_1": "value", "disco_tag_n": "value"}
-        :type d_disco_id_tag: dict
-        """
-
-        # We use a sort toward OrderedDict to have consistent and predictive matching
-        do = OrderedDict(sorted(d_disco_id_tag.items(), key=lambda t: t[0]))
-
-        # Compute key
-        key = "{0}".format(disco_key)
-        for disco_id, disco_tag in do.items():
-            assert isinstance(disco_id, str), "disco_id must be str, got={0}, value={1}".format(SolBase.get_classname(disco_id), disco_id)
-            assert isinstance(disco_tag, str), "disco_tag must be str, got={0}, value={1}".format(SolBase.get_classname(disco_tag), disco_tag)
-            key += "|{0}|{1}".format(disco_id, disco_tag)
-
-        if key in self._superv_notify_disco_hash:
-            # Hashed, exit
-            return
-        else:
-            # Add
-            tu = (disco_key, do)
-            logger.debug("ADDING tu=%s", tu)
-            self._superv_notify_disco_hash[key] = tu
-
-            # Stats
-            Meters.aii("knock_stat_notify_disco")
-
-    # ==============================
     # SUPERV NOTIFY : VALUE
     # ==============================
 

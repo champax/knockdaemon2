@@ -238,17 +238,6 @@ class PhpFpmStat(KnockProbe):
         # NOTE : In call cases, we process the config pool (we NEED the uris, this basterd fpm has no stats socket or similar)
 
         # -------------------------------
-        # P0 : Fire discoveries
-        # -------------------------------
-        logger.info("Firing discoveries (from d_pool_from_files)")
-
-        # From detection
-        for pool_id, (_, _) in d_pool_from_files.items():
-            self.notify_discovery_n("k.phpfpm.discovery", {"ID": pool_id})
-
-        self.notify_discovery_n("k.phpfpm.discovery", {"ID": "ALL"})
-
-        # -------------------------------
         # Execute stuff now
         # -------------------------------
 

@@ -94,11 +94,6 @@ class TestProbe(KnockProbe):
 
             self.exec_count += 1
 
-            # Discovery
-            self.notify_discovery_n("test.dummy.discovery", {"TYPE": "all"})
-            self.notify_discovery_n("test.dummy.discovery", {"TYPE": "one"})
-            self.notify_discovery_n("test.dummy.discovery", {"TYPE": "two"})
-
             # Values
             self.notify_value_n("test.dummy.count", {"TYPE": "all"}, 100)
             self.notify_value_n("test.dummy.count", {"TYPE": "one"}, 90)

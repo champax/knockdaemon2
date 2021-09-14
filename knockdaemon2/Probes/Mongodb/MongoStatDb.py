@@ -57,7 +57,6 @@ class MongoStatDb(KnockProbe):
 
         for port, t in self.__getserverlist():
             if port == 27017:
-                self.notify_discovery_n("knock.mongo.discovery", {"PORT": str(port)})
                 self.getstat("127.0.0.1", port)
 
     def getstat(self, host, port):
@@ -87,17 +86,12 @@ class MongoStatDb(KnockProbe):
         self.recurse(mongo_db_handle.command("dbstats"), 'server.')
 
         for db in db_list:
-            self.notify_discovery_n("knock.mongo.databases.db.discovery", {"DB": str(db)})
-
-        for db in db_list:
             self.database = db
             currentdb = mongo_connection[db]
             self.recurse(mongo_db_handle.command("dbstats", db), 'db.')
             for coll in currentdb.collection_names():
                 if coll == 'system.indexes':
                     continue
-
-                self.notify_discovery_n("knock.mongo.databases.coll.discovery", {"COLL": db + "." + coll})
 
                 for key, value in currentdb.command("collstats", str(coll)).items():
                     if key in ('count', 'storageSize', 'sharded'):

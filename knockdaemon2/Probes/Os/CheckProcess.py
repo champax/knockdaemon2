@@ -150,9 +150,6 @@ class CheckProcess(KnockProbe):
             # Ok
             logger.info("Got found_startup=%s, processing checker=%s against pid=%s", found_startup, checker, pid_file)
 
-            # add discovery
-            self.notify_discovery_n("k.proc.discovery", {"PROCNAME": checker})
-
             # read pid
             pid_file_present = "missing"
             pid = 0

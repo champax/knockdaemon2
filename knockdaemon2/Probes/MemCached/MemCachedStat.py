@@ -201,10 +201,6 @@ class MemCachedStat(KnockProbe):
 
         # Single (default) instance notify
         logger.info("Memcache detected, cur_type=%s, connect_to=%s", cur_type, connect_to)
-        self.notify_discovery_n("k.memcached.discovery", {"MC": str(connect_to)})
-
-        # Push ALL
-        self.notify_discovery_n("k.memcached.discovery", {"MC": "ALL"})
 
         # -------
         # CONNECT

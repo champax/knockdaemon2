@@ -196,8 +196,6 @@ class CheckDns(KnockProbe):
             data_dict = dict()
             data_dict["data"] = disco_list
 
-            self.notify_discovery_n("k.dns.discovery", {"HOST": host_to_resolv, "SERVER": dns_server})
-
             string_result = ""
 
             for retry_count in range(3):

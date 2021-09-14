@@ -164,7 +164,6 @@ class ApacheStat(KnockProbe):
         # -------------------------------
         logger.info("Firing discoveries (default)")
         pool_id = "default"
-        self.notify_discovery_n("k.apache.discovery", {"ID": pool_id})
 
         # -------------------------------
         # Loop and try uris

@@ -119,12 +119,6 @@ class DanteParser(BaseParser):
         """
 
         # ===================
-        # DISCO KEY
-        # ===================
-
-        self.notify_discovery_n("k.dante.discovery", {"ID": "dante"})
-
-        # ===================
         # DATA
         # ===================
 

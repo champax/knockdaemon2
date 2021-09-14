@@ -477,8 +477,6 @@ class UDPBusinessServerBase(DatagramServer):
                     if len(self._dict_dtc) > 0:
 
                         for item, value in self._dict_dtc.items():
-                            # Disco
-                            self._probe_dtc.notify_discovery_n("k.business.dtc.discovery", {"ITEM": item})
 
                             # Data
                             d = self._dtc_to_dict(value)
@@ -495,7 +493,6 @@ class UDPBusinessServerBase(DatagramServer):
                         for item, value in self._dict_increment.items():
                             logger.debug('item=%s value=%s', item, value.get())
 
-                            self._probe_inc.notify_discovery_n("k.business.inc.discovery", {"ITEM": item})
                             self._probe_inc.notify_value_n(UDPBusinessServerBase.KNOCK_PREFIX_KEY + "inc", {"ITEM": item}, value.get())
 
                 # gauge
@@ -504,7 +501,6 @@ class UDPBusinessServerBase(DatagramServer):
                         for item, value in self._dict_gauge.items():
                             logger.debug('item=%s value=%s', item, value)
 
-                            self._probe_inc.notify_discovery_n("k.business.gauge.discovery", {"ITEM": item})
                             self._probe_inc.notify_value_n(UDPBusinessServerBase.KNOCK_PREFIX_KEY + "gauge", {"ITEM": item}, value)
 
                 # Next schedule (in lock, re-entrant)

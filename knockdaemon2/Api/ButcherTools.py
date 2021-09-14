@@ -130,8 +130,8 @@ class ButcherTools(object):
         """
         :param orig: str
         :type orig: str
-        :param sep: str
-        :type str: str
+        :param sep: str,None
+        :type sep: str,None
         :return generator
         :rtype generator
         """

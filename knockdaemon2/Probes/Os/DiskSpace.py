@@ -150,9 +150,6 @@ class DiskSpace(KnockProbe):
 
         mount = open('/etc/mtab', mode='r')
 
-        # Disco ALL
-        self.notify_discovery_n("k.vfs.fs.discovery", {"FSNAME": "ALL"})
-
         # All init
         all_hash = dict()
 
@@ -166,9 +163,6 @@ class DiskSpace(KnockProbe):
                         mountpoint.startswith('/media/') or \
                         "/.zfs/snapshot/" in mountpoint:
                     continue
-
-                # Disco
-                self.notify_discovery_n("k.vfs.fs.discovery", {"FSNAME": mountpoint})
 
                 self._disk_usage(mountpoint)
                 current_time_ms = SolBase.mscurrent()
@@ -345,8 +339,6 @@ class DiskSpace(KnockProbe):
             inodepfree = 100.0
         else:
             inodepfree = 100.0 * st.f_ffree / st.f_files
-
-        self.notify_discovery_n("k.vfs.fs.discovery", {"FSNAME": path})
 
         # TODO : NON COMPATIBLE DISCO PROBES : k.vfs.fs.size[DISCO, type]
 

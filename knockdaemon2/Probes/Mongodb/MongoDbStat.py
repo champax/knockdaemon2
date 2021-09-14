@@ -64,7 +64,6 @@ class MongoDbStat(KnockProbe):
         """
 
         for port, t in self.__getserverlist():
-            self.notify_discovery_n("k.mongodb.discovery", {"PORT": str(port)})
             self.notify_value_n("k.mongodb.type", {"PORT": str(port)}, t)
 
             try:

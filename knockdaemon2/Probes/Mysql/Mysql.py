@@ -329,9 +329,6 @@ class Mysql(KnockProbe):
                 logger.info("No mysql located (no file=%s)", Mysql.MYSQL_CONFIG_FILE)
                 return
 
-            # Disco
-            self.notify_discovery_n("k.mysql.discovery", {"ID": id_mysql})
-
             # Fetch (MUST NOT FAILS)
             login, pwd, soc = self._parse_config_debian()
             if not login:

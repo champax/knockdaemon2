@@ -168,9 +168,6 @@ class Network(KnockProbe):
 
                 d_in = interface_name
 
-                # Disco
-                self.notify_discovery_n("k.net.if.discovery", {"IFNAME": d_in})
-
                 # Status interface
                 operstate = ""
 

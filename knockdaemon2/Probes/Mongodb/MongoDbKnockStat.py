@@ -110,10 +110,6 @@ class MongoDbKnockStat(KnockProbe):
                     if coll == 'system.indexes':
                         continue
 
-                    # Notify disco
-                    self.notify_discovery_n("knock.mongodb_knockstat.collection.discovery", {"COLL": db + "." + coll})
-                    self.notify_discovery_n("knock.mongodb_knockstat.database.discovery", {"DB": str(db)})
-
                     # Notify values
                     for key, value in currentdb.command("collstats", str(coll)).items():
                         if key in ('count', 'storageSize', 'sharded'):

@@ -132,12 +132,7 @@ class NginxStat(KnockProbe):
 
         logger.info("Nginx detected (/etc/nginx/nginx.conf found)")
 
-        # -------------------------------
-        # P0 : Fire discoveries
-        # -------------------------------
-        logger.info("Firing discoveries (default)")
         pool_id = "default"
-        self.notify_discovery_n("k.nginx.discovery", {"ID": pool_id})
 
         # -------------------------------
         # Loop and try uris

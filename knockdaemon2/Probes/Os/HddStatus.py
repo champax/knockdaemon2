@@ -89,9 +89,6 @@ class HddStatus(KnockProbe):
 
         self.liste = list()
 
-        # Add ALL
-        self.notify_discovery_n("k.hard.hd.discovery", {"HDD": "ALL"})
-
         # All hash
         self.all_hash = dict()
 
@@ -145,9 +142,6 @@ class HddStatus(KnockProbe):
 
         # Clean
         c_hd = hd.replace('/dev/', '')
-
-        # Disco
-        self.notify_discovery_n("k.hard.hd.discovery", {"HDD": c_hd})
 
         # out = os.popen("/usr/sbin/smartctl -q errorsonly -H -l selftest " + hd)
         cmd = self.helpers.sudoize("smartctl -q errorsonly -H -l selftest " + hd)

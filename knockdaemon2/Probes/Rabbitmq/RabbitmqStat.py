@@ -91,9 +91,6 @@ class RabbitmqStat(KnockProbe):
             logger.info("No rabbitmq detected, give up")
             return
 
-        # Signal discovery
-        self.notify_discovery_n("k.rabbitmq.discovery", {"PORT": "default"})
-
         # Must have rabbitmqadmin installed (otherwise signal DOWN)
         ec, so, se = ButcherTools.invoke("rabbitmqadmin --help")
         if ec != 0:

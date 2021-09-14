@@ -156,20 +156,6 @@ class KnockProbe(object):
         """
         raise NotImplementedError()
 
-    def notify_discovery_n(self, disco_key, d_disco_id_tag):
-        """
-        Notify discovery (1..n)
-
-        Sample:
-        - notify_discovery_n("k.dns", {"HOST": "my_host", "SERVER": "my_server"})
-        :param disco_key: discovery key
-        :type disco_key: str
-        :param d_disco_id_tag: dict {"disco_tag_1": "value", "disco_tag_n": "value"}
-        :type d_disco_id_tag: dict
-        """
-
-        self._knock_manager.notify_discovery_n(disco_key, d_disco_id_tag)
-
     def notify_value_n(self, counter_key, d_disco_id_tag, counter_value, ts=None, additional_fields=None):
         """
         Notify value

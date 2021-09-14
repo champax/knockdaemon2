@@ -62,10 +62,7 @@ class IpvsAdm(KnockProbe):
             logger.debug('keepalive stopped')
             return
 
-        self.notify_discovery_n("knock.ipvsadm.discovery", {"VIP": "ALL"})
-
         for key, value in hashtab.items():
-            self.notify_discovery_n("knock.ipvsadm.discovery", {"VIP": key})
             self._push_result("knock.ipvsadm.activerip", key, value=value)
 
         for key, value in resulttab.items():

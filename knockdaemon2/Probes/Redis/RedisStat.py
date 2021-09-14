@@ -139,17 +139,12 @@ class RedisStat(KnockProbe):
 
                     logger.info("Redis, got instance port=%s, line=%s, line2=%s", port, line, line2)
 
-                    # Detected instance, notify disco asap
-                    self.notify_discovery_n("k.redis.discovery", {"RDPORT": port})
                     break
 
         # If no instance, give up
         if len(redis_ports) == 0:
             logger.info("No redis instance detected, give up")
             return
-
-        # ALL instance
-        self.notify_discovery_n("k.redis.discovery", {"RDPORT": "ALL"})
 
         # ---------------------------
         # PROCESS INSTANCES
@@ -246,7 +241,7 @@ class RedisStat(KnockProbe):
                     continue
 
                 # Notify
-                self._push_result(knock_key, port, v, aggreg_op)
+                self._push_result(knock_key, int(port), v, aggreg_op)
 
         # Push aggregate results
         for key, value in self._d_aggregate.items():

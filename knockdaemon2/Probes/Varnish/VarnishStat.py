@@ -266,7 +266,6 @@ class VarnishStat(KnockProbe):
         # -------------------------------
         logger.info("Firing discoveries (default)")
         pool_id = "default"
-        self.notify_discovery_n("k.varnish.discovery", {"ID": pool_id})
 
         # -------------------------------
         # We support varnish 3.0.7 json

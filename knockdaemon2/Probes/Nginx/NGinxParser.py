@@ -564,16 +564,6 @@ class NGinxParser(BaseParser):
         """
         Populate counters
         """
-
-        # ===================
-        # DISCO KEY
-        # ===================
-
-        # Dict
-        self.notify_discovery_n("k.nglog.discovery", {"NGLOG": "ALL"})
-        for key in self.hash_stat.keys():
-            self.notify_discovery_n("k.nglog.discovery", {"NGLOG": key})
-
         # ===================
         # DATA (ALL only)
         # ===================

@@ -468,7 +468,6 @@ class UwsgiStat(KnockProbe):
             d_instance_cur = dict()
             d_instance_cur["{#ID}"] = cur_uwsgi_id
             uwsgi_instance_list.append(d_instance_cur)
-            self.notify_discovery_n("k.uwsgi.discovery", {"ID": cur_uwsgi_id})
 
             # -----------------------
             # B1_TER) Locate "stats" in config
@@ -560,9 +559,6 @@ class UwsgiStat(KnockProbe):
             # Go nothing, possible no uwsgi instance, over
             logger.info("No d_uwsgi_aggregate, give up")
             return
-
-        # Notify disco
-        self.notify_discovery_n("k.uwsgi.discovery", {"ID": "ALL"})
 
         # Aggreg firing
         for k, v in self.d_uwsgi_aggregate.items():
