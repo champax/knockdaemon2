@@ -1,21 +1,18 @@
-# Private Pip Url
-# --extra-index-url https://pypi.knock.center/knock/dev/+simple/
-
 # pip / setup
 pip
-setuptools==42.0.2
+setuptools
 
 # pysol
-pysolbase<3.0.0
-pysolcache<3.0.0
-pysoldaemon<3.0.0
-pysolmysql<3.0.0
-pysolhttpclient<3.0.0
-pysolmeters<3.0.0
-pysoltcp<3.0.0
+pysolbase>=3.0.0
+pysolcache>=3.0.0
+pysoldaemon>=3.0.0
+pysolmysql>=3.0.0
+pysolhttpclient>=3.0.0
+pysolmeters>=3.0.0
+pysoltcp>=3.0.0
 
 # gevent
-gevent==1.3.7
+gevent
 geventhttpclient
 greenlet
 
@@ -45,6 +42,7 @@ jinja2
 pytz
 
 mdstat
+
 # services check
 # aptitude install libdbus-1-dev libglib2.0-dev
 dbus-python
