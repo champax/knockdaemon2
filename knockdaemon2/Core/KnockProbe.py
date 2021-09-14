@@ -3,7 +3,7 @@
 
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
 #
 #
 #
