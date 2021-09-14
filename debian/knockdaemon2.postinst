@@ -1,13 +1,5 @@
 #!/bin/bash
 
-# Avoid a failing "python2.7 -m compileall /opt/knock/ "
-echo "postinst: pass 1"
-if [ -f /opt/knock/knockdaemon2/lib/python2.7/site-packages/gevent/_socket3.py ]
-then
-    rm -f /opt/knock/knockdaemon2/lib/python2.7/site-packages/gevent/_socket3.py
-fi
-echo "postinst: pass 1 complete"
-
 # Rc
 echo "postinst: pass 2 complete"
 update-rc.d -f knockdaemon2 defaults
