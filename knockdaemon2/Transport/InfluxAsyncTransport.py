@@ -99,7 +99,8 @@ class InfluxAsyncTransport(HttpAsyncTransport):
 
         # Mode : "knock" or "influx"
         self._influx_mode = d.get("influx_mode", "knock")
-        assert self._influx_mode in ["knock", "influx"], "Invalid _influx_mode={0}, need 'knock' or 'influx'".format(self._influx_mode)
+        if self._influx_mode not in ["knock", "influx"]:
+            raise Exception("Invalid _influx_mode={0}, need 'knock' or 'influx'".format(self._influx_mode))
 
         # Timeout
         self._influx_timeout_ms = int(d.get("influx_timeout_ms", 20000))
@@ -401,7 +402,8 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                     logger.info("Push done (influx), ms=%s", SolBase.msdiff(ms))
 
                 # Check
-                assert ri, "write_points returned false, ar_lines={0}".format(repr(ar_lines))
+                if not ri:
+                    raise Exception("write_points returned false, ar_lines={0}".format(repr(ar_lines)))
             elif self._influx_mode == "knock":
                 # --------------------
                 # KNOCK CLIENT
@@ -411,7 +413,8 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                 if not self._influx_db_created:
                     try:
                         http_rep = Tools.influx_create_database(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, timeout_ms=self._influx_timeout_ms, ssl=self._influx_ssl, verify_ssl=self._influx_ssl_verify)
-                        assert 200 <= http_rep.status_code < 300, "Need http 2xx, got http_req={0}".format(http_rep)
+                        if not 200 <= http_rep.status_code < 300:
+                            raise Exception("Need http 2xx, got http_req={0}".format(http_rep))
                     except Exception as e:
                         logger.warning("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
                     finally:
@@ -423,7 +426,8 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                     ms = SolBase.mscurrent()
                     logger.info("Push now (knock), ar_lines.len=%s", len(ar_lines))
                     http_rep = Tools.influx_write_data(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, ar_data=ar_lines, timeout_ms=self._influx_timeout_ms, ssl=self._influx_ssl, verify_ssl=self._influx_ssl_verify)
-                    assert 200 <= http_rep.status_code < 300, "Need http 2xx, got http_req={0}".format(http_rep)
+                    if not 200 <= http_rep.status_code < 300:
+                        raise Exception("Need http 2xx, got http_req={0}".format(http_rep))
 
                     # Call ok, store
                     self.last_http_ok_ms = SolBase.mscurrent()

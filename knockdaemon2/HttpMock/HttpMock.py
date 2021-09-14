@@ -807,8 +807,10 @@ class HttpMock(object):
                 # -----------------------
                 disco_key = tu[0]
                 dd = tu[1]
-                assert isinstance(dd, dict), "dd must be a dict, got={0}, value={1}".format(SolBase.get_classname(dd), dd)
-                assert disco_key.endswith(".discovery"), "disco_key must end with .discovery, got={0}".format(disco_key)
+                if not isinstance(dd, dict):
+                    raise Exception("dd must be a dict, got={0}, value={1}".format(SolBase.get_classname(dd), dd))
+                elif not disco_key.endswith(".discovery"):
+                    raise Exception("disco_key must end with .discovery, got={0}".format(disco_key))
 
                 # Switch to ordered dict
                 od = OrderedDict(sorted(dd.items(), key=lambda z: z[0]))

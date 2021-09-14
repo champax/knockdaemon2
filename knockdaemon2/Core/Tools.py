@@ -81,7 +81,8 @@ class Tools(object):
         # ]
 
         # Get host
-        assert len(node_hash) == 1, "len(node_hash) must be 1, got node_hash={0}".format(node_hash)
+        if not len(node_hash) == 1:
+            raise Exception("len(node_hash) must be 1, got node_hash={0}".format(node_hash))
         c_host = node_hash["host"]
         logger.debug("Processing c_host=%s", c_host)
 
@@ -325,7 +326,8 @@ class Tools(object):
             http_req.uri = "http://{0}:{1}/write?{2}".format(host, port, s_qs)
         http_req.method = "POST"
         http_req.post_data = ('\n'.join(ar_data) + '\n').encode('utf8')
-        assert http_req.post_data.decode("utf8").endswith("\n\n"), "Need \n\n ended post_data, got={0}".format(http_req.post_data[:-16])
+        if not http_req.post_data.decode("utf8").endswith("\n\n"):
+            raise Exception("Need \n\n ended post_data, got={0}".format(http_req.post_data[:-16]))
 
         # Go
         logger.info("Influx, http go, req=%s", http_req)

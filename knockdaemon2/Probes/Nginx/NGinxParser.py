@@ -400,7 +400,8 @@ class NGinxParser(BaseParser):
         # "http://whatever whatever " "unixsocket"
 
         # We must start with "
-        assert ar[13].startswith("\""), "ar[13] must start with \", got={0}".format(ar[13])
+        if not ar[13].startswith("\""):
+            raise Exception("ar[13] must start with \", got={0}".format(ar[13]))
         # We look for '" "'
         idx = ar[13].find("\" \"")
 

@@ -344,7 +344,7 @@ class TestBasic(unittest.TestCase):
             else:
                 # Randomize exec sleep between 0 and 1000
                 r = random.randint(500, 1500)
-                assert 500 <= r <= 1500
+                self.assertTrue(500 <= r <= 1500)
                 for p in self.k._probe_list:
                     p.sleep_ms_in_exec = r
                 # Wait

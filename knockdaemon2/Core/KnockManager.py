@@ -200,8 +200,10 @@ class KnockManager(object):
         :rtype dict
         """
 
-        assert isinstance(d1, dict), "need a dict"
-        assert isinstance(d2, dict), "need a dict"
+        if not isinstance(d1, dict):
+            raise Exception("need a dict")
+        elif not isinstance(d2, dict):
+            raise Exception("need a dict")
 
         for cur_k, cur_v in d2.items():
             if cur_k in d1:
@@ -258,8 +260,10 @@ class KnockManager(object):
                 }
 
             # Check them
-            assert len(self._account_hash["acc_namespace"]) > 0, "Invalid acc_namespace"
-            assert len(self._account_hash["acc_key"]) > 0, "Invalid acc_key"
+            if not len(self._account_hash["acc_namespace"]) > 0:
+                raise Exception("Invalid acc_namespace")
+            elif not len(self._account_hash["acc_key"]) > 0:
+                raise Exception("Invalid acc_key")
 
             # Lifecycle
             try:
@@ -706,12 +710,16 @@ class KnockManager(object):
         """
 
         # Strict mode : we refuse keys with [ or ] or with .discovery
-        assert counter_key.find("[") == -1, "counter_key : [] chars are not allowed, got counter_key={0}".format(counter_key)
-        assert counter_key.find("]") == -1, "counter_key : [] chars are not allowed, got counter_key={0}".format(counter_key)
-        assert counter_key.find(".discovery") == - 1, "counter_key : '.discovery' is not allowed, got counter_key={0}".format(counter_key)
+        if not counter_key.find("[") == -1:
+            raise Exception("counter_key : [] chars are not allowed, got counter_key={0}".format(counter_key))
+        elif not counter_key.find("]") == -1:
+            raise Exception("counter_key : [] chars are not allowed, got counter_key={0}".format(counter_key))
+        elif not counter_key.find(".discovery") == - 1:
+            raise Exception("counter_key : '.discovery' is not allowed, got counter_key={0}".format(counter_key))
 
         # Value must NOT be a tuple or a list, it must an int,float,bool,string
-        assert isinstance(counter_value, (int, float, bool, str)), "counter_value must be an int, float, bool, basestring k=%s, v=%s type=%s" % (counter_key, counter_value, type(counter_value))
+        if not isinstance(counter_value, (int, float, bool, str)):
+            raise Exception("counter_value must be an int, float, bool, basestring k=%s, v=%s type=%s" % (counter_key, counter_value, type(counter_value)))
 
         if d_values is None:
             d_values = dict()
@@ -732,8 +740,10 @@ class KnockManager(object):
 
         # Validate
         for k, v in d_tags.items():
-            assert isinstance(k, str), "k must be str, got class={0}, k={1}".format(SolBase.get_classname(k), k)
-            assert isinstance(v, str), "v must be str, got class={0}, v={1}".format(SolBase.get_classname(v), v)
+            if not isinstance(k, str):
+                raise Exception("k must be str, got class={0}, k={1}".format(SolBase.get_classname(k), k))
+            elif not isinstance(v, str):
+                raise Exception("v must be str, got class={0}, v={1}".format(SolBase.get_classname(v), v))
 
         # Append
         if not ts:

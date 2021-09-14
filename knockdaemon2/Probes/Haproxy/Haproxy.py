@@ -61,8 +61,10 @@ class Haproxy(KnockProbe):
         :rtype list
         """
 
-        assert buf, "Need buf"
-        assert len(buf) > 0, "Need buf not empty"
+        if not buf:
+            raise Exception("Need buf")
+        elif not len(buf) > 0:
+            raise Exception("Need buf not empty")
 
         ar_out = list()
         ar_buf = buf.split("\n")
@@ -76,7 +78,8 @@ class Haproxy(KnockProbe):
 
             # Header
             if cur_line.startswith("#"):
-                assert ar_fields is None, "cur_line startswith #, need ar_fields None"
+                if  ar_fields is not None:
+                    raise Exception("cur_line startswith #, need ar_fields None")
                 cur_line = cur_line[1:]
 
             # Clean again
