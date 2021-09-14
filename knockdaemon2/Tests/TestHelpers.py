@@ -28,39 +28,6 @@ import ujson
 logger = logging.getLogger(__name__)
 
 
-def expect_disco(self, k, key, d_disco):
-    """
-    Expect discovery present
-    :param self: self (must be a unittest.case.TestCase)
-    :param k: knockdaemon2.Core.KnockManager.KnockManager
-    :type k: knockdaemon2.Core.KnockManager.KnockManager
-    :param key str
-    :type key str
-    :param d_disco: dict {"ID": "toto}
-    :type d_disco: dict
-    """
-
-    count = 0
-    # noinspection PyProtectedMember
-    for cur_key, tu in k._superv_notify_disco_hash.items():
-        disco_key, ddict = tu
-        if disco_key != key:
-            continue
-
-        # Check we have all
-        if len(d_disco) != len(ddict):
-            continue
-
-        # Check key / values
-        for k2, v2 in d_disco.items():
-            if k2 in ddict and ddict[k2] == v2:
-                count += 1
-
-    # Check
-    # noinspection PyProtectedMember
-    self.assertGreater(count, 0, msg="Disco not found, lookfor={0}, having={1}".format(d_disco, k._superv_notify_disco_hash))
-
-
 def expect_value(self, k, key, value, operator, d_disco=None, cast_to_float=False, target_count=None):
     """
     Expect key to have value

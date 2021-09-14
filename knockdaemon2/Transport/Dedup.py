@@ -22,7 +22,6 @@
 # ===============================================================================
 """
 import logging
-from collections import OrderedDict
 
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
@@ -46,36 +45,20 @@ class Dedup(object):
     # ============================
 
     @classmethod
-    def get_dedup_key(cls, probe_name, dd, d_opt_tags):
+    def get_dedup_key(cls, counter_key, d_tags):
         """
         Get dedup key (computed using probe names and tags, ordered).
-        :param probe_name: str
-        :type probe_name: str
-        :param dd: dict,None
-        :type dd: dict,None
-        :param d_opt_tags: dict,None
-        :type d_opt_tags: dict,None
+        :param counter_key: str
+        :type counter_key: str
+        :param d_tags: OrderedDict,None
+        :type d_tags: OrderedDict,None
         :return str
         :rtype str
         """
 
-        # Init
-        d_tags = {}
-
-        # Discovery
-        if dd:
-            d_tags.update(dd)
-
-        # Add optional tags
-        if d_opt_tags:
-            d_tags.update(d_opt_tags)
-
-        # Sorted and fire
-        do = OrderedDict(sorted(d_tags.items(), key=lambda t: t[0]))
-
         # Key
-        key = probe_name + "_tags"
-        for k, v in do.items():
+        key = counter_key + "_tags"
+        for k, v in d_tags.items():
             key += "_" + str(k) + ":" + str(v)
 
         return key
@@ -169,9 +152,9 @@ class Dedup(object):
         out_list = list()
 
         # Browse incoming
-        for probe_name, dd, value, timestamp, d_opt_tags, additional_fields in notify_values:
+        for counter_key, d_tags, value, timestamp, d_values in notify_values:
             # Get key
-            in_dedup_key = self.get_dedup_key(probe_name, dd, d_opt_tags)
+            in_dedup_key = self.get_dedup_key(counter_key, d_tags)
 
             # Get window
             in_window = self.epoch_to_dt_without_sec(timestamp)
@@ -183,14 +166,14 @@ class Dedup(object):
                     Meters.aii("dedup.discard_window_hit")
                 else:
                     # We have a miss, we keep this one
-                    out_list.append((probe_name, dd, value, timestamp, d_opt_tags, additional_fields))
+                    out_list.append((counter_key, d_tags, value, timestamp, d_values))
 
                     # We register (add)
                     Meters.aii("dedup.keep_window_miss")
                     self.d_dedup[in_dedup_key][in_window] = SolBase.mscurrent()
             else:
                 # We have a miss, we keep this one
-                out_list.append((probe_name, dd, value, timestamp, d_opt_tags, additional_fields))
+                out_list.append((counter_key, d_tags, value, timestamp, d_values))
 
                 # We register (init)
                 Meters.aii("dedup.keep_key_miss")

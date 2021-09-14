@@ -40,7 +40,6 @@ from knockdaemon2.Core.UDPBusinessServerBase import UDPBusinessServerBase
 from knockdaemon2.Core.UDPServer import UDPServer
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 from knockdaemon2.Platform.PTools import PTools
-from knockdaemon2.Tests.TestHelpers import expect_disco
 from knockdaemon2.Tests.TestHelpers import expect_value
 from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
 from knockdaemon2_test.ForTest.UdpClient import UdpClient
@@ -424,17 +423,14 @@ class TestUdp(unittest.TestCase):
 
         # counter
         dd = {"ITEM": "counter1"}
-        expect_disco(self, self.k, "k.business.inc.discovery", dd)
         expect_value(self, self.k, "k.business.inc", 2.2, "eq", dd, cast_to_float=True)
 
         # gauge
         dd = {"ITEM": "gauge1"}
-        expect_disco(self, self.k, "k.business.gauge.discovery", dd)
         expect_value(self, self.k, "k.business.gauge", 3.3, "eq", dd, cast_to_float=True)
 
         # dtc
         dd = {"ITEM": "dtc1"}
-        expect_disco(self, self.k, "k.business.dtc.discovery", dd)
         expect_value(self, self.k, "k.business.dtc.00000-00050", 1.0, "eq", dd, cast_to_float=True)
         expect_value(self, self.k, "k.business.dtc.00050-00100", 0.0, "eq", dd, cast_to_float=True)
         expect_value(self, self.k, "k.business.dtc.00100-00500", 0.0, "eq", dd, cast_to_float=True)

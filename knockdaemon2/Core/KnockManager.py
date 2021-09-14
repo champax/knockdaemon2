@@ -130,9 +130,6 @@ class KnockManager(object):
         self._timestamp_override = True
         self._timestamp_override_use_expected = True
 
-        # Disco hash
-        self._superv_notify_disco_hash = dict()
-
         # Value list
         self._superv_notify_value_list = list()
 
@@ -689,7 +686,7 @@ class KnockManager(object):
     # SUPERV NOTIFY : VALUE
     # ==============================
 
-    def notify_value_n(self, counter_key, d_disco_id_tag, counter_value, ts=None, d_opt_tags=None, additional_fields=None):
+    def notify_value_n(self, counter_key, d_tags, counter_value, ts=None, d_values=None):
         """
         Notify value
 
@@ -698,16 +695,14 @@ class KnockManager(object):
 
         :param counter_key: Counter key (str)
         :type counter_key: str
-        :param d_disco_id_tag: None (if no discovery) or dict of {disco_id: disco_tag}
-        :type d_disco_id_tag: None, dict
+        :param d_tags: Dict of tags
+        :type d_tags: None, dict
         :param counter_value: Counter value
         :type counter_value: object
         :param ts: timestamp (epoch), or None to use current
         :type ts: None, float
-        :param d_opt_tags: None,dict (additional tags)
-        :type d_opt_tags: None,dict
-        :param additional_fields: dict
-        :type additional_fields: dict
+        :param d_values: Additional counter values (dict)
+        :type d_values: dict
         """
 
         # Strict mode : we refuse keys with [ or ] or with .discovery
@@ -718,40 +713,33 @@ class KnockManager(object):
         # Value must NOT be a tuple or a list, it must an int,float,bool,string
         assert isinstance(counter_value, (int, float, bool, str)), "counter_value must be an int, float, bool, basestring k=%s, v=%s type=%s" % (counter_key, counter_value, type(counter_value))
 
-        if additional_fields is None:
-            additional_fields = {}
+        if d_values is None:
+            d_values = dict()
+        if d_tags is None:
+            d_tags = dict()
+
         # Stat
         Meters.aii("knock_stat_notify_value")
 
         # PID : d_opt_tags : we may receive "PID" in this dict from client libs
         # This will put pressure on supervision backends
         # If we have it, we remove it
-        if d_opt_tags and "PID" in d_opt_tags:
-            del d_opt_tags["PID"]
+        if "PID" in d_tags:
+            del d_tags["PID"]
 
-        # Sort
-        if d_disco_id_tag:
-            # PID : d_disco_id_tag : we may receive "PID" in this dict from client libs
-            # This will put pressure on supervision backends
-            # If we have it, we remove it
-            if "PID" in d_disco_id_tag:
-                del d_disco_id_tag["PID"]
+        # Ordered
+        d_tags = OrderedDict(sorted(d_tags.items(), key=lambda t: t[0]))
 
-            # Ordered
-            dd = OrderedDict(sorted(d_disco_id_tag.items(), key=lambda t: t[0]))
-
-            # Validate
-            for k, v in dd.items():
-                assert isinstance(k, str), "k must be str, got class={0}, k={1}".format(SolBase.get_classname(k), k)
-                assert isinstance(v, str), "v must be str, got class={0}, v={1}".format(SolBase.get_classname(v), v)
-        else:
-            dd = None
+        # Validate
+        for k, v in d_tags.items():
+            assert isinstance(k, str), "k must be str, got class={0}, k={1}".format(SolBase.get_classname(k), k)
+            assert isinstance(v, str), "v must be str, got class={0}, v={1}".format(SolBase.get_classname(v), v)
 
         # Append
         if not ts:
             ts = time()
 
-        self._superv_notify_value_list.append((counter_key, dd, counter_value, ts, d_opt_tags, additional_fields))
+        self._superv_notify_value_list.append((counter_key, d_tags, counter_value, ts, d_values))
 
     # ==============================
     # SUPERV : TOOLS
@@ -762,15 +750,10 @@ class KnockManager(object):
         Reset Superv pending notify
         """
 
-        if self._superv_notify_disco_hash and len(self._superv_notify_disco_hash) > 0:
-            logger.warning("Discarding pending _superv_notify_disco_hash=%s",
-                           self._superv_notify_disco_hash)
         if self._superv_notify_value_list and len(self._superv_notify_value_list) > 0:
-            logger.warning("Discarding pending _superv_notify_value_list=%s",
-                           self._superv_notify_value_list)
+            logger.warning("Discarding pending _superv_notify_value_list=%s", self._superv_notify_value_list)
 
         # Reset
-        self._superv_notify_disco_hash = dict()
         self._superv_notify_value_list = list()
 
     def _process_superv_notify(self):
@@ -788,7 +771,8 @@ class KnockManager(object):
         clear_hash = True
         for t in self._ar_knock_transport:
             b = t.process_notify(
-                self._account_hash, node_hash, self._superv_notify_disco_hash,
+                self._account_hash,
+                node_hash,
                 self._superv_notify_value_list)
             if not b:
                 if len(self._ar_knock_transport) == 1:
@@ -801,7 +785,6 @@ class KnockManager(object):
 
         # We reset if required
         if clear_hash:
-            self._superv_notify_disco_hash = dict()
             self._superv_notify_value_list = list()
 
     def get_first_transport_by_type(self, transport_class):

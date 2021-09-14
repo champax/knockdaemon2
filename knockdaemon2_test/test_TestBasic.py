@@ -35,7 +35,6 @@ from pysolmeters.Meters import Meters
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockManager import KnockManager
 from knockdaemon2.Platform.PTools import PTools
-from knockdaemon2.Tests.TestHelpers import expect_disco
 from knockdaemon2.Tests.TestHelpers import expect_value
 from knockdaemon2_test.ForTest.TestTransport import TestTransport
 
@@ -546,12 +545,6 @@ class TestBasic(unittest.TestCase):
         self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), 3)
         self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
-        # Validate discovery
-        self.assertEqual(len(self.k._superv_notify_disco_hash), 3)
-        expect_disco(self, self.k, "test.dummy.discovery", {"TYPE": "all"})
-        expect_disco(self, self.k, "test.dummy.discovery", {"TYPE": "one"})
-        expect_disco(self, self.k, "test.dummy.discovery", {"TYPE": "two"})
-
         # Validate values (6 per exec)
         self.assertEqual(len(self.k._superv_notify_value_list), 3 * 6)
 
@@ -569,7 +562,6 @@ class TestBasic(unittest.TestCase):
 
         # Validate transport notify
         self.assertEqual(self.k.get_first_transport_by_type(TestTransport).notify_call_count, 3)
-        self.assertEqual(self.k._superv_notify_disco_hash, self.k.get_first_transport_by_type(TestTransport).notify_hash)
         self.assertEqual(self.k._superv_notify_value_list, self.k.get_first_transport_by_type(TestTransport).notify_values)
 
         # Over

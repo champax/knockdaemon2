@@ -50,7 +50,7 @@ class Tools(object):
         :type account_hash; dict
         :param node_hash: Hash str to value
         :type node_hash; dict
-        :param notify_values: List of (superv_key, tag, value, d_opt_tags). Cleared upon success.
+        :param notify_values: List of (counter_key, d_tags, value, d_values). Cleared upon success.
         :type notify_values; list
         :return list of dict
         :rtype list
@@ -66,8 +66,7 @@ class Tools(object):
         # dict string (formatted) => tuple (disco_name, disco_id, disco_value)
         # notify_hash => {'test.dummy|TYPE|one': ('test.dummy', 'TYPE', 'one'), 'test.dummy|TYPE|all': ('test.dummy', 'TYPE', 'all'), 'test.dummy|TYPE|two': ('test.dummy', 'TYPE', 'two')}
         #
-        # list : tuple (probe_name, disco_value, value, timestamp)
-        # notify_values => <type 'list'>: [('test.dummy.count', 'all', 100, 1503045097.626604), ('test.dummy.count', 'one', 90, 1503045097.626629), ('test.dummy.count[two]', None, 10, 1503045097.626639), ('test.dummy.error', 'all', 5, 1503045097.62668), ('test.dummy.error', 'one', 3, 1503045097.626704), ('test.dummy.error', 'two', 2, 1503045097.626728)]
+        # list : List of (counter_key, d_tags, value, d_values). Cleared upon success.
 
         # We must send blocks like :
         # [
@@ -88,13 +87,7 @@ class Tools(object):
 
         # Process data and build output dict
         ar_out = list()
-        for item in notify_values:
-            # additional_fields : default value {}
-            if len(item) == 5:
-                probe_name, dd, value, timestamp, d_opt_tags = item
-                additional_fields = {}
-            else:
-                probe_name, dd, value, timestamp, d_opt_tags, additional_fields = item
+        for counter_key, d_tags, value, timestamp, d_values in notify_values:
 
             # We got a unix timestamp (1503045097.626604)
             # Convert it to required date format
@@ -104,20 +97,15 @@ class Tools(object):
             # Init
             d_tags = {"host": c_host, "ns": account_hash["acc_namespace"]}
 
-            # Discovery
-            if dd:
-                d_tags.update(dd)
-
-            # Add optional tags
-            if d_opt_tags:
-                d_tags.update(d_opt_tags)
-
             f_dict = {"value": value}
-            f_dict.update(additional_fields)
+            if d_values:
+                if "value" in d_values:
+                    raise Exception("Got 'value' key in d_value (will lost it - not allowed)")
+                f_dict.update(d_values)
 
             # Build
             d_temp = {
-                "measurement": probe_name,
+                "measurement": counter_key,
                 "tags": d_tags,
                 "time": s_dt_temp,
                 "fields": f_dict

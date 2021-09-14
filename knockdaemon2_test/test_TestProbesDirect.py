@@ -71,7 +71,7 @@ from knockdaemon2.Probes.Redis.RedisStat import RedisStat
 from knockdaemon2.Probes.Uwsgi.UwsgiStat import UwsgiStat
 from knockdaemon2.Probes.Varnish.VarnishStat import VarnishStat
 # noinspection PyProtectedMember
-from knockdaemon2.Tests.TestHelpers import expect_disco, _exec_helper
+from knockdaemon2.Tests.TestHelpers import _exec_helper
 from knockdaemon2.Tests.TestHelpers import expect_value
 
 SolBase.voodoo_init()
@@ -154,7 +154,6 @@ class TestProbesDirect(unittest.TestCase):
         # Validate results - disco
 
         dd = {"ID": "default"}
-        expect_disco(self, self.k, "k.nginx.discovery", dd)
 
         # Validate results - data
         expect_value(self, self.k, "k.nginx.started", 1, "eq", dd)
@@ -280,7 +279,6 @@ class TestProbesDirect(unittest.TestCase):
 
         # Validate results - disco
         dd = {"HOST": "knock.center", "SERVER": ns}
-        expect_disco(self, self.k, "k.dns.discovery", dd)
 
         # Validate results - data
         expect_value(self, self.k, "k.dns.resolv", "198.27.81.204", "eq", dd)
@@ -361,7 +359,6 @@ class TestProbesDirect(unittest.TestCase):
             expect_value(self, self.k, "k.hard.hd.health", "KNOCKOK", "eq", dd)
             expect_value(self, self.k, "k.hard.hd.device_model", "ALL", "eq", dd)
 
-            expect_disco(self, self.k, "k.hard.hd.discovery", dd)
         else:
             # Try invoke on first sdX
             ec, so, se = ButcherTools.invoke("smartctl -q errorsonly -H -l selftest -b " + hds[0], timeout_ms=120000)
@@ -480,8 +477,6 @@ class TestProbesDirect(unittest.TestCase):
                 elif knock_type == "str":
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-                expect_disco(self, self.k, "k.redis.discovery", dd)
-
     @unittest.skipIf(MemCachedStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % MemCachedStat())
     @attr('prov')
     def test_MemCachedStat(self):
@@ -502,8 +497,6 @@ class TestProbesDirect(unittest.TestCase):
                     expect_value(self, self.k, knock_key, 0.0, "gte", dd)
                 elif knock_type == "str":
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
-
-            expect_disco(self, self.k, "k.memcached.discovery", dd)
 
     @unittest.skipIf(DiskSpace().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % DiskSpace())
     def test_DiskSpace(self):
@@ -711,8 +704,6 @@ class TestProbesDirect(unittest.TestCase):
                 elif knock_type == "str":
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-                expect_disco(self, self.k, "k.phpfpm.discovery", dd)
-
     @unittest.skipIf(ApacheStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % ApacheStat())
     @attr('prov')
     def test_Apache(self):
@@ -731,8 +722,6 @@ class TestProbesDirect(unittest.TestCase):
                 expect_value(self, self.k, knock_key, 0.0, "gte", dd)
             elif knock_type == "str":
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
-
-            expect_disco(self, self.k, "k.apache.discovery", dd)
 
     @unittest.skipIf(ApacheStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % ApacheStat())
     @attr('prov')
@@ -784,8 +773,6 @@ class TestProbesDirect(unittest.TestCase):
             elif knock_type == "str":
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-            expect_disco(self, self.k, "k.rabbitmq.discovery", dd)
-
     @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
     @attr('prov')
     def test_Varnish(self):
@@ -804,8 +791,6 @@ class TestProbesDirect(unittest.TestCase):
                 expect_value(self, self.k, knock_key, 0.0, "gte", dd)
             elif knock_type == "str":
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
-
-            expect_disco(self, self.k, "k.varnish.discovery", dd)
 
     @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
     @attr('prov')
@@ -892,8 +877,6 @@ class TestProbesDirect(unittest.TestCase):
                 elif knock_type == "str":
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-                expect_disco(self, self.k, "k.uwsgi.discovery", dd)
-
     @unittest.skipIf(CheckProcess().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % CheckProcess())
     def test_CheckProcess(self):
         """
@@ -975,8 +958,6 @@ class TestProbesDirect(unittest.TestCase):
                 expect_value(self, self.k, knock_key, 0.0, "gte", dd)
             elif knock_type == "str":
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
-
-            expect_disco(self, self.k, "k.mysql.discovery", dd)
 
     @unittest.skipIf(MongoDbStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % MongoDbStat())
     # @unittest.skip("zzz")

@@ -59,15 +59,13 @@ class KnockTransport(object):
         """
         raise NotImplementedError()
 
-    def process_notify(self, account_hash, node_hash, notify_hash, notify_values):
+    def process_notify(self, account_hash, node_hash, notify_values):
         """
         Process notify
         :param account_hash: Hash bytes to value
         :type account_hash; dict
         :param node_hash: Hash bytes to value
         :type node_hash; dict
-        :param notify_hash: Hash bytes to (disco_key, disco_id, tag)
-        :type notify_hash; dict
         :param notify_values: List of (superv_key, tag, value)
         :type notify_values; list
         :return True if success

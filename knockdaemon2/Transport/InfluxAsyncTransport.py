@@ -128,16 +128,14 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         if auto_start:
             self.greenlet_start()
 
-    def process_notify(self, account_hash, node_hash, notify_hash, notify_values):
+    def process_notify(self, account_hash, node_hash, notify_values):
         """
         Process notify
         :param account_hash: Hash bytes to value
         :type account_hash; dict
         :param node_hash: Hash bytes to value
         :type node_hash; dict
-        :param notify_hash: Hash bytes to (disco_key, disco_id, tag). Cleared upon success. UNUSED HERE.
-        :type notify_hash; dict
-        :param notify_values: List of (superv_key, tag, value, additional_fields). Cleared upon success.
+        :param notify_values: List of (counter_key, d_tags, counter_value, ts, d_values). Cleared upon success.
         :type notify_values; list
         """
 
@@ -156,8 +154,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         # dict string (formatted) => tuple (disco_name, disco_id, disco_value)
         # notify_hash => {'test.dummy|TYPE|one': ('test.dummy', 'TYPE', 'one'), 'test.dummy|TYPE|all': ('test.dummy', 'TYPE', 'all'), 'test.dummy|TYPE|two': ('test.dummy', 'TYPE', 'two')}
         #
-        # list : tuple (probe_name, disco_value, value, timestamp)
-        # notify_values => <type 'list'>: [('test.dummy.count', 'all', 100, 1503045097.626604), ('test.dummy.count', 'one', 90, 1503045097.626629), ('test.dummy.count[two]', None, 10, 1503045097.626639), ('test.dummy.error', 'all', 5, 1503045097.62668), ('test.dummy.error', 'one', 3, 1503045097.626704), ('test.dummy.error', 'two', 2, 1503045097.626728)]
+        # list : List of (counter_key, d_tags, counter_value, ts, d_values). Cleared upon success.
 
         # We must send blocks like :
         # [
