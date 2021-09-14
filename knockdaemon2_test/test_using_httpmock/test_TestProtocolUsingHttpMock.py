@@ -33,7 +33,7 @@ from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.KnockManager import KnockManager
 from knockdaemon2.HttpMock.HttpMock import HttpMock
-from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
+from knockdaemon2.Transport.InfluxAsyncTransport import InfluxAsyncTransport
 
 SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
@@ -145,10 +145,10 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
 
         # Init manager
         self.k = KnockManager(self.manager_config_file)
-        self.k.get_first_transport_by_type(HttpAsyncTransport)._http_send_min_interval_ms = 5000
+        self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_send_min_interval_ms = 5000
 
         # Meters prefix, first transport
-        self.ft_meters_prefix = self.k.get_first_meters_prefix_by_type(HttpAsyncTransport)
+        self.ft_meters_prefix = self.k.get_first_meters_prefix_by_type(InfluxAsyncTransport)
 
         # Keep only one item (easier to test)
         self.k._probe_list.pop()

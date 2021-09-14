@@ -38,7 +38,7 @@ from pysolmeters.Meters import Meters
 from knockdaemon2.Core.KnockManager import KnockManager
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 from knockdaemon2.Platform.PTools import PTools
-from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
+from knockdaemon2.Transport.InfluxAsyncTransport import InfluxAsyncTransport
 
 SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
@@ -155,10 +155,10 @@ class TestRealAllUsingHttpMock(unittest.TestCase):
 
         # Init manager
         self.k = KnockManager(self.manager_config_file)
-        self.k.get_first_transport_by_type(HttpAsyncTransport)._http_send_min_interval_ms = 5000
+        self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_send_min_interval_ms = 5000
 
         # Meters prefix, first transport
-        self.ft_meters_prefix = self.k.get_first_meters_prefix_by_type(HttpAsyncTransport)
+        self.ft_meters_prefix = self.k.get_first_meters_prefix_by_type(InfluxAsyncTransport)
 
         # Do NOT Start
         pass
@@ -181,7 +181,7 @@ class TestRealAllUsingHttpMock(unittest.TestCase):
         while SolBase.msdiff(ms_start) < timeout_ms:
             # Transport
             if Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count") >= 1 \
-                    and not self.k.get_first_transport_by_type(HttpAsyncTransport)._http_pending and len(self.k._superv_notify_value_list) == 0:
+                    and not self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_pending and len(self.k._superv_notify_value_list) == 0:
                 break
 
             SolBase.sleep(50)

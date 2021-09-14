@@ -78,7 +78,7 @@ class Haproxy(KnockProbe):
 
             # Header
             if cur_line.startswith("#"):
-                if  ar_fields is not None:
+                if ar_fields is not None:
                     raise Exception("cur_line startswith #, need ar_fields None")
                 cur_line = cur_line[1:]
 
@@ -325,9 +325,9 @@ class Haproxy(KnockProbe):
 
                 self.notify_value_n(
                     counter_key="k.haproxy.%s" % proxy_detail_d['type'],
-                    d_disco_id_tag={"PROXY": proxy_name},
+                    d_tags={"PROXY": proxy_name},
                     counter_value=proxy_detail_d["status_ok"],
-                    additional_fields=proxy_detail_d
+                    d_values=proxy_detail_d
                 )
             # -----------------------
             # GLOBAL : PUSH
@@ -347,7 +347,7 @@ class Haproxy(KnockProbe):
                 # Push
                 self.notify_value_n(
                     counter_key=s_key,
-                    d_disco_id_tag={"PROXY": "ALL"},
+                    d_tags={"PROXY": "ALL"},
                     counter_value=d_global[s],
                 )
 
@@ -355,7 +355,7 @@ class Haproxy(KnockProbe):
             logger.info("Run ok (signaling up)")
             self.notify_value_n(
                 counter_key="k.haproxy.started",
-                d_disco_id_tag={"PROXY": "ALL"},
+                d_tags={"PROXY": "ALL"},
                 counter_value=1,
             )
 
@@ -364,7 +364,7 @@ class Haproxy(KnockProbe):
             # Failed
             self.notify_value_n(
                 counter_key="k.haproxy.started",
-                d_disco_id_tag={"PROXY": "ALL"},
+                d_tags={"PROXY": "ALL"},
                 counter_value=0,
             )
 
@@ -450,10 +450,10 @@ class Haproxy(KnockProbe):
                 table_name, table_type, table_size, used = match.groups()
                 self.notify_value_n(
                     counter_key="k.haproxy.table",
-                    d_disco_id_tag={"TABLE": table_name,
-                                    "TYPE": table_type},
+                    d_tags={"TABLE": table_name,
+                            "TYPE": table_type},
                     counter_value=int(used),
-                    additional_fields={"size": int(table_size)}
+                    d_values={"size": int(table_size)}
                 )
             except Exception as e:
                 logger.warning(SolBase.extostr(e))

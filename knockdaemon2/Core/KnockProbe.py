@@ -156,7 +156,7 @@ class KnockProbe(object):
         """
         raise NotImplementedError()
 
-    def notify_value_n(self, counter_key, d_disco_id_tag, counter_value, ts=None, additional_fields=None):
+    def notify_value_n(self, counter_key, d_tags, counter_value, ts=None, d_values=None):
         """
         Notify value
 
@@ -165,14 +165,14 @@ class KnockProbe(object):
 
         :param counter_key: Counter key (str)
         :type counter_key: str
-        :param d_disco_id_tag: None (if no discovery) or dict of {disco_id: disco_tag}
-        :type d_disco_id_tag: None, dict
+        :param d_tags: None,dict
+        :type d_tags: None,dict
         :param counter_value: Counter value
         :type counter_value: object
         :param ts: timestamp (epoch), or None to use current
         :type ts: None, float
-        :param additional_fields: dict
-        :type additional_fields: dict
+        :param d_values: dict
+        :type d_values: dict
 
         """
 
@@ -184,8 +184,13 @@ class KnockProbe(object):
                 Meters.aii("knock_stat_ts_override")
                 ts = self.notify_ts_override
 
-        # Notify manager
-        self._knock_manager.notify_value_n(counter_key, d_disco_id_tag, counter_value, ts, {"category": self.category}, additional_fields)
+        # Add category tag
+        if not d_tags:
+            d_tags = dict()
+        d_tags["category"] = self.category
+
+        # Call manager
+        self._knock_manager.notify_value_n(counter_key, d_tags, counter_value, ts, d_values)
 
     def __str__(self):
         """

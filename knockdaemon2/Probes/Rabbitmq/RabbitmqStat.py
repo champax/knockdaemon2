@@ -135,7 +135,7 @@ class RabbitmqStat(KnockProbe):
                         knock_key = "m.%s.persec" % matches.groups()[0]
                         additional_fields[knock_key] = counters[k]
                 for k in ('messages',):
-                    self.notify_value_n("k.rabbitmq.per_queue." + k, {"PORT": "default", 'QUEUE': queue}, counters[k], additional_fields=additional_fields)
+                    self.notify_value_n("k.rabbitmq.per_queue." + k, {"PORT": "default", 'QUEUE': queue}, counters[k], d_values=additional_fields)
 
         # ----------------
         # Signal started

@@ -41,7 +41,7 @@ from knockdaemon2.Core.UDPServer import UDPServer
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 from knockdaemon2.Platform.PTools import PTools
 from knockdaemon2.Tests.TestHelpers import expect_value
-from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
+from knockdaemon2.Transport.InfluxAsyncTransport import InfluxAsyncTransport
 from knockdaemon2_test.ForTest.UdpClient import UdpClient
 
 SolBase.voodoo_init()
@@ -176,7 +176,7 @@ class TestUdp(unittest.TestCase):
 
         # Init manager
         self.k = KnockManager(self.manager_config_file, auto_start=start_manager)
-        self.k.get_first_transport_by_type(HttpAsyncTransport)._http_send_min_interval_ms = 5000
+        self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_send_min_interval_ms = 5000
 
         # Keep only one item (easier to test)
         self.k._probe_list.pop()

@@ -22,8 +22,11 @@
 # ===============================================================================
 """
 import logging
+from threading import Lock
 
+import gevent
 from gevent.queue import Empty
+from greenlet import GreenletExit
 from influxdb import InfluxDBClient
 from influxdb.line_protocol import make_lines
 from pysolbase.SolBase import SolBase
@@ -32,17 +35,19 @@ from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.Tools import Tools
 from knockdaemon2.Transport.Dedup import Dedup
-from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
+from knockdaemon2.Transport.KnockTransport import KnockTransport
 
 logger = logging.getLogger(__name__)
 lifecyclelogger = logging.getLogger("LifeCycle")
 
 
-class InfluxAsyncTransport(HttpAsyncTransport):
+class InfluxAsyncTransport(KnockTransport):
     """
     Influx Http transport
     We override only required method and re-use HttpAsyncTransport implementation.
     """
+
+    QUEUE_WAIT_SEC_PER_LOOP = None
 
     def __init__(self):
         """
@@ -63,12 +68,34 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         self._influx_db_created = False
         self._influx_dedup = True
 
+        # Locker
+        self._locker = Lock()
+
+        # Run
+        self._is_running = False
+        self._greenlet = None
+        self._dt_last_send = SolBase.datecurrent()
+
         # Dedup
         self.dedup_instance = Dedup()
         self.last_http_ok_ms = SolBase.mscurrent()
 
+        # Wait ms if send is bypassed before re-trying
+        self._http_send_bypass_wait_ms = 1000
+
+        # Minimum http send interval. If reached, a send will occurs
+        # (even if _http_send_max_bytes is not reached).
+        self._http_send_min_interval_ms = 60000
+
+        # Upon http failure, time to wait before next http request
+        # Recommended : _http_send_min_interval_ms*2
+        self._http_ko_interval_ms = 10000
+
+        # Max items in send queue (if reached, older items are kicked)
+        self._max_items_in_queue = 36000
+
         # Call base
-        HttpAsyncTransport.__init__(self)
+        KnockTransport.__init__(self)
 
         # Override
         self.meters_prefix = "influxasync_"
@@ -86,7 +113,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         """
 
         # Call base, hacking autostart
-        HttpAsyncTransport.init_from_config(self, d_yaml_config, d, auto_start=False)
+        KnockTransport.init_from_config(self, d_yaml_config, d, auto_start=False)
 
         # Load our stuff
         self._influx_host = d["influx_host"]
@@ -96,6 +123,26 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         self._influx_database = d["influx_database"]
         self._influx_ssl = d["influx_ssl"]
         self._influx_ssl_verify = d["influx_ssl_verify"]
+
+        try:
+            self._http_send_bypass_wait_ms = d["http_send_bypass_wait_ms"]
+        except KeyError:
+            logger.debug("Key http_send_bypass_wait_ms not present, using default, d=%s", d)
+
+        try:
+            self._http_send_min_interval_ms = d["http_send_min_interval_ms"]
+        except KeyError:
+            logger.debug("Key http_send_min_interval_ms not present, using default, d=%s", d)
+
+        try:
+            self._max_items_in_queue = d["max_items_in_queue"]
+        except KeyError:
+            logger.debug("Key max_items_in_queue not present, using default, d=%s", d)
+
+        try:
+            self._http_ko_interval_ms = d["http_ko_interval_ms"]
+        except KeyError:
+            logger.debug("Key http_ko_interval_ms not present, using default, d=%s", d)
 
         # Mode : "knock" or "influx"
         self._influx_mode = d.get("influx_mode", "knock")
@@ -128,6 +175,119 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         # Autostart hack : finish him
         if auto_start:
             self.greenlet_start()
+
+    def greenlet_start(self):
+        """
+        Start
+        """
+
+        with self._locker:
+            # Signal
+            logger.info("Send Greenlet : starting")
+            self._is_running = True
+
+            # Check
+            if self._greenlet:
+                logger.warning("_greenlet already set, doing nothing")
+                return
+
+            # Fire
+            self._greenlet = gevent.spawn(self.greenlet_run)
+            logger.info("Send greenlet : started")
+
+    def greenlet_stop(self):
+        """
+        Stop
+        """
+
+        with self._locker:
+            # Signal
+            logger.info("Send greenlet : stopping")
+            self._is_running = False
+
+            # Check
+            if not self._greenlet:
+                logger.warning("_greenlet not set, doing nothing")
+                return
+
+            # Kill
+            logger.info("_greenlet.kill")
+            self._greenlet.kill()
+            logger.info("_greenlet.kill done")
+            # gevent.kill(self._greenlet)
+            self._greenlet = None
+            logger.info("Send greenlet : stopped")
+
+    def greenlet_run(self):
+        """
+        Run
+        """
+        try:
+            logger.info("Entering loop")
+            while self._is_running:
+                try:
+                    # ------------------------------
+                    # Wait for the queue
+                    # ------------------------------
+                    logger.debug("Queue : Waiting")
+                    try:
+                        # Call (blocking)
+                        self._queue_to_send.peek(True, self.QUEUE_WAIT_SEC_PER_LOOP)
+                    except Empty:
+                        # Next try
+                        SolBase.sleep(0)
+                        continue
+
+                    # ------------------------------
+                    # GOT SOMETHING IN THE QUEUE, TRY TO SEND
+                    # ------------------------------
+
+                    logger.debug("Queue : Signaled")
+                    go_fast = self._try_send_to_http()
+                    if not go_fast:
+                        SolBase.sleep(self._http_send_bypass_wait_ms)
+                except GreenletExit:
+                    logger.debug("GreenletExit in loop2")
+                    return
+                except Exception as e:
+                    logger.warning("Exception in loop2=%s", SolBase.extostr(e))
+                    continue
+        except GreenletExit:
+            logger.debug("GreenletExit in loop1")
+        finally:
+            logger.info("Exiting loop")
+
+    def stop(self):
+        """
+        Stop
+        """
+
+        # Stop
+        self.greenlet_stop()
+
+    def _requeue_pending_array(self, ar_pending):
+        """
+        Requeue pending array at head for re-emission on next http try
+        :param ar_pending: list
+        :type ar_pending: list
+        """
+
+        q_in = self._queue_to_send.qsize()
+
+        ms_start = SolBase.mscurrent()
+        ar_pending.reverse()
+        ms_reverse = SolBase.msdiff(ms_start)
+
+        ms_start = SolBase.mscurrent()
+        for item in ar_pending:
+            self._queue_to_send.queue.appendleft(item)
+        ms_requeue = SolBase.msdiff(ms_start)
+
+        logger.debug(
+            "Re-queued, ms_reverse=%s, ms_requeue=%s, ar_pending.len=%s, q.len.in/out=%s/%s",
+            ms_reverse, ms_requeue,
+            len(ar_pending), q_in,
+            self._queue_to_send.qsize())
 
     def process_notify(self, account_hash, node_hash, notify_values):
         """
