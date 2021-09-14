@@ -22,8 +22,8 @@
 # ===============================================================================
 """
 import logging
-
 import re
+
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolhttpclient.Http.HttpClient import HttpClient

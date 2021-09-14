@@ -23,19 +23,19 @@
 """
 
 import logging
-import ujson
 import urlparse
 # noinspection PyProtectedMember
 from collections import OrderedDict
+from os.path import abspath
+from os.path import dirname
 from threading import Lock
 
 import gevent
+import ujson
 # noinspection PyProtectedMember
 from gevent.baseserver import _parse_address
 from gevent.event import Event
 from gevent.pywsgi import WSGIServer
-from os.path import abspath
-from os.path import dirname
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters

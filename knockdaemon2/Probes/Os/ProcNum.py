@@ -22,9 +22,9 @@
 # ===============================================================================
 """
 import logging
-
 from os import listdir
 from os.path import isdir, join
+
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.KnockProbe import KnockProbe

@@ -22,9 +22,9 @@
 # ===============================================================================
 """
 
+import re
 from distutils.core import setup
 
-import re
 from setuptools import find_packages
 
 

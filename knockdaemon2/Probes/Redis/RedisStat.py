@@ -24,8 +24,8 @@
 
 import glob
 import logging
-
 import re
+
 import redis
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase

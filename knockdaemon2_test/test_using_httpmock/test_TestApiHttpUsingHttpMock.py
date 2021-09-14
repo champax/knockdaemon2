@@ -23,10 +23,10 @@
 """
 
 import logging
+import os
 import unittest
 import urllib
 
-import os
 import redis
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from nose.plugins.attrib import attr

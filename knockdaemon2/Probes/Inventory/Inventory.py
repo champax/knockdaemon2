@@ -25,9 +25,9 @@
 # https://www.openhub.net/p/python-dmidecode
 """
 import logging
+import os
 import platform
 
-import os
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Api.ButcherTools import ButcherTools

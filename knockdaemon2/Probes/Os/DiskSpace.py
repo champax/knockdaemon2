@@ -22,10 +22,10 @@
 # ===============================================================================
 """
 import logging
-
 import os
 import re
 import stat
+
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.KnockProbe import KnockProbe

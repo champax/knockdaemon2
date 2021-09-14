@@ -22,9 +22,9 @@
 # ===============================================================================
 """
 import logging
-import ujson
-
 import re
+
+import ujson
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 

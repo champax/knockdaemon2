@@ -42,7 +42,7 @@ class TestProbe(KnockProbe):
         """
 
         # Base (both support)
-        KnockProbe.__init__(self, linux_support=True, windows_support=True)
+        KnockProbe.__init__(self, linux_support=True, windows_support=False)
 
         # Go
         self.custom_key_b = None

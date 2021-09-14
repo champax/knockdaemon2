@@ -22,11 +22,12 @@
 # ===============================================================================
 """
 import logging
-import unittest
 import os
+import unittest
+from os.path import dirname, abspath
+
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from nose.plugins.attrib import attr
-from os.path import dirname, abspath
 from pysolbase.SolBase import SolBase
 
 SolBase.voodoo_init()

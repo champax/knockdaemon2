@@ -22,10 +22,10 @@
 # ===============================================================================
 """
 import logging
-import unittest
-
 import os
+import unittest
 from os.path import dirname, abspath
+
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 

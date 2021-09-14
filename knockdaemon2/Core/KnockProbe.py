@@ -23,8 +23,8 @@
 # ===============================================================================
 """
 import logging
-
 import os
+
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
 

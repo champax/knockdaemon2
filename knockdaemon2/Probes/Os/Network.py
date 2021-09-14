@@ -24,11 +24,11 @@
 
 import glob
 import logging
+import os
 import struct
 from socket import AF_INET
 from socket import socket, SOCK_DGRAM
 
-import os
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.KnockProbe import KnockProbe

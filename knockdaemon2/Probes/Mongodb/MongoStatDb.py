@@ -24,10 +24,10 @@
 
 import glob
 import logging
+import re
 from datetime import datetime
 
 import pymongo
-import re
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
 

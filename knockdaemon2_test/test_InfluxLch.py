@@ -23,9 +23,9 @@
 """
 
 import logging
+import os
 import unittest
 
-import os
 from influxdb import InfluxDBClient
 from influxdb.line_protocol import make_lines
 from pysolbase.SolBase import SolBase

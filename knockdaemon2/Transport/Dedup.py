@@ -141,7 +141,7 @@ class Dedup(object):
                 if cur_added_ms < limit_ms:
                     to_del2.append(cur_window)
             for cur_window in to_del2:
-                    del cur_d[cur_window]
+                del cur_d[cur_window]
             if len(cur_d) == 0:
                 Meters.aii("dedup.purge_window")
                 to_del1.append(cur_dedup_key)
@@ -183,14 +183,14 @@ class Dedup(object):
                     Meters.aii("dedup.discard_window_hit")
                 else:
                     # We have a miss, we keep this one
-                    out_list.append((probe_name, dd, value, timestamp, d_opt_tags,additional_fields))
+                    out_list.append((probe_name, dd, value, timestamp, d_opt_tags, additional_fields))
 
                     # We register (add)
                     Meters.aii("dedup.keep_window_miss")
                     self.d_dedup[in_dedup_key][in_window] = SolBase.mscurrent()
             else:
                 # We have a miss, we keep this one
-                out_list.append((probe_name, dd, value, timestamp, d_opt_tags,additional_fields))
+                out_list.append((probe_name, dd, value, timestamp, d_opt_tags, additional_fields))
 
                 # We register (init)
                 Meters.aii("dedup.keep_key_miss")

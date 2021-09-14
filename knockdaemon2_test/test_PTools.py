@@ -23,10 +23,10 @@
 """
 
 import logging
+import os
 import platform
 import unittest
 
-import os
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Platform.PTools import PTools

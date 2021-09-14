@@ -25,8 +25,8 @@
 import glob
 import json
 import logging
-
 import re
+
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 

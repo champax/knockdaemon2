@@ -22,14 +22,14 @@
 # ===============================================================================
 """
 import logging
+import os
 import sys
 import unittest
 from multiprocessing import Process
+from os.path import dirname, abspath
 from string import join
 
-import os
 import redis
-from os.path import dirname, abspath
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 
@@ -247,8 +247,6 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             else:
                 SolBase.sleep(10)
 
-    @unittest.skipIf(PTools.get_distribution_type() == "windows", "no unix daemon on windows")
-    @unittest.skip("TODO : Re-enable later")
     def test_start_status_reload_stop_debian(self):
         """
         Test

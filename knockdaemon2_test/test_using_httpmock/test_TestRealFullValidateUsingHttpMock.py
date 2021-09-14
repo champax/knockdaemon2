@@ -23,14 +23,14 @@
 """
 
 import logging
+import os
 import shutil
 import unittest
+from os.path import dirname, abspath
 
-import os
 import redis
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from nose.plugins.attrib import attr
-from os.path import dirname, abspath
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
@@ -117,12 +117,6 @@ class TestRealAll(unittest.TestCase):
         r = redis.Redis()
         r.flushall()
         del r
-
-        # If windows, perform a WMI initial refresh to get datas
-        if PTools.get_distribution_type() == "windows":
-            from knockdaemon2.Windows.Wmi.Wmi import Wmi
-            Wmi._wmi_fetch_all()
-            Wmi._flush_props(Wmi._WMI_DICT, Wmi._WMI_DICT_PROPS)
 
     def tearDown(self):
         """

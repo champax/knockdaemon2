@@ -23,9 +23,9 @@
 """
 
 import logging
+import os
 import unittest
 
-import os
 from influxdb import InfluxDBClient
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters

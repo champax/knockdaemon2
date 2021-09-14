@@ -25,11 +25,11 @@ import _socket
 import logging
 import os
 import sys
-import ujson
 from collections import OrderedDict
 from errno import EWOULDBLOCK
 
 import gevent
+import ujson
 from gevent.lock import RLock
 from gevent.server import DatagramServer
 from gevent.threading import Lock

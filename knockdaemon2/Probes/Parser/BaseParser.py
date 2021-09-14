@@ -24,8 +24,8 @@
 
 import glob
 import logging
-
 import os
+
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.KnockProbe import KnockProbe

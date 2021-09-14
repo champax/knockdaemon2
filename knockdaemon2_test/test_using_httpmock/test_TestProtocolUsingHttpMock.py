@@ -23,11 +23,11 @@
 """
 
 import logging
-import unittest
-
 import os
-import redis
+import unittest
 from os.path import dirname, abspath
+
+import redis
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
 

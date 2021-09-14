@@ -23,11 +23,11 @@
 """
 
 import logging
-import ujson
+import os
 import unittest
 import urllib
 
-import os
+import ujson
 from geventhttpclient import HTTPClient, URL
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 from nose.plugins.attrib import attr

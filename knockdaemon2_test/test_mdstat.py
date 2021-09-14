@@ -24,10 +24,10 @@ Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
 import glob
 import logging
 import os
-import ujson
 import unittest
 from os.path import dirname, abspath
 
+import ujson
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Probes.Os.Mdstat import Mdstat

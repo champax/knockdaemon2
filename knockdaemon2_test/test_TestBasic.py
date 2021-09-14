@@ -23,12 +23,12 @@
 """
 
 import logging
+import os
 import random
 import unittest
-
-import os
-import redis
 from os.path import dirname, abspath
+
+import redis
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
 
@@ -577,7 +577,6 @@ class TestBasic(unittest.TestCase):
         # Over
         self.k = None
 
-    @unittest.skipIf(PTools.get_distribution_type() == "windows", "Commands do not work on windows")
     def test_invoke(self):
         """
         inv
@@ -658,40 +657,3 @@ class TestBasic(unittest.TestCase):
 
         self.assertRaises(Exception, ButcherTools.invoke, "ls -l | wc -l")
 
-    @unittest.skipIf(PTools.get_distribution_type() != "windows", "Commands do not work on linux")
-    def test_invoke_windows(self):
-        """
-        inv
-        :return: (ec, so, si)
-        """
-
-        # Doc
-        # https://ss64.com/nt/cmd.html
-
-        logger.info("CMD ok")
-        ec, so, se = ButcherTools.invoke("cmd.exe /C DIR", shell=False, timeout_ms=self.invoke_timeout)
-        logger.info("ec=%s", ec)
-        logger.info("so=%s", so)
-        logger.info("se=%s", se)
-        self.assertEqual(ec, 0)
-        self.assertGreater(len(so), 0)
-        self.assertEqual(len(se), 0)
-
-        logger.info("CMD failed")
-        ec, so, se = ButcherTools.invoke("cmd.exe /C DIR /tmpxxx", shell=False, timeout_ms=self.invoke_timeout)
-        logger.info("ec=%s", ec)
-        logger.info("so=%s", so)
-        logger.info("se=%s", se)
-        self.assertNotEqual(ec, 0)
-        self.assertEqual(len(so), 0)
-        self.assertGreater(len(se), 0)
-
-        # TO SLEEP 9 sec : ping 127.0.0.1 -n 9
-        logger.info("CMD timeout")
-        ec, so, se = ButcherTools.invoke("cmd.exe /C ping 127.0.0.1 -n 9", timeout_ms=100)
-        logger.info("ec=%s", ec)
-        logger.info("so=%s", so)
-        logger.info("se=%s", se)
-        self.assertEqual(ec, -999)
-        self.assertEqual(len(so), 0)
-        self.assertEqual(len(se), 0)

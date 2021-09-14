@@ -23,20 +23,20 @@
 """
 import glob
 import logging
+import os
 import platform
 import shutil
 import sys
-import ujson
 import unittest
 from datetime import datetime
+from os.path import dirname, abspath
 
-import os
 import psutil
+import ujson
 # noinspection PyPackageRequirements
 from dns.resolver import Resolver
 # noinspection PyPackageRequirements,PyUnresolvedReferences
 from nose.plugins.attrib import attr
-from os.path import dirname, abspath
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
@@ -135,12 +135,6 @@ class TestProbesDirect(unittest.TestCase):
 
         # Overide parameter in probe to mock
         self.conf_probe_override = dict()
-
-        # If windows, perform a WMI initial refresh to get datas
-        if PTools.get_distribution_type() == "windows":
-            from knockdaemon2.Windows.Wmi.Wmi import Wmi
-            Wmi._wmi_fetch_all()
-            Wmi._flush_props(Wmi._WMI_DICT, Wmi._WMI_DICT_PROPS)
 
     def tearDown(self):
         """
@@ -539,10 +533,7 @@ class TestProbesDirect(unittest.TestCase):
         _exec_helper(self, DiskSpace)
         SolBase.sleep(1000)
         _exec_helper(self, DiskSpace)
-        if PTools.get_distribution_type() == "windows":
-            ar = ["C:", "ALL"]
-        else:
-            ar = ["/", "ALL"]
+        ar = ["/", "ALL"]
 
         for cur_p in ar:
             dd = {"FSNAME": cur_p}
@@ -654,10 +645,7 @@ class TestProbesDirect(unittest.TestCase):
         # Exec it
         _exec_helper(self, Network)
 
-        if PTools.get_distribution_type() == "windows":
-            ar = ("dynamic", "dynamic")
-        else:
-            ar = ("lo", "LoopBack")
+        ar = ("lo", "LoopBack")
         for cur_n, cur_type in [ar]:
             # --------------------
             # If dynamic, extract first stuff
@@ -934,10 +922,7 @@ class TestProbesDirect(unittest.TestCase):
         _exec_helper(self, CheckProcess)
 
         # Ar
-        if PTools.get_distribution_type() == "windows":
-            ar = ["win_idle_process"]
-        else:
-            ar = ["nginx"]
+        ar = ["nginx"]
 
         # Using direct
         for cur_p in ar:
@@ -964,10 +949,7 @@ class TestProbesDirect(unittest.TestCase):
 
         # Using arrays
         # Ar
-        if PTools.get_distribution_type() == "windows":
-            ar = ["win_idle_process_array"]
-        else:
-            ar = ["nginx_array"]
+        ar = ["nginx_array"]
         for cur_p in ar:
             dd = {"PROCNAME": cur_p}
             expect_value(self, self.k, "k.proc.pidfile", "ok", "eq", dd)

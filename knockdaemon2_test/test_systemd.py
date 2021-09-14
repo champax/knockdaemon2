@@ -23,16 +23,13 @@
 """
 
 import logging
+import os
 import unittest
 
-import os
-from influxdb import InfluxDBClient
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.systemd import SystemdManager
-from knockdaemon2.Transport.Dedup import Dedup
-from knockdaemon2.Transport.InfluxAsyncTransport import InfluxAsyncTransport
 
 SolBase.voodoo_init()
 logger = logging.getLogger(__name__)

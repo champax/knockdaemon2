@@ -22,11 +22,10 @@
 # ===============================================================================
 """
 import logging
-import socket
-import struct
-
 import os
 import re
+import socket
+import struct
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
 

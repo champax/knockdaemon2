@@ -22,8 +22,8 @@ Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
  ===============================================================================
 """
 import logging
-
 import os
+
 from gevent.pool import Pool
 
 from knockdaemon2.Core.UDPBusinessServerDomainLinux import UDPBusinessServerDomainLinux

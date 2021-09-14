@@ -23,14 +23,14 @@
 """
 
 import logging
-import ujson
+import os
 import unittest
+from os.path import dirname, abspath
 
 import gevent
-import os
 import redis
+import ujson
 from gevent.event import Event
-from os.path import dirname, abspath
 from pysolbase.SolBase import SolBase
 from pysolmeters.AtomicInt import AtomicInt
 from pysolmeters.Meters import Meters
@@ -122,12 +122,8 @@ class TestUdp(unittest.TestCase):
         :type uc: UdpClient
         """
 
-        if PTools.get_distribution_type() == "windows":
-            # Use ip port
-            uc.connect_windows(UDPServer.UDP_IP_UNITTEST_SOCKET_HOST, UDPServer.UDP_IP_UNITTEST_SOCKET_PORT)
-        else:
-            # Use domain
-            uc.connect(UDPServer.UDP_UNITTEST_SOCKET_NAME)
+        # Use domain
+        uc.connect(UDPServer.UDP_UNITTEST_SOCKET_NAME)
 
     def _kick_host(self):
         """
@@ -626,7 +622,6 @@ class TestUdp(unittest.TestCase):
                     total_item_count += len(temp_list)
                 self.assertEqual(len(data_list), total_item_count)
 
-    @unittest.skipIf(PTools.get_distribution_type() == "windows", "not stable on windows, need ip stack tuning")
     def test_udp_chunking_and_recv(self):
         """
         Test
@@ -640,10 +635,6 @@ class TestUdp(unittest.TestCase):
             if PTools.is_cpu_arm():
                 # For arm, we lower this
                 logger.info("ARM ON, lowering max_count=200")
-                max_count = 200
-            elif PTools.get_distribution_type() == "windows":
-                # For windows, we lower this (no domain socket)
-                logger.info("WINDOWS ON, lowering max_count=200")
                 max_count = 200
 
             for item_count in [max_count]:

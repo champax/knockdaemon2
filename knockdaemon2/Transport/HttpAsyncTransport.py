@@ -22,14 +22,14 @@
 # ===============================================================================
 """
 import logging
-# noinspection PyUnresolvedReferences
-import ujson
 from datetime import datetime
-from greenlet import GreenletExit
 
 import gevent
+# noinspection PyUnresolvedReferences
+import ujson
 from gevent.queue import Queue, Empty
 from gevent.threading import Lock
+from greenlet import GreenletExit
 from pysolbase.SolBase import SolBase
 from pysolhttpclient.Http.HttpClient import HttpClient
 from pysolhttpclient.Http.HttpRequest import HttpRequest
@@ -641,5 +641,3 @@ class HttpAsyncTransport(KnockTransport):
 
         # Stop
         self.greenlet_stop()
-
-

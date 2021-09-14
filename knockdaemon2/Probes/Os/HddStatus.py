@@ -22,9 +22,9 @@
 # ===============================================================================
 """
 import logging
+import re
 
 import gevent
-import re
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Api.ButcherTools import ButcherTools

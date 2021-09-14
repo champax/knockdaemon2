@@ -23,8 +23,8 @@
 """
 import logging
 import socket
-import ujson
 
+import ujson
 from pysolbase.SolBase import SolBase
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class UdpClient(object):
 
     def connect(self, socket_name):
         """
-        Connect (not available on windows)
+        Connect
         :param socket_name: str
         :type socket_name: str
         """
@@ -57,22 +57,6 @@ class UdpClient(object):
         try:
             self._soc = socket.socket(socket.AF_UNIX, type=socket.SOCK_DGRAM)
             self._soc.connect(socket_name)
-        except Exception as e:
-            logger.warn("connect failed, ex=%s", SolBase.extostr(e))
-            raise
-
-    def connect_windows(self, host, port):
-        """
-        Connect (not available on windows)
-        :param host: str
-        :type host: str
-        :param port: int
-        :type port: int
-        """
-
-        try:
-            self._soc = socket.socket(socket.AF_INET, type=socket.SOCK_DGRAM)
-            self._soc.connect((host, port))
         except Exception as e:
             logger.warn("connect failed, ex=%s", SolBase.extostr(e))
             raise

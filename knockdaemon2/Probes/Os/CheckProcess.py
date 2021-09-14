@@ -24,10 +24,10 @@
 
 import json
 import logging
-
 import ntpath
-import psutil
 from os.path import dirname, abspath
+
+import psutil
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.KnockProbe import KnockProbe

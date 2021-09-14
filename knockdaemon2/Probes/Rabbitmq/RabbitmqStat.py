@@ -138,16 +138,14 @@ class RabbitmqStat(KnockProbe):
             for k, v in d_global.iteritems():
                 self.notify_value_n("k.rabbitmq.queue." + k, {"PORT": "default"}, v)
             for queue, counters in d_perqueue.items():
-                additional_fields={}
+                additional_fields = {}
                 for k in counters.keys():
                     matches = self.FILTER_COUNTER_PER_QUEUE.match(k)
                     if matches:
                         knock_key = "m.%s.persec" % matches.groups()[0]
                         additional_fields[knock_key] = counters[k]
-                for k in ('messages', ):
+                for k in ('messages',):
                     self.notify_value_n("k.rabbitmq.per_queue." + k, {"PORT": "default", 'QUEUE': queue}, counters[k], additional_fields=additional_fields)
-
-
 
         # ----------------
         # Signal started
@@ -289,11 +287,10 @@ class RabbitmqStat(KnockProbe):
             queue = ar_temp[2].strip()
 
             d["consumers"] = ar_temp[4].strip()
-            d["messages"] =  ar_temp[7].strip()
+            d["messages"] = ar_temp[7].strip()
             d["message_ready"] = ar_temp[8].strip()
             d["messages_unacknowledged"] = ar_temp[9].strip()
             d_per_queue[queue] = dict()
-
 
             # Cast to int
             for k, v in d.iteritems():
@@ -314,7 +311,6 @@ class RabbitmqStat(KnockProbe):
                 d["synchronised_slave_nodes"] = len(v_synchronised_slave_nodes.split(" "))
             else:
                 d["synchronised_slave_nodes"] = 0
-
 
             # Rates (to float)
             ar_tuple = [

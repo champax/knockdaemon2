@@ -24,11 +24,11 @@
 
 import datetime
 import logging
+import os
 import random
 import time
 import unittest
 
-import os
 from gevent import Timeout
 from gevent.pool import Pool
 from influxdb import InfluxDBClient

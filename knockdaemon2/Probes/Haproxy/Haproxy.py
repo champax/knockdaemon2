@@ -454,7 +454,7 @@ class Haproxy(KnockProbe):
             try:
                 table_name, table_type, table_size, used = match.groups()
                 self.notify_value_n(
-                    counter_key="k.haproxy.table" ,
+                    counter_key="k.haproxy.table",
                     d_disco_id_tag={"TABLE": table_name,
                                     "TYPE": table_type},
                     counter_value=int(used),
@@ -463,4 +463,3 @@ class Haproxy(KnockProbe):
             except Exception as e:
                 logger.warning(SolBase.extostr(e))
                 continue
-
