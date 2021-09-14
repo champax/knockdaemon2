@@ -160,7 +160,7 @@ class MemCachedStat(KnockProbe):
             return None, None
 
         # Browse file
-        buf = FileUtility.file_to_textbuffer(conf_file, "utf-8")
+        buf = FileUtility.file_to_textbuffer(conf_file, "utf8")
 
         # Go
         for line in buf.split("\n"):
@@ -184,15 +184,8 @@ class MemCachedStat(KnockProbe):
                 return "unix", unix_socket_name
 
         # Nothing found
-        logger.warn("Found %s but unable to locate -p or -s rows, giveup", conf_file)
+        logger.warning("Found %s but unable to locate -p or -s rows, giveup", conf_file)
         return None, None
-
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
 
     def _execute_linux(self):
         """
@@ -251,7 +244,7 @@ class MemCachedStat(KnockProbe):
                 client.close()
 
             # Notify down
-            logger.warn("Exception, connect_to=%s, notifying started=0, ex=%s", connect_to, SolBase.extostr(e))
+            logger.warning("Exception, connect_to=%s, notifying started=0, ex=%s", connect_to, SolBase.extostr(e))
             self._push_result("k.memcached.started", connect_to, 0, False)
             return
 
@@ -274,7 +267,7 @@ class MemCachedStat(KnockProbe):
                     # Expected
                     continue
                 else:
-                    logger.warn("Unable to locate k=%s in d_info", k)
+                    logger.warning("Unable to locate k=%s in d_info", k)
                     continue
             else:
                 # Ok, fetch
@@ -291,7 +284,7 @@ class MemCachedStat(KnockProbe):
                 logger.debug("Skipping type=%s", knock_type)
                 continue
             else:
-                logger.warn("Not managed type=%s", knock_type)
+                logger.warning("Not managed type=%s", knock_type)
                 continue
 
             # Notify

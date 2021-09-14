@@ -1,7 +1,7 @@
 EVENT
 => "[:" First entry for an operation, occurs only once per operation.
-=> "-:" Traﬁc being passed, can occur multiple times.
-Note that this can also include trafﬁc without content
+=> "-:" Traffic being passed, can occur multiple times.
+Note that this can also include traffic without content
 => "]:" Termination of the operation, either due to errors or a connection being closed.
 
 REQUEST TYPE
@@ -12,11 +12,11 @@ REQUEST TYPE
 => "tcp/bindreply" A connection being received from a remote host
 on a port previously bound with tcp/bind.
 => "udp/udpassociate" An association created to be able to send and receive UDP packets.
-=> "udp/udpreply" A reply received to an UDP packet sent to a remote host.
+=> "udp/udpreply" A reply received for a UDP packet sent to a remote host.
 
 ACCESS CONTROL
-=> "pass(N)" Trafﬁc or request passed, due to rule N.
-=> "block(N)" Trafﬁc or request blocked, due to rule N.
+=> "pass(N)" Traffic or request passed, due to rule N.
+=> "block(N)" Traffic or request blocked, due to rule N.
 
 CLOSURE REASON
 => connection i/o expired

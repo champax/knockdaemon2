@@ -139,7 +139,7 @@ class TestInfluxLch(unittest.TestCase):
 
         client.drop_database("zzz2")
         client.create_database("zzz2")
-        line_buf = make_lines(d_body, precision=None).encode('utf-8')
+        line_buf = make_lines(d_body, precision=None).encode('utf8')
         logger.info("line_buf=%s", line_buf)
         client.write_points([line_buf], protocol="line")
 
@@ -177,9 +177,9 @@ class TestInfluxLch(unittest.TestCase):
             self.assertEqual(len(d_influx["tags"]), len(cur_dd) + len(cur_opt_tags) + 2)
             self.assertEqual(d_influx["tags"]["host"], "klchgui01")
             self.assertEqual(d_influx["tags"]["ns"], "unittest")
-            for k, v in cur_dd.iteritems():
+            for k, v in cur_dd.items():
                 self.assertEqual(v, d_influx["tags"][k])
-            for k, v in cur_opt_tags.iteritems():
+            for k, v in cur_opt_tags.items():
                 self.assertEqual(v, d_influx["tags"][k])
 
                 # TODO : Check multiple diso : k.dns.resolv
@@ -246,7 +246,7 @@ class TestInfluxLch(unittest.TestCase):
         self.assertEqual(http_rep.status_code, 200)
 
         # Build lines
-        line_buf = make_lines(d_body, precision=None).encode('utf-8')
+        line_buf = make_lines(d_body, precision=None).encode('utf8')
         logger.info("line_buf=%s", repr(line_buf))
 
         # Insert

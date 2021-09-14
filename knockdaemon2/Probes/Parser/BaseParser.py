@@ -90,13 +90,6 @@ class BaseParser(KnockProbe):
         self.file_mask = d["file_mask"]
         self.pos_file = d["pos_file"]
 
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
-
     def _execute_linux(self):
         """
         Execute a probe.
@@ -106,7 +99,7 @@ class BaseParser(KnockProbe):
         try:
             file_found = self.parse_file()
         except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
             raise
         finally:
             if file_found:
@@ -138,8 +131,8 @@ class BaseParser(KnockProbe):
                 self.file_cur_name = None
                 self.file_cur_pos = 0
         except Exception as e:
-            logger.warn("Exception while loading position file, reverting to default, ex=%s",
-                        SolBase.extostr(e))
+            logger.warning("Exception while loading position file, reverting to default, ex=%s",
+                           SolBase.extostr(e))
             self.file_cur_name = None
             self.file_cur_pos = 0
 
@@ -204,7 +197,7 @@ class BaseParser(KnockProbe):
             return True
 
         except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
             raise
 
     def parse_line(self, line_buffer):
@@ -228,7 +221,7 @@ class BaseParser(KnockProbe):
                 self.line_parsed_ok += 1
         except Exception as e:
             # Failed
-            logger.warn("Ex=%s, buffer=%s", SolBase.extostr(e), line_buffer)
+            logger.warning("Ex=%s, buffer=%s", SolBase.extostr(e), line_buffer)
             self.line_parsed_failed += 1
         finally:
             pass
@@ -366,7 +359,7 @@ class BaseParser(KnockProbe):
                         # Callback
                         line_processing_callback(line)
                 except Exception as e:
-                    logger.warn("line_processing_callback exception, ex=%s, line=%s", e, line)
+                    logger.warning("line_processing_callback exception, ex=%s, line=%s", e, line)
                     raise
 
             # Return position
@@ -374,7 +367,7 @@ class BaseParser(KnockProbe):
             return pos
         except Exception as e:
             # Failed
-            logger.warn("Ex=%s", e)
+            logger.warning("Ex=%s", e)
             raise
         finally:
             # Close

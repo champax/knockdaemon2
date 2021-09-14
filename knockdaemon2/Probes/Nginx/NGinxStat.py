@@ -121,13 +121,6 @@ class NginxStat(KnockProbe):
 
         logger.info("Set ar_url=%s", self.ar_url)
 
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
-
     def _execute_linux(self):
         """
         Exec
@@ -177,7 +170,7 @@ class NginxStat(KnockProbe):
                 # Try
                 if k not in d_nginx:
                     if k.find("k.nginx.") != 0:
-                        logger.warn("Unable to locate k=%s in d_nginx", k)
+                        logger.warning("Unable to locate k=%s in d_nginx", k)
                     else:
                         logger.info("Unable to locate k=%s in d_nginx (this is expected)", k)
                     continue
@@ -194,7 +187,7 @@ class NginxStat(KnockProbe):
                     logger.debug("Skipping type=%s", knock_type)
                     continue
                 else:
-                    logger.warn("Not managed type=%s", knock_type)
+                    logger.warning("Not managed type=%s", knock_type)
 
                 # Notify
                 self.notify_value_n(knock_key, {"ID": pool_id}, v)
@@ -205,7 +198,7 @@ class NginxStat(KnockProbe):
             return
 
         # Here we are NOT ok
-        logger.warn("All Uri down, notify started=0 and return, pool_id=%s", pool_id)
+        logger.warning("All Uri down, notify started=0 and return, pool_id=%s", pool_id)
         self.notify_value_n("k.nginx.started", {"ID": pool_id}, 0)
 
     # noinspection PyMethodMayBeStatic
@@ -250,7 +243,7 @@ class NginxStat(KnockProbe):
 
             # Get response
             if hresp.status_code != 200:
-                logger.warn("No http 200, give up")
+                logger.warning("No http 200, give up")
                 return None
 
             # Get buffer
@@ -258,10 +251,10 @@ class NginxStat(KnockProbe):
 
             # Check
             if not pd:
-                logger.warn("No buffer, give up")
+                logger.warning("No buffer, give up")
                 return None
             elif pd.find("Active connections") < 0:
-                logger.warn("Invalid buffer (no Active connections), give up")
+                logger.warning("Invalid buffer (no Active connections), give up")
                 return None
 
             # Got it : parse
@@ -273,7 +266,7 @@ class NginxStat(KnockProbe):
             match3 = re.search(r'Reading:\s*(\d+)\s*Writing:\s*(\d+)\s*Waiting:\s*(\d+)', pd)
 
             if not match1 or not match2 or not match3:
-                logger.warn('Unable to parse %s, uri=%s, pd=%s', url_status, pd)
+                logger.warning('Unable to parse %s, uri=%s, pd=%s', url_status, pd)
                 return None
 
             d_nginx['connections'] = int(match1.group(1))
@@ -292,5 +285,5 @@ class NginxStat(KnockProbe):
             return d_nginx
 
         except Exception as e:
-            logger.warn("Exception, ex=%s", SolBase.extostr(e))
+            logger.warning("Exception, ex=%s", SolBase.extostr(e))
             return None

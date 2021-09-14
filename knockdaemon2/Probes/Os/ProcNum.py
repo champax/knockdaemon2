@@ -25,13 +25,11 @@ import logging
 from os import listdir
 from os.path import isdir, join
 
-from pysolbase.SolBase import SolBase
-
 from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Platform.PTools import PTools
 
 if PTools.get_distribution_type() == "windows":
-    from knockdaemon2.Windows.Wmi.Wmi import Wmi
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -57,24 +55,6 @@ class NumberOfProcesses(KnockProbe):
 
         # This is in fact the number of running processes
         self.notify_value_n("k.os.processes.total", None, self._get_process_count())
-
-    def _execute_windows(self):
-        """
-        Exec
-        """
-        try:
-            d, age_ms = Wmi.wmi_get_dict()
-            logger.info("Using wmi with age_ms=%s", age_ms)
-
-            # Total thread count is TOO SLOW
-            # th_total_count = int(d["WQL_RunningThreadTotalCount"])
-            th_total_count = int(d["WQL_RunningThreadCount"])
-            logger.info("Got th_total_count=%s", th_total_count)
-
-            self.notify_value_n("k.os.processes.total", None, th_total_count)
-
-        except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
 
     # noinspection PyMethodMayBeStatic
     def _get_process_count(self):

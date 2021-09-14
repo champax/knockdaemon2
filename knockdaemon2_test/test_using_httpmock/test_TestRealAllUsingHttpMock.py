@@ -57,9 +57,7 @@ class TestRealAllUsingHttpMock(unittest.TestCase):
         os.environ.setdefault("KNOCK_UNITTEST", "yes")
 
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
-        self.manager_config_file = \
-            self.current_dir + "conf" + SolBase.get_pathseparator() + "realall" \
-            + SolBase.get_pathseparator() + "knockdaemon2.yaml"
+        self.manager_config_file = self.current_dir + "conf" + SolBase.get_pathseparator() + "realall" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
         self.k = None
 
         # Config files
@@ -105,12 +103,12 @@ class TestRealAllUsingHttpMock(unittest.TestCase):
         Setup (called after each test)
         """
         if self.k:
-            logger.warn("k set, stopping, not normal")
+            logger.warning("k set, stopping, not normal")
             self.k.stop()
             self.k = None
 
         if self.h:
-            logger.warn("h set, stopping, not normal")
+            logger.warning("h set, stopping, not normal")
             self.h.stop()
             self.h = None
 

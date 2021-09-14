@@ -26,8 +26,8 @@
 """
 import logging
 import os
-import platform
 
+import distro
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
@@ -90,27 +90,21 @@ class Inventory(KnockProbe):
     Probe
     """
 
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
-
     def _execute_linux(self):
         """
         Exec
         """
 
         (sysname, nodename, kernel, version, machine) = os.uname()
-        (distribution, dversion, _) = platform.linux_distribution()
+        distribution = distro.id()
+        dversion = distro.version()
         self.notify_value_n("k.inventory.os", None, "%s %s %s" % (sysname, distribution, dversion))
         self.notify_value_n("k.inventory.kernel", None, kernel)
         self.notify_value_n("k.inventory.name", None, nodename)
 
         # dmidecode
         return_empty = True
-        for k, v in self._get_dmi().iteritems():
+        for k, v in self._get_dmi().items():
             return_empty = False
             self.notify_value_n("k.inventory." + k, None, v)
 
@@ -121,52 +115,55 @@ class Inventory(KnockProbe):
                 ec, so, se = ButcherTools.invoke("dmesg")
                 if ec != 0:
                     # Non-zero exit code
-                    logger.warn("dmesg invoke failed, ec=%s, so=%s, se=%s", ec, so, se)
+                    logger.warning("dmesg invoke failed, ec=%s, so=%s, se=%s", ec, so, se)
                 else:
                     # Ok, parse
                     if so.find('Booting paravirtualized kernel on Xen'):
                         self.notify_value_n("k.inventory.chassis", None, "Virtual Server XEN")
             except Exception as e:
-                logger.warn("Ex=%s", SolBase.extostr(e))
+                logger.warning("Ex=%s", SolBase.extostr(e))
 
     def _parse_dmi(self, content):
         """
-        :param content: str
-        :return info: list
         Parse the whole dmidecode output.
         Returns a list of tuples of (type int, value dict).
+        :param content: str
+        :type content: str
+        :return info: list
+        :rtype list
+
         """
         info = []
-        lines = iter(content.strip().splitlines())
-        while True:
-            try:
-                line = lines.next()
-            except StopIteration:
-                break
-
+        idx = 0
+        ar = content.strip().splitlines()
+        for line in ar:
             if line.startswith('Handle 0x'):
                 typ = int(line.split(',', 2)[1].strip()[len('DMI type'):])
                 if typ in DMI_TYPE:
-                    info.append((typ, self._dmi_parse_handle_section(lines)))
+                    info.append((typ, self._dmi_parse_handle_section(ar[idx:])))
+            idx += 1
         return info
 
     # noinspection PyMethodMayBeStatic
     def _dmi_parse_handle_section(self, lines):
         """
-        :param lines:
-        :return : dict: data
         Parse a section of dmidecode output
 
         * 1st line contains address, type and size
         * 2nd line is title
         * line started with one tab is one option and its value
         * line started with two tabs is a member of list
+
+        :param lines: list
+        :type lines: list
+        :return : dict
+        :rtype dict
         """
         data = {
-            '_title': lines.next().rstrip(),
+            '_title': lines[0].rstrip(),
         }
         k = 0
-        for line in lines:
+        for line in lines[1:]:
             line = line.rstrip()
             if line.startswith('\t\t'):
                 if isinstance(data[k], list):
@@ -271,7 +268,7 @@ class Inventory(KnockProbe):
                 logger.info("dmidecode invoke failed, retry sudo, ec=%s, so=%s, se=%s", ec, so, se)
                 ec, so, se = ButcherTools.invoke("sudo dmidecode")
                 if ec != 0:
-                    logger.warn("dmidecode invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)
+                    logger.warning("dmidecode invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)
                     return dict()
 
             if so.find("sorry") >= 0:
@@ -288,7 +285,7 @@ class Inventory(KnockProbe):
             return o2
 
         except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
             return dict()
 
             # output = ''

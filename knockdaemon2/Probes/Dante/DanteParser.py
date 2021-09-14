@@ -176,17 +176,17 @@ class DanteParser(BaseParser):
         self.hash_computed_header = self.compute_report_header()
         self.hash_computed_row = self.compute_report_row()
 
-        for key, value in self.hash_computed_header.iteritems():
+        for key, value in self.hash_computed_header.items():
             self.notify_key_value(key, value)
 
-        for key, value in self.hash_computed_row.iteritems():
+        for key, value in self.hash_computed_row.items():
             self.notify_key_value(key, value)
 
     def notify_key_value(self, key, value, append_dante=True):
         """
         Notify
         :param key: Key
-        :type key: str, unicode
+        :type key: str
         :param append_dante; True if append [dante]
         :type append_dante: bool
         :param value: Value
@@ -481,18 +481,12 @@ class DanteParser(BaseParser):
                 h_out["knock.dante.header.c_value.max"] = c_value
             else:
                 h_out["knock.dante.header.key.count"] += 1
-                h_out["knock.dante.header.a_value.sum"] = \
-                    h_out["knock.dante.header.a_value.sum"] + a_value
-                h_out["knock.dante.header.c_value.sum"] = \
-                    h_out["knock.dante.header.c_value.sum"] + c_value
-                h_out["knock.dante.header.a_value.min"] = \
-                    min(h_out["knock.dante.header.a_value.min"], a_value)
-                h_out["knock.dante.header.c_value.min"] = \
-                    min(h_out["knock.dante.header.c_value.min"], c_value)
-                h_out["knock.dante.header.a_value.max"] = \
-                    max(h_out["knock.dante.header.a_value.max"], a_value)
-                h_out["knock.dante.header.c_value.max"] = \
-                    max(h_out["knock.dante.header.c_value.max"], c_value)
+                h_out["knock.dante.header.a_value.sum"] = h_out["knock.dante.header.a_value.sum"] + a_value
+                h_out["knock.dante.header.c_value.sum"] = h_out["knock.dante.header.c_value.sum"] + c_value
+                h_out["knock.dante.header.a_value.min"] = min(h_out["knock.dante.header.a_value.min"], a_value)
+                h_out["knock.dante.header.c_value.min"] = min(h_out["knock.dante.header.c_value.min"], c_value)
+                h_out["knock.dante.header.a_value.max"] = max(h_out["knock.dante.header.a_value.max"], a_value)
+                h_out["knock.dante.header.c_value.max"] = max(h_out["knock.dante.header.c_value.max"], c_value)
 
         if "knock.dante.header.key.count" in h_out == 0:
             # Default

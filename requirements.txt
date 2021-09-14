@@ -11,10 +11,11 @@ pysolhttpclient>=3.0.0
 pysolmeters>=3.0.0
 pysoltcp>=3.0.0
 
-# gevent
 gevent
 geventhttpclient
 greenlet
+
+distro
 
 # crypt
 pycrypto

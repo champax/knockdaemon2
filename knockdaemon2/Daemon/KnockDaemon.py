@@ -136,8 +136,7 @@ class KnockDaemon(Daemon):
                 )
         except Exception as e:
             s = SolBase.extostr(e)
-            print(s)
-            logger.warn("Ex=%s", s)
+            logger.warning("Ex=%s", s)
 
     def _on_start(self):
         """

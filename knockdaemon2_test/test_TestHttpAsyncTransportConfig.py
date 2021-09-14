@@ -48,13 +48,9 @@ class TestHttpAsyncTransportConfig(unittest.TestCase):
         os.environ.setdefault("KNOCK_UNITTEST", "yes")
 
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
-        self.config_file_ok = \
-            self.current_dir + "conf" + SolBase.get_pathseparator() \
-            + "check" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
+        self.config_file_ok = self.current_dir + "conf" + SolBase.get_pathseparator() + "check" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
 
-        self.config_file_nothing = \
-            self.current_dir + "conf" + SolBase.get_pathseparator() \
-            + "check" + SolBase.get_pathseparator() + "knockdaemon2_nothing.yaml"
+        self.config_file_nothing = self.current_dir + "conf" + SolBase.get_pathseparator() + "check" + SolBase.get_pathseparator() + "knockdaemon2_nothing.yaml"
 
     def tearDown(self):
         """

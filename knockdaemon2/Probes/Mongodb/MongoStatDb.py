@@ -50,13 +50,6 @@ class MongoStatDb(KnockProbe):
         self.database = None
         self.category = "/nosql/mongodb"
 
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
-
     def _execute_linux(self):
         """
         Exec
@@ -88,7 +81,7 @@ class MongoStatDb(KnockProbe):
         # -----------------------------
         # Get DB list and cumulative DB info
         # -----------------------------
-        db_list = mongo_connection.database_names()
+        db_list = mongo_connection.list_database_names()
 
         self.database = "all"
         self.recurse(mongo_db_handle.command("dbstats"), 'server.')
@@ -169,7 +162,10 @@ class MongoStatDb(KnockProbe):
     # noinspection PyMethodMayBeStatic
     def cleanvalue(self, v):
         """
-        :param v: str
+        :param v: str, datetime
+        :type v: str, datetime
+        :rtype str,int
+        :return str,in
         """
 
         if isinstance(v, datetime):

@@ -27,7 +27,6 @@ import sys
 import unittest
 from multiprocessing import Process
 from os.path import dirname, abspath
-from string import join
 
 import redis
 from pysolbase.FileUtility import FileUtility
@@ -36,7 +35,6 @@ from pysolbase.SolBase import SolBase
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Daemon.KnockDaemon import KnockDaemon
 from knockdaemon2.HttpMock.HttpMock import HttpMock
-from knockdaemon2.Platform.PTools import PTools
 
 SolBase.voodoo_init()
 
@@ -45,10 +43,10 @@ logger = logging.getLogger(__name__)
 # Patch to dispatch env to subprocess
 oldPath = os.environ.get("PYTHONPATH")
 if oldPath is not None:
-    os.environ["PYTHONPATH"] = join(sys.path, ":") + ":" + oldPath
+    os.environ["PYTHONPATH"] = ":".join(sys.path) + ":" + oldPath
 else:
-    os.environ["PYTHONPATH"] = join(sys.path, ":")
-os.environ["PATH"] = join(sys.path, ", ") + ", " + os.environ["PATH"]
+    os.environ["PYTHONPATH"] = ":".join(sys.path)
+os.environ["PATH"] = ", ".join(sys.path) + ", " + os.environ["PATH"]
 
 
 class TestDaemonUsingHttpMock(unittest.TestCase):
@@ -73,9 +71,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
         logger.info("setup : Entering, %s", SolBase.get_current_pid_as_string())
 
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
-        self.manager_config_file = \
-            self.current_dir + "conf" + SolBase.get_pathseparator() + "real" \
-            + SolBase.get_pathseparator() + "knockdaemon2.yaml"
+        self.manager_config_file = self.current_dir + "conf" + SolBase.get_pathseparator() + "real" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
 
         # Config
         self.testtimeout_ms = 5000
@@ -119,7 +115,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
                 if FileUtility.is_file_exist(cur_f):
                     os.remove(cur_f)
             except Exception as e:
-                logger.warn("Ex=%s", SolBase.extostr(e))
+                logger.warning("Ex=%s", SolBase.extostr(e))
 
     # ==============================
     # HTTP MOCK
@@ -184,7 +180,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
         try:
             if FileUtility.is_file_exist(file_name):
                 ret = FileUtility.file_to_textbuffer(file_name, "ascii")
-        except:
+        except Exception:
             ret = None
         finally:
             if ret and len(ret) > 0:
@@ -290,7 +286,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             logger.info("Wait now")
             ms_start = SolBase.mscurrent()
             while SolBase.msdiff(ms_start) < self.stdout_timeout_ms:
-                if join(self._get_std_out(), '\n').find("knockdaemon2 started") >= 0:
+                if "n".join(self._get_std_out()).find("knockdaemon2 started") >= 0:
                     break
                 else:
                     SolBase.sleep(10)
@@ -312,8 +308,8 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             # Check
             self.assertTrue(p.exitcode == 0)
             self.assertTrue(len(self._get_std_err()) == 0)
-            self.assertTrue(join(self._get_std_out(), '\n').find(" ERROR ") < 0)
-            self.assertTrue(join(self._get_std_out(), '\n').find(" WARN ") < 0)
+            self.assertTrue("\n".join(self._get_std_out()).find(" ERROR ") < 0)
+            self.assertTrue("\n".join(self._get_std_out()).find(" WARN ") < 0)
 
             # =========================
             # STATUS
@@ -376,7 +372,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             # Try wait for stdout
             ms_start = SolBase.mscurrent()
             while SolBase.msdiff(ms_start) < self.stdout_timeout_ms:
-                if join(self._get_std_out(), '\n').find("knockdaemon2 started") >= 0:
+                if "\n".join(self._get_std_out()).find("knockdaemon2 started") >= 0:
                     break
                 else:
                     SolBase.sleep(10)
@@ -395,13 +391,13 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             # Check
             self.assertTrue(p.exitcode == 0)
             self.assertTrue(len(self._get_std_err()) == 0)
-            self.assertTrue(join(self._get_std_out(), '\n').find(" ERROR ") < 0)
-            self.assertTrue(join(self._get_std_out(), '\n').find(" WARN ") < 0)
+            self.assertTrue("\n".join(self._get_std_out()).find(" ERROR ") < 0)
+            self.assertTrue("\n".join(self._get_std_out()).find(" WARN ") < 0)
 
         finally:
             try:
                 for p in p_list:
                     p.terminate()
             except Exception as e:
-                logger.warn("Ex=%s", e)
+                logger.warning("Ex=%s", e)
             logger.info("Exiting test, idx=%s", self.run_idx)

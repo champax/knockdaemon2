@@ -67,13 +67,6 @@ class MongoDbKnockStat(KnockProbe):
         self.server = d["mongoserver"]
         self.port = d["port"]
 
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
-
     def _execute_linux(self):
         """
         Doc
@@ -96,7 +89,7 @@ class MongoDbKnockStat(KnockProbe):
             mongo_client = pymongo.MongoClient(host, port)
 
             # Get DB list and cumulative DB info
-            database_list = mongo_client.database_names()
+            database_list = mongo_client.list_database_names()
 
             # For each db
             for db in database_list:

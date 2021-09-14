@@ -24,14 +24,12 @@
 import logging
 from math import floor
 
-from pysolbase.SolBase import SolBase
-
 from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Platform.PTools import PTools
 
 logger = logging.getLogger(__name__)
 if PTools.get_distribution_type() == "windows":
-    from knockdaemon2.Windows.Wmi.Wmi import Wmi
+    pass
 
 UPTIME_PATH = "/proc/uptime"
 
@@ -58,33 +56,6 @@ class Uptime(KnockProbe):
         # Notify we are up
         self.notify_value_n("k.os.knock", None, 1)
         self.notify_value_n("k.os.uptime", None, self._get_uptime())
-
-    def _execute_windows(self):
-        """
-        Exec
-        """
-
-        d = None
-        try:
-            # Win32_OperatingSystem :: LastBootUpTime => 20170312044209.003363-420
-            # => Date and time the operating system was last restarted.
-            # => unicode
-
-            # Win32_PerfFormattedData_PerfOS_System :: SystemUpTime
-            # => Elapsed time, in seconds, that the computer has been running after it was last started.
-            # => This property displays the difference between the start time and the current time.
-
-            d, age_ms = Wmi.wmi_get_dict()
-            logger.info("Using wmi with age_ms=%s", age_ms)
-
-            elapsed_sec = int(d["Win32_PerfFormattedData_PerfOS_System"]["SystemUpTime"])
-            logger.info("Got elapsed_sec=%s", elapsed_sec)
-
-            # Notify we are up
-            self.notify_value_n("k.os.knock", None, 1)
-            self.notify_value_n("k.os.uptime", None, elapsed_sec)
-        except Exception as e:
-            logger.warn("Exception while processing, ex=%s, d=%s", SolBase.extostr(e), d)
 
     # noinspection PyMethodMayBeStatic
     def _get_uptime(self):

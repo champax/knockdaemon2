@@ -78,13 +78,6 @@ class TestProbe(KnockProbe):
         logger.info("Go")
         self._execute_all()
 
-    def _execute_windows(self):
-        """
-        Execute a probe.
-        """
-        logger.info("Go")
-        self._execute_all()
-
     def _execute_all(self):
         """
         Execute a probe.
@@ -115,7 +108,7 @@ class TestProbe(KnockProbe):
             self.notify_value_n("test.dummy.error", {"TYPE": "one"}, 3)
             self.notify_value_n("test.dummy.error", {"TYPE": "two"}, 2)
         except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
         finally:
             logger.info("Finally")
 

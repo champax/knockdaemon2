@@ -68,13 +68,6 @@ class RabbitmqStat(KnockProbe):
         self._d_aggregate = None
         self.category = "/nosql/rabbitmq"
 
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
-
     def _execute_linux(self):
         """
         Execute
@@ -135,7 +128,7 @@ class RabbitmqStat(KnockProbe):
             self.notify_value_n("k.rabbitmq.started", {"PORT": "default"}, 0)
         else:
             d_global, d_perqueue = self._process_queues_buffer(so)
-            for k, v in d_global.iteritems():
+            for k, v in d_global.items():
                 self.notify_value_n("k.rabbitmq.queue." + k, {"PORT": "default"}, v)
             for queue, counters in d_perqueue.items():
                 additional_fields = {}
@@ -293,7 +286,7 @@ class RabbitmqStat(KnockProbe):
             d_per_queue[queue] = dict()
 
             # Cast to int
-            for k, v in d.iteritems():
+            for k, v in d.items():
                 if len(v) > 0:
                     d[k] = int(v)
                 else:
@@ -342,11 +335,11 @@ class RabbitmqStat(KnockProbe):
                 # noinspection PyBroadException
                 try:
                     d[cur_name] = float(cur_s)
-                except:
+                except Exception:
                     d[cur_name] = 0.0
 
             # Push to global
-            for k, v in d.iteritems():
+            for k, v in d.items():
                 d_global[k] += v
 
             d_per_queue[queue] = d

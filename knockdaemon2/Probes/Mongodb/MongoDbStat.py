@@ -58,13 +58,6 @@ class MongoDbStat(KnockProbe):
         self.super_key['failed'] = defaultdict(int)
         self.category = "/nosql/mongodb"
 
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
-
     def _execute_linux(self):
         """
         Exec
@@ -77,7 +70,7 @@ class MongoDbStat(KnockProbe):
             try:
                 self.getstat("127.0.0.1", port)
             except Exception as e:
-                logger.warn(SolBase.extostr(e))
+                logger.warning(SolBase.extostr(e))
 
     def getstat(self, host, port):
         """
@@ -105,7 +98,7 @@ class MongoDbStat(KnockProbe):
             mongo_connection = pymongo.MongoClient(cnx_string)
 
         except Exception as e:
-            logger.warn(SolBase.extostr(e))
+            logger.warning(SolBase.extostr(e))
             self.notify_value_n("k.mongodb.ok", {"PORT": self.strport}, "0")
             return
 
@@ -120,7 +113,7 @@ class MongoDbStat(KnockProbe):
             return
 
         if not server_status['ok'] and not server_status['ok'] == 1.0:
-            logger.warn("server_status Failed")
+            logger.warning("server_status Failed")
             return
         else:
             self.recurse(server_status, '')
@@ -148,13 +141,13 @@ class MongoDbStat(KnockProbe):
                 try:
                     config = yaml.load(stream)
                 except yaml.YAMLError as e:
-                    logger.warn('Error loadding %s %s ', conf_file, SolBase.extostr(e))
+                    logger.warning('Error loadding %s %s ', conf_file, SolBase.extostr(e))
                     continue
             try:
                 port = config['net']['port']
             except KeyError as e:
                 port = 27017
-                logger.warn(SolBase.extostr(e))
+                logger.warning(SolBase.extostr(e))
 
             try:
                 cluster_role = config['sharding']['clusterRole']
@@ -201,14 +194,14 @@ class MongoDbStat(KnockProbe):
             v = int(v.strftime('%s'))
         elif isinstance(v, float):
             v = round(v, 3)
-        elif isinstance(v, (int, long)):
+        elif isinstance(v, int):
             v = abs(v)
         if MongodDbStatKeys.Key[key] is not None:
             v = MongodDbStatKeys.Key[key](v)
         else:
             # NO EXPLICIT CASTING
             # For influx, we cast int in all cases for numeric
-            if not isinstance(v, (datetime, str, unicode, basestring)):
+            if not isinstance(v, (datetime, str)):
                 v = int(v)
 
         return v
@@ -254,7 +247,7 @@ class MongoDbStat(KnockProbe):
         :return:
         """
         for cur_type in self.super_key:
-            for k, v in self.super_key[cur_type].iteritems():
+            for k, v in self.super_key[cur_type].items():
                 self.notify_value_n("k.mongodb." + k + "_" + cur_type, {"PORT": self.strport}, v)
 
 

@@ -163,7 +163,7 @@ class VarnishStat(KnockProbe):
         ec, so, se = ButcherTools.invoke("varnishstat -j")
         ms = SolBase.msdiff(ms_start)
         if ec != 0:
-            logger.warn("varnishstat -j invoke failed (requires varnish >= 3.0.7), ec=%s, so=%s, se=%s", ec, so, se)
+            logger.warning("varnishstat -j invoke failed (requires varnish >= 3.0.7), ec=%s, so=%s, se=%s", ec, so, se)
             return None
 
         # Process
@@ -178,7 +178,7 @@ class VarnishStat(KnockProbe):
             # Ok
             return d_json
         except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
             return None
 
     # noinspection PyMethodMayBeStatic
@@ -194,7 +194,7 @@ class VarnishStat(KnockProbe):
         ec, so, se = ButcherTools.invoke("varnishstat -1")
         ms = SolBase.msdiff(ms_start)
         if ec != 0:
-            logger.warn("varnishstat -1 invoke failed, ec=%s, so=%s, se=%s", ec, so, se)
+            logger.warning("varnishstat -1 invoke failed, ec=%s, so=%s, se=%s", ec, so, se)
             return None
 
         # Process
@@ -240,15 +240,8 @@ class VarnishStat(KnockProbe):
             # Over
             return d_json
         except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
             return None
-
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
 
     def _execute_linux(self):
         """
@@ -290,7 +283,7 @@ class VarnishStat(KnockProbe):
 
             # Check if we have stuff
             if not d_json:
-                logger.warn("varnishstat invoke failed (no d_json), notify instance down and give up")
+                logger.warning("varnishstat invoke failed (no d_json), notify instance down and give up")
                 self.notify_value_n("k.varnish.started", {"ID": pool_id}, 0)
                 return
 
@@ -299,7 +292,7 @@ class VarnishStat(KnockProbe):
 
         except Exception as e:
             # FAILED
-            logger.warn("varnishstat processing failed, notify instance down and give up, ex=%s", SolBase.extostr(e))
+            logger.warning("varnishstat processing failed, notify instance down and give up, ex=%s", SolBase.extostr(e))
             self.notify_value_n("k.varnish.started", {"ID": pool_id}, 0)
 
     def process_json(self, d_json, pool_id):
@@ -318,7 +311,7 @@ class VarnishStat(KnockProbe):
             # Try
             if k not in d_json:
                 if k.find("k.varnish.") != 0:
-                    logger.warn("Unable to locate k=%s in d_json", k)
+                    logger.warning("Unable to locate k=%s in d_json", k)
                 else:
                     logger.info("Unable to locate k=%s in d_json (this is expected)", k)
                 continue
@@ -335,7 +328,7 @@ class VarnishStat(KnockProbe):
                 logger.debug("Skipping type=%s", knock_type)
                 continue
             else:
-                logger.warn("Not managed type=%s", knock_type)
+                logger.warning("Not managed type=%s", knock_type)
 
             # Notify
             self.notify_value_n(knock_key, {"ID": pool_id}, v)

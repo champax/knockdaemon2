@@ -145,7 +145,7 @@ class SystemdManager(object):
         pid = self._get_unit_property(unit_name, self.SERVICE_UNIT_INTERFACE, 'MainPID')
         try:
             if isinstance(pid, bytes):
-                pid = int(pid.decode('utf-8'), 10)
+                pid = int(pid.decode('utf8'), 10)
             elif isinstance(pid, str):
                 pid = int(pid, 10)
             return pid
@@ -160,7 +160,7 @@ class SystemdManager(object):
             return False
 
         try:
-            state = properties["ActiveState"].encode("utf-8")
+            state = properties["ActiveState"].encode("utf8")
             return state
         except KeyError:
             return False
@@ -181,6 +181,7 @@ class SystemdManager(object):
 
         return self._get_exec_status(service_properties)
 
+    # noinspection PyMethodMayBeStatic
     def _get_exec_status(self, properties):
         try:
             exec_status = int(properties["ExecMainStatus"])
@@ -188,9 +189,10 @@ class SystemdManager(object):
         except KeyError:
             return None
 
+    # noinspection PyMethodMayBeStatic
     def _get_result(self, properties):
         try:
-            result = properties["Result"].encode("utf-8")
+            result = properties["Result"].encode("utf8")
             return result
         except KeyError:
             return False

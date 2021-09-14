@@ -56,9 +56,7 @@ class TestBasic(unittest.TestCase):
         os.environ.setdefault("KNOCK_UNITTEST", "yes")
 
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
-        self.config_file = \
-            self.current_dir + "conf" + SolBase.get_pathseparator() \
-            + "basic" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
+        self.config_file = self.current_dir + "conf" + SolBase.get_pathseparator() + "basic" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
         self.k = None
 
         # Reset meter
@@ -83,7 +81,7 @@ class TestBasic(unittest.TestCase):
         Setup (called after each test)
         """
         if self.k:
-            logger.warn("k set, stopping, not normal")
+            logger.warning("k set, stopping, not normal")
             self.k.stop()
             self.k = None
 
@@ -656,4 +654,3 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(len(se), 0)
 
         self.assertRaises(Exception, ButcherTools.invoke, "ls -l | wc -l")
-

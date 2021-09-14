@@ -147,7 +147,7 @@ class UDPBusinessServerBase(DatagramServer):
         """
 
         if self._is_started:
-            logger.warn("Already started, bypass")
+            logger.warning("Already started, bypass")
             return
 
         # Base start
@@ -170,7 +170,7 @@ class UDPBusinessServerBase(DatagramServer):
         """
 
         if not self._is_started:
-            logger.warn("Not started, bypass")
+            logger.warning("Not started, bypass")
             return
 
         # Base stop
@@ -196,7 +196,7 @@ class UDPBusinessServerBase(DatagramServer):
             if os.path.exists(self._socket_name):
                 os.remove(self._socket_name)
         except Exception as e:
-            logger.warn("Socket file remove ex=%s", SolBase.extostr(e))
+            logger.warning("Socket file remove ex=%s", SolBase.extostr(e))
 
         # Signal stopped
         self._is_started = False
@@ -306,7 +306,7 @@ class UDPBusinessServerBase(DatagramServer):
 
             # Send back udp
             if self._send_back_udp:
-                self.socket.sendto(('Received %s bytes' % len(data)).encode('utf-8'), address)
+                self.socket.sendto(('Received %s bytes' % len(data)).encode('utf8'), address)
 
             # Stats
             Meters.aii("knock_stat_udp_recv")
@@ -316,7 +316,7 @@ class UDPBusinessServerBase(DatagramServer):
 
             # Send back udp
             if self._send_back_udp:
-                self.socket.sendto(('KO-NR: Received %s bytes - cant decode' % len(data)).encode('utf-8'), address)
+                self.socket.sendto(('KO-NR: Received %s bytes - cant decode' % len(data)).encode('utf8'), address)
 
             # Stat
             Meters.aii("knock_stat_udp_recv_ex")
@@ -333,7 +333,7 @@ class UDPBusinessServerBase(DatagramServer):
         """
         Clean item and value, returning them
         :param item: item
-        :type item: unicode
+        :type item: str
         :param value: int,float
         :type value:int,float
         :return tuple (item as str, value as float)
@@ -344,7 +344,7 @@ class UDPBusinessServerBase(DatagramServer):
         value = float(value)
 
         # Binary
-        # TODO Check : item (unicode) to binary (utf8 encoded) ?
+        # TODO Check : item (str) to binary (utf8 encoded) ?
         item = SolBase.unicode_to_binary(item)
         return item, value
 
@@ -368,7 +368,7 @@ class UDPBusinessServerBase(DatagramServer):
 
             # Pad
             ms1 = str(ms1).zfill(5)
-            if ms2 == sys.maxint:
+            if ms2 == sys.maxsize:
                 ms2 = "MAX"
             else:
                 ms2 = str(ms2).zfill(5)
@@ -386,7 +386,7 @@ class UDPBusinessServerBase(DatagramServer):
         """
         Increment process
         :param item: item
-        :type item: unicode
+        :type item: str
         :param value: value
         :type value: int|float
         """
@@ -402,7 +402,7 @@ class UDPBusinessServerBase(DatagramServer):
         """
         Process gauge
         :param item: item
-        :type item: unicode
+        :type item: str
         :param value: value
         :type value: int|float
         """
@@ -414,7 +414,7 @@ class UDPBusinessServerBase(DatagramServer):
         """
         Process dtc
         :param item: item
-        :type item: unicode
+        :type item: str
         :param value: value
         :type value: int|float
         """
@@ -476,13 +476,13 @@ class UDPBusinessServerBase(DatagramServer):
                 with self._dtc_lock:
                     if len(self._dict_dtc) > 0:
 
-                        for item, value in self._dict_dtc.iteritems():
+                        for item, value in self._dict_dtc.items():
                             # Disco
                             self._probe_dtc.notify_discovery_n("k.business.dtc.discovery", {"ITEM": item})
 
                             # Data
                             d = self._dtc_to_dict(value)
-                            for k, v in d.iteritems():
+                            for k, v in d.items():
                                 # k : 0xxxx-0xxxx
                                 logger.debug('item=%s k=%s v=%s', item, k, v)
                                 k_dtc = UDPBusinessServerBase.KNOCK_PREFIX_KEY + "dtc." + k
@@ -492,7 +492,7 @@ class UDPBusinessServerBase(DatagramServer):
                 # Increment
                 with self._increment_lock:
                     if len(self._dict_increment) > 0:
-                        for item, value in self._dict_increment.iteritems():
+                        for item, value in self._dict_increment.items():
                             logger.debug('item=%s value=%s', item, value.get())
 
                             self._probe_inc.notify_discovery_n("k.business.inc.discovery", {"ITEM": item})
@@ -501,7 +501,7 @@ class UDPBusinessServerBase(DatagramServer):
                 # gauge
                 with self._gauge_lock:
                     if len(self._dict_gauge) > 0:
-                        for item, value in self._dict_gauge.iteritems():
+                        for item, value in self._dict_gauge.items():
                             logger.debug('item=%s value=%s', item, value)
 
                             self._probe_inc.notify_discovery_n("k.business.gauge.discovery", {"ITEM": item})
@@ -510,7 +510,7 @@ class UDPBusinessServerBase(DatagramServer):
                 # Next schedule (in lock, re-entrant)
                 self._notify_schedule_next()
         except Exception as e:
-            logger.warn("Internal ex=%s", SolBase.extostr(e))
+            logger.warning("Internal ex=%s", SolBase.extostr(e))
             Meters.aii("knock_stat_udp_notify_run_ex")
         finally:
             elapsed_ms = SolBase.msdiff(ms_start)

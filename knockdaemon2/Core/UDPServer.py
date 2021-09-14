@@ -140,7 +140,7 @@ class UDPServer(object):
 
         # Check
         if self._is_started:
-            logger.warn("Already started, bypass")
+            logger.warning("Already started, bypass")
             return
 
         # Start
@@ -180,7 +180,7 @@ class UDPServer(object):
 
         # Check
         if not self._is_started:
-            logger.warn("Not started, bypass")
+            logger.warning("Not started, bypass")
             return
 
         # Stop

@@ -114,6 +114,7 @@ class Service(KnockProbe):
             self.notify_value_n("k.os.service.running", {"SERVICE": s}, 0)
         for s in running_checked:
             self.notify_value_n("k.os.service.running", {"SERVICE": s}, 1)
+            # noinspection PyBroadException
             try:
                 self._service_meters(s)
             except Exception:
@@ -132,13 +133,6 @@ class Service(KnockProbe):
             self.notify_value_n("k.os.service.running", {"SERVICE": uwsgi_type}, 1)
             # Notify processes
             self._notify_process(pid=uwsgi_pid, service=uwsgi_type)
-
-    def _execute_windows(self):
-        """
-        Windows
-        """
-
-        return
 
     def _get_local_services(self):
         """
@@ -164,7 +158,7 @@ class Service(KnockProbe):
         cmd = "systemctl --full --no-legend --no-pager"
         ec, out, se = ButcherTools.invoke(cmd, shell=False, timeout_ms=10 * 1000)
         if ec != 0:
-            logger.warn("Invoke failed, ec=%s, so=%s, se=%s", ec, out, se)
+            logger.warning("Invoke failed, ec=%s, so=%s, se=%s", ec, out, se)
             return list()
         else:
             logger.info("Invoke ok, ec=%s, so=%s, se=%s", ec, str(out.split('\n')[0:10]) + "...", se)
@@ -270,7 +264,7 @@ class Service(KnockProbe):
         manager = SystemdManager()
 
         if not manager.is_active("%s.service" % s):
-            logger.warn("service %s is not active", s)
+            logger.warning("service %s is not active", s)
             return
 
         pid = manager.get_pid("%s.service" % s)
@@ -376,7 +370,7 @@ class Service(KnockProbe):
             logger.debug("notify read/write %s/%s service %s", read_bytes, write_bytes, service)
 
         except psutil.AccessDenied as e:
-            logger.warn(
+            logger.warning(
                 "io_counters failed, pid=%s, e=%s",
                 pid,
                 SolBase.extostr(e))

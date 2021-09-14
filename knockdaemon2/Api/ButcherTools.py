@@ -111,10 +111,10 @@ class ButcherTools(object):
                 p = None
                 return ret_code, so, se
         except InvokeTimeout:
-            logger.warn("invoke timeout, ar_or_string=%s, ms=%s", ar_or_string, SolBase.msdiff(ms))
+            logger.warning("invoke timeout, ar_or_string=%s, ms=%s", ar_or_string, SolBase.msdiff(ms))
             return -999, so, se
         except Exception as e:
-            logger.warn("Exception in invoke, ar_or_string=%s, ex=%s", ar_or_string, SolBase.extostr(e))
+            logger.warning("Exception in invoke, ar_or_string=%s, ex=%s", ar_or_string, SolBase.extostr(e))
             return -998, so, se
         finally:
             # Kill if set
@@ -123,18 +123,17 @@ class ButcherTools(object):
                     p.kill()
                     del p
                 except Exception as e:
-                    logger.warn("Exception in kill, ar=%s, ex=%s", ar_or_string, SolBase.extostr(e))
+                    logger.warning("Exception in kill, ar=%s, ex=%s", ar_or_string, SolBase.extostr(e))
 
     @classmethod
     def split(cls, orig, sep=None):
         """
-        Generator function for iterating through large strings, particularly useful
-        as a replacement for str.splitlines().
-
-        See http://stackoverflow.com/a/3865367
-        :param orig:
-        :param sep:
-        :return:
+        :param orig: str
+        :type orig: str
+        :param sep: str
+        :type str: str
+        :return generator
+        :rtype generator
         """
         exp = re.compile(r'\s+' if sep is None else re.escape(sep))
         pos = 0

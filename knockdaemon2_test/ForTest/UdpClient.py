@@ -58,7 +58,7 @@ class UdpClient(object):
             self._soc = socket.socket(socket.AF_UNIX, type=socket.SOCK_DGRAM)
             self._soc.connect(socket_name)
         except Exception as e:
-            logger.warn("connect failed, ex=%s", SolBase.extostr(e))
+            logger.warning("connect failed, ex=%s", SolBase.extostr(e))
             raise
 
     def disconnect(self):
@@ -153,8 +153,8 @@ class UdpClient(object):
     def send_binary(self, bin_buf):
         """
         Send binary
-        :param bin_buf: str
-        :type bin_buf: str
+        :param bin_buf: bytes
+        :type bin_buf: bytes
         """
 
         if not self._soc:
@@ -163,5 +163,5 @@ class UdpClient(object):
         try:
             self._soc.sendall(bin_buf)
         except Exception as e:
-            logger.warn("send failed, ex=%s", SolBase.extostr(e))
+            logger.warning("send failed, ex=%s", SolBase.extostr(e))
             raise

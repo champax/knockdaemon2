@@ -22,7 +22,7 @@
 # ===============================================================================
 """
 import logging
-from Queue import Queue
+from queue import Queue
 
 logger = logging.getLogger(__name__)
 lifecyclelogger = logging.getLogger("LifeCycle")
@@ -62,11 +62,11 @@ class KnockTransport(object):
     def process_notify(self, account_hash, node_hash, notify_hash, notify_values):
         """
         Process notify
-        :param account_hash: Hash str to value
+        :param account_hash: Hash bytes to value
         :type account_hash; dict
-        :param node_hash: Hash str to value
+        :param node_hash: Hash bytes to value
         :type node_hash; dict
-        :param notify_hash: Hash str to (disco_key, disco_id, tag)
+        :param notify_hash: Hash bytes to (disco_key, disco_id, tag)
         :type notify_hash; dict
         :param notify_values: List of (superv_key, tag, value)
         :type notify_values; list

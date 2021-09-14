@@ -142,13 +142,6 @@ class ApacheStat(KnockProbe):
 
         logger.info("Set ar_url=%s", self.ar_url)
 
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
-
     def _execute_linux(self):
         """
         Exec
@@ -201,7 +194,7 @@ class ApacheStat(KnockProbe):
                 return
 
         # Here we are NOT ok
-        logger.warn("All Uri down, notify started=0 and return, pool_id=%s", pool_id)
+        logger.warning("All Uri down, notify started=0 and return, pool_id=%s", pool_id)
         self.notify_value_n("k.apache.started", {"ID": pool_id}, 0)
 
     def process_apache_dict(self, d_apache, pool_id):
@@ -220,7 +213,7 @@ class ApacheStat(KnockProbe):
             # Try
             if k not in d_apache:
                 if k.find("k.apache.") != 0:
-                    logger.warn("Unable to locate k=%s in d_apache", k)
+                    logger.warning("Unable to locate k=%s in d_apache", k)
                 else:
                     logger.info("Unable to locate k=%s in d_apache (this is expected)", k)
                 continue
@@ -237,7 +230,7 @@ class ApacheStat(KnockProbe):
                 logger.debug("Skipping type=%s", knock_type)
                 continue
             else:
-                logger.warn("Not managed type=%s", knock_type)
+                logger.warning("Not managed type=%s", knock_type)
 
             # Notify
             self.notify_value_n(knock_key, {"ID": pool_id}, v)
@@ -282,7 +275,7 @@ class ApacheStat(KnockProbe):
                     d_apache[c_name] = round(float(c_value), 2)
                     logger.info("c_name=%s, c_value=%s, h_value=%s", c_name, c_value, d_apache[c_name])
             except Exception as e:
-                logger.warn("Parsing failed, line=%s, c_name=%s, c_value=%s, ex=%s", line, c_name, c_value, e)
+                logger.warning("Parsing failed, line=%s, c_name=%s, c_value=%s, ex=%s", line, c_name, c_value, e)
                 continue
 
         return d_apache
@@ -332,7 +325,7 @@ class ApacheStat(KnockProbe):
 
             # Get response
             if hresp.status_code != 200:
-                logger.warn("No http 200, give up")
+                logger.warning("No http 200, give up")
                 return None
 
             # Get buffer
@@ -340,10 +333,10 @@ class ApacheStat(KnockProbe):
 
             # Check
             if not pd:
-                logger.warn("No buffer, give up")
+                logger.warning("No buffer, give up")
                 return None
             elif pd.find("Scoreboard") < 0:
-                logger.warn("Invalid buffer (no Scoreboard), give up")
+                logger.warning("Invalid buffer (no Scoreboard), give up")
                 return None
 
             # Got it : parse
@@ -354,7 +347,7 @@ class ApacheStat(KnockProbe):
             return d_apache
 
         except Exception as e:
-            logger.warn("Exception, ex=%s", SolBase.extostr(e))
+            logger.warning("Exception, ex=%s", SolBase.extostr(e))
             return None
 
     def populate_scoreboard(self, string, d_apache):

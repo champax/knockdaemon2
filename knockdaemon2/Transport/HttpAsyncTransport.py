@@ -186,11 +186,11 @@ class HttpAsyncTransport(KnockTransport):
     def process_notify(self, account_hash, node_hash, notify_hash, notify_values):
         """
         Process notify TODO need server implementation of multiseries time series
-        :param account_hash: Hash str to value
+        :param account_hash: Hash bytes to value
         :type account_hash; dict
-        :param node_hash: Hash str to value
+        :param node_hash: Hash bytes to value
         :type node_hash; dict
-        :param notify_hash: Hash str to (disco_key, disco_id, tag). Cleared upon success.
+        :param notify_hash: Hash bytes to (disco_key, disco_id, tag). Cleared upon success.
         :type notify_hash; dict
         :param notify_values: List of (superv_key, tag, value). Cleared upon success.
         :type notify_values; list
@@ -198,7 +198,7 @@ class HttpAsyncTransport(KnockTransport):
 
         # If not running, exit
         if not self._is_running:
-            logger.warn("Not running, processing not possible")
+            logger.warning("Not running, processing not possible")
             return False
 
         # Fix value
@@ -231,7 +231,7 @@ class HttpAsyncTransport(KnockTransport):
         # Check max
         if self._queue_to_send.qsize() >= self._max_items_in_queue:
             # Too much, kick
-            logger.warn("Max queue reached, discarding older item")
+            logger.warning("Max queue reached, discarding older item")
             self._queue_to_send.get(block=True)
             Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard")
         elif self._queue_to_send.qsize() == 0:
@@ -356,15 +356,15 @@ class HttpAsyncTransport(KnockTransport):
                     Meters.aii(self.meters_prefix + "knock_stat_transport_client_spv_failed", ko_count)
                     return True
                 else:
-                    logger.warn("HTTP HS, r=%s", hresp)
+                    logger.warning("HTTP HS, r=%s", hresp)
                     Meters.aii(self.meters_prefix + "knock_stat_transport_failed_count")
             else:
-                logger.warn("HTTP KO, uri=%s, r=%s", self.http_uri, hresp)
+                logger.warning("HTTP KO, uri=%s, r=%s", self.http_uri, hresp)
                 Meters.aii(self.meters_prefix + "knock_stat_transport_failed_count")
 
             return False
         except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
             Meters.aii(self.meters_prefix + "knock_stat_transport_exception_count")
 
             # Here, HTTP not ok
@@ -394,7 +394,7 @@ class HttpAsyncTransport(KnockTransport):
 
             # Check
             if self._greenlet:
-                logger.warn("_greenlet already set, doing nothing")
+                logger.warning("_greenlet already set, doing nothing")
                 return
 
             # Fire
@@ -413,7 +413,7 @@ class HttpAsyncTransport(KnockTransport):
 
             # Check
             if not self._greenlet:
-                logger.warn("_greenlet not set, doing nothing")
+                logger.warning("_greenlet not set, doing nothing")
                 return
 
             # Kill
@@ -552,7 +552,7 @@ class HttpAsyncTransport(KnockTransport):
                 # --------------------
                 # NOT POSSIBLE
                 # --------------------
-                logger.warn("HttpCheck : Impossible case (not maxed, not empty)")
+                logger.warning("HttpCheck : Impossible case (not maxed, not empty)")
 
             # --------------------
             # HTTP NO GO
@@ -580,7 +580,7 @@ class HttpAsyncTransport(KnockTransport):
             logger.debug("go_to_http true")
             b = self._send_to_http(buf_to_send)
             if not b:
-                logger.warn("go_to_http failed, re-queue now, then sleep=%s", self._http_ko_interval_ms)
+                logger.warning("go_to_http failed, re-queue now, then sleep=%s", self._http_ko_interval_ms)
                 self._requeue_pending_array(buf_pending_array)
 
                 # Wait a bit
@@ -627,7 +627,7 @@ class HttpAsyncTransport(KnockTransport):
                     logger.debug("GreenletExit in loop2")
                     return
                 except Exception as e:
-                    logger.warn("Exception in loop2=%s", SolBase.extostr(e))
+                    logger.warning("Exception in loop2=%s", SolBase.extostr(e))
                     continue
         except GreenletExit:
             logger.debug("GreenletExit in loop1")

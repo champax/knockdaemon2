@@ -49,13 +49,6 @@ class IpvsAdm(KnockProbe):
 
         self.category = "/web/ipvsadm"
 
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
-
     def _execute_linux(self):
         """
         LA DOC PD DU FION
@@ -71,11 +64,11 @@ class IpvsAdm(KnockProbe):
 
         self.notify_discovery_n("knock.ipvsadm.discovery", {"VIP": "ALL"})
 
-        for key, value in hashtab.iteritems():
+        for key, value in hashtab.items():
             self.notify_discovery_n("knock.ipvsadm.discovery", {"VIP": key})
             self._push_result("knock.ipvsadm.activerip", key, value=value)
 
-        for key, value in resulttab.iteritems():
+        for key, value in resulttab.items():
             vip, key = key.split('_')
             self._push_result("knock.ipvsadm." + key, vip, value=value)
 
@@ -86,9 +79,8 @@ class IpvsAdm(KnockProbe):
         to test file_ip_vs = 'knock/ip_vs'
         """
         # MASK
-        vip_exp = "^...\s+([0-9A-F]{8}):([0-9A-F]{4}).*$"
-        rip_exp = \
-            "^\s*->\s([0-9A-F]{8}):([0-9A-F]{4})\s{6}[A-Za-z]+\s+([0-9]+)\s+([0-9]+)\s+([0-9]+)$"
+        vip_exp = r"^...\s+([0-9A-F]{8}):([0-9A-F]{4}).*$"
+        rip_exp = r"^\s*->\s([0-9A-F]{8}):([0-9A-F]{4})\s{6}[A-Za-z]+\s+([0-9]+)\s+([0-9]+)\s+([0-9]+)$"
 
         hashtab = dict()
         resulttab = dict()
@@ -101,7 +93,9 @@ class IpvsAdm(KnockProbe):
         if not os.path.isfile(file_ip_vs):
             return False, False
 
-        for line in file(file_ip_vs):
+        vip = None
+        portvip = None
+        for line in open(file_ip_vs):
             line = line.strip()
             # vip
             # TCP  256EC116:01BB rr
@@ -142,18 +136,18 @@ class IpvsAdm(KnockProbe):
         """
         Send
         """
-        for key, value in self._agregate.iteritems():
+        for key, value in self._agregate.items():
             self.notify_value_n(key, {"VIP": "ALL"}, value)
 
     def _push_result(self, key, id_vip, value):
         """
         Agregate all key and send local key
 
-        :param key:
-        :type key : str
-        :param id_vip:
+        :param key: str
+        :type key: str
+        :param id_vip: str
         :type id_vip : str
-        :param value:
+        :param value: variant
         :type value: variant
         """
         if key not in self._agregate:

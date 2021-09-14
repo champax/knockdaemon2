@@ -75,7 +75,7 @@ class Dedup(object):
 
         # Key
         key = probe_name + "_tags"
-        for k, v in do.iteritems():
+        for k, v in do.items():
             key += "_" + str(k) + ":" + str(v)
 
         return key
@@ -135,9 +135,9 @@ class Dedup(object):
         """
 
         to_del1 = list()
-        for cur_dedup_key, cur_d in self.d_dedup.iteritems():
+        for cur_dedup_key, cur_d in self.d_dedup.items():
             to_del2 = list()
-            for cur_window, cur_added_ms in cur_d.iteritems():
+            for cur_window, cur_added_ms in cur_d.items():
                 if cur_added_ms < limit_ms:
                     to_del2.append(cur_window)
             for cur_window in to_del2:
@@ -151,7 +151,7 @@ class Dedup(object):
 
         # Stats
         c = 0
-        for cur_dedup_key, cur_d in self.d_dedup.iteritems():
+        for cur_dedup_key, cur_d in self.d_dedup.items():
             c += len(cur_d)
         Meters.ai("dedup.cur_hash_key_len").set(len(self.d_dedup))
         Meters.ai("dedup.cur_hash_window_len").set(c)

@@ -24,7 +24,7 @@
 
 import logging
 from base64 import b64encode
-from urllib import urlencode
+from urllib.parse import urlencode
 
 from pysolbase.SolBase import SolBase
 from pysolhttpclient.Http.HttpClient import HttpClient
@@ -140,8 +140,12 @@ class Tools(object):
         :rtype dict
         """
 
+        buf = ':'.join((username, password))
+        bin_buf = buf.encode("utf8")
+        bin_b64 = b64encode(bin_buf)
+        b64 = bin_b64.decode("utf8")
         return {
-            "Authorization": "Basic " + b64encode(b':'.join((username, password)))
+            "Authorization": "Basic " + b64
         }
 
     @classmethod
@@ -332,8 +336,8 @@ class Tools(object):
         else:
             http_req.uri = "http://{0}:{1}/write?{2}".format(host, port, s_qs)
         http_req.method = "POST"
-        http_req.post_data = ('\n'.join(ar_data) + '\n').encode('utf-8')
-        assert http_req.post_data.endswith("\n\n"), "Need \n\n ended post_data, got={0}".format(http_req.post_data[:-16])
+        http_req.post_data = ('\n'.join(ar_data) + '\n').encode('utf8')
+        assert http_req.post_data.decode("utf8").endswith("\n\n"), "Need \n\n ended post_data, got={0}".format(http_req.post_data[:-16])
 
         # Go
         logger.info("Influx, http go, req=%s", http_req)

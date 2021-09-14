@@ -231,7 +231,7 @@ class NGinxParser(BaseParser):
         # noinspection PyBroadException
         try:
             return int(buf)
-        except:
+        except Exception:
             return 0
 
     # noinspection PyMethodMayBeStatic
@@ -246,7 +246,7 @@ class NGinxParser(BaseParser):
         # noinspection PyBroadException
         try:
             return float(buf)
-        except:
+        except Exception:
             return float(0)
 
     def get_http_class(self, http_code):
@@ -319,7 +319,7 @@ class NGinxParser(BaseParser):
                 return "NoComponent"
             else:
                 return unix_socket_buffer.split("/")[5]
-        except:
+        except Exception:
             return "NoComponent"
 
     def super_split(self, buf):
@@ -595,7 +595,7 @@ class NGinxParser(BaseParser):
         # DATA PER HASH
         # ===================
 
-        for key, stat in self.hash_stat.iteritems():
+        for key, stat in self.hash_stat.items():
             # Let's go...
 
             # Log count
@@ -619,22 +619,22 @@ class NGinxParser(BaseParser):
             self.notify_key_value("k.nglog.byte_hit_percent", {"NGLOG": key}, byte_hit_percent)
 
             # Status hashes
-            for status, count in stat.ng_hash_statuscode_to_count.iteritems():
+            for status, count in stat.ng_hash_statuscode_to_count.items():
                 self.notify_key_value("k.nglog.ngHttpStatusCode.{0}".format(status), {"NGLOG": key}, count)
 
-            for status, count in stat.up_hash_statuscode_to_count.iteritems():
+            for status, count in stat.up_hash_statuscode_to_count.items():
                 self.notify_key_value("k.nglog.up_http_status_code.{0}".format(status), {"NGLOG": key}, count)
 
             # Time to count...
-            for ttcKey, ttcValue in stat.ngReplyTimeMs.getCounterDict().iteritems():
+            for ttcKey, ttcValue in stat.ngReplyTimeMs.getCounterDict().items():
                 self.notify_key_value("k.nglog.{0}".format(ttcKey), {"NGLOG": key}, ttcValue)
 
-            for ttcKey, ttcValue in stat.upReplyTimeMs.getCounterDict().iteritems():
+            for ttcKey, ttcValue in stat.upReplyTimeMs.getCounterDict().items():
                 self.notify_key_value("k.nglog.{0}".format(ttcKey), {"NGLOG": key}, ttcValue)
 
                 # Time to count...
-            for ttcKey, ttcValue in stat.ngReplyTimeMsLongPoll.getCounterDict().iteritems():
+            for ttcKey, ttcValue in stat.ngReplyTimeMsLongPoll.getCounterDict().items():
                 self.notify_key_value("k.nglog.{0}".format(ttcKey), {"NGLOG": key}, ttcValue)
 
-            for ttcKey, ttcValue in stat.upReplyTimeMsLongPoll.getCounterDict().iteritems():
+            for ttcKey, ttcValue in stat.upReplyTimeMsLongPoll.getCounterDict().items():
                 self.notify_key_value("k.nglog.{0}".format(ttcKey), {"NGLOG": key}, ttcValue)

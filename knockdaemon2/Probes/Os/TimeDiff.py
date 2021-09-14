@@ -86,15 +86,9 @@ class TimeDiff(KnockProbe):
             logger.debug(SolBase.extostr(e))
             value = self.get_time_from_http()
         except Exception as e:
-            logger.warn("Exception=%s", SolBase.extostr(e))
+            logger.warning("Exception=%s", SolBase.extostr(e))
             value = self.get_time_from_http()
         self.notify_value_n("k.os.timediff", None, abs(value))
-
-    def _execute_windows(self):
-        """
-        Exec
-        """
-        return self._execute_linux()
 
     def get_time_from_http(self):
         """

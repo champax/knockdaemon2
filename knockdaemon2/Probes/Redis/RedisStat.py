@@ -61,9 +61,9 @@ class RedisStat(KnockProbe):
         ("rdb_last_bgsave_time_sec", "int", "k.redis.rdb_last_bgsave_time_sec", "max"),
         ("aof_last_rewrite_time_sec", "int", "k.redis.aof_last_rewrite_time_sec", "max"),
 
-        ("rdb_last_bgsave_status", "str", "k.redis.rdb_last_bgsave_status", "custom"),
-        ("aof_last_bgrewrite_status", "str", "k.redis.aof_last_bgrewrite_status", "custom"),
-        ("aof_last_write_status", "str", "k.redis.aof_last_write_status", "custom"),
+        ("rdb_last_bgsave_status", "bytes", "k.redis.rdb_last_bgsave_status", "custom"),
+        ("aof_last_bgrewrite_status", "bytes", "k.redis.aof_last_bgrewrite_status", "custom"),
+        ("aof_last_write_status", "bytes", "k.redis.aof_last_write_status", "custom"),
 
         # Stats (per sec)
         ("total_connections_received", "float", "k.redis.total_connections_received", "sum"),
@@ -95,13 +95,6 @@ class RedisStat(KnockProbe):
         self._d_aggregate = None
         self.category = "/nosql/redis"
 
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
-
     def _execute_linux(self):
         """
         Execute
@@ -127,7 +120,7 @@ class RedisStat(KnockProbe):
         conf_files = glob.glob("/etc/redis/*.conf") + glob.glob("/etc/redis.conf")
         for conf in conf_files:
             # Read
-            buf = FileUtility.file_to_textbuffer(conf, "utf-8")
+            buf = FileUtility.file_to_textbuffer(conf, "utf8")
 
             if buf is None:
                 continue
@@ -186,7 +179,7 @@ class RedisStat(KnockProbe):
                 logger.info("Redis info ok, notifying started=1, d_info=%s", d_info)
                 self.notify_value_n("k.redis.started", {"RDPORT": port}, 1)
             except Exception as e:
-                logger.warn("Exception, port=%s, notifying started=0, ex=%s", port, SolBase.extostr(e))
+                logger.warning("Exception, port=%s, notifying started=0, ex=%s", port, SolBase.extostr(e))
                 self.notify_value_n("k.redis.started", {"RDPORT": port}, 0)
                 continue
 
@@ -206,7 +199,7 @@ class RedisStat(KnockProbe):
             # a) dbX special processing : (keys, expires, avg_ttl)
             key_count = 0
             key_count_with_ttl = 0
-            for k, v in d_info.iteritems():
+            for k, v in d_info.items():
                 if k.find("db") != 0:
                     continue
 
@@ -232,7 +225,7 @@ class RedisStat(KnockProbe):
                         # Expected
                         continue
                     else:
-                        logger.warn("Unable to locate k=%s in d_out", k)
+                        logger.warning("Unable to locate k=%s in d_out", k)
                         continue
                 else:
                     # Ok, fetch
@@ -249,14 +242,14 @@ class RedisStat(KnockProbe):
                     logger.debug("Skipping type=%s", knock_type)
                     continue
                 else:
-                    logger.warn("Not managed type=%s", knock_type)
+                    logger.warning("Not managed type=%s", knock_type)
                     continue
 
                 # Notify
                 self._push_result(knock_key, port, v, aggreg_op)
 
         # Push aggregate results
-        for key, value in self._d_aggregate.iteritems():
+        for key, value in self._d_aggregate.items():
             self.notify_value_n(key, {"RDPORT": "ALL"}, value)
 
         # Over
@@ -266,9 +259,13 @@ class RedisStat(KnockProbe):
         """
         Agregate all key and send local key
         :param key; key
+        :type key: str
         ;param redis_port: redis_port
+        :type redis_port: int
         :param value: value
+        :type: value: object
         :param aggreg_op: str
+        :type aggreg_op: str
         """
 
         self.notify_value_n(key, {"RDPORT": redis_port}, value)

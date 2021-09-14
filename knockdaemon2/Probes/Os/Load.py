@@ -24,9 +24,7 @@
 import logging
 import os
 import time
-from datetime import datetime
 
-import pytz
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
@@ -36,7 +34,7 @@ from knockdaemon2.Platform.PTools import PTools
 logger = logging.getLogger(__name__)
 
 if PTools.get_distribution_type() == "windows":
-    from knockdaemon2.Windows.Wmi.Wmi import Wmi
+    pass
 
 try:
     from os import getloadavg
@@ -97,7 +95,7 @@ class Load(KnockProbe):
         cpu = self.get_stat()
 
         for key, value in cpu.items():
-            if isinstance(value, (long, int, float)):
+            if isinstance(value, (int, float)):
                 if key not in "total,guest":
                     if value < 0:
                         value = 0
@@ -229,7 +227,7 @@ class Load(KnockProbe):
             # sysctl = subprocess.Popen(["sysctl", "-n", "hw.ncpu"], stdout=subprocess.PIPE)
             # sc_stdout = sysctl.communicate()[0]
             if ec != 0:
-                logger.warn("ex=%s, so=%s, se=%s", ec, so, se)
+                logger.warning("ex=%s, so=%s, se=%s", ec, so, se)
                 pass
 
             sc_stdout = so
@@ -259,7 +257,7 @@ class Load(KnockProbe):
                 # dmesg = dmesg_process.communicate()[0]
                 ec, so, se = ButcherTools.invoke("dmesg")
                 if ec != 0:
-                    logger.warn("ex=%s, so=%s, se=%s", ec, so, se)
+                    logger.warning("ex=%s, so=%s, se=%s", ec, so, se)
                 else:
                     dmesg = so
 
@@ -287,7 +285,7 @@ class Load(KnockProbe):
 
         ec, so, se = ButcherTools.invoke("users")
         if ec != 0:
-            logger.warn("ex=%s, so=%s, se=%s", ec, so, se)
+            logger.warning("ex=%s, so=%s, se=%s", ec, so, se)
         else:
             buf = so.strip()
             if len(buf) > 0:
@@ -295,329 +293,6 @@ class Load(KnockProbe):
             else:
                 number = 0
             return number
-
-    # =======================================
-    # Windows support
-    # =======================================
-
-    def _windows_set_cpu_count(self, d):
-        """
-        Set total number of cores present accross all cpus (HT cores not included) inside _cpu_count
-        :param d: wmi dict
-        :type d: dict
-        """
-
-        # If done, exit
-        if self._cpu_count:
-            return
-
-        # We target :
-        # Win32_Processor :: CPUx => NumberOfCores => 4
-        # Note : For a 2 core HT : NumberOfCores is 2 and NumberOfLogicalProcessors is 4, we use NumberOfCores (real cpu cores)
-        total_core_count = 0
-
-        # Browse all physical CPU
-        for cpu_props in d["Win32_Processor"]:
-            # Get cores
-            core_count = int(cpu_props["NumberOfCores"])
-            name = cpu_props["Name"]
-            logger.info("Got cores=%s, name=%s", core_count, name)
-            # Sum
-            total_core_count += core_count
-
-        # Ok
-        self._cpu_count = total_core_count
-        logger.info("Detected total_core_count=%s, assigned to _cpu_count", total_core_count)
-
-    # noinspection PyMethodMayBeStatic
-    def _get_raw_proc_perf(self, d_wmi):
-        """
-        Get perf dict
-        :param d_wmi dict
-        :type d_wmi dict
-        :return dict
-        :rtype dict
-        """
-
-        for d in d_wmi["Win32_PerfRawData_PerfOS_Processor"]:
-            if "_total" == d["Name"].lower():
-                return d
-        return None
-
-    def _execute_windows(self):
-        """
-        Exec
-        """
-
-        d = None
-        try:
-            # We NEED recent data for RAW perf. This call is blocking.
-            Wmi.ensure_recent("Win32_PerfRawData_PerfOS_System")
-            Wmi.ensure_recent("Win32_PerfRawData_PerfOS_Processor")
-
-            # Get datas
-            d, age_ms = Wmi.wmi_get_dict()
-            logger.info("Using wmi with age_ms=%s", age_ms)
-
-            # Set cpu count (if needed)
-            self._windows_set_cpu_count(d)
-
-            # -------------------------
-            # Ok, load...
-            # -------------------------
-
-            d_proc_perf_raw = self._get_raw_proc_perf(d_wmi=d)
-            assert d_proc_perf_raw, "d_proc_perf_raw must be set"
-
-            # This is not available on windows
-            # We use ProcessorQueueLength
-            queue_len = int(d["Win32_PerfFormattedData_PerfOS_System"]["ProcessorQueueLength"])
-            logger.info("Got queue_len=%s", queue_len)
-
-            # This is instant value, we need to store history
-            # We should retain queue_len each second, but its too heavy, so we retain each run in array
-            self._ar_proc_qlen.append({"ms": SolBase.mscurrent(), "q": queue_len})
-            load1, load5, load15 = Load.process_ar_queue(self._ar_proc_qlen, SolBase.mscurrent())
-            logger.info("Got _ar_proc_qlen len=%s, q=%s", len(self._ar_proc_qlen), self._ar_proc_qlen)
-            logger.info("Got raw load1=%.2f, load5=%.2f, load15=%.2f", load1, load5, load15)
-
-            # Normalize
-            load1 /= float(self._cpu_count)
-            load5 /= float(self._cpu_count)
-            load15 /= float(self._cpu_count)
-            logger.info("Got nor load1=%.2f, load5=%.2f, load15=%.2f, cpu_count=%s", load1, load5, load15, self._cpu_count)
-
-            # Notify
-            self.notify_value_n("k.os.cpu.load.percpu.avg1", None, load1)
-            self.notify_value_n("k.os.cpu.load.percpu.avg5", None, load5)
-            self.notify_value_n("k.os.cpu.load.percpu.avg15", None, load15)
-            self.notify_value_n("k.os.cpu.core", None, self._cpu_count)
-
-            # =========================================
-            # Ok, cpu usages...
-            # =========================================
-
-            d_cpu = dict()
-
-            # We need :
-            # 'k.os.boottime' 1467005981
-            # 'k.os.hostname' 'klchgui01'
-            # 'k.os.localtime' 1489434351
-            # 'k.os.cpu.util[,softirq]' 113763      # cumulative, / cpu_count
-            # 'k.os.cpu.util[,iowait]' 8874729      # cumulative, / cpu_count
-            # 'k.os.cpu.util[,system]' 14525502     # cumulative, / cpu_count
-            # 'k.os.cpu.util[,idle]' 2142535263     # cumulative, / cpu_count
-            # 'k.os.cpu.util[,user]' 43317681       # cumulative, / cpu_count
-            # 'k.os.cpu.util[,interrupt]' 1373      # cumulative, / cpu_count
-            # 'k.os.cpu.util[,steal]' 2401629       # cumulative, / cpu_count
-            # 'k.os.cpu.util[,nice]' 2035           # cumulative, / cpu_count
-            # 'k.os.cpu.switches' 96431364224       # cumulative, Context switches (sum)
-            # 'k.os.cpu.intr' 9180015588            # cumulative, Interrupts (sum)
-
-            # 'k.os.processes.total[,,run]' 3           # Running process count (cur)
-            # 'k.os.maxfiles' '1048576'             # Max open files (cur)
-            # 'k.os.maxproc' '131072'               # Max process count (cur)
-            # 'k.os.users.connected' 1                    # Connected users (cur)
-
-            # ----------------------
-            # Boot time and local time
-            # The "btime" line gives the time at which the system booted, in seconds since the Unix epoch.
-            # We don't support that in windows (moreover we don't use that)
-            # ----------------------
-
-            # Get
-            boot_time = d["Win32_OperatingSystem"]["LastBootUpTime"]
-            logger.info("Got type=%s, boot_time=%s", type(boot_time), boot_time)
-
-            # Format is yyyyMMddhhmmss.ffffff+zzz
-            # We need to compute seconds elapsed since this date, so we need a date, utc naive
-            dt_boot_utc = Load.parse_time(boot_time)
-            elapsed_boot_sec = (SolBase.datediff(dt_boot_utc) / 1000)
-            logger.info("Got dt_boot_utc=%s, elapsed_boot_sec=%s", dt_boot_utc, elapsed_boot_sec)
-            d_cpu["k.os.boottime"] = elapsed_boot_sec
-
-            # Local time : direct
-            d_cpu["k.os.localtime"] = int(time.time())
-
-            # ----------------------
-            # Hostname
-            # ----------------------
-            d_cpu["k.os.hostname"] = SolBase.get_machine_name()
-
-            # ----------------------
-            # Cpu stuff
-            # ----------------------
-
-            # CAUTION :
-            # - We handle ALL stuff as cumulative values
-            # - Windows returning stuff as immediate values
-            # - Server handle stuff as delta per second
-            # SO :
-            # We use RAW datas from Win32_PerfRawData_PerfOS_Processor
-
-            # Example :
-            # sec 0         50% cpu                         => server receive 50       = 50 (no previous value, we store it raw)
-            # sec 60        50% cpu,    60s * 50% = 30      => server receive 50 + 30  = 80      => server delta = 30        => for 60 sec : 30 / 60 = 50%
-            # sec 120       50% cpu,    60s * 50% = 30      => server receive 80 + 30  = 110     => server delta = 30        => for 60 sec : 30 / 60 = 50%
-            # sec 180       100% cpu,   60s * 100% = 30     => server receive 110 + 60 = 170     => server delta = 60        => for 60 sec : 60 / 60 = 100%
-
-            # 'k.os.cpu.util[,softirq]' 113763      # cumulative, / cpu_count
-            # 'k.os.cpu.util[,iowait]' 8874729      # cumulative, / cpu_count
-            # 'k.os.cpu.util[,system]' 14525502     # cumulative, / cpu_count
-            # 'k.os.cpu.util[,idle]' 2142535263     # cumulative, / cpu_count
-            # 'k.os.cpu.util[,user]' 43317681       # cumulative, / cpu_count
-            # 'k.os.cpu.util[,interrupt]' 1373      # cumulative, / cpu_count
-            # 'k.os.cpu.util[,steal]' 2401629       # cumulative, / cpu_count
-            # 'k.os.cpu.util[,nice]' 2035           # cumulative, / cpu_count
-            # 'k.os.cpu.switches' 96431364224       # cumulative, Context switches (sum)
-            # 'k.os.cpu.intr' 9180015588            # cumulative, Interrupts (sum)
-
-            # Fetch raw values
-            d_cur_val = dict()
-            for k_key, w_d, w_key in [
-                # We map PercentDPCTime
-                ["k.os.cpu.util[,softirq]", d_proc_perf_raw, "PercentDPCTime"],
-                # Must remove PercentDPCTime and interrupts from this one, since they are INCLUDED inside(yeaaaaaah guys GG)
-                ["k.os.cpu.util[,system]", d_proc_perf_raw, "PercentPrivilegedTime"],
-                ["k.os.cpu.util[,idle]", d_proc_perf_raw, "PercentIdleTime"],
-                ["k.os.cpu.util[,user]", d_proc_perf_raw, "PercentUserTime"],
-                ["k.os.cpu.util[,interrupt]", d_proc_perf_raw, "PercentInterruptTime"],
-                # Will be zero (not supported)
-                ["k.os.cpu.util[,steal]", None, None],
-                ["k.os.cpu.util[,iowait]", None, None],
-                ["k.os.cpu.util[,nice]", None, None],
-                # Int/Switches
-                ["k.os.cpu.switches", d["Win32_PerfRawData_PerfOS_System"], "ContextSwitchesPersec"],
-                ["k.os.cpu.intr", d_proc_perf_raw, "InterruptsPersec"],
-            ]:
-                # FETCH (or set)
-                if w_key:
-                    d_cur_val[k_key] = float(w_d[w_key])
-                else:
-                    d_cur_val[k_key] = 0.0
-
-            # Fix "k.os.cpu.util[,system]" : "k.os.cpu.util[,softirq]" and  interrupt
-            d_cur_val["k.os.cpu.util[,system]"] -= d_cur_val["k.os.cpu.util[,softirq]"]
-            d_cur_val["k.os.cpu.util[,system]"] -= d_cur_val["k.os.cpu.util[,interrupt]"]
-
-            # For check only
-            raw_cpu_usage = float(d_proc_perf_raw["PercentProcessorTime"])
-
-            # Logs
-            logger.info("Got dir %s=%s", "raw_cpu_usage".ljust(48), str(int(raw_cpu_usage)).rjust(20))
-            chk_sum = 0.0
-            for k, v in d_cur_val.iteritems():
-                logger.info("Got raw %s=%s", k.ljust(48), str(int(v)).rjust(20))
-                chk_sum += v
-            logger.info("Got chk %s=%s", "chk_cpu_usage".ljust(48), str(int(chk_sum)).rjust(20))
-            logger.info("Got chk %s=%s", "chk_diff".ljust(48), str(int(raw_cpu_usage - chk_sum)).rjust(20))
-
-            # For cpu we need precision, so get the timestamp
-            ts_100 = float(d_proc_perf_raw["Timestamp_Sys100NS"])
-            logger.info("Got ts_100=%s", ts_100)
-            ts_epoch = Wmi.get_sec_epoch_from_ns(ts_100)
-            logger.info("Got ts_epoch=%s", ts_epoch)
-
-            # Raw values are cumulative 100NS-ticks, divide by 10000 to get ms
-            # Linux values are usually hundredths of a second, so divide again by 10 to get 1/100 sec (we are % based at server end)
-            # And we DO NOT normalize by cpu count since we are already targeting total
-            for k, v in d_cur_val.iteritems():
-                # Do not do it for these one
-                if k in ["k.os.cpu.intr"]:
-                    continue
-                elif k in ["k.os.cpu.switches"]:
-                    # Here, we have uint32, which is mapped by pywin32 to int, which can become negative (???)
-                    # If it is negative : uint32 max minus our value
-                    if v < 0:
-                        d_cur_val[k] = Wmi.fix_uint32_max(v)
-                else:
-                    # Got to ms (1/1000)
-                    ms = float(v) / 10000.0
-                    # Got to 1/100
-                    cms = float(ms) / 10.0
-                    # Normalize
-                    # nms = float(cms) / float(self._cpu_count)
-                    # Update
-                    d_cur_val[k] = cms
-
-            for k, v in d_cur_val.iteritems():
-                logger.info("Got fin %s=%s", k.ljust(48), str(int(v)).rjust(20))
-
-            # Merge
-            d_cpu.update(d_cur_val)
-
-            # ===========================
-            # RUNNING PROCESSES / CONNECTED USERS
-            # Runnign threads => We browse Win32_Thread and check ThreadState running (2)
-            # Connected users (cur) => Win32_LogonSession, LogonType == 10
-            # ===========================
-
-            d_cpu["k.os.processes.total[,,run]"] = d["WQL_RunningThreadCount"]
-            d_cpu["k.os.users.connected"] = d["WQL_ConnectedUsers"]
-
-            # ===========================
-            # MISC
-            # 'k.os.maxfiles' '1048576'             # Max open files (cur) => BYPASS
-            # 'k.os.maxproc' '131072'               # Max process count (cur) => BYPASS
-            # ===========================
-
-            # Roughly
-            d_cpu["k.os.maxfiles"] = 16711680
-            d_cpu["k.os.maxproc"] = 16711680
-
-            # Notify all
-            for k, v in d_cpu.iteritems():
-                # For k.os.cpu.util : push precise
-                if k.startswith("k.os.cpu.util"):
-                    self.notify_value_n(k, None, v, ts_epoch)
-                else:
-                    self.notify_value_n(k, None, v)
-
-        except Exception as e:
-            logger.warn("Exception while processing, ex=%s, d=%s", SolBase.extostr(e), d)
-
-    @classmethod
-    def parse_time(cls, st):
-        """
-        Parse date time string (20170312044209.003363-420)
-        :param st: unicode,str as 20170312044209.003363-420
-        :type st: unicode,str
-        :return datetime (naive, utc)
-        :rtype datetime
-        """
-
-        year = int(st[0:4])
-        month = int(st[4:6])
-        day = int(st[6:8])
-        hh = int(st[8:10])
-        mm = int(st[10:12])
-        ss = int(st[12:14])
-        ms = int(st[15:21])
-        tz = st[21:]
-        if len(tz) > 0:
-            tz = int(tz)
-        else:
-            tz = 0
-
-        # Timezone aware date
-        # noinspection PyArgumentList
-        dt = datetime(year=year, month=month, day=day, hour=hh, minute=mm, second=ss, microsecond=ms, tzinfo=pytz.FixedOffset(tz))
-        logger.info("Got a.dt=%s", dt)
-
-        # Add (if naive) or move (if aware) to UTC
-        if not dt.tzinfo:
-            # If naive, add utc
-            dt = dt.replace(tzinfo=pytz.utc)
-        else:
-            # Not naive, go utc, keep aware
-            dt = dt.astimezone(pytz.utc)
-        logger.info("Got b.dt=%s", dt)
-
-        # Move from aware to naive
-        dt = dt.replace(tzinfo=None)
-        logger.info("Got c.dt=%s", dt)
-
-        return dt
 
     @classmethod
     def process_ar_queue(cls, ar, ms_current):

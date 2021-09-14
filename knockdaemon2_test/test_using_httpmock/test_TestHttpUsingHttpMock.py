@@ -25,7 +25,7 @@
 import logging
 import os
 import unittest
-import urllib
+from urllib.parse import urlencode
 
 import ujson
 from geventhttpclient import HTTPClient, URL
@@ -66,7 +66,7 @@ class TestHttp(unittest.TestCase):
         Setup (called after each test)
         """
         if self.h:
-            logger.warn("h set, stopping, not normal")
+            logger.warning("h set, stopping, not normal")
             self.h.stop()
             self.h = None
 
@@ -110,7 +110,7 @@ class TestHttp(unittest.TestCase):
         self.assertIsNotNone(self.h._server_greenlet)
 
         # Param
-        v = urllib.urlencode({"p1": "v1 2.3/4"})
+        v = urlencode({"p1": "v1 2.3/4"})
 
         # Http get
         url = URL("http://localhost:7900/unittest?" + v)

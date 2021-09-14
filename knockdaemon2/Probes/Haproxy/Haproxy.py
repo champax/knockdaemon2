@@ -25,7 +25,7 @@ import csv
 import logging
 import re
 import socket
-from StringIO import StringIO
+from io import StringIO
 
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
@@ -104,7 +104,7 @@ class Haproxy(KnockProbe):
                 # noinspection PyBroadException
                 try:
                     cur_val = float(cur_val)
-                except:
+                except Exception:
                     # If empty string, set 0.0
                     if len(cur_val) == 0:
                         cur_val = 0.0
@@ -133,18 +133,12 @@ class Haproxy(KnockProbe):
         # Base
         KnockProbe.init_from_config(self, k, d_yaml_config, d)
 
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
-
     def _execute_linux(self):
         """
         Exec
         """
 
+        soc_name = None
         try:
             if not FileUtility.is_file_exist('/etc/haproxy/haproxy.cfg'):
                 logger.info("Give up (/etc/haproxy/haproxy.cfg not found)")
@@ -156,7 +150,7 @@ class Haproxy(KnockProbe):
             # Load config and locate stats socket /var/lib/haproxy/stats
             # -------------------------------
 
-            c_buf = FileUtility.file_to_textbuffer("/etc/haproxy/haproxy.cfg", "utf-8")
+            c_buf = FileUtility.file_to_textbuffer("/etc/haproxy/haproxy.cfg", "utf8")
             ar_buf = c_buf.split("\n")
             soc_name = None
             for cur_line in ar_buf:
@@ -168,7 +162,7 @@ class Haproxy(KnockProbe):
 
             # Check
             if not soc_name:
-                logger.warn("Unable to locate stats socket (giveup)")
+                logger.warning("Unable to locate stats socket (giveup)")
                 return
 
             # Ok
@@ -181,7 +175,7 @@ class Haproxy(KnockProbe):
             try:
                 ha_buf = self.read_soc(soc_name, "show stat")
             except Exception as e:
-                logger.warn("Exception, ex=%s", SolBase.extostr(e))
+                logger.warning("Exception, ex=%s", SolBase.extostr(e))
                 raise e
 
             # -------------------------------
@@ -244,7 +238,6 @@ class Haproxy(KnockProbe):
                 # String
                 proxy_name = cur_d["# pxname"]
                 service_name = cur_d["svname"]
-                status = cur_d["status"]
 
                 # -----------------------
                 # BYPASS STATS
@@ -298,8 +291,6 @@ class Haproxy(KnockProbe):
                         agregated_dict[proxy_name]['server_ok'] += 1
                         agregated_dict[proxy_name]['status_ok'] += 1
                         d_global["status_ok"] += 1.0
-
-
                     else:
                         agregated_dict[proxy_name]['server_ko'] += 1.0
                         agregated_dict[proxy_name]['status_ko'] += 1.0
@@ -366,7 +357,7 @@ class Haproxy(KnockProbe):
             )
 
         except Exception as e:
-            logger.warn("Exception (signaling down), ex=%s", SolBase.extostr(e))
+            logger.warning("Exception (signaling down), ex=%s", SolBase.extostr(e))
             # Failed
             self.notify_value_n(
                 counter_key="k.haproxy.started",
@@ -376,15 +367,16 @@ class Haproxy(KnockProbe):
 
         self.read_table(soc_name)
 
+    # noinspection PyMethodMayBeStatic
     def read_soc(self, soc_name, cmd):
         """
         Open socket, send and readall
 
         :param soc_name: Socket path
         :type soc_name: str
-        :param cmd:
+        :param cmd: str
         :type cmd: str
-        :return:
+        :return: str
         :rtype str
         """
         ha_buf = ""
@@ -396,7 +388,7 @@ class Haproxy(KnockProbe):
             soc.connect(soc_name)
             SolBase.sleep(0)
             logger.debug("Send socket, soc_name=%s", soc_name)
-            soc.sendall("%s \n" % cmd)
+            soc.sendall(("%s \n" % cmd).encode("utf8"))
             SolBase.sleep(0)
 
             logger.debug("Recv (start) socket, soc_name=%s", soc_name)
@@ -419,7 +411,7 @@ class Haproxy(KnockProbe):
 
         :param ha_buf: buffer to parse
         :type ha_buf: str
-        :return:
+        :return: csv.DictReader
         :rtype: csv.DictReader
         """
         f = StringIO()
@@ -443,7 +435,7 @@ class Haproxy(KnockProbe):
         try:
             ha_buf = self.read_soc(soc_name, "show table")
         except Exception as e:
-            logger.warn("Exception, ex=%s", SolBase.extostr(e))
+            logger.warning("Exception, ex=%s", SolBase.extostr(e))
             raise e
 
         matches = re.finditer(regex, ha_buf, re.MULTILINE)

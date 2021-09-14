@@ -58,13 +58,6 @@ class Mdstat(KnockProbe):
         for md, result in Mdstat.parse():
             self.notify_value_n("k.os.disk.mdstat", {'md': md}, result)
 
-    def _execute_windows(self):
-        """
-        Windows
-        """
-
-        return
-
     @classmethod
     def parse(cls, mdjson=False):
         """

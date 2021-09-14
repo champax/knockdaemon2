@@ -25,6 +25,7 @@ import logging
 import platform
 import tempfile
 
+import distro
 from pysolbase.SolBase import SolBase
 
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class PTools(object):
             return platform.machine().find('64') >= 0
         except Exception as e:
             # Not normal, but fallback 64 bits
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
             return True
 
     @classmethod
@@ -65,7 +66,7 @@ class PTools(object):
                 return False
         except Exception as e:
             # Not normal, but fallback x86
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
             return False
 
     @classmethod
@@ -113,13 +114,12 @@ class PTools(object):
         detected_dist = None
 
         # Get
-        cur_dist = platform.dist()
-        cur_linux_distribution = platform.linux_distribution(full_distribution_name=False)
-
+        cur_dist = distro.id()
+        cur_linux_distribution = distro.codename()
         # Try dist
         if not detected_dist:
             try:
-                detected_dist = cur_dist[0]
+                detected_dist = cur_dist
                 detected_dist = detected_dist.strip()
                 if len(detected_dist) == 0:
                     # Reset
@@ -162,7 +162,7 @@ class PTools(object):
 
         # Check
         if not detected_dist:
-            logger.warn("Unable to detect distribution, fallback debian, got detected_dist=%s, cur_dist=%s, cur_linux_distribution=%s", detected_dist, cur_dist, cur_linux_distribution)
+            logger.warning("Unable to detect distribution, fallback debian, got detected_dist=%s, cur_dist=%s, cur_linux_distribution=%s", detected_dist, cur_dist, cur_linux_distribution)
             return "debian"
 
         # Lower
@@ -193,7 +193,7 @@ class PTools(object):
             return "windows"
 
         # Fallback
-        logger.warn("Unknown distribution, fallback debian, got detected_dist=%s, cur_dist=%s, cur_linux_distribution=%s", detected_dist, cur_dist, cur_linux_distribution)
+        logger.warning("Unknown distribution, fallback debian, got detected_dist=%s, cur_dist=%s, cur_linux_distribution=%s", detected_dist, cur_dist, cur_linux_distribution)
         return "debian"
 
     @classmethod

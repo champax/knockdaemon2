@@ -23,12 +23,13 @@
 """
 
 import logging
-import urlparse
 # noinspection PyProtectedMember
+import zlib
 from collections import OrderedDict
 from os.path import abspath
 from os.path import dirname
 from threading import Lock
+from urllib.parse import parse_qsl
 
 import gevent
 import ujson
@@ -94,7 +95,7 @@ class HttpMock(object):
 
                 # Check
                 if self._is_running:
-                    logger.warn("Already running, doing nothing")
+                    logger.warning("Already running, doing nothing")
 
                 # Start
                 self._server_greenlet = gevent.spawn(self._server_forever)
@@ -170,7 +171,7 @@ class HttpMock(object):
                 id(self),
             )
         except Exception as e:
-            logger.warn("Exception, ex=%s", SolBase.extostr(e))
+            logger.warning("Exception, ex=%s", SolBase.extostr(e))
 
     # ==============================
     # SERVER
@@ -250,7 +251,7 @@ class HttpMock(object):
 
         # Decode, browse and hash (got a list of tuple (param, value))
         d = dict()
-        for tu in urlparse.parse_qsl(buf, keep_blank_values=True, strict_parsing=True):
+        for tu in parse_qsl(buf, keep_blank_values=True, strict_parsing=True):
             d[tu[0]] = tu[1]
         return d
 
@@ -260,12 +261,12 @@ class HttpMock(object):
         Get post data, raw, not decoded. Return an empty string is no post data.
         :param environ: dict
         :type environ: dict
-        :return str
-        :rtype str
+        :return bytes
+        :rtype bytes
         """
         wi = environ["wsgi.input"]
         if not wi:
-            return ""
+            return b""
         else:
             return wi.read()
 
@@ -274,14 +275,14 @@ class HttpMock(object):
         Get post data, raw, not decoded. Return an empty string is no post data.
         :param environ: dict
         :type environ: dict
-        :return str
-        :rtype str
+        :return bytes
+        :rtype bytes
         """
         wi = self._get_post_data_raw(environ)
         if wi:
             # Try gzip
             try:
-                wi = wi.decode("zlib")
+                wi = zlib.decompress(wi)
             except Exception as ex:
                 logger.debug("Unable to decode zlib, should be a normal buffer, ex=%s",
                              SolBase.extostr(ex))
@@ -307,7 +308,7 @@ class HttpMock(object):
             logger.info("Request start now")
 
             # Log
-            for k, v in environ.iteritems():
+            for k, v in environ.items():
                 logger.debug("Env: %s=%s", k, v)
 
             # Switch
@@ -334,7 +335,7 @@ class HttpMock(object):
             else:
                 return self._on_invalid(start_response)
         except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
             status = "500 Internal Server Error"
             body = status
             headers = [('Content-Type', 'text/plain')]
@@ -557,7 +558,7 @@ class HttpMock(object):
             start_response(status, headers)
             return [body]
         except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
             # Reply success to avoid client enqueing stuff if we are buggy
             rd = dict()
             rd["st"] = 200
@@ -608,12 +609,12 @@ class HttpMock(object):
             logger.info("GOT OS name=%s, version=%s, arch=%s", client_os_name, client_os_version, client_os_arch)
 
         except KeyError:
-            logger.warn("Missing parameters")
+            logger.warning("Missing parameters")
             return_status_code = 418
             return_status_message = "I'm a teapot"
 
         except Exception as e:
-            logger.warn(SolBase.extostr(e))
+            logger.warning(SolBase.extostr(e))
             return_status_code = 500
             return_status_message = 'Internal error'
 
@@ -630,12 +631,12 @@ class HttpMock(object):
                     from_cache = False
 
             except NotSupportedVersion as e:
-                logger.warn(SolBase.extostr(e))
+                logger.warning(SolBase.extostr(e))
                 return_status_message = 'Version not supported'
                 return_status_code = 404
             except Exception as e:
                 package_url = None
-                logger.warn(SolBase.extostr(e))
+                logger.warning(SolBase.extostr(e))
 
         # Reply
         rd = dict()
@@ -697,7 +698,7 @@ class HttpMock(object):
             start_response(status, headers)
             return [body]
         except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
             rd = dict()
             rd["st"] = 500
             status = "500"
@@ -726,7 +727,7 @@ class HttpMock(object):
         # ----------------------------
         # NODES
         # ----------------------------
-        for k, v in node_hash.iteritems():
+        for k, v in node_hash.items():
             logger.debug("Node %s: %s", k, v)
 
         # Get host
@@ -770,7 +771,7 @@ class HttpMock(object):
 
         # Merge disco key to list
         hash_disco_key_to_list = dict()
-        for k, tu in notify_hash.iteritems():
+        for k, tu in notify_hash.items():
 
             # OLD FORMAT :
             # Key => tuple (disco_key, disco_id, tag)
@@ -818,7 +819,7 @@ class HttpMock(object):
 
                 # Browse
                 local_dict = dict()
-                for disco_id, disco_tag in od.iteritems():
+                for disco_id, disco_tag in od.items():
                     # Create dict
                     local_dict["{#" + disco_id + "}"] = disco_tag
 
@@ -832,7 +833,7 @@ class HttpMock(object):
         # B) BUILD data_list using DISCO, browse hash_disco_key_to_list
         # ----------------------------
         disco_list = list()
-        for superv_disco_key, localList in hash_disco_key_to_list.iteritems():
+        for superv_disco_key, localList in hash_disco_key_to_list.items():
             # Value is a JSON { "data" : [ list of dict ]
             json_dict = dict()
             json_dict["data"] = localList
@@ -896,7 +897,7 @@ class HttpMock(object):
                     if len(od) > 1:
                         pass
                     sa = "["
-                    for k, v in od.iteritems():
+                    for k, v in od.items():
                         # sa += "'" + v + "',"
                         sa += "" + v + ","
                     sa = sa[:-1]
@@ -914,7 +915,7 @@ class HttpMock(object):
                     # --------------------
                     # We do NOT allow discovery here
                     if superv_key.endswith(".discovery"):
-                        logger.warn(".discovery not allowed in tag value, got %s, %s, %s, %s", superv_key, tag, value, t)
+                        logger.warning(".discovery not allowed in tag value, got %s, %s, %s, %s", superv_key, tag, value, t)
                         raise Exception(".discovery not allowed in tag value")
 
                     # Tag value
@@ -1011,7 +1012,7 @@ class HttpMock(object):
             r_ok += ok_count
             r_ko += ko_count
         except Exception as e:
-            logger.warn("Exception (new code path), ex=%s", SolBase.extostr(e))
+            logger.warning("Exception (new code path), ex=%s", SolBase.extostr(e))
             raise
         finally:
             # required for unittest
@@ -1044,7 +1045,7 @@ class HttpMock(object):
 
         # Merge disco key to list
         hash_disco_key_to_list = dict()
-        for k, tu in notify_hash.iteritems():
+        for k, tu in notify_hash.items():
             disco_key = tu[0]
             disco_id = tu[1]
             tag = tu[2]
@@ -1067,7 +1068,7 @@ class HttpMock(object):
 
         # Browse it
         data_list = list()
-        for superv_disco_key, localList in hash_disco_key_to_list.iteritems():
+        for superv_disco_key, localList in hash_disco_key_to_list.items():
             # Value is a JSON { "data" : [ list of dict ]
             json_dict = dict()
             json_dict["data"] = localList
@@ -1114,7 +1115,7 @@ class HttpMock(object):
             if tag and len(tag) > 0:
                 # We do NOT allow discovery here
                 if superv_key.endswith(".discovery"):
-                    logger.warn(".discovery not allowed in tag value, got %s, %s, %s, %s", superv_key, tag, value, t)
+                    logger.warning(".discovery not allowed in tag value, got %s, %s, %s, %s", superv_key, tag, value, t)
                     raise Exception(".discovery not allowed in tag value")
 
                 # Tag value
@@ -1196,7 +1197,7 @@ class HttpMock(object):
             r_ok += ok_count
             r_ko += ko_count
         except Exception as e:
-            logger.warn("Exception (new code path), ex=%s", SolBase.extostr(e))
+            logger.warning("Exception (new code path), ex=%s", SolBase.extostr(e))
             raise
         finally:
             # required for unittest

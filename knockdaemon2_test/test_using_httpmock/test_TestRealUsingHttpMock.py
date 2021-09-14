@@ -35,7 +35,6 @@ from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.KnockManager import KnockManager
 from knockdaemon2.HttpMock.HttpMock import HttpMock
-from knockdaemon2.Platform.PTools import PTools
 from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
 
 logger = logging.getLogger(__name__)
@@ -56,9 +55,7 @@ class TestRealUsingHttpMock(unittest.TestCase):
         os.environ.setdefault("KNOCK_UNITTEST", "yes")
 
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
-        self.manager_config_file = \
-            self.current_dir + "conf" + SolBase.get_pathseparator() + "real" \
-            + SolBase.get_pathseparator() + "knockdaemon2.yaml"
+        self.manager_config_file = self.current_dir + "conf" + SolBase.get_pathseparator() + "real" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
         self.k = None
 
         # Reset meter
@@ -77,12 +74,12 @@ class TestRealUsingHttpMock(unittest.TestCase):
         Setup (called after each test)
         """
         if self.k:
-            logger.warn("k set, stopping, not normal")
+            logger.warning("k set, stopping, not normal")
             self.k.stop()
             self.k = None
 
         if self.h:
-            logger.warn("h set, stopping, not normal")
+            logger.warning("h set, stopping, not normal")
             self.h.stop()
             self.h = None
 

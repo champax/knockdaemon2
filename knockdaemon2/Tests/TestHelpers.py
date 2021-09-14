@@ -42,7 +42,7 @@ def expect_disco(self, k, key, d_disco):
 
     count = 0
     # noinspection PyProtectedMember
-    for cur_key, tu in k._superv_notify_disco_hash.iteritems():
+    for cur_key, tu in k._superv_notify_disco_hash.items():
         disco_key, ddict = tu
         if disco_key != key:
             continue
@@ -52,7 +52,7 @@ def expect_disco(self, k, key, d_disco):
             continue
 
         # Check key / values
-        for k2, v2 in d_disco.iteritems():
+        for k2, v2 in d_disco.items():
             if k2 in ddict and ddict[k2] == v2:
                 count += 1
 
@@ -108,7 +108,7 @@ def expect_value(self, k, key, value, operator, d_disco=None, cast_to_float=Fals
             if d_disco:
                 d_ok = 0
 
-                for k2, v2 in d_disco.iteritems():
+                for k2, v2 in d_disco.items():
                     if k2 not in k_d_disco:
                         continue
                     elif k_d_disco[k2] != v2:
@@ -167,7 +167,7 @@ def _exec_helper(self, exec_class):
     count = 0
     for p in self.k._probe_list:
         if isinstance(p, exec_class) or exec_class.__name__ == p.__class__.__name__:
-            for k, v in self.conf_probe_override.iteritems():
+            for k, v in self.conf_probe_override.items():
                 setattr(p, k, v)
             # Category must be set and no "undef"
             self.assertIsNotNone(p.category)
@@ -181,5 +181,5 @@ def _exec_helper(self, exec_class):
     for tu in self.k._superv_notify_value_list:
         logger.info("Having tu=%s", tu)
 
-    for k, tu in self.k._superv_notify_disco_hash.iteritems():
+    for k, tu in self.k._superv_notify_disco_hash.items():
         logger.info("Having disco, k=%s, tu=%s", k, tu)

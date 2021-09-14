@@ -54,9 +54,7 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
         os.environ.setdefault("KNOCK_UNITTEST", "yes")
 
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
-        self.manager_config_file = \
-            self.current_dir + "conf" + SolBase.get_pathseparator() + "protocol" \
-            + SolBase.get_pathseparator() + "knockdaemon2.yaml"
+        self.manager_config_file = self.current_dir + "conf" + SolBase.get_pathseparator() + "protocol" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
         self.k = None
 
         # Reset meter

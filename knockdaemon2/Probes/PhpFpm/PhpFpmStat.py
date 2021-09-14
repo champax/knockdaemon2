@@ -122,13 +122,6 @@ class PhpFpmStat(KnockProbe):
 
         self.category = "/app/phpfpm"
 
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
-
     def init_from_config(self, k, d_yaml_config, d):
         """
         Initialize from configuration
@@ -180,7 +173,7 @@ class PhpFpmStat(KnockProbe):
             # Ok
             logger.info("Config loaded, _d_pool_from_url=%s", self._d_pool_from_url)
         except Exception as e:
-            logger.warn("Exception while loading config, ex=%s", SolBase.extostr(e))
+            logger.warning("Exception while loading config, ex=%s", SolBase.extostr(e))
 
     def _execute_linux(self):
         """
@@ -221,7 +214,7 @@ class PhpFpmStat(KnockProbe):
 
             # Check
             if pool_id in d_pool_from_files:
-                logger.warn("Already hashed pool, pool_id=%s, d_pool_from_files=%s", pool_id, d_pool_from_files)
+                logger.warning("Already hashed pool, pool_id=%s, d_pool_from_files=%s", pool_id, d_pool_from_files)
 
             # Hash
             d_pool_from_files[pool_id] = status_path, cur_file
@@ -238,7 +231,7 @@ class PhpFpmStat(KnockProbe):
         # -------------------------------
 
         if len(d_pool_from_files) != len(self._d_pool_from_url):
-            logger.warn("Possible pool mismatch, d_pool_from_files=%s, _d_pool_from_url=%s", d_pool_from_files, self._d_pool_from_url)
+            logger.warning("Possible pool mismatch, d_pool_from_files=%s, _d_pool_from_url=%s", d_pool_from_files, self._d_pool_from_url)
         else:
             logger.info("Pool seems ok, d_pool_from_files=%s, _d_pool_from_url=%s", d_pool_from_files, self._d_pool_from_url)
 
@@ -250,7 +243,7 @@ class PhpFpmStat(KnockProbe):
         logger.info("Firing discoveries (from d_pool_from_files)")
 
         # From detection
-        for pool_id, (_, _) in d_pool_from_files.iteritems():
+        for pool_id, (_, _) in d_pool_from_files.items():
             self.notify_discovery_n("k.phpfpm.discovery", {"ID": pool_id})
 
         self.notify_discovery_n("k.phpfpm.discovery", {"ID": "ALL"})
@@ -264,12 +257,12 @@ class PhpFpmStat(KnockProbe):
 
         # GO
         logger.info("Processing pools (from d_pool_from_files)")
-        for pool_id, (status_path, pool_file) in d_pool_from_files.iteritems():
+        for pool_id, (status_path, pool_file) in d_pool_from_files.items():
             logger.info("Processing, pool_id=%s, status_path=%s, pool_file=%s", pool_id, status_path, pool_file)
 
             # Try to locate uri
             if pool_id not in self._d_pool_from_url:
-                logger.warn("Cannot locate uri, notify started=0 and skip, pool_id=%s, _d_pool_from_url=%s", pool_id, self._d_pool_from_url)
+                logger.warning("Cannot locate uri, notify started=0 and skip, pool_id=%s, _d_pool_from_url=%s", pool_id, self._d_pool_from_url)
                 self.notify_value_n("k.phpfpm.started", {"ID": pool_id}, 0)
                 continue
 
@@ -288,7 +281,7 @@ class PhpFpmStat(KnockProbe):
 
             # Here, we are NOT OK for this pool
             if not pool_ok:
-                logger.warn("All Uri down, notify started=0 and return, pool_id=%s", pool_id)
+                logger.warning("All Uri down, notify started=0 and return, pool_id=%s", pool_id)
                 self.notify_value_n("k.phpfpm.started", {"ID": pool_id}, 0)
 
             # Next pool
@@ -313,13 +306,13 @@ class PhpFpmStat(KnockProbe):
 
             # Check
             if not FileUtility.is_file_exist(cur_file):
-                logger.warn("Give up (file not found), cur_file=%s", cur_file)
+                logger.warning("Give up (file not found), cur_file=%s", cur_file)
                 return None, None
 
             # Load buffer
             buf = FileUtility.file_to_textbuffer(cur_file, "utf8")
             if not buf:
-                logger.warn("Give up (no buffer), cur_file=%s", cur_file)
+                logger.warning("Give up (no buffer), cur_file=%s", cur_file)
                 return None, None
 
             # Parse
@@ -343,12 +336,12 @@ class PhpFpmStat(KnockProbe):
                     # Extract
                     temp_ar = a.split("=", 1)
                     if len(temp_ar) != 2:
-                        logger.warn("Split issues, temp_ar=%s", temp_ar)
+                        logger.warning("Split issues, temp_ar=%s", temp_ar)
                         continue
 
                     temp_ar[1] = temp_ar[1].strip()
                     if len(temp_ar[1]) == 0:
-                        logger.warn("Config issue, not value, temp_ar=%s", temp_ar)
+                        logger.warning("Config issue, not value, temp_ar=%s", temp_ar)
                         continue
 
                     # Ok
@@ -357,13 +350,13 @@ class PhpFpmStat(KnockProbe):
 
             # Check
             if not cur_status_path:
-                logger.warn("Give up (no status_path), cur_file=%s", cur_file)
+                logger.warning("Give up (no status_path), cur_file=%s", cur_file)
                 return None, None
 
             # Ok
             return cur_status_path, cur_id
         except Exception as e:
-            logger.warn("Give up (exception), cur_file=%s, ex=%s", cur_file, SolBase.extostr(e))
+            logger.warning("Give up (exception), cur_file=%s, ex=%s", cur_file, SolBase.extostr(e))
             return None, None
 
     def _process_pool(self, pool_id, pool_uri):
@@ -400,7 +393,7 @@ class PhpFpmStat(KnockProbe):
                 # Try
                 if k not in d_json:
                     if k.find("k.phpfpm.") != 0:
-                        logger.warn("Unable to locate k=%s in d_out", k)
+                        logger.warning("Unable to locate k=%s in d_out", k)
                     continue
 
                 # Ok, fetch and cast
@@ -415,7 +408,7 @@ class PhpFpmStat(KnockProbe):
                     logger.debug("Skipping type=%s", knock_type)
                     continue
                 else:
-                    logger.warn("Not managed type=%s", knock_type)
+                    logger.warning("Not managed type=%s", knock_type)
 
                 # Handle ALL
                 self._handle_all(knock_key, v)
@@ -434,7 +427,7 @@ class PhpFpmStat(KnockProbe):
         Push all
         """
 
-        for k, v in self._d_all.iteritems():
+        for k, v in self._d_all.items():
             self.notify_value_n(k, {"ID": "ALL"}, v)
 
     def _handle_all(self, knock_key, v):
@@ -476,7 +469,7 @@ class PhpFpmStat(KnockProbe):
             return
 
         # Failed
-        logger.warn("Not managed knock_key=%s for ALL instance", knock_key)
+        logger.warning("Not managed knock_key=%s for ALL instance", knock_key)
 
     # noinspection PyMethodMayBeStatic
     def fetch_url_as_json(self, url_status):
@@ -545,7 +538,7 @@ class PhpFpmStat(KnockProbe):
 
                 # Check
                 if not pd:
-                    logger.warn("No buffer, give up")
+                    logger.warning("No buffer, give up")
                     return None
 
                 # Json
@@ -554,15 +547,15 @@ class PhpFpmStat(KnockProbe):
                     logger.info("Got d_json=%s", d_json)
                     return d_json
                 except Exception as e:
-                    logger.warn("json loads exception, give up, ex=%s", SolBase.extostr(e))
+                    logger.warning("json loads exception, give up, ex=%s", SolBase.extostr(e))
                     return None
 
             # Failed
-            logger.warn("No http 200, give up")
+            logger.warning("No http 200, give up")
             return None
 
         except Exception as e:
-            logger.warn("Exception, ex=%s", SolBase.extostr(e))
+            logger.warning("Exception, ex=%s", SolBase.extostr(e))
             return None
 
     @staticmethod
@@ -573,6 +566,7 @@ class PhpFpmStat(KnockProbe):
         :rtype: list(dict())
         """
         reg_obj_status = re.compile(r"^pm.status_path\s*=\s*(.*)$")
+        # noinspection RegExpRedundantEscape
         reg_obj_pool = re.compile(r"^\[(.*)\].*$")
         res = []
         for filename in glob.glob("/etc/php5/fpm/**/*.conf"):

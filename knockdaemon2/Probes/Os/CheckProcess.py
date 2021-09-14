@@ -34,7 +34,7 @@ from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Platform.PTools import PTools
 
 if PTools.get_distribution_type() == "windows":
-    from knockdaemon2.Windows.Wmi.Wmi import Wmi
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +87,7 @@ class CheckProcess(KnockProbe):
         logger.info("process_config=%s", self.process_config)
 
         # Default to linux
-        for k, d in self.process_config.iteritems():
+        for k, d in self.process_config.items():
             if "os" not in d:
                 logger.info("Switching k=%s to os=linux (default)", k)
                 d["os"] = "linux"
@@ -109,7 +109,7 @@ class CheckProcess(KnockProbe):
         # if True:
         #            return
 
-        for checker, param in self.process_config.iteritems():
+        for checker, param in self.process_config.items():
             if param["os"] != "linux":
                 logger.info("Bypassing checker=%s due to os=%s", checker, param["os"])
                 continue
@@ -136,10 +136,10 @@ class CheckProcess(KnockProbe):
                     with open(cur_startup):
                         found_startup = cur_startup
                 except IOError as e:
-                    logger.warn("IOError for cur_startup=%s, ex=%s", cur_startup, SolBase.extostr(e))
+                    logger.warning("IOError for cur_startup=%s, ex=%s", cur_startup, SolBase.extostr(e))
                     continue
                 except Exception as e:
-                    logger.warn("Exception for cur_startup=%s, ex=%s", cur_startup, SolBase.extostr(e))
+                    logger.warning("Exception for cur_startup=%s, ex=%s", cur_startup, SolBase.extostr(e))
                     continue
 
             # Check
@@ -154,18 +154,20 @@ class CheckProcess(KnockProbe):
             self.notify_discovery_n("k.proc.discovery", {"PROCNAME": checker})
 
             # read pid
+            pid_file_present = "missing"
+            pid = 0
             try:
                 logger.info("Reading pid_file=%s", pid_file)
                 pid = int(open(pid_file, "r").readline())
                 pid_file_present = "ok"
             except IOError as e:
-                logger.warn("IOError for pid_file=%s, ex=%s", pid_file, SolBase.extostr(e))
+                logger.warning("IOError for pid_file=%s, ex=%s", pid_file, SolBase.extostr(e))
                 pid_file_present = "missing"
                 pid = 0
             except ValueError as e:
-                logger.warn("ValueError for pid_file=%s, ex=%s", pid_file, SolBase.extostr(e))
+                logger.warning("ValueError for pid_file=%s, ex=%s", pid_file, SolBase.extostr(e))
             except Exception as e:
-                logger.warn("Exception for pid_file=%s, ex=%s", pid_file, SolBase.extostr(e))
+                logger.warning("Exception for pid_file=%s, ex=%s", pid_file, SolBase.extostr(e))
             finally:
                 self.notify_value_n("k.proc.pidfile", {"PROCNAME": checker}, pid_file_present)
 
@@ -174,11 +176,11 @@ class CheckProcess(KnockProbe):
                 logger.info("Process call now for pid=%s", pid)
                 psutil.Process(pid)
             except psutil.NoSuchProcess as e:
-                logger.warn("NoSuchProcess (Process) for pid=%s, ex=%s", pid, SolBase.extostr(e))
+                logger.warning("NoSuchProcess (Process) for pid=%s, ex=%s", pid, SolBase.extostr(e))
                 self.notify_value_n("k.proc.running", {"PROCNAME": checker}, "crash")
                 continue
             except Exception as e:
-                logger.warn("Exception (Process) for pid=%s, ex=%s", pid, SolBase.extostr(e))
+                logger.warning("Exception (Process) for pid=%s, ex=%s", pid, SolBase.extostr(e))
                 self.notify_value_n("k.proc.running", {"PROCNAME": checker}, "crash")
                 continue
 
@@ -238,7 +240,7 @@ class CheckProcess(KnockProbe):
                         self.notify_value_n("k.proc.io.write_bytes", {"PROCNAME": checker}, write_bytes)
 
                     except psutil.AccessDenied as e:
-                        logger.warn(
+                        logger.warning(
                             "io_counters failed, checker=%s, pid_file=%s, e=%s",
                             checker, pid_file,
                             SolBase.extostr(e))
@@ -259,7 +261,7 @@ class CheckProcess(KnockProbe):
                     if v:
                         num_fds += v
                     else:
-                        logger.warn("num_fds None")
+                        logger.warning("num_fds None")
 
                     cpu_used += cpu_system + cpu_user
 
@@ -267,161 +269,3 @@ class CheckProcess(KnockProbe):
             self.notify_value_n("k.proc.memory_used", {"PROCNAME": checker}, memory_used)
             self.notify_value_n("k.proc.cpu_used", {"PROCNAME": checker}, cpu_used)
             self.notify_value_n("k.proc.nbprocess", {"PROCNAME": checker}, nb_process)
-
-    # ======================================
-    # WINDOWS
-    # ======================================
-
-    # noinspection SqlDialectInspection,SqlNoDataSourceInspection,PyProtectedMember
-    def _windows_register_wmi(self):
-        """
-        Register WQL inside wmi
-        """
-
-        try:
-            logger.info("Windows mode, registering WQL into Wmi for process fetch")
-
-            # "WQL_ConnectedUsers": {"type": "wql", "statement": "SELECT LogonType FROM Win32_LogonSession WHERE LogonType=10", "read": "count", "min_client": "Windows Vista", "min_server": "Windows Server 2008", },
-            wql_where = ""
-            for k, d in self.process_config.iteritems():
-                if d["os"] != "windows":
-                    continue
-                p_name = d["name"]
-                if isinstance(p_name, (str, unicode)):
-                    # DIRECT
-                    if len(wql_where) > 0:
-                        wql_where += " or Name='%s'" % p_name
-                    else:
-                        wql_where += "Name='%s'" % p_name
-                elif isinstance(p_name, (tuple, list)):
-                    for cur_name in p_name:
-                        if len(wql_where) > 0:
-                            wql_where += " or Name='%s'" % cur_name
-                        else:
-                            wql_where += "Name='%s'" % cur_name
-
-            # Finish it
-            if len(wql_where) > 0:
-                # Got some, register
-                wql = "SELECT Name, HandleCount, WorkingSetSize, UserModeTime, KernelModeTime, ReadTransferCount, WriteTransferCount FROM Win32_Process WHERE " + wql_where
-                Wmi._WMI_INSTANCES["WQL_Processes"] = {
-                    "type": "wql",
-                    "statement": wql,
-                    "read": "list",
-                    "min_client": "Windows Vista", "min_server": "Windows Server 2008",
-                }
-                logger.info("Registered WMI WQL_Processes=%s", Wmi._WMI_INSTANCES["WQL_Processes"])
-            else:
-                logger.info("No windows process to handle, bypass")
-
-        except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
-
-    # noinspection PyMethodMayBeStatic
-    def _get_wmi_process(self, d, name):
-        """
-        Get wmi process dict
-        :param d: dict
-        :type d: dict
-        :param name: process name
-        :type name: str,unicode
-        :return list of dict
-        :rtype list
-        """
-
-        ar_out = list()
-        for cur_d in d["WQL_Processes"]:
-            if cur_d.get("Name") == name:
-                ar_out.append(cur_d)
-        return ar_out
-
-    def _execute_windows(self):
-        """
-        Exec
-        """
-
-        try:
-            d, age_ms = Wmi.wmi_get_dict()
-            logger.info("Using wmi with age_ms=%s", age_ms)
-
-            # Browse
-            for checker, param in self.process_config.iteritems():
-                # Bypass linux
-                if param["os"] != "windows":
-                    logger.info("Bypassing checker=%s due to os=%s", checker, param["os"])
-                    continue
-
-                # Check Wmi
-                if "WQL_Processes" not in d:
-                    logger.warn("WQL_Processes not in d, bypassing checker=%s", checker)
-
-                # Handle list or direct
-                p_name = param["name"]
-                if isinstance(p_name, (str, unicode)):
-                    ar_name = [p_name]
-                else:
-                    ar_name = p_name
-
-                # Browse
-                for p_name in ar_name:
-                    # Name
-                    logger.info("Processing p_name=%s", p_name)
-
-                    # Ok, get process dict (can retrieve several hits)
-                    ar_process = self._get_wmi_process(d, p_name)
-                    if len(ar_process) == 0:
-                        logger.warn("Got no process for p_name=%s, bypass", p_name)
-                        continue
-
-                    # Ok got some
-                    logger.info("Got %s process for p_name=%s", len(ar_process), p_name)
-
-                    # -------------------------
-                    # Ok so
-                    # -------------------------
-                    # Disco id
-                    pid = checker
-
-                    # Disco
-                    self.notify_discovery_n("k.proc.discovery", {"PROCNAME": pid})
-
-                    # Stat dict
-                    p_stat = dict()
-
-                    # Init static stuff (windows : we got the process, it is running)
-                    p_stat["k.proc.pidfile"] = "ok"
-                    p_stat["k.proc.running"] = "ok"
-                    p_stat["k.proc.nbprocess"] = len(ar_process)
-                    p_stat["k.proc.running"] = "ok"
-
-                    # Init
-                    p_stat["k.proc.io.num_fds"] = 0
-                    p_stat["k.proc.memory_used"] = 0
-                    p_stat["k.proc.cpu_used"] = 0
-                    p_stat["k.proc.io.read_bytes"] = 0
-                    p_stat["k.proc.io.write_bytes"] = 0
-
-                    # Browse
-                    for cur_d in ar_process:
-                        # Handle count
-                        p_stat["k.proc.io.num_fds"] += int(cur_d.get("HandleCount", 0))
-                        # In bytes
-                        p_stat["k.proc.memory_used"] += int(cur_d.get("WorkingSetSize", 0))
-                        # Cpu used
-                        # We need cumulative values, we have, it comes in millis, we need seconds
-                        cpu_time = int(cur_d.get("KernelModeTime", 0)) + int(cur_d.get("UserModeTime", 0))
-                        cpu_time /= 1000
-                        p_stat["k.proc.cpu_used"] += cpu_time
-                        # R/W
-                        p_stat["k.proc.io.read_bytes"] = int(cur_d.get("ReadTransferCount", 0))
-                        p_stat["k.proc.io.write_bytes"] = int(cur_d.get("WriteTransferCount", 0))
-
-                    # Ok
-                    for k, v in p_stat.iteritems():
-                        logger.info("Got %s=%s", k, v)
-
-                    # Notify
-                    for k, v in p_stat.iteritems():
-                        self.notify_value_n(k, {"PROCNAME": pid}, v)
-        except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))

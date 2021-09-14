@@ -25,7 +25,6 @@ import logging
 import re
 
 import gevent
-from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockHelpers import KnockHelpers
@@ -33,7 +32,7 @@ from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Platform.PTools import PTools
 
 if PTools.get_distribution_type() == "windows":
-    from knockdaemon2.Windows.Wmi.Wmi import Wmi
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +113,7 @@ class HddStatus(KnockProbe):
         # -----------------------------
         # Handle "ALL" keys
         # -----------------------------
-        for key, value in self.all_hash.iteritems():
+        for key, value in self.all_hash.items():
             self.notify_value_n(key, {"HDD": "ALL"}, value)
 
     def scan_hdd(self):
@@ -155,7 +154,7 @@ class HddStatus(KnockProbe):
         logger.info("going invoke, cmd=%s", cmd)
         ec, so, se = ButcherTools.invoke(cmd)
         if ec != 0:
-            logger.warn("invoke failed, give up,  ec=%s, so=%s, se=%s", ec, so, se)
+            logger.warning("invoke failed, give up,  ec=%s, so=%s, se=%s", ec, so, se)
             return
 
         logger.debug("invoke ok, ec=%s, so=%s, se=%s", ec, so, se)
@@ -171,7 +170,7 @@ class HddStatus(KnockProbe):
         logger.info("going invoke, cmd=%s", cmd)
         ec, so, se = ButcherTools.invoke(cmd)
         if ec != 0:
-            logger.warn("invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)
+            logger.warning("invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)
             return
 
         logger.info("invoke ok, ec=%s, so=%s, se=%s", ec, so, se)
@@ -182,7 +181,7 @@ class HddStatus(KnockProbe):
 
         for line in out_text:
             # noinspection RepeatedSpace
-            if re.search("  5 Reallocated_Sector_Ct", line):
+            if re.search(" 5 Reallocated_Sector_Ct", line):
                 value = line.split()[9]
 
                 self.notify_value_n("k.hard.hd.reallocated_sector_ct", {"HDD": c_hd}, value)
@@ -194,85 +193,19 @@ class HddStatus(KnockProbe):
                     int_value = int(value)
                     self.add_to_hash(self.all_hash, 'k.hard.hd.reallocated_sector_ct', int_value)
                 except Exception as e:
-                    logger.warn("Unable to process reallocated_sector_ct[ALL], value=%s, ex=%s", value, e)
+                    logger.warning("Unable to process reallocated_sector_ct[ALL], value=%s, ex=%s", value, e)
             elif re.search("241 Total_LBAs_Written", line):
                 value = line.split()[9]
                 self.notify_value_n("k.hard.hd.total_lbas_written", {"HDD": c_hd}, value)
             elif re.search("Model Family: ", line):
                 value = line.split(None, 2)[2].strip()
                 self.notify_value_n("k.hard.hd.model_family", {"HDD": c_hd}, value)
-            elif re.search("Device Model:     ", line):
+            elif re.search("Device Model: ", line):
                 value = line.split(None, 2)[2].strip()
                 self.notify_value_n("k.hard.hd.device_model", {"HDD": c_hd}, value)
-            elif re.search("Serial Number:    ", line):
+            elif re.search("Serial Number: ", line):
                 value = line.split(None, 2)[2].strip()
                 self.notify_value_n("k.hard.hd.serial_number", {"HDD": c_hd}, value)
-            elif re.search("User Capacity:    ", line):
+            elif re.search("User Capacity: ", line):
                 value = line.split(None, 5)[2].strip().replace(',', '')
                 self.notify_value_n("k.hard.hd.user_capacity", {"HDD": c_hd}, value)
-
-    def _execute_windows(self):
-        """
-        Windows
-        """
-
-        try:
-            # Wmi
-            d, age_ms = Wmi.wmi_get_dict()
-            logger.info("Using wmi with age_ms=%s", age_ms)
-
-            # "k.hard.hd.status[ALL]" = "OK"
-            # "k.hard.hd.user_capacity[ALL]" = "ALL"
-            # "k.hard.hd.reallocated_sector_ct[ALL]" = 0
-            # "k.hard.hd.serial_number[ALL]" = "ALL"
-            # "k.hard.hd.model_family[ALL]" = "ALL"
-            # "k.hard.hd.total_lbas_written[ALL] =  0
-            # "k.hard.hd.health[ALL]" = "KNOCKOK"
-            # "k.hard.hd.device_model[ALL]" = "ALL"
-
-            # Smart : MSStorageDriver_Failure* WMI classes are all empty on all computers tested
-            # We HACK the stuff based on Win32_DiskDrive status
-            failed_count = 0
-            for d_diskdrive in d["Win32_DiskDrive"]:
-                # Device ID
-                s_disk_deviceid = d_diskdrive["DeviceID"]
-                s_status = d_diskdrive["Status"]
-                logger.info("Processing disk=%s, status=%s", s_disk_deviceid, s_status)
-
-                if s_status.lower() == "ok":
-                    # OK
-                    pass
-                else:
-                    # NOK
-                    logger.info("Got a failure")
-                    failed_count += 1
-
-            # If we have one failure, signal it
-            if failed_count > 0:
-                logger.info("Notifying failure (failed_count=%s)", failed_count)
-                self.notify_value_n("k.hard.hd.status", {"HDD": "ALL"}, "FAILED_WIN")
-                self.notify_value_n("k.hard.hd.user_capacity", {"HDD": "ALL"}, "ALL")
-                self.notify_value_n("k.hard.hd.reallocated_sector_ct", {"HDD": "ALL"}, failed_count)
-                self.notify_value_n("k.hard.hd.serial_number", {"HDD": "ALL"}, "ALL")
-                self.notify_value_n("k.hard.hd.model_family", {"HDD": "ALL"}, "ALL")
-                self.notify_value_n("k.hard.hd.total_lbas_written", {"HDD": "ALL"}, failed_count)
-                self.notify_value_n("k.hard.hd.health", {"HDD": "ALL"}, "KNOCK_FAILED_WIN")
-                self.notify_value_n("k.hard.hd.device_model", {"HDD": "ALL"}, "ALL")
-            else:
-                logger.info("Notifying success")
-                self.notify_value_n("k.hard.hd.status", {"HDD": "ALL"}, "OK")
-                self.notify_value_n("k.hard.hd.user_capacity", {"HDD": "ALL"}, "ALL")
-                self.notify_value_n("k.hard.hd.reallocated_sector_ct", {"HDD": "ALL"}, failed_count)
-                self.notify_value_n("k.hard.hd.serial_number", {"HDD": "ALL"}, "ALL")
-                self.notify_value_n("k.hard.hd.model_family", {"HDD": "ALL"}, "ALL")
-                self.notify_value_n("k.hard.hd.total_lbas_written", {"HDD": "ALL"}, failed_count)
-                self.notify_value_n("k.hard.hd.health", {"HDD": "ALL"}, "KNOCKOK")
-                self.notify_value_n("k.hard.hd.device_model", {"HDD": "ALL"}, "ALL")
-
-            # -----------------
-            # DISCO
-            # -----------------
-            self.notify_discovery_n("k.hard.hd.discovery", {"HDD": "ALL"})
-
-        except Exception as e:
-            logger.info("Ex=%s", SolBase.extostr(e))

@@ -76,9 +76,9 @@ class UDPBusinessServerIpPort(UDPBusinessServerBase):
         logger.info("Binding")
 
         # IP / PORT listen
-        logger.warn("Using UDP toward IP/PORT, %s:%s (not a domain socket)", self._ip_host, self._ip_port)
-        logger.warn("You may (will) experience performance issues over the UDP channel (possible lost of packets)")
-        logger.warn("If you are using client library upon linux, prefer using a linux domain socket.")
+        logger.warning("Using UDP toward IP/PORT, %s:%s (not a domain socket)", self._ip_host, self._ip_port)
+        logger.warning("You may (will) experience performance issues over the UDP channel (possible lost of packets)")
+        logger.warning("If you are using client library upon linux, prefer using a linux domain socket.")
         self._soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         # Switch to non blocking

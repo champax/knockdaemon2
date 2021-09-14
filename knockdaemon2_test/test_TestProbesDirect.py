@@ -24,13 +24,12 @@
 import glob
 import logging
 import os
-import platform
 import shutil
 import sys
 import unittest
-from datetime import datetime
 from os.path import dirname, abspath
 
+import distro
 import psutil
 import ujson
 # noinspection PyPackageRequirements
@@ -92,9 +91,7 @@ class TestProbesDirect(unittest.TestCase):
         os.environ.setdefault("KNOCK_UNITTEST", "yes")
 
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
-        self.config_file = \
-            self.current_dir + "conf" + SolBase.get_pathseparator() \
-            + "realall" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
+        self.config_file = self.current_dir + "conf" + SolBase.get_pathseparator() + "realall" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
 
         # Config files
         for f in [
@@ -214,7 +211,7 @@ class TestProbesDirect(unittest.TestCase):
             for k, v in d.items():
                 self.assertIsNotNone(k)
                 self.assertIsNotNone(v)
-                self.assertIsInstance(k, basestring)
+                self.assertIsInstance(k, str)
                 self.assertTrue(k.startswith("uwsgi_"))
                 self.assertIsInstance(v, int)
 
@@ -312,7 +309,8 @@ class TestProbesDirect(unittest.TestCase):
 
         # Prepare
         (sysname, nodename, kernel, version, machine) = os.uname()
-        (distribution, dversion, _) = platform.linux_distribution()
+        distribution = distro.id()
+        dversion = distro.version()
 
         # Exec it
         _exec_helper(self, Inventory)
@@ -432,22 +430,6 @@ class TestProbesDirect(unittest.TestCase):
         self.assertEqual(load1, 10.0)
         self.assertEqual(load5, 10.0)
         self.assertEqual(load15, 80.0)
-
-        # ---------------------------
-        # Parse datetime (windows)
-        # ---------------------------
-        # noinspection PyArgumentList
-        for ar in [
-            # Offset -420 (ie -7H based on utc : Hour=4 => +7 : Hour=11 in utc)
-            ["20170312044209.003363-420", datetime(year=2017, month=3, day=12, hour=11, minute=42, second=9, microsecond=3363)],
-        ]:
-            # GO
-            s_dt = ar[0]
-            c_dt = ar[1]
-            d_dt = Load.parse_time(s_dt)
-            logger.info("Got c_dt=%s", c_dt)
-            logger.info("Got d_dt=%s", d_dt)
-            self.assertEqual(c_dt, d_dt)
 
         # ----------------------------
         # Exec it
@@ -945,7 +927,7 @@ class TestProbesDirect(unittest.TestCase):
                     expect_value(self, self.k, "k.proc.io.read_bytes", 0, "gte", dd)
                     expect_value(self, self.k, "k.proc.io.write_bytes", 0, "gte", dd)
                 except Exception as e:
-                    logger.warn("io_counters failed, bypassing checks, ex=%s", SolBase.extostr(e))
+                    logger.warning("io_counters failed, bypassing checks, ex=%s", SolBase.extostr(e))
 
         # Using arrays
         # Ar
@@ -970,7 +952,7 @@ class TestProbesDirect(unittest.TestCase):
                     expect_value(self, self.k, "k.proc.io.read_bytes", 0, "gte", dd)
                     expect_value(self, self.k, "k.proc.io.write_bytes", 0, "gte", dd)
                 except Exception as e:
-                    logger.warn("io_counters failed, bypassing checks, ex=%s", SolBase.extostr(e))
+                    logger.warning("io_counters failed, bypassing checks, ex=%s", SolBase.extostr(e))
 
     @unittest.skipIf(Mysql().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Mysql())
     @attr('prov')

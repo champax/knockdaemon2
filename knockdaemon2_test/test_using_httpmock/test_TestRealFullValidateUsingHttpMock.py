@@ -75,9 +75,7 @@ class TestRealAll(unittest.TestCase):
         self.h = None
 
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
-        self.manager_config_file = \
-            self.current_dir + "conf" + SolBase.get_pathseparator() + "realall" \
-            + SolBase.get_pathseparator() + "knockdaemon2.yaml"
+        self.manager_config_file = self.current_dir + "conf" + SolBase.get_pathseparator() + "realall" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
         self.k = None
 
         # Config files
@@ -123,12 +121,12 @@ class TestRealAll(unittest.TestCase):
         Setup (called after each test)
         """
         if self.k:
-            logger.warn("k set, stopping, not normal")
+            logger.warning("k set, stopping, not normal")
             self.k.stop()
             self.k = None
 
         if self.h:
-            logger.warn("h set, stopping, not normal")
+            logger.warning("h set, stopping, not normal")
             self.h.stop()
             self.h = None
 
@@ -206,7 +204,7 @@ class TestRealAll(unittest.TestCase):
 
         # Init our probes
         i_count = 0
-        for k, d in self.k._d_yaml_config["probes"].iteritems():
+        for k, d in self.k._d_yaml_config["probes"].items():
             class_name = d["class_name"]
             f_name = self.fullname(p)
             if class_name == f_name:
@@ -260,7 +258,7 @@ class TestRealAll(unittest.TestCase):
                 break
 
             # NOT OK
-            logger.warn(
+            logger.warning(
                 "Re-looping, having=%s, target=%s",
                 processed_ok,
                 disco_count + 1

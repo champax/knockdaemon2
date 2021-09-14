@@ -25,7 +25,7 @@
 import logging
 import os
 import unittest
-import urllib
+from urllib.parse import urlencode
 
 import redis
 # noinspection PyUnresolvedReferences,PyPackageRequirements
@@ -73,7 +73,7 @@ class TestApiHttpUsingHttpMock(unittest.TestCase):
         """
 
         if self.h:
-            logger.warn("h set, stopping, not normal")
+            logger.warning("h set, stopping, not normal")
             self.h.stop()
             self.h = None
 
@@ -106,7 +106,7 @@ class TestApiHttpUsingHttpMock(unittest.TestCase):
         self.assertIsNotNone(self.h._server_greenlet)
 
         # Param
-        v = urllib.urlencode({"p1": "v1 2.3/4"})
+        v = urlencode({"p1": "v1 2.3/4"})
 
         # Client
         hc = HttpClient()

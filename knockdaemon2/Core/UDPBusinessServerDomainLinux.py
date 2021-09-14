@@ -82,7 +82,7 @@ class UDPBusinessServerDomainLinux(UDPBusinessServerBase):
             # ==========================
             # Ahah, no support for domain socket on Windows
             # ==========================
-            logger.warn("Windows detected, discarding domain linux socket listening. You may move to linux, it rocks.")
+            logger.warning("Windows detected, discarding domain linux socket listening. You may move to linux, it rocks.")
             return
 
         # ==========================

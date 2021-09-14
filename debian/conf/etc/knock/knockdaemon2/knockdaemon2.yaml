@@ -10,7 +10,7 @@ knockd:
   # Notify timestamp override (default true)
   # If set, notify timestamp are overriden by KnockManager at probe end and set to probe execution start timestamp (so execute latencies has no impact on timestamps)
   timestamp_override: true
-  # If timestamp_override is set : if this is set, timestamp is calculated based on probes expected exec start, otherwise it use current timestamp
+  # If timestamp_override is set : if this is set, timestamp is calculated based on probes expected exec start, otherwise it uses current timestamp
   timestamp_override_use_expected: true
   # Lifecycle log interal in ms
   lifecycle_interval_ms: 30000

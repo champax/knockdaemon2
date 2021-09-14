@@ -133,7 +133,7 @@ class CheckDns(KnockProbe):
             except gaierror as e:
                 string_result = "KO: Dns server: %s[%s] " % (e.strerror, e.errno)
             except BaseException as e:
-                string_result = "KO: Exception %s" % e.message
+                string_result = "KO: Exception %s" % str(e)
 
             if not response:
                 if not string_result:
@@ -172,13 +172,6 @@ class CheckDns(KnockProbe):
 
         for dns_servers in self.dns_check_config:
             self.dns_check_group(dns_servers)
-
-    def _execute_windows(self):
-        """
-        Exec
-        """
-
-        return self._execute_linux()
 
     def dns_check_group(self, dns_server):
         """

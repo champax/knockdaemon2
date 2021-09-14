@@ -35,9 +35,9 @@ class Kindly(object):
     def clean_string(cls, s):
         """
         fix
-        :param s: str,unicode
-        :type s: str,unicode
-        :rtype str,unicode
+        :param s: str
+        :type s:str
+        :rtype str
         """
 
         return s.replace("\"", "")
@@ -51,10 +51,10 @@ class Kindly(object):
         :type d: dict
         """
 
-        for k, v in d.iteritems():
+        for k, v in d.items():
             if isinstance(v, dict):
                 Kindly.kindly_anyconfig_fix_ta_shitasse(v)
-            elif isinstance(v, (str, unicode)):
+            elif isinstance(v, str):
                 f = Kindly.clean_string(v)
                 d[k] = f
 

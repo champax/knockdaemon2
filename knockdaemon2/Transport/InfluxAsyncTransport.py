@@ -131,11 +131,11 @@ class InfluxAsyncTransport(HttpAsyncTransport):
     def process_notify(self, account_hash, node_hash, notify_hash, notify_values):
         """
         Process notify
-        :param account_hash: Hash str to value
+        :param account_hash: Hash bytes to value
         :type account_hash; dict
-        :param node_hash: Hash str to value
+        :param node_hash: Hash bytes to value
         :type node_hash; dict
-        :param notify_hash: Hash str to (disco_key, disco_id, tag). Cleared upon success. UNUSED HERE.
+        :param notify_hash: Hash bytes to (disco_key, disco_id, tag). Cleared upon success. UNUSED HERE.
         :type notify_hash; dict
         :param notify_values: List of (superv_key, tag, value, additional_fields). Cleared upon success.
         :type notify_values; list
@@ -143,7 +143,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
 
         # If not running, exit
         if not self._is_running:
-            logger.warn("Not running, processing not possible")
+            logger.warning("Not running, processing not possible")
             return False
 
         # We receive :
@@ -197,12 +197,12 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         # So we use the line protocol
         # We serialize this block right now in a single line buffer
         d_points = {"points": ar_influx}
-        buf = make_lines(d_points, precision=None).encode('utf-8')
+        buf = make_lines(d_points, precision=None).encode('utf8')
 
         # Check max
         if self._queue_to_send.qsize() >= self._max_items_in_queue:
             # Too much, kick
-            logger.warn("Max queue reached, discarding older item")
+            logger.warning("Max queue reached, discarding older item")
             self._queue_to_send.get(block=True)
             Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard")
         elif self._queue_to_send.qsize() == 0:
@@ -229,7 +229,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
 
         # NOTE :
         # _queue_to_send : it's a queue of  pre-serialized line buffer (binary buffer) to send
-        # So, _queue_to_send => queue of list(str)
+        # So, _queue_to_send => queue of list(bytes)
         #
         # We use the line protocol to handle stuff similar to HttpAsyncTransport (which works with pre-serialized json buffers)
         #
@@ -311,7 +311,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                 # --------------------
                 # NOT POSSIBLE
                 # --------------------
-                logger.warn("HttpCheck : Impossible case (not maxed, not empty)")
+                logger.warning("HttpCheck : Impossible case (not maxed, not empty)")
 
             # --------------------
             # HTTP NO GO
@@ -335,7 +335,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
             logger.debug("go_to_http true")
             b = self._send_to_http_influx(buf_pending_array, buf_pending_length)
             if not b:
-                logger.warn("go_to_http failed, re-queue now, then sleep=%s", self._http_ko_interval_ms)
+                logger.warning("go_to_http failed, re-queue now, then sleep=%s", self._http_ko_interval_ms)
                 self._requeue_pending_array(buf_pending_array)
 
                 # Wait a bit
@@ -353,7 +353,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
     def _send_to_http_influx(self, ar_lines, total_len):
         """
         Send to http
-        :param ar_lines: list of str (list of influx line buffers)
+        :param ar_lines: list of bytes (list of influx line buffers)
         :type ar_lines: list
         :param total_len: total len of all list items
         :type total_len: int
@@ -387,7 +387,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                         # Create DB
                         client.create_database(self._influx_database)
                     except Exception as e:
-                        logger.warn("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
+                        logger.warning("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
                     finally:
                         # Assume success
                         self._influx_db_created = True
@@ -416,7 +416,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                         http_rep = Tools.influx_create_database(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, timeout_ms=self._influx_timeout_ms, ssl=self._influx_ssl, verify_ssl=self._influx_ssl_verify)
                         assert 200 <= http_rep.status_code < 300, "Need http 2xx, got http_req={0}".format(http_rep)
                     except Exception as e:
-                        logger.warn("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
+                        logger.warning("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
                     finally:
                         # Assume success
                         self._influx_db_created = True
@@ -467,7 +467,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
             return True
 
         except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
             Meters.aii(self.meters_prefix + "knock_stat_transport_exception_count")
 
             # Here, HTTP not ok

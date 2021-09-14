@@ -57,6 +57,8 @@ class KnockProbe(object):
 
         self.linux_support = linux_support
         self.windows_support = windows_support
+        if self.windows_support:
+            raise Exception("windows not more supported")
         self.platform = PTools.get_distribution_type()
         self.platform_supported = self.is_supported_on_platform()
 
@@ -108,7 +110,7 @@ class KnockProbe(object):
         """
 
         # If unittest, do nothing
-        if "KNOCK_UNITTEST" in os.environ.data:
+        if "KNOCK_UNITTEST" in os.environ:
             return
 
         # Lower limits for important stuff
@@ -122,7 +124,7 @@ class KnockProbe(object):
         :rtype bool
         """
         if PTools.get_distribution_type() == "windows":
-            return self.windows_support
+            return False
         else:
             return self.linux_support
 
@@ -141,29 +143,16 @@ class KnockProbe(object):
         - "running" key (for each discovered instance) will be backed by a nodata trigger
         - SO : as discoveries are send ASAP, even if instance is down, even is execute() exec is cut => the nodata trigger on running keys will be fired
         """
-        dt = PTools.get_distribution_type()
-        if dt == "windows":
-            # WINDOWS
-            if not self.windows_support:
-                logger.info("Not supported on [%s], probe=%s", dt, self)
-            else:
-                self._execute_windows()
+
+        # LINUX
+        if not self.linux_support:
+            logger.info("Not supported (linux), probes=%s", self)
         else:
-            # LINUX
-            if not self.linux_support:
-                logger.info("Not supported on [%s], probes=%s", dt, self)
-            else:
-                self._execute_linux()
+            self._execute_linux()
 
     def _execute_linux(self):
         """
         Execute a probe (linux)
-        """
-        raise NotImplementedError()
-
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
         """
         raise NotImplementedError()
 

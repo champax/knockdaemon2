@@ -176,7 +176,7 @@ class Mysql(KnockProbe):
                     cmd = "sudo cat {0}".format(Mysql.MYSQL_CONFIG_FILE)
                     ec, so, se = ButcherTools.invoke(cmd)
                     if ec != 0:
-                        logger.warn("invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)
+                        logger.warning("invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)
                         return None, None, None
                 # Ok
                 buf = so
@@ -223,7 +223,7 @@ class Mysql(KnockProbe):
 
             # Check
             if not cur_login or not cur_pwd or not cur_socket:
-                logger.warn("Unable to detect creds, buf=%s", buf)
+                logger.warning("Unable to detect creds, buf=%s", buf)
                 return None, None, None
 
             # Ok
@@ -232,7 +232,7 @@ class Mysql(KnockProbe):
             return t_out
 
         except Exception as e:
-            logger.warn("Parse failed, ex=%s", SolBase.extostr(e))
+            logger.warning("Parse failed, ex=%s", SolBase.extostr(e))
             return None, None, None
 
     # noinspection PyMethodMayBeStatic
@@ -262,7 +262,7 @@ class Mysql(KnockProbe):
                     cmd = "sudo cat {0}".format(Mysql.CENTOS_CONFIG_FILE)
                     ec, so, se = ButcherTools.invoke(cmd)
                     if ec != 0:
-                        logger.warn("invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)
+                        logger.warning("invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)
                         return None, None, None
                 # Ok
                 buf = so
@@ -304,7 +304,7 @@ class Mysql(KnockProbe):
 
             # Check
             if not cur_socket:
-                logger.warn("Unable to detect creds, buf=%s", buf)
+                logger.warning("Unable to detect creds, buf=%s", buf)
                 return None, None, None
 
             # Ok
@@ -313,15 +313,8 @@ class Mysql(KnockProbe):
             return t_out
 
         except Exception as e:
-            logger.warn("Parse failed, ex=%s", SolBase.extostr(e))
+            logger.warning("Parse failed, ex=%s", SolBase.extostr(e))
             return None, None, None
-
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
 
     def _execute_linux(self):
         """
@@ -348,7 +341,7 @@ class Mysql(KnockProbe):
             if not login:
                 # FATAL
                 # Notify instance down (type : 0)
-                logger.warn("_parse_config returned None, signaling instance down, started=0")
+                logger.warning("_parse_config returned None, signaling instance down, started=0")
                 self.notify_value_n("k.mysql.started", {"ID": id_mysql}, 0)
                 return
 
@@ -395,7 +388,7 @@ class Mysql(KnockProbe):
             logger.info("Mysql global status ok, got ar_show_global_status, values below, building output")
             for d in ar_show_global_status:
                 logger.debug("Got row")
-                for k, v in d.iteritems():
+                for k, v in d.items():
                     logger.debug("Got k=%s, v=%s, type=%s", k, v, type(v))
 
                 key = d["Variable_name"]
@@ -410,7 +403,7 @@ class Mysql(KnockProbe):
             logger.info("Mysql global variables ok, got ar_show_global_variables, values below, building output")
             for d in ar_show_global_variables:
                 logger.debug("Got row")
-                for k, v in d.iteritems():
+                for k, v in d.items():
                     logger.debug("Got k=%s, v=%s, type=%s", k, v, type(v))
 
                 key = d["Variable_name"]
@@ -489,7 +482,7 @@ class Mysql(KnockProbe):
                             debug_conn_pool,
                             debug_thread_pool)
             except Exception as e:
-                logger.warn("Abnormal exception in special processing, ex=%s", SolBase.extostr(e))
+                logger.warning("Abnormal exception in special processing, ex=%s", SolBase.extostr(e))
 
             # -----------------------------
             # SHOW SLAVE STATUS
@@ -520,8 +513,8 @@ class Mysql(KnockProbe):
                         else:
                             # Not all threads running, signal it
                             repli_lag_sec = -2
-                    elif isinstance(v, (str, unicode)) and v.lower() == "null":
-                        logger.info("Found direct str/unicode null, v=%s", v)
+                    elif isinstance(v, str) and v.lower() == "null":
+                        logger.info("Found direct bytes/str null, v=%s", v)
                         if s_all_running:
                             repli_lag_sec = 0
                         else:
@@ -542,7 +535,7 @@ class Mysql(KnockProbe):
                 # Set in output dict
                 d_out["Seconds_Behind_Master"] = repli_lag_sec
             except Exception as e:
-                logger.warn("Slave status failed, ex=%s", SolBase.extostr(e))
+                logger.warning("Slave status failed, ex=%s", SolBase.extostr(e))
                 # Fallback
                 d_out["Seconds_Behind_Master"] = -1
 
@@ -552,7 +545,7 @@ class Mysql(KnockProbe):
             # -----------------------------
             # Debug
             # -----------------------------
-            for k, v in d_out.iteritems():
+            for k, v in d_out.items():
                 logger.debug("Final, k=%s, v=%s, vtype=%s", k, v, type(v))
 
             # Browse our stuff and try to locate
@@ -570,7 +563,7 @@ class Mysql(KnockProbe):
                 elif knock_type == "float":
                     v = float(v)
                 else:
-                    logger.warn("Not managed type=%s", knock_type)
+                    logger.warning("Not managed type=%s", knock_type)
 
                 # Ok, notify it (no discovery, we assume 1 instance per box)
                 self.notify_value_n(knock_key, {"ID": id_mysql}, v)
@@ -581,6 +574,6 @@ class Mysql(KnockProbe):
 
         except Exception as e:
             # Notify instance down (type : 0)
-            logger.warn("Execute failed, signaling instance down, started=0, ex=%s", SolBase.extostr(e))
+            logger.warning("Execute failed, signaling instance down, started=0, ex=%s", SolBase.extostr(e))
             self.notify_value_n("k.mysql.started", {"ID": id_mysql}, 0)
             return

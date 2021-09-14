@@ -67,9 +67,7 @@ class TestUdp(unittest.TestCase):
         os.environ.setdefault("KNOCK_UNITTEST", "yes")
 
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
-        self.manager_config_file = \
-            self.current_dir + "conf" + SolBase.get_pathseparator() + "protocol" \
-            + SolBase.get_pathseparator() + "knockdaemon2.yaml"
+        self.manager_config_file = self.current_dir + "conf" + SolBase.get_pathseparator() + "protocol" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
         self.k = None
 
         # Reset meter
@@ -566,8 +564,8 @@ class TestUdp(unittest.TestCase):
     def _send_callback(self, b_buf):
         """
         Send callback
-        :param b_buf: str
-        :type b_buf: str
+        :param b_buf: bytes
+        :type b_buf: bytes
         """
 
         self.b_buf_list.append(b_buf)
@@ -894,7 +892,7 @@ class TestUdp(unittest.TestCase):
                 # Keep some room for server
                 SolBase.sleep(0)
         except Exception as e:
-            logger.warn("Fatal ex=%s", SolBase.extostr(e))
+            logger.warning("Fatal ex=%s", SolBase.extostr(e))
             self.bench_ex.increment()
         finally:
             logger.info("Exiting")
@@ -907,7 +905,7 @@ class TestUdp(unittest.TestCase):
         Test domain run
         """
 
-        logger.warn("*** GO, THIS WILL NOT EXIT")
+        logger.warning("*** GO, THIS WILL NOT EXIT")
 
         # We do NOT autostart (we do not want the transport to be started)
         self._start_all(start_manager=False)

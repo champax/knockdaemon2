@@ -35,7 +35,7 @@ if not PTools.get_distribution_type() == "windows":
     from os import statvfs
 else:
     # Windows
-    from knockdaemon2.Windows.Wmi.Wmi import Wmi
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -233,7 +233,7 @@ class DiskSpace(KnockProbe):
                         self.add_to_hash(all_hash, 'k.vfs.dev.io.totalms', int(cumulative_wait_rtime_ms))
 
                     except Exception as e:
-                        logger.warn(SolBase.extostr(e))
+                        logger.warning(SolBase.extostr(e))
                         continue
                     continue
                 # END ZFS PROCESSING
@@ -255,7 +255,7 @@ class DiskSpace(KnockProbe):
                 # noinspection PyUnresolvedReferences
                 minor = os.minor(mode.st_rdev)
                 for line2 in diskstats:
-                    regex = "^\s*" + str(major) + "\s+" + str(minor) + "\s+"
+                    regex = r"^\s*" + str(major) + r"\s+" + str(minor) + r"\s+"
                     if not re.search(regex, line2):
                         continue
                     temp_ar = line2.split()
@@ -322,10 +322,10 @@ class DiskSpace(KnockProbe):
         # -----------------------------
         # Handle "ALL" keys
         # -----------------------------
-        for key, value in all_hash.iteritems():
+        for key, value in all_hash.items():
             self.notify_value_n(key, {"FSNAME": "ALL"}, value)
 
-        for key, v in self.hash_fs.iteritems():
+        for key, v in self.hash_fs.items():
             d_disco = v[0]
             value = v[1]
             self.notify_value_n(key, d_disco, value)
@@ -369,8 +369,8 @@ class DiskSpace(KnockProbe):
         Get logical disk
         :param d_wmi dict
         :type d_wmi dict
-        :param deviceid: str,unicode
-        :type: deviceid: str,unicode
+        :param deviceid: str
+        :type: deviceid: str
         :return dict
         :rtype dict
         """
@@ -386,8 +386,8 @@ class DiskSpace(KnockProbe):
         Get logical perf
         :param d_wmi dict
         :type d_wmi dict
-        :param deviceid: str,unicode
-        :type: deviceid: str,unicode
+        :param deviceid: str
+        :type: deviceid: str
         :return dict
         :rtype dict
         """
@@ -403,8 +403,8 @@ class DiskSpace(KnockProbe):
         Get raw perf
         :param d_wmi dict
         :type d_wmi dict
-        :param deviceid: str,unicode
-        :type: deviceid: str,unicode
+        :param deviceid: str
+        :type: deviceid: str
         :return dict
         :rtype dict
         """
@@ -413,213 +413,3 @@ class DiskSpace(KnockProbe):
             if deviceid == d["Name"]:
                 return d
         return None
-
-    def _execute_windows(self):
-        """
-        Windows
-        """
-
-        d = None
-        try:
-            d, age_ms = Wmi.wmi_get_dict()
-            logger.info("Using wmi with age_ms=%s", age_ms)
-
-            # RESET
-            self.hash_file_reset()
-
-            # ---------------------------------
-            # => Win32_DiskDrive (list)
-            # ====> DeviceID = "\\\\.\\PHYSICALDRIVE0";
-            #
-            # => Win32_DiskDriveToDiskPartition (list)
-            # ====> Antecedent: Win32_DiskDrive (#DeviceID = "\\\\.\\PHYSICALDRIVE0";)
-            # ====> Dependent : Win32_DiskPartition (#DeviceID = "Disk #0, Partition #0";)
-            #
-            # => Win32_LogicalDiskToPartition (list)
-            # ====> Antecedent: Win32_DiskPartition DeviceID = "Disk #0, Partition #0";
-            # ====> Dependent : Win32_LogicalDisk (#DeviceID = "C:";)
-            #
-            # => LogicalDisk (list)
-            # ====> DeviceID => "C:"
-            #
-            # Note : one logical disk can be mapped to several physical disks
-            # We use mapping to physical to extract block size, we assume on disk is enough to fetch that
-            # The last win
-            # ---------------------------------
-
-            d_logicaldisk_to_diskdrive = dict()
-
-            # Browse Disks (this bypass LogicalDisk without partitions and so without local disks)
-            for d_diskdrive in d["Win32_DiskDrive"]:
-                # Device ID
-                s_disk_deviceid = d_diskdrive["DeviceID"]
-                logger.info("Processing disk=%s", s_disk_deviceid)
-
-                # Browse disk => partitions
-                for d_dd_to_dp in d["Win32_DiskDriveToDiskPartition"]:
-                    logger.info("Processing disk to part, disk=%s, part=%s", d_dd_to_dp["Antecedent"]["DeviceID"], d_dd_to_dp["Dependent"]["DeviceID"])
-
-                    # Check
-                    if s_disk_deviceid != d_dd_to_dp["Antecedent"]["DeviceID"]:
-                        logger.info("part bypass (mismatch)")
-                        continue
-
-                    # Get partition device id
-                    s_partition_deviceid = d_dd_to_dp["Dependent"]["DeviceID"]
-
-                    # Browse partitions to local disk
-                    for d_ld_to_dp in d["Win32_LogicalDiskToPartition"]:
-                        logger.info("Processing part to logi, part=%s, logical=%s", d_ld_to_dp["Antecedent"]["DeviceID"], d_ld_to_dp["Dependent"]["DeviceID"])
-
-                        # Check
-                        if s_partition_deviceid != d_ld_to_dp["Antecedent"]["DeviceID"]:
-                            logger.info("logi bypass (mismatch)")
-                            continue
-
-                        # Get logical disk device id
-                        d_logicaldisk = d_ld_to_dp["Dependent"]
-                        s_logical_deviceid = d_logicaldisk["DeviceID"]
-
-                        # Ok, we have a mapping c_disk_deviceid => c_logical_deviceid
-                        logger.info("Mapping s_disk_deviceid=%s to s_logical_deviceid=%s", s_disk_deviceid, s_logical_deviceid)
-                        d_logicaldisk_to_diskdrive[s_logical_deviceid] = s_disk_deviceid
-
-                        # Append Win32_DiskDriveToDiskPartition_Dependent_BlockSize
-                        block_size = d_dd_to_dp["Dependent"]["BlockSize"]
-                        logger.info("Appending block_size=%s to logical disk", block_size)
-                        self._get_logicaldisk(d, s_logical_deviceid)["Win32_DiskDriveToDiskPartition_Dependent_BlockSize"] = block_size
-
-            # Check
-            if len(d_logicaldisk_to_diskdrive) == 0:
-                logger.warn("Got no detection between diskdrive and logicaldisk, exiting now (full bypass")
-                return
-
-            # ---------------------------------
-            # Process the logical disks
-            # ---------------------------------
-
-            # Disco : ALL
-            self.notify_discovery_n("k.vfs.fs.discovery", {"FSNAME": "ALL"})
-
-            # Browse
-            for logi_deviceid, phys_deviceid in d_logicaldisk_to_diskdrive.iteritems():
-                logger.info("Processing perf, logi_deviceid=%s, phys_deviceid=%s", logi_deviceid, phys_deviceid)
-                logi_device = self._get_logicaldisk(d, logi_deviceid)
-                logi_perf = self._get_logicalperf(d, logi_deviceid)
-                logi_rawperf = self._get_rawperf(d, logi_deviceid)
-                assert logi_device, "logi_device must be set"
-                assert logi_perf, "logi_perf must be set"
-
-                # Compute date (current device and ALL)
-                d_stat = self._get_wmi_disk_stat(logi_device, logi_perf, logi_rawperf)
-
-                # Disco
-                self.notify_discovery_n("k.vfs.fs.discovery", {"FSNAME": logi_device["DeviceID"]})
-
-                # Notify
-                for k, v in d_stat.iteritems():
-                    logger.info("Notifying %s=%s", k, v)
-                    self.notify_value_n(k, {"FSNAME": logi_device["DeviceID"]}, v)
-
-            # -----------------------------
-            # ALL send
-            # -----------------------------
-            for k, v in self.hash_fs.iteritems():
-                logger.info("Notifying %s=%s", k, v)
-                self.notify_value_n(k, {"FSNAME": "ALL"}, v)
-
-        except Exception as e:
-            logger.warn("Exception while processing, ex=%s, d=%s", SolBase.extostr(e), d)
-
-    def _get_wmi_disk_stat(self, logi_device, logi_perf, logi_rawperf):
-        """
-        Get wmi disk stat
-        :param logi_device: dict 
-        :type logi_device: dict
-        :param logi_perf: dict        
-        :type logi_perf: dict
-        :param logi_rawperf: dict
-        :type logi_rawperf: dict
-        :return: dict
-        :rtype dict
-        """
-
-        # k.vfs.dev.io.currentcount[/var/log]           => CurrentDiskQueueLength
-        # k.vfs.dev.io.percentused[/var/log]            => PercentDiskTime
-        # k.vfs.dev.io.totalms[/var/log]                => 0.0
-        # k.vfs.dev.read.totalbytes[/var/log]           => DiskReadBytesPerSec (trick it)
-        # k.vfs.dev.read.totalcount[/var/log]           => DiskReadsPerSec (trick it)
-        # k.vfs.dev.read.totalms[/var/log]              => 0.0
-        # k.vfs.dev.read.totalsectorcount[/var/log]     => DiskWriteBytesPerSec / Win32_DiskDriveToDiskPartition_Dependent_BlockSize (trick it)
-        # k.vfs.dev.write.totalbytes[/var/log]          => DiskWriteBytesPerSec (trick it)
-        # k.vfs.dev.write.totalcount[/var/log]          => DiskWritesPerSec (trick it)
-        # k.vfs.dev.write.totalms[/var/log]             => 0.0
-        # k.vfs.dev.write.totalsectorcount[/var/log]    => Using DiskWriteBytesPerSec / Win32_DiskDriveToDiskPartition_Dependent_BlockSize (trick it)
-        # k.vfs.fs.inode[/var/log,pfree]                => 100.0
-        # k.vfs.fs.size[/var/log,free]                  => Using FreeMegabytes and Win32_LogicalDisk :: Size
-        # k.vfs.fs.size[/var/log,pfree]                 => Using FreeMegabytes and Win32_LogicalDisk :: Size
-        # k.vfs.fs.size[/var/log,total]                 => Using FreeMegabytes and Win32_LogicalDisk :: Size
-        # k.vfs.fs.size[/var/log,used]                  => Using FreeMegabytes and Win32_LogicalDisk :: Size
-
-        did = logi_device["DeviceID"]
-        block_size = int(logi_device["Win32_DiskDriveToDiskPartition_Dependent_BlockSize"])
-        d_stat = dict()
-
-        # No support
-        d_stat["k.vfs.dev.io.totalms"] = 0.0
-        d_stat["k.vfs.dev.read.totalms"] = 0.0
-        d_stat["k.vfs.dev.write.totalms"] = 0.0
-        d_stat["k.vfs.fs.inode.pfree"] = 100.0
-
-        # Direct
-        d_stat["k.vfs.dev.io.currentcount"] = int(logi_perf.get("CurrentDiskQueueLength", None))
-        d_stat["k.vfs.dev.io.percentused"] = int(logi_perf.get("PercentDiskTime", None))
-
-        # Size (in bytes)
-        total_bytes = int(logi_device["Size"])
-        free_bytes = int(logi_perf.get("FreeMegabytes", None)) * 1024 * 1024
-        d_stat["k.vfs.fs.size.free"] = free_bytes
-        d_stat["k.vfs.fs.size.total"] = total_bytes
-        d_stat["k.vfs.fs.size.used"] = total_bytes - free_bytes
-        d_stat["k.vfs.fs.size.pfree"] = float(free_bytes) / float(total_bytes) * 100.0
-
-        # Trick items (refer to Load.py)
-        # We use raw so we get cumulative datas directly
-        d_stat["k.vfs.dev.read.totalbytes"] = int(logi_rawperf.get("DiskReadBytesPersec", None))
-        d_stat["k.vfs.dev.read.totalcount"] = int(logi_rawperf.get("DiskReadsPersec", None))
-        d_stat["k.vfs.dev.read.totalsectorcount"] = int(d_stat["k.vfs.dev.read.totalbytes"] / block_size)
-        d_stat["k.vfs.dev.write.totalbytes"] = int(logi_rawperf.get("DiskWriteBytesPersec", None))
-        d_stat["k.vfs.dev.write.totalcount"] = int(logi_rawperf.get("DiskWritesPersec", None))
-        d_stat["k.vfs.dev.write.totalsectorcount"] = int(d_stat["k.vfs.dev.write.totalbytes"] / block_size)
-
-        # Inject d_stat into "ALL" counters
-        for k, op in [
-            # hash_file
-            ["k.vfs.fs.size.free", "min"],
-            ["k.vfs.fs.size.pfree", "min"],
-            ["k.vfs.fs.inode.pfree", "min"],
-            ["k.vfs.fs.size.total", "sum"],
-            ["k.vfs.fs.size.used", "sum"],
-            # was using all_hash (local var) => use hash_file
-            ["k.vfs.dev.io.percentused", "max"],
-            ["k.vfs.dev.read.totalcount", "sum"],
-            ["k.vfs.dev.read.totalsectorcount", "sum"],
-            ["k.vfs.dev.read.totalbytes", "sum"],
-            ["k.vfs.dev.read.totalms", "sum"],
-            ["k.vfs.dev.write.totalcount", "sum"],
-            ["k.vfs.dev.write.totalsectorcount", "sum"],
-            ["k.vfs.dev.write.totalbytes", "sum"],
-            ["k.vfs.dev.write.totalms", "sum"],
-            ["k.vfs.dev.io.currentcount", "sum"],
-            ["k.vfs.dev.io.totalms", "sum"],
-            ["k.vfs.dev.read.totalcount", "sum"],
-            ["k.vfs.dev.read.totalbytes", "sum"],
-            ["k.vfs.dev.write.totalcount", "sum"],
-            ["k.vfs.dev.write.totalbytes", "sum"],
-            ["k.vfs.dev.io.currentcount", "sum"],
-            ["k.vfs.dev.io.totalms", "sum"],
-        ]:
-            # Process
-            self.hash_file(k, d_stat[k], {"FSNAME": did}, "min")
-
-        return d_stat
