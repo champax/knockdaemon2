@@ -46,8 +46,6 @@ class ButcherTools(object):
     Tools
     """
 
-    HAS_BEEN_CALLED = False
-
     @classmethod
     def invoke(cls, cmd, timeout_ms=10000, shell=False):
         """
@@ -85,8 +83,6 @@ class ButcherTools(object):
         :return tuple (exit code, stdout, stderr)
         :rtype tuple
         """
-
-        cls.HAS_BEEN_CALLED = True
 
         so = ""
         se = ""

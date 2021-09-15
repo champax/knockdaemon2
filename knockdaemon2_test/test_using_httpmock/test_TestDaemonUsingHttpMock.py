@@ -250,8 +250,6 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
 
         p_list = list()
         try:
-            # MAJOR BUG WITH GEVENT : join will lock if it has been called (gevent #600)
-            # self.assertFalse(ButcherTools.HAS_BEEN_CALLED)
 
             # Start
             self._reset_std_capture()
