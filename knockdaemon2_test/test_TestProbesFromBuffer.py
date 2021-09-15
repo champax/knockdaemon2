@@ -160,6 +160,7 @@ class TestProbesFromBuffer(unittest.TestCase):
             fn = self.sample_dir + fn
 
             # Reset
+            self.k._reset_superv_notify()
             Meters.reset()
 
             # Load
@@ -494,26 +495,73 @@ class TestProbesFromBuffer(unittest.TestCase):
             expect_value(self, self.k, "k.os.maxproc", None, "exists")
             expect_value(self, self.k, "k.os.users.connected", 0, "gte")
 
-    @unittest.skipIf(RedisStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % RedisStat())
-    @unittest.skip("TODO : Re-enable later")
-    def test_RedisStat(self):
+    def test_from_buffer_redis(self):
         """
         Test
         """
 
-        # Exec it
-        exec_helper(self, RedisStat)
+        # Init
+        rs = RedisStat()
+        rs.set_manager(self.k)
 
-        # Validate KEYS
-        for cur_port in ["6379", "ALL"]:
-            for _, knock_type, knock_key, _ in RedisStat.KEYS:
-                dd = {"RDPORT": cur_port}
-                if knock_type == "int":
-                    expect_value(self, self.k, knock_key, -1, "gte", dd)
-                elif knock_type == "float":
-                    expect_value(self, self.k, knock_key, 0.0, "gte", dd)
-                elif knock_type == "str":
-                    expect_value(self, self.k, knock_key, 0, "exists", dd)
+        # Go
+        for fn in [
+            "redis/redis.out",
+        ]:
+            # Path
+            fn = self.sample_dir + fn
+
+            # Reset
+            self.k._reset_superv_notify()
+            Meters.reset()
+
+            # Load
+            self.assertTrue(FileUtility.is_file_exist(fn))
+            buf = FileUtility.file_to_textbuffer(fn, "utf8")
+
+            # Convert to dict
+            d_info = dict()
+            for s in buf.split("\n"):
+                s = s.strip()
+                if len(s) == 0:
+                    continue
+                elif s.startswith("#"):
+                    continue
+                ar = s.split(":", 2)
+                k = ar[0]
+                v = ar[1]
+
+                # Special processing
+                if k.startswith("db"):
+                    d_v = dict()
+                    for ss in v.split(","):
+                        ss_ar = ss.split("=")
+                        d_v[ss_ar[0]] = int(ss_ar[1])
+                    v = d_v
+
+                # Push
+                d_info[k] = v
+
+            # Process
+            rs.process_redis_dict(d_info, 6379, 22)
+
+            # Process aggregate
+            rs.process_redis_aggregate()
+
+            # Log
+            for tu in self.k.superv_notify_value_list:
+                logger.info("Having tu=%s", tu)
+
+            # Validate KEYS
+            for cur_port in ["6379", "ALL"]:
+                for _, knock_type, knock_key, _ in RedisStat.KEYS:
+                    dd = {"RDPORT": cur_port}
+                    if knock_type == "int":
+                        expect_value(self, self.k, knock_key, -1, "gte", dd)
+                    elif knock_type == "float":
+                        expect_value(self, self.k, knock_key, 0.0, "gte", dd)
+                    elif knock_type == "str":
+                        expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     @unittest.skipIf(MemCachedStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % MemCachedStat())
     def test_MemCachedStat(self):
@@ -757,6 +805,7 @@ class TestProbesFromBuffer(unittest.TestCase):
             fn = self.sample_dir + fn
 
             # Reset
+            self.k._reset_superv_notify()
             Meters.reset()
 
             # Load

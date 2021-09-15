@@ -92,12 +92,149 @@ class RedisStat(KnockProbe):
         """
 
         KnockProbe.__init__(self)
-        self._d_aggregate = None
+        self._d_aggregate = dict()
         self.category = "/nosql/redis"
 
     def _execute_linux(self):
         """
         Execute
+        """
+
+        self._execute_native()
+
+    @classmethod
+    def try_get_redis_port(cls, buf):
+        """
+        Try get redis port from config
+        :param buf: config buffer
+        :type buf: str
+        :return: int,None
+        :rtype int,None
+        """
+
+        # Go
+        for line in buf.split("\n"):
+            line = line.strip()
+            if line.startswith("port "):
+                line2 = re.sub(" +", " ", line)
+                port = line2[5:].strip()
+                port = int(port)
+                return port
+        return None
+
+    @classmethod
+    def fetch_redis_info(cls, port):
+        """
+        Fetch redis into
+        :param port: int
+        :type port: int
+        :return dict,None
+        :rtype dict,None
+        """
+
+        r = redis.Redis("localhost", int(port))
+        d_info = r.info()
+        return d_info
+
+    def process_redis_dict(self, d_info, port, ms_info):
+        """
+        Process redis dict
+        :param d_info: dict
+        :type d_info: dict
+        :param port: int
+        :type port: int
+        :param ms_info: float
+        :type ms_info: float
+        :return: dict
+        :rtype dict
+        """
+
+        # Add ms
+        d_info["k.redis.info.ms"] = ms_info
+
+        # 0) fix d_info
+        if "master_link_down_since_seconds" not in d_info:
+            d_info["master_link_down_since_seconds"] = 0
+        if "master_last_io_seconds_ago" not in d_info:
+            d_info["master_last_io_seconds_ago"] = 0
+
+        # a) dbX special processing : (keys, expires, avg_ttl)
+        key_count = 0
+        key_count_with_ttl = 0
+        for k, v in d_info.items():
+            if k.find("db") != 0:
+                continue
+
+            # Got
+            # k => dbX
+            # v => keys=3,expires=3,avg_ttl=7193838
+            key_count += v["keys"]
+            key_count_with_ttl += v["expires"]
+
+        # b) Browse our KEYS
+        for k, knock_type, knock_key, aggreg_op in RedisStat.KEYS:
+            logger.debug("Processing, k=%s, knock_key=%s", k, knock_key)
+
+            # Try
+            if k not in d_info:
+                if k == "k.redis.db.key_count_with_ttl":
+                    # Special "db" processing
+                    v = key_count_with_ttl
+                elif k == "k.redis.db.key_count":
+                    # Special "db" processing
+                    v = key_count
+                elif k.find("k.redis.") == 0:
+                    # Expected
+                    continue
+                else:
+                    logger.warning("Unable to locate k=%s in d_out", k)
+                    continue
+            else:
+                # Ok, fetch
+                v = d_info[k]
+
+            # Cast
+            if knock_type == "int":
+                v = int(v)
+            elif knock_type == "float":
+                v = float(v)
+            elif knock_type == "str":
+                v = str(v)
+            elif knock_type == "skip":
+                logger.debug("Skipping type=%s", knock_type)
+                continue
+            else:
+                logger.warning("Not managed type=%s", knock_type)
+                continue
+
+            # Notify
+            self._push_result(knock_key, port, v, aggreg_op)
+
+        # Notify up
+        logger.info("Redis info ok, notifying started=1, d_info=%s", d_info)
+        self.notify_value_n("k.redis.started", {"RDPORT": str(port)}, 1)
+        self.notify_value_n("k.redis.started", {"RDPORT": "ALL"}, 1)
+
+    def process_redis_aggregate(self):
+        """
+        Process aggregate
+        """
+        # Push aggregate results
+        for key, value in self._d_aggregate.items():
+            self.notify_value_n(key, {"RDPORT": "ALL"}, value)
+
+    def _notify_down(self, port):
+        """
+        Notify down
+        :param port: int
+        :type port: int
+        """
+
+        self.notify_value_n("k.redis.started", {"RDPORT": port}, 0)
+
+    def _execute_native(self):
+        """
+        Exec, native
         """
 
         # ---------------------------
@@ -116,30 +253,21 @@ class RedisStat(KnockProbe):
         # /etc/redis/redis.conf:port 6379
         # /etc/redis/sentinel.conf:port 26379
 
+        # Scan configs
         redis_ports = list()
         conf_files = glob.glob("/etc/redis/*.conf") + glob.glob("/etc/redis.conf")
         for conf in conf_files:
             # Read
             buf = FileUtility.file_to_textbuffer(conf, "utf8")
-
             if buf is None:
                 continue
-
-            # Sentinel bypass # TODO : regex detection of "sentinel monitor"
-            if "sentinel monitor" in buf:
+            elif "sentinel monitor" in buf:
+                # Sentinel bypass # TODO : regex detection of "sentinel monitor"
                 continue
 
             # Go
-            for line in buf.split("\n"):
-                line = line.strip()
-                if line.startswith("port "):
-                    line2 = re.sub(" +", " ", line)
-                    port = line2[5:].strip()
-                    redis_ports.append(port)
-
-                    logger.info("Redis, got instance port=%s, line=%s, line2=%s", port, line, line2)
-
-                    break
+            port = self.try_get_redis_port(buf)
+            redis_ports.append(port)
 
         # If no instance, give up
         if len(redis_ports) == 0:
@@ -157,98 +285,21 @@ class RedisStat(KnockProbe):
             # TODO : Redis info : handle info with timeout ?
 
             try:
-                # Connect
-                ms_info_start = SolBase.mscurrent()
-                logger.info("Redis now, port=%s", port)
-                r = redis.Redis("localhost", int(port))
+                # Fetch info
+                ms = SolBase.mscurrent()
+                d_info = self.fetch_redis_info(port)
 
-                # Query info
-                logger.info("Redis info now, r=%s", r)
-                d_info = r.info()
-                ms_info = SolBase.msdiff(ms_info_start)
+                # Process it
+                if self.process_redis_dict(d_info, port, SolBase.msdiff(ms)):
+                    return
 
-                # Add ms
-                d_info["k.redis.info.ms"] = ms_info
-
-                # Notify up
-                logger.info("Redis info ok, notifying started=1, d_info=%s", d_info)
-                self.notify_value_n("k.redis.started", {"RDPORT": port}, 1)
             except Exception as e:
                 logger.warning("Exception, port=%s, notifying started=0, ex=%s", port, SolBase.extostr(e))
-                self.notify_value_n("k.redis.started", {"RDPORT": port}, 0)
+                self._notify_down(port)
                 continue
 
-            # AGGREG : Started
-            self.notify_value_n("k.redis.started", {"RDPORT": "ALL"}, 1)
-
-            # -------
-            # PROCESS INFO
-            # -------
-
-            # 0) fix d_info
-            if "master_link_down_since_seconds" not in d_info:
-                d_info["master_link_down_since_seconds"] = 0
-            if "master_last_io_seconds_ago" not in d_info:
-                d_info["master_last_io_seconds_ago"] = 0
-
-            # a) dbX special processing : (keys, expires, avg_ttl)
-            key_count = 0
-            key_count_with_ttl = 0
-            for k, v in d_info.items():
-                if k.find("db") != 0:
-                    continue
-
-                # Got
-                # k => dbX
-                # v => keys=3,expires=3,avg_ttl=7193838
-                key_count += v["keys"]
-                key_count_with_ttl += v["expires"]
-
-            # b) Browse our KEYS
-            for k, knock_type, knock_key, aggreg_op in RedisStat.KEYS:
-                logger.debug("Processing, k=%s, knock_key=%s", k, knock_key)
-
-                # Try
-                if k not in d_info:
-                    if k == "k.redis.db.key_count_with_ttl":
-                        # Special "db" processing
-                        v = key_count_with_ttl
-                    elif k == "k.redis.db.key_count":
-                        # Special "db" processing
-                        v = key_count
-                    elif k.find("k.redis.") == 0:
-                        # Expected
-                        continue
-                    else:
-                        logger.warning("Unable to locate k=%s in d_out", k)
-                        continue
-                else:
-                    # Ok, fetch
-                    v = d_info[k]
-
-                # Cast
-                if knock_type == "int":
-                    v = int(v)
-                elif knock_type == "float":
-                    v = float(v)
-                elif knock_type == "str":
-                    v = str(v)
-                elif knock_type == "skip":
-                    logger.debug("Skipping type=%s", knock_type)
-                    continue
-                else:
-                    logger.warning("Not managed type=%s", knock_type)
-                    continue
-
-                # Notify
-                self._push_result(knock_key, int(port), v, aggreg_op)
-
-        # Push aggregate results
-        for key, value in self._d_aggregate.items():
-            self.notify_value_n(key, {"RDPORT": "ALL"}, value)
-
-        # Over
-        logger.info("redis done")
+        # Push aggregate
+        self.process_redis_aggregate()
 
     def _push_result(self, key, redis_port, value, aggreg_op):
         """
@@ -263,7 +314,7 @@ class RedisStat(KnockProbe):
         :type aggreg_op: str
         """
 
-        self.notify_value_n(key, {"RDPORT": redis_port}, value)
+        self.notify_value_n(key, {"RDPORT": str(redis_port)}, value)
 
         if aggreg_op == "min":
             if key not in self._d_aggregate:
