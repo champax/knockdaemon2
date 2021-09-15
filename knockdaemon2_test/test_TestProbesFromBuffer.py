@@ -143,31 +143,45 @@ class TestProbesFromBuffer(unittest.TestCase):
         if self.debug_stat:
             Meters.write_to_logger()
 
-    @unittest.skipIf(NginxStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % NginxStat())
-    @unittest.skip("TODO : Re-enable later")
-    def test_NginxStat(self):
+    def test_from_buffer_nginx(self):
         """
         Test
         """
 
-        # Exec it
-        exec_helper(self, NginxStat)
+        # Init
+        ap = NginxStat()
+        ap.set_manager(self.k)
 
-        # Validate results - disco
+        # Go
+        for fn in [
+            "nginx/nginx.out",
+        ]:
+            # Path
+            fn = self.sample_dir + fn
 
-        dd = {"ID": "default"}
+            # Reset
+            Meters.reset()
 
-        # Validate results - data
-        expect_value(self, self.k, "k.nginx.started", 1, "eq", dd)
+            # Load
+            self.assertTrue(FileUtility.is_file_exist(fn))
+            buf = FileUtility.file_to_binary(fn)
 
-        expect_value(self, self.k, "k.nginx.reading", 0, "gte", dd)
-        expect_value(self, self.k, "k.nginx.writing", 0, "gte", dd)
+            # Process
+            ap.process_nginx_buffer(nginx_buf=buf, pool_id="default", ms_http=11)
 
-        expect_value(self, self.k, "k.nginx.connections", 0, "gte", dd)
+            # Log
+            for tu in self.k.superv_notify_value_list:
+                logger.info("Having tu=%s", tu)
 
-        expect_value(self, self.k, "k.nginx.waiting", 0, "gte", dd)
-        expect_value(self, self.k, "k.nginx.requests", 1, "gte", dd)
-        expect_value(self, self.k, "k.nginx.accepted", 1, "gte", dd)
+            # Validate results - data
+            dd = {"ID": "default"}
+            expect_value(self, self.k, "k.nginx.started", 1, "eq", dd)
+            expect_value(self, self.k, "k.nginx.reading", 0, "gte", dd)
+            expect_value(self, self.k, "k.nginx.writing", 0, "gte", dd)
+            expect_value(self, self.k, "k.nginx.connections", 0, "gte", dd)
+            expect_value(self, self.k, "k.nginx.waiting", 0, "gte", dd)
+            expect_value(self, self.k, "k.nginx.requests", 1, "gte", dd)
+            expect_value(self, self.k, "k.nginx.accepted", 1, "gte", dd)
 
     @unittest.skipIf(SolBase.get_machine_name() == 'admin01', 'Not compatible jessie')
     @unittest.skipIf(Service().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Service())

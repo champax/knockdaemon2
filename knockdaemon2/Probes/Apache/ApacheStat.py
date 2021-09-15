@@ -126,11 +126,8 @@ class ApacheStat(KnockProbe):
             logger.info("Got (set) ar_url=%s", self.ar_url)
             return
         elif "url" in d:
-            logger.info("Loading url from config")
-            url = d["url"]
-            url = url.strip()
-
-            if url.lower() == "auto":
+            url = d["url"].strip().lower()
+            if url == "auto":
                 self.ar_url = ["http://127.0.0.1/server-status?auto"]
                 logger.info("Got (auto) ar_url=%s", self.ar_url)
             else:
@@ -191,7 +188,7 @@ class ApacheStat(KnockProbe):
 
     def process_apache_buffer(self, apache_buf, pool_id, ms_http):
         """
-        Process apache dict, return True if ok
+        Process apache buffer, return True if ok
         :param apache_buf: bytes
         :type apache_buf: bytes
         :param pool_id: str
@@ -236,7 +233,7 @@ class ApacheStat(KnockProbe):
             self.notify_value_n(knock_key, {"ID": pool_id}, v)
 
         # Good, notify & exit
-        logger.info("Dict processing ok, notify started=1 and return, pool_id=%s", pool_id)
+        logger.info("Processing ok, notify started=1 and return, pool_id=%s", pool_id)
         self.notify_value_n("k.apache.started", {"ID": pool_id}, 1)
         return True
 

@@ -28,7 +28,6 @@ from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolhttpclient.Http.HttpClient import HttpClient
 from pysolhttpclient.Http.HttpRequest import HttpRequest
-from urllib3.exceptions import MaxRetryError
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
 
@@ -102,34 +101,36 @@ class NginxStat(KnockProbe):
 
         # Go
         if self.ar_url:
-            logger.info("Skip loading ar_url from config (already set), ar_url=%s", self.ar_url)
+            logger.info("Got (set) ar_url=%s", self.ar_url)
             return
-
-        if "url" in d:
-            logger.info("Loading url from config")
-            url = d["url"]
-            url = url.strip()
-
-            if url.lower() == "auto":
-                logger.info("Auto url from config, using default")
+        elif "url" in d:
+            url = d["url"].strip().lower()
+            if url == "auto":
                 self.ar_url = ["http://127.0.0.1/nginx_status"]
+                logger.info("Got (auto) ar_url=%s", self.ar_url)
             else:
                 self.ar_url = url.split("|")
+                logger.info("Got (load) ar_url=%s", self.ar_url)
         else:
-            logger.info("No url from config, using default")
             self.ar_url = ["http://127.0.0.1/nginx_status"]
-
-        logger.info("Set ar_url=%s", self.ar_url)
+            logger.info("No url from config, using default")
 
     def _execute_linux(self):
         """
         Exec
         """
 
+        self._execute_native()
+
+    def _execute_native(self):
+        """
+        Exec, native
+        """
+
+        # Detect nginx
         if not FileUtility.is_file_exist('/etc/nginx/nginx.conf'):
             logger.info("Give up (/etc/nginx/nginx.conf not found)")
             return
-
         logger.info("Nginx detected (/etc/nginx/nginx.conf found)")
 
         pool_id = "default"
@@ -143,72 +144,80 @@ class NginxStat(KnockProbe):
 
             # Fetch
             ms_http_start = SolBase.mscurrent()
-            try:
-                d_nginx = self.fetch_url(u)
-            except MaxRetryError:
-                d_nginx = None
-            ms_http = SolBase.msdiff(ms_http_start)
-
-            # Check
-            if not d_nginx:
-                logger.info("Url failed, skip, u=%s", u)
+            buf_nginx = self.fetch_nginx_url(u)
+            if not buf_nginx:
                 continue
 
-            # Add http millis
-            d_nginx["k.nginx.status.ms"] = ms_http
-
-            # -------------------------------
-            # Got a dict, fine, send everything browsing our keys
-            # -------------------------------
-            logger.info("Url reply ok, firing notify now")
-            for k, knock_type, knock_key in NginxStat.KEYS:
-                # Try
-                if k not in d_nginx:
-                    if k.find("k.nginx.") != 0:
-                        logger.warning("Unable to locate k=%s in d_nginx", k)
-                    else:
-                        logger.info("Unable to locate k=%s in d_nginx (this is expected)", k)
-                    continue
-
-                # Ok, fetch and cast
-                v = d_nginx[k]
-                if knock_type == "int":
-                    v = int(v)
-                elif knock_type == "float":
-                    v = float(v)
-                elif knock_type == "str":
-                    v = str(v)
-                elif knock_type == "skip":
-                    logger.debug("Skipping type=%s", knock_type)
-                    continue
-                else:
-                    logger.warning("Not managed type=%s", knock_type)
-
-                # Notify
-                self.notify_value_n(knock_key, {"ID": pool_id}, v)
-
-            # Good, notify & exit
-            logger.info("Uri ok, notify started=1 and return, pool_id=%s", pool_id)
-            self.notify_value_n("k.nginx.started", {"ID": pool_id}, 1)
-            return
+            # Try process
+            if self.process_nginx_buffer(buf_nginx, pool_id, SolBase.msdiff(ms_http_start)):
+                return
 
         # Here we are NOT ok
         logger.warning("All Uri down, notify started=0 and return, pool_id=%s", pool_id)
         self.notify_value_n("k.nginx.started", {"ID": pool_id}, 0)
 
-    # noinspection PyMethodMayBeStatic
-    def fetch_url(self, url_status):
+    def process_nginx_buffer(self, nginx_buf, pool_id, ms_http):
         """
-        Fetch url and return a dict
-        :param url_status: str
-        :type url_status: str
-        :return: dict,None
-        :rtype: dict,None
+        Process nginx buffer, return True if ok
+        :param nginx_buf: bytes
+        :type nginx_buf: bytes
+        :param pool_id: str
+        :type pool_id: str
+        :param ms_http: float
+        :type ms_http: float
+        :return bool
+        :rtype bool
+        """
+
+        d_nginx = self.parse_nginx_buffer(nginx_buf.decode("utf8"))
+
+        # Add http millis
+        d_nginx["k.nginx.status.ms"] = ms_http
+
+        # Go
+        for k, knock_type, knock_key in NginxStat.KEYS:
+            # Try
+            if k not in d_nginx:
+                if k.find("k.nginx.") != 0:
+                    logger.warning("Unable to locate k=%s in d_nginx", k)
+                else:
+                    logger.debug("Unable to locate k=%s in d_nginx (this is expected)", k)
+                continue
+
+            # Ok, fetch and cast
+            v = d_nginx[k]
+            if knock_type == "int":
+                v = int(v)
+            elif knock_type == "float":
+                v = float(v)
+            elif knock_type == "str":
+                v = str(v)
+            elif knock_type == "skip":
+                logger.debug("Skipping type=%s", knock_type)
+                continue
+            else:
+                logger.warning("Not managed type=%s", knock_type)
+
+            # Notify
+            self.notify_value_n(knock_key, {"ID": pool_id}, v)
+
+        # Good, notify & exit
+        logger.info("Processing, notify started=1 and return, pool_id=%s", pool_id)
+        self.notify_value_n("k.nginx.started", {"ID": pool_id}, 1)
+
+    @classmethod
+    def fetch_nginx_url(cls, url):
+        """
+        Fetch url and return buffer
+        :param url: str
+        :type url: str
+        :return: bytes,None
+        :rtype: bytes,None
         """
 
         try:
             # Go
-            logger.info("Processing url_status=%s", url_status)
+            logger.info("Processing url=%s", url)
 
             # Client
             hclient = HttpClient()
@@ -229,56 +238,60 @@ class NginxStat(KnockProbe):
             hreq.headers["Cache-Control"] = "no-cache"
 
             # Uri
-            hreq.uri = url_status
+            hreq.uri = url
 
             # Fire http now
-            logger.info("Firing http now, hreq=%s", hreq)
+            logger.debug("Firing http now, hreq=%s", hreq)
             hresp = hclient.go_http(hreq)
-            logger.info("Got reply, hresp=%s", hresp)
+            logger.debug("Got reply, hresp=%s", hresp)
 
             # Get response
             if hresp.status_code != 200:
                 logger.warning("No http 200, give up")
                 return None
 
-            # Get buffer
-            pd = hresp.buffer
-
             # Check
-            if not pd:
+            if not hresp.buffer:
                 logger.warning("No buffer, give up")
                 return None
-            elif pd.find("Active connections") < 0:
-                logger.warning("Invalid buffer (no Active connections), give up")
-                return None
-
-            # Got it : parse
-            d_nginx = dict()
-            logger.debug("Parsing pd=%s", repr(pd))
-
-            match1 = re.search(r'Active connections:\s+(\d+)', pd)
-            match2 = re.search(r'\s*(\d+)\s+(\d+)\s+(\d+)', pd)
-            match3 = re.search(r'Reading:\s*(\d+)\s*Writing:\s*(\d+)\s*Waiting:\s*(\d+)', pd)
-
-            if not match1 or not match2 or not match3:
-                logger.warning('Unable to parse %s, uri=%s, pd=%s', url_status, pd)
-                return None
-
-            d_nginx['connections'] = int(match1.group(1))
-
-            d_nginx['accepted'] = int(match2.group(1))
-            d_nginx['handled'] = int(match2.group(2))
-            d_nginx['requests'] = int(match2.group(3))
-
-            d_nginx['reading'] = int(match3.group(1))
-
-            d_nginx['writing'] = int(match3.group(2))
-            d_nginx['waiting'] = int(match3.group(3))
-
-            # Over
-            logger.info("Url hit, d_nginx=%s", d_nginx)
-            return d_nginx
-
+            return hresp.buffer
         except Exception as e:
             logger.warning("Exception, ex=%s", SolBase.extostr(e))
             return None
+
+    @classmethod
+    def parse_nginx_buffer(cls, buf_nginx):
+        """
+        Parse nginx buffer
+        :param buf_nginx: str
+        :type buf_nginx: str
+        :return dict,None
+        :rtype dict,None
+        """
+
+        if buf_nginx.find("Active connections") < 0:
+            logger.info("Give up (no Active connections)")
+            return None
+
+        # Got it : parse
+        d_nginx = dict()
+        logger.debug("Parsing buf_nginx=%s", repr(buf_nginx))
+
+        match1 = re.search(r'Active connections:\s+(\d+)', buf_nginx)
+        match2 = re.search(r'\s*(\d+)\s+(\d+)\s+(\d+)', buf_nginx)
+        match3 = re.search(r'Reading:\s*(\d+)\s*Writing:\s*(\d+)\s*Waiting:\s*(\d+)', buf_nginx)
+
+        if not match1 or not match2 or not match3:
+            logger.info("Unable to parse (re miss), match1=%s, match2=%s, match3=%s", match1, match2, match3)
+            return None
+
+        d_nginx['connections'] = int(match1.group(1))
+        d_nginx['accepted'] = int(match2.group(1))
+        d_nginx['handled'] = int(match2.group(2))
+        d_nginx['requests'] = int(match2.group(3))
+        d_nginx['reading'] = int(match3.group(1))
+        d_nginx['writing'] = int(match3.group(2))
+        d_nginx['waiting'] = int(match3.group(3))
+
+        # Over
+        return d_nginx
