@@ -800,7 +800,7 @@ class TestProbesFromBuffer(unittest.TestCase):
 
         # Go
         for f_node, f_queue in [
-            ("rabbitmq/node.out", "/rabbitmq/queue.out"),
+            ("rabbitmq/node.out", "rabbitmq/queue.out"),
         ]:
             # Path
             f_node = self.sample_dir + f_node
@@ -984,26 +984,95 @@ class TestProbesFromBuffer(unittest.TestCase):
                 except Exception as e:
                     logger.warning("io_counters failed, bypassing checks, ex=%s", SolBase.extostr(e))
 
-    @unittest.skipIf(Mysql().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Mysql())
-    def test_Mysql(self):
+    def test_from_buffer_mysql(self):
         """
         Test
         """
 
-        # Exec it
-        exec_helper(self, Mysql)
+        # Init
+        m = Mysql()
+        m.set_manager(self.k)
 
-        for _, knock_type, knock_key in Mysql.KEYS:
-            dd = {"ID": "default"}
-            if knock_type == "int":
-                if knock_key == "k.mysql.repli.cur.lag_sec":
-                    expect_value(self, self.k, knock_key, -2, "gte", dd)
-                else:
-                    expect_value(self, self.k, knock_key, 0, "gte", dd)
-            elif knock_type == "float":
-                expect_value(self, self.k, knock_key, 0.0, "gte", dd)
-            elif knock_type == "str":
-                expect_value(self, self.k, knock_key, 0, "exists", dd)
+        # Go
+        for f_status, f_variables, f_slave in [
+            ("mysql/status.out", "mysql/variables.out", "mysql/slave.out"),
+        ]:
+            # Path
+            f_status = self.sample_dir + f_status
+            f_variables = self.sample_dir + f_variables
+            f_slave = self.sample_dir + f_slave
+
+            # Reset
+            self.k._reset_superv_notify()
+            Meters.reset()
+
+            # Load
+            self.assertTrue(FileUtility.is_file_exist(f_status))
+            status_buf = FileUtility.file_to_textbuffer(f_status, "utf8")
+            self.assertTrue(FileUtility.is_file_exist(f_variables))
+            variables_buf = FileUtility.file_to_textbuffer(f_variables, "utf8")
+            self.assertTrue(FileUtility.is_file_exist(f_slave))
+            slave_buf = FileUtility.file_to_textbuffer(f_slave, "utf8")
+
+            # Switch to arrays - status
+            ar_status = list()
+            for s in status_buf.split("\n"):
+                s = s.strip()
+                if not s.startswith("|"):
+                    continue
+                elif s.startswith("| Variable_name"):
+                    continue
+                ar = s.split("|")
+                k = ar[1].strip()
+                v = ar[2].strip()
+                ar_status.append({"Variable_name": k, "Value": v})
+
+            # Switch to arrays - variables
+            ar_variables = list()
+            for s in variables_buf.split("\n"):
+                s = s.strip()
+                if not s.startswith("|"):
+                    continue
+                elif s.startswith("| Variable_name"):
+                    continue
+                ar = s.split("|")
+                k = ar[1].strip()
+                v = ar[2].strip()
+                ar_variables.append({"Variable_name": k, "Value": v})
+
+            # Switch to arrays - slave
+            d_slave = dict()
+            for s in slave_buf.split("\n"):
+                s = s.strip()
+                if s.startswith("*"):
+                    continue
+                elif ":" not in s:
+                    continue
+                ar = s.split(":")
+                k = ar[0].strip()
+                v = ar[1].strip()
+                d_slave[k] = v
+            ar_slave = [d_slave]
+
+            # Process
+            m.process_mysql_buffers(ar_status, ar_slave, ar_variables, "default", 22)
+
+            # Log
+            for tu in self.k.superv_notify_value_list:
+                logger.info("Having tu=%s", tu)
+
+            # Check
+            for _, knock_type, knock_key in Mysql.KEYS:
+                dd = {"ID": "default"}
+                if knock_type == "int":
+                    if knock_key == "k.mysql.repli.cur.lag_sec":
+                        expect_value(self, self.k, knock_key, -2, "gte", dd)
+                    else:
+                        expect_value(self, self.k, knock_key, 0, "gte", dd)
+                elif knock_type == "float":
+                    expect_value(self, self.k, knock_key, 0.0, "gte", dd)
+                elif knock_type == "str":
+                    expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     @unittest.skipIf(MongoDbStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % MongoDbStat())
     def test_MongoDbStat(self):
