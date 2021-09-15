@@ -34,8 +34,6 @@ import psutil
 import ujson
 # noinspection PyPackageRequirements
 from dns.resolver import Resolver
-# noinspection PyPackageRequirements,PyUnresolvedReferences
-
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
@@ -71,8 +69,10 @@ from knockdaemon2.Probes.Redis.RedisStat import RedisStat
 from knockdaemon2.Probes.Uwsgi.UwsgiStat import UwsgiStat
 from knockdaemon2.Probes.Varnish.VarnishStat import VarnishStat
 # noinspection PyProtectedMember
-from knockdaemon2.Tests.TestHelpers import _exec_helper
+from knockdaemon2.Tests.TestHelpers import exec_helper
 from knockdaemon2.Tests.TestHelpers import expect_value
+
+# noinspection PyPackageRequirements,PyUnresolvedReferences
 
 SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
@@ -149,7 +149,7 @@ class TestProbesDirect(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, NginxStat)
+        exec_helper(self, NginxStat)
 
         # Validate results - disco
 
@@ -176,7 +176,7 @@ class TestProbesDirect(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, Service)
+        exec_helper(self, Service)
 
         # Validate results - disco
 
@@ -221,7 +221,7 @@ class TestProbesDirect(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, Mdstat)
+        exec_helper(self, Mdstat)
 
         # Validate results - disco
         pass
@@ -234,7 +234,7 @@ class TestProbesDirect(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, Haproxy)
+        exec_helper(self, Haproxy)
 
         # Validate results - disco
         dd = {"PROXY": "ALL"}
@@ -261,7 +261,7 @@ class TestProbesDirect(unittest.TestCase):
         expect_value(self, self.k, "k.haproxy.avg_time_session_ms", 0.0, "gte", dd)
         expect_value(self, self.k, "k.haproxy.status_ok", 0.0, "gte", dd)
         expect_value(self, self.k, "k.haproxy.status_ko", 0.0, "gte", dd)
-        logger.info('self.k._superv_notify_value_list=%s', ujson.dumps(self.k._superv_notify_value_list))
+        logger.info('self.k.superv_notify_value_list=%s', ujson.dumps(self.k.superv_notify_value_list))
 
         # expect_value(self, self.k, "k.haproxy.backend", 0.0, "exists", {"PROXY": "nodes"})
         # expect_value(self, self.k, "k.haproxy.frontend", 0.0, "exists", {"PROXY": "localnodes"})
@@ -274,7 +274,7 @@ class TestProbesDirect(unittest.TestCase):
 
         # Exec it
 
-        _exec_helper(self, CheckDns)
+        exec_helper(self, CheckDns)
         ns = Resolver().nameservers[0]
 
         # Validate results - disco
@@ -292,7 +292,7 @@ class TestProbesDirect(unittest.TestCase):
 
         # Exec it
 
-        _exec_helper(self, TimeDiff)
+        exec_helper(self, TimeDiff)
 
         expect_value(self, self.k, "k.os.timediff", 10, "lte", None, cast_to_float=True)
 
@@ -311,7 +311,7 @@ class TestProbesDirect(unittest.TestCase):
         dversion = distro.version()
 
         # Exec it
-        _exec_helper(self, Inventory)
+        exec_helper(self, Inventory)
 
         # Check
         expect_value(self, self.k, "k.inventory.os", "%s %s %s" % (sysname, distribution, dversion), "eq", cast_to_float=False)
@@ -341,7 +341,7 @@ class TestProbesDirect(unittest.TestCase):
         # user ALL=(ALL:ALL) NOPASSWD: /usr/sbin/smartctl
 
         # Exec it
-        _exec_helper(self, HddStatus)
+        exec_helper(self, HddStatus)
 
         # CANNOT VALIDATE ON vm, requires a PHYSICAL server (need /dev/sd*)
         hds = glob.glob('/dev/sd[a-z]')
@@ -432,7 +432,7 @@ class TestProbesDirect(unittest.TestCase):
         # Exec it
         # ----------------------------
         for _ in range(2):
-            _exec_helper(self, Load)
+            exec_helper(self, Load)
             expect_value(self, self.k, "k.os.cpu.load.percpu.avg1", None, "exists")
             expect_value(self, self.k, "k.os.cpu.load.percpu.avg5", None, "exists")
             expect_value(self, self.k, "k.os.cpu.load.percpu.avg15", None, "exists")
@@ -464,7 +464,7 @@ class TestProbesDirect(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, RedisStat)
+        exec_helper(self, RedisStat)
 
         # Validate KEYS
         for cur_port in ["6379", "ALL"]:
@@ -478,14 +478,13 @@ class TestProbesDirect(unittest.TestCase):
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     @unittest.skipIf(MemCachedStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % MemCachedStat())
-
     def test_MemCachedStat(self):
         """
         Test
         """
 
         # Exec it
-        _exec_helper(self, MemCachedStat)
+        exec_helper(self, MemCachedStat)
 
         # Validate KEYS
         for cur_connect_to in ["11211", "ALL"]:
@@ -505,9 +504,9 @@ class TestProbesDirect(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, DiskSpace)
+        exec_helper(self, DiskSpace)
         SolBase.sleep(1000)
-        _exec_helper(self, DiskSpace)
+        exec_helper(self, DiskSpace)
         ar = ["/", "ALL"]
 
         for cur_p in ar:
@@ -541,7 +540,7 @@ class TestProbesDirect(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, IpvsAdm)
+        exec_helper(self, IpvsAdm)
 
     @unittest.skipIf(Memory().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Memory())
     def test_Memory(self):
@@ -551,7 +550,7 @@ class TestProbesDirect(unittest.TestCase):
 
         # Exec it
         for _ in range(2):
-            _exec_helper(self, Memory)
+            exec_helper(self, Memory)
 
             expect_value(self, self.k, "k.os.memory.size.available", 0, "gte")
             expect_value(self, self.k, "k.os.swap.size.free", 0, "gte")
@@ -575,7 +574,7 @@ class TestProbesDirect(unittest.TestCase):
         # Exec it
         mem_file = os.path.join(dirname(abspath(__file__)), 'conf/mock_mem.txt')
         self.conf_probe_override['mem_info'] = mem_file
-        _exec_helper(self, Memory)
+        exec_helper(self, Memory)
 
         expect_value(self, self.k, "k.os.memory.size.available", 0, "gte")
         expect_value(self, self.k, "k.os.swap.size.free", 0, "gte")
@@ -597,7 +596,7 @@ class TestProbesDirect(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, Netstat)
+        exec_helper(self, Netstat)
 
         expect_value(self, self.k, "k.net.netstat.SYN_SENT", 0, "gte")
         expect_value(self, self.k, "k.net.netstat.LISTEN", 0, "gte")
@@ -618,7 +617,7 @@ class TestProbesDirect(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, Network)
+        exec_helper(self, Network)
 
         ar = ("lo", "LoopBack")
         for cur_n, cur_type in [ar]:
@@ -627,7 +626,7 @@ class TestProbesDirect(unittest.TestCase):
             # --------------------
             if cur_n == "dynamic":
                 # Windows, fetch first and extract
-                for tu in self.k._superv_notify_value_list:
+                for tu in self.k.superv_notify_value_list:
                     k = tu[0]
                     v = tu[2]
                     if k.startswith("k.net.if.type"):
@@ -665,7 +664,7 @@ class TestProbesDirect(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, NumberOfProcesses)
+        exec_helper(self, NumberOfProcesses)
 
         expect_value(self, self.k, "k.os.processes.total", 1, "gte")
 
@@ -679,20 +678,19 @@ class TestProbesDirect(unittest.TestCase):
         # Exec it
         # ---------------------------
         for _ in range(2):
-            _exec_helper(self, Uptime)
+            exec_helper(self, Uptime)
 
             expect_value(self, self.k, "k.os.knock", 1, "gte")
             expect_value(self, self.k, "k.os.uptime", 1, "gte")
 
     @unittest.skipIf(PhpFpmStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % PhpFpmStat())
-
     def test_PhpFpmStat(self):
         """
         Test
         """
 
         # Exec it
-        _exec_helper(self, PhpFpmStat)
+        exec_helper(self, PhpFpmStat)
 
         for _, knock_type, knock_key in PhpFpmStat.KEYS:
             for pool_id in ["www", "ALL"]:
@@ -705,14 +703,13 @@ class TestProbesDirect(unittest.TestCase):
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     @unittest.skipIf(ApacheStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % ApacheStat())
-
     def test_Apache(self):
         """
         Test
         """
 
         # Exec it
-        _exec_helper(self, ApacheStat)
+        exec_helper(self, ApacheStat)
 
         for _, knock_type, knock_key in ApacheStat.KEYS:
             dd = {"ID": "default"}
@@ -722,47 +719,15 @@ class TestProbesDirect(unittest.TestCase):
                 expect_value(self, self.k, knock_key, 0.0, "gte", dd)
             elif knock_type == "str":
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
-
-    @unittest.skipIf(ApacheStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % ApacheStat())
-
-    def test_Apache_from_dict_1(self):
-        """
-        Test
-        """
-        d = {'k.apache.status.ms': 100, 'k.apache.sc.send_reply': 3, 'Uptime': 599634.0, 'IdleWorkers': 12.0, 'k.apache.sc.waiting_for_connection': 12, 'k.apache.sc.keepalive': 0,
-             'k.apache.sc.dns_lookup': 0, 'Total Accesses': 11934709.0, 'k.apache.sc.closing': 1, 'Total kBytes': 33635364.0, 'BytesPerReq': 2885.92, 'k.apache.sc.reading_request': 0, 'CPULoad': 0.06,
-             'BytesPerSec': 57439.4, 'k.apache.sc.gracefully': 0, 'k.apache.sc.starting_up': 0, 'ReqPerSec': 19.9, 'k.apache.sc.open': 240, 'k.apache.sc.idle': 0, 'k.apache.sc.logging': 0,
-             'BusyWorkers': 4.0}
-        ap = ApacheStat()
-        ap.set_manager(self.k)
-        ap.process_apache_dict(d, "default")
-
-        # Log
-        for tu in self.k._superv_notify_value_list:
-            logger.info("Having tu=%s", tu)
-
-        # Check
-        for _, knock_type, knock_key in ApacheStat.KEYS:
-            dd = {"ID": "default"}
-            if knock_type == "int":
-                expect_value(self, self.k, knock_key, 0, "gte", dd)
-            elif knock_type == "float":
-                expect_value(self, self.k, knock_key, 0.0, "gte", dd)
-            elif knock_type == "str":
-                expect_value(self, self.k, knock_key, 0, "exists", dd)
-
-        # Discovery is fired outside this, do not check it here
-        pass
 
     @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
-
     def test_Rabbitmq(self):
         """
         Test
         """
 
         # Exec it
-        _exec_helper(self, RabbitmqStat)
+        exec_helper(self, RabbitmqStat)
 
         for _, knock_type, knock_key, _ in RabbitmqStat.KEYS:
             dd = {"PORT": "default"}
@@ -774,14 +739,13 @@ class TestProbesDirect(unittest.TestCase):
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
-
     def test_Varnish(self):
         """
         Test
         """
 
         # Exec it
-        _exec_helper(self, VarnishStat)
+        exec_helper(self, VarnishStat)
 
         for _, knock_type, knock_key in VarnishStat.KEYS:
             dd = {"ID": "default"}
@@ -793,7 +757,6 @@ class TestProbesDirect(unittest.TestCase):
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
-
     def test_Varnish_via_invoke_json(self):
         """
         Test
@@ -808,7 +771,7 @@ class TestProbesDirect(unittest.TestCase):
         d_json = vp.try_load_json()
         vp.process_json(d_json, "default")
         # Log
-        for tu in self.k._superv_notify_value_list:
+        for tu in self.k.superv_notify_value_list:
             logger.info("Having tu=%s", tu)
 
         for _, knock_type, knock_key in VarnishStat.KEYS:
@@ -824,7 +787,6 @@ class TestProbesDirect(unittest.TestCase):
         pass
 
     @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
-
     def test_Varnish_via_invoke_text(self):
         """
         Test
@@ -839,7 +801,7 @@ class TestProbesDirect(unittest.TestCase):
         d_json = vp.try_load_text()
         vp.process_json(d_json, "default")
         # Log
-        for tu in self.k._superv_notify_value_list:
+        for tu in self.k.superv_notify_value_list:
             logger.info("Having tu=%s", tu)
 
         for _, knock_type, knock_key in VarnishStat.KEYS:
@@ -855,14 +817,13 @@ class TestProbesDirect(unittest.TestCase):
         pass
 
     @unittest.skipIf(UwsgiStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % UwsgiStat())
-
     def test_UwsgiStat(self):
         """
         Test
         """
 
         # Exec it
-        _exec_helper(self, UwsgiStat)
+        exec_helper(self, UwsgiStat)
 
         for cur_p in [
             'z_frontends',
@@ -884,7 +845,7 @@ class TestProbesDirect(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, CheckProcess)
+        exec_helper(self, CheckProcess)
 
         # Ar
         ar = ["nginx"]
@@ -938,14 +899,13 @@ class TestProbesDirect(unittest.TestCase):
                     logger.warning("io_counters failed, bypassing checks, ex=%s", SolBase.extostr(e))
 
     @unittest.skipIf(Mysql().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Mysql())
-
     def test_Mysql(self):
         """
         Test
         """
 
         # Exec it
-        _exec_helper(self, Mysql)
+        exec_helper(self, Mysql)
 
         for _, knock_type, knock_key in Mysql.KEYS:
             dd = {"ID": "default"}
@@ -960,12 +920,10 @@ class TestProbesDirect(unittest.TestCase):
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     @unittest.skipIf(MongoDbStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % MongoDbStat())
-    # @unittest.skip("zzz")
-    
     def test_MongoDbStat(self):
         """
         Test
         """
 
         # Exec it
-        _exec_helper(self, MongoDbStat)
+        exec_helper(self, MongoDbStat)

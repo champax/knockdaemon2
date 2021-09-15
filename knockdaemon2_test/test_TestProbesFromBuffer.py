@@ -37,7 +37,6 @@ from os.path import dirname, abspath
 
 import distro
 import psutil
-import ujson
 from dns.resolver import Resolver
 from pysolbase.FileUtility import FileUtility
 from pysolmeters.Meters import Meters
@@ -72,7 +71,7 @@ from knockdaemon2.Probes.Rabbitmq.RabbitmqStat import RabbitmqStat
 from knockdaemon2.Probes.Redis.RedisStat import RedisStat
 from knockdaemon2.Probes.Uwsgi.UwsgiStat import UwsgiStat
 from knockdaemon2.Probes.Varnish.VarnishStat import VarnishStat
-from knockdaemon2.Tests.TestHelpers import _exec_helper
+from knockdaemon2.Tests.TestHelpers import exec_helper
 from knockdaemon2.Tests.TestHelpers import expect_value
 
 logger = logging.getLogger(__name__)
@@ -152,7 +151,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, NginxStat)
+        exec_helper(self, NginxStat)
 
         # Validate results - disco
 
@@ -179,7 +178,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, Service)
+        exec_helper(self, Service)
 
         # Validate results - disco
 
@@ -224,50 +223,72 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, Mdstat)
+        exec_helper(self, Mdstat)
 
         # Validate results - disco
         pass
 
-    @unittest.skipIf(Haproxy().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % NginxStat())
-    @unittest.skip("TODO : Re-enable later")
-    def test_Haproxy(self):
+    def test_from_buffer_haproxy(self):
         """
         Test
         """
 
-        # Exec it
-        _exec_helper(self, Haproxy)
+        # Init
+        hp = Haproxy()
+        hp.set_manager(self.k)
 
-        # Validate results - disco
-        dd = {"PROXY": "ALL"}
+        # Go
+        for fn in [
+            "haproxy/haproxy.out",
+            "haproxy/haproxy.2.out",
+        ]:
+            logger.info("*** GO, fn=%s", fn)
 
-        # Validate results - data
-        expect_value(self, self.k, "k.haproxy.started", 1, "eq", dd)
+            # Path
+            fn = self.sample_dir + fn
 
-        expect_value(self, self.k, "k.haproxy.session_cur", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.session_limit", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.denied_req", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.denied_resp", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.err_req", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.err_conn", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.err_resp", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.hrsp_1xx", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.hrsp_2xx", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.hrsp_3xx", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.hrsp_4xx", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.hrsp_5xx", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.hrsp_other", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.avg_time_queue_ms", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.avg_time_connect_ms", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.avg_time_resp_ms", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.avg_time_session_ms", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.status_ok", 0.0, "gte", dd)
-        expect_value(self, self.k, "k.haproxy.status_ko", 0.0, "gte", dd)
-        logger.info('self.k._superv_notify_value_list=%s', ujson.dumps(self.k._superv_notify_value_list))
+            # Reset
+            self.k._reset_superv_notify()
+            Meters.reset()
 
-        # expect_value(self, self.k, "k.haproxy.backend", 0.0, "exists", {"PROXY": "nodes"})
-        # expect_value(self, self.k, "k.haproxy.frontend", 0.0, "exists", {"PROXY": "localnodes"})
+            # Load
+            self.assertTrue(FileUtility.is_file_exist(fn))
+            buf = FileUtility.file_to_binary(fn)
+
+            # Process
+            hp.process_haproxy_buffer(buf.decode("utf8"))
+
+            # Log
+            for tu in self.k.superv_notify_value_list:
+                logger.info("Having tu=%s", tu)
+
+            # Validate results
+            dd = {"PROXY": "ALL"}
+
+            # Validate results - data
+            expect_value(self, self.k, "k.haproxy.started", 1, "eq", dd)
+            expect_value(self, self.k, "k.haproxy.session_cur", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.session_limit", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.denied_req", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.denied_resp", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.err_req", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.err_conn", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.err_resp", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.hrsp_1xx", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.hrsp_2xx", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.hrsp_3xx", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.hrsp_4xx", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.hrsp_5xx", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.hrsp_other", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.avg_time_queue_ms", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.avg_time_connect_ms", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.avg_time_resp_ms", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.avg_time_session_ms", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.status_ok", 0.0, "gte", dd)
+            expect_value(self, self.k, "k.haproxy.status_ko", 0.0, "gte", dd)
+
+            # expect_value(self, self.k, "k.haproxy.backend", 0.0, "exists", {"PROXY": "nodes"})
+            # expect_value(self, self.k, "k.haproxy.frontend", 0.0, "exists", {"PROXY": "localnodes"})
 
     @unittest.skipIf(CheckDns().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % CheckDns())
     def test_CheckDns(self):
@@ -277,7 +298,7 @@ class TestProbesFromBuffer(unittest.TestCase):
 
         # Exec it
 
-        _exec_helper(self, CheckDns)
+        exec_helper(self, CheckDns)
         ns = Resolver().nameservers[0]
 
         # Validate results - disco
@@ -295,7 +316,7 @@ class TestProbesFromBuffer(unittest.TestCase):
 
         # Exec it
 
-        _exec_helper(self, TimeDiff)
+        exec_helper(self, TimeDiff)
 
         expect_value(self, self.k, "k.os.timediff", 10, "lte", None, cast_to_float=True)
 
@@ -314,7 +335,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         dversion = distro.version()
 
         # Exec it
-        _exec_helper(self, Inventory)
+        exec_helper(self, Inventory)
 
         # Check
         expect_value(self, self.k, "k.inventory.os", "%s %s %s" % (sysname, distribution, dversion), "eq", cast_to_float=False)
@@ -344,7 +365,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         # user ALL=(ALL:ALL) NOPASSWD: /usr/sbin/smartctl
 
         # Exec it
-        _exec_helper(self, HddStatus)
+        exec_helper(self, HddStatus)
 
         # CANNOT VALIDATE ON vm, requires a PHYSICAL server (need /dev/sd*)
         hds = glob.glob('/dev/sd[a-z]')
@@ -435,7 +456,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         # Exec it
         # ----------------------------
         for _ in range(2):
-            _exec_helper(self, Load)
+            exec_helper(self, Load)
             expect_value(self, self.k, "k.os.cpu.load.percpu.avg1", None, "exists")
             expect_value(self, self.k, "k.os.cpu.load.percpu.avg5", None, "exists")
             expect_value(self, self.k, "k.os.cpu.load.percpu.avg15", None, "exists")
@@ -467,7 +488,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, RedisStat)
+        exec_helper(self, RedisStat)
 
         # Validate KEYS
         for cur_port in ["6379", "ALL"]:
@@ -487,7 +508,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, MemCachedStat)
+        exec_helper(self, MemCachedStat)
 
         # Validate KEYS
         for cur_connect_to in ["11211", "ALL"]:
@@ -507,9 +528,9 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, DiskSpace)
+        exec_helper(self, DiskSpace)
         SolBase.sleep(1000)
-        _exec_helper(self, DiskSpace)
+        exec_helper(self, DiskSpace)
         ar = ["/", "ALL"]
 
         for cur_p in ar:
@@ -543,7 +564,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, IpvsAdm)
+        exec_helper(self, IpvsAdm)
 
     @unittest.skipIf(Memory().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Memory())
     def test_Memory(self):
@@ -553,7 +574,7 @@ class TestProbesFromBuffer(unittest.TestCase):
 
         # Exec it
         for _ in range(2):
-            _exec_helper(self, Memory)
+            exec_helper(self, Memory)
 
             expect_value(self, self.k, "k.os.memory.size.available", 0, "gte")
             expect_value(self, self.k, "k.os.swap.size.free", 0, "gte")
@@ -577,7 +598,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         # Exec it
         mem_file = os.path.join(dirname(abspath(__file__)), 'conf/mock_mem.txt')
         self.conf_probe_override['mem_info'] = mem_file
-        _exec_helper(self, Memory)
+        exec_helper(self, Memory)
 
         expect_value(self, self.k, "k.os.memory.size.available", 0, "gte")
         expect_value(self, self.k, "k.os.swap.size.free", 0, "gte")
@@ -599,7 +620,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, Netstat)
+        exec_helper(self, Netstat)
 
         expect_value(self, self.k, "k.net.netstat.SYN_SENT", 0, "gte")
         expect_value(self, self.k, "k.net.netstat.LISTEN", 0, "gte")
@@ -620,7 +641,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, Network)
+        exec_helper(self, Network)
 
         ar = ("lo", "LoopBack")
         for cur_n, cur_type in [ar]:
@@ -629,7 +650,7 @@ class TestProbesFromBuffer(unittest.TestCase):
             # --------------------
             if cur_n == "dynamic":
                 # Windows, fetch first and extract
-                for tu in self.k._superv_notify_value_list:
+                for tu in self.k.superv_notify_value_list:
                     k = tu[0]
                     v = tu[2]
                     if k.startswith("k.net.if.type"):
@@ -667,7 +688,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, NumberOfProcesses)
+        exec_helper(self, NumberOfProcesses)
 
         expect_value(self, self.k, "k.os.processes.total", 1, "gte")
 
@@ -681,7 +702,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         # Exec it
         # ---------------------------
         for _ in range(2):
-            _exec_helper(self, Uptime)
+            exec_helper(self, Uptime)
 
             expect_value(self, self.k, "k.os.knock", 1, "gte")
             expect_value(self, self.k, "k.os.uptime", 1, "gte")
@@ -693,7 +714,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, PhpFpmStat)
+        exec_helper(self, PhpFpmStat)
 
         for _, knock_type, knock_key in PhpFpmStat.KEYS:
             for pool_id in ["www", "ALL"]:
@@ -732,7 +753,7 @@ class TestProbesFromBuffer(unittest.TestCase):
             ap.process_apache_buffer(apache_buf=buf, pool_id="default", ms_http=11)
 
             # Log
-            for tu in self.k._superv_notify_value_list:
+            for tu in self.k.superv_notify_value_list:
                 logger.info("Having tu=%s", tu)
 
             # Check
@@ -752,7 +773,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, RabbitmqStat)
+        exec_helper(self, RabbitmqStat)
 
         for _, knock_type, knock_key, _ in RabbitmqStat.KEYS:
             dd = {"PORT": "default"}
@@ -770,7 +791,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, VarnishStat)
+        exec_helper(self, VarnishStat)
 
         for _, knock_type, knock_key in VarnishStat.KEYS:
             dd = {"ID": "default"}
@@ -796,7 +817,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         d_json = vp.try_load_json()
         vp.process_json(d_json, "default")
         # Log
-        for tu in self.k._superv_notify_value_list:
+        for tu in self.k.superv_notify_value_list:
             logger.info("Having tu=%s", tu)
 
         for _, knock_type, knock_key in VarnishStat.KEYS:
@@ -826,7 +847,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         d_json = vp.try_load_text()
         vp.process_json(d_json, "default")
         # Log
-        for tu in self.k._superv_notify_value_list:
+        for tu in self.k.superv_notify_value_list:
             logger.info("Having tu=%s", tu)
 
         for _, knock_type, knock_key in VarnishStat.KEYS:
@@ -848,7 +869,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, UwsgiStat)
+        exec_helper(self, UwsgiStat)
 
         for cur_p in [
             'z_frontends',
@@ -870,7 +891,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, CheckProcess)
+        exec_helper(self, CheckProcess)
 
         # Ar
         ar = ["nginx"]
@@ -930,7 +951,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         """
 
         # Exec it
-        _exec_helper(self, Mysql)
+        exec_helper(self, Mysql)
 
         for _, knock_type, knock_key in Mysql.KEYS:
             dd = {"ID": "default"}
@@ -945,12 +966,10 @@ class TestProbesFromBuffer(unittest.TestCase):
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     @unittest.skipIf(MongoDbStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % MongoDbStat())
-    # @unittest.skip("zzz")
-
     def test_MongoDbStat(self):
         """
         Test
         """
 
         # Exec it
-        _exec_helper(self, MongoDbStat)
+        exec_helper(self, MongoDbStat)

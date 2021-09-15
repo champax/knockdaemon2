@@ -151,10 +151,10 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
         self.ft_meters_prefix = self.k.get_first_meters_prefix_by_type(InfluxAsyncTransport)
 
         # Keep only one item (easier to test)
-        self.k._probe_list.pop()
+        self.k.probe_list.pop()
 
         # Override
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             p.exec_interval_ms = 1000
 
         # Start
@@ -176,7 +176,7 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
             ok = True
 
             # Probes
-            for p in self.k._probe_list:
+            for p in self.k.probe_list:
                 if p.exec_count < 2:
                     ok = False
 
@@ -194,7 +194,7 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
         self.k.stop()
 
         # Check
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             logger.info("p=%s", p)
             c = self.k._get_probe_context(p)
             self.assertGreaterEqual(p.exec_count, 2)
@@ -211,10 +211,8 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
         self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), 2)
         self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
-        # Validate discovery (must be empty since notified)
-        self.assertEqual(len(self.k._superv_notify_disco_hash), 0)
         # Validate values (must be empty since notified)
-        self.assertEqual(len(self.k._superv_notify_value_list), 0)
+        self.assertEqual(len(self.k.superv_notify_value_list), 0)
 
         # Check transport
         self.assertGreaterEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_call_count"), 1)
@@ -241,7 +239,7 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
             ok = True
 
             # Probes
-            for p in self.k._probe_list:
+            for p in self.k.probe_list:
                 if p.exec_count < 2:
                     ok = False
 
@@ -259,7 +257,7 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
         self.k.stop()
 
         # Check
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             logger.info("p=%s", p)
             c = self.k._get_probe_context(p)
             self.assertGreaterEqual(p.exec_count, 2)
@@ -276,10 +274,8 @@ class TestProtocolUsingHttpMock(unittest.TestCase):
         self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), 2)
         self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
-        # Validate discovery (must be empty since notified)
-        self.assertEqual(len(self.k._superv_notify_disco_hash), 0)
         # Validate values (must be empty since notified)
-        self.assertEqual(len(self.k._superv_notify_value_list), 0)
+        self.assertEqual(len(self.k.superv_notify_value_list), 0)
 
         # Check transport
         self.assertGreaterEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_call_count"), 1)

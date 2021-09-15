@@ -28,8 +28,6 @@ import unittest
 from os.path import dirname, abspath
 
 import redis
-# noinspection PyUnresolvedReferences,PyPackageRequirements
-
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
 
@@ -37,9 +35,10 @@ from knockdaemon2.Core.KnockManager import KnockManager
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 from knockdaemon2.Transport.InfluxAsyncTransport import InfluxAsyncTransport
 
+# noinspection PyUnresolvedReferences,PyPackageRequirements
+
 logger = logging.getLogger(__name__)
 SolBase.voodoo_init()
-
 
 
 class TestRealUsingHttpMock(unittest.TestCase):
@@ -157,7 +156,7 @@ class TestRealUsingHttpMock(unittest.TestCase):
         self.k.stop()
 
         # Check
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             logger.info("p=%s", p)
             c = self.k._get_probe_context(p)
             self.assertGreater(c.initial_ms_start, 0)
@@ -173,10 +172,8 @@ class TestRealUsingHttpMock(unittest.TestCase):
         self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), 2)
         self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
-        # Validate discovery (must be empty since notified)
-        self.assertEqual(len(self.k._superv_notify_disco_hash), 0)
         # Validate values (must be empty since notified)
-        self.assertEqual(len(self.k._superv_notify_value_list), 0)
+        self.assertEqual(len(self.k.superv_notify_value_list), 0)
 
         # Validate to superv (critical)
         self.assertGreater(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed"), 0)

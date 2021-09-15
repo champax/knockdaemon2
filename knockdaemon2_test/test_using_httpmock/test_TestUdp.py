@@ -179,10 +179,10 @@ class TestUdp(unittest.TestCase):
         self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_send_min_interval_ms = 5000
 
         # Keep only one item (easier to test)
-        self.k._probe_list.pop()
+        self.k.probe_list.pop()
 
         # Override
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             p.exec_interval_ms = 1000
 
         # Start
@@ -419,7 +419,7 @@ class TestUdp(unittest.TestCase):
         # ----------------------
         logger.info("*** CHECK NOTIFY")
 
-        logger.info("ZZZ=%s", self.k._superv_notify_value_list)
+        logger.info("ZZZ=%s", self.k.superv_notify_value_list)
 
         # counter
         dd = {"ITEM": "counter1"}
@@ -535,7 +535,7 @@ class TestUdp(unittest.TestCase):
         # ----------------------
         logger.info("*** CHECK NOTIFY")
 
-        logger.info("ZZZ=%s", self.k._superv_notify_value_list)
+        logger.info("ZZZ=%s", self.k.superv_notify_value_list)
 
         # check 1
         dd = {"TAG1": "tag11", "TAG2": "tag21"}

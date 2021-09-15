@@ -48,9 +48,6 @@ def expect_value(self, k, key, value, operator, d_tags_expected=None, cast_to_fl
     :param target_count: None, int
     """
 
-    if key == "k.apache.started":
-        n= 0
-
     # LLA fix
     if isinstance(value, dict):
         value = ujson.dumps(value)
@@ -59,7 +56,7 @@ def expect_value(self, k, key, value, operator, d_tags_expected=None, cast_to_fl
     count = 0
     vlist = list()
     # noinspection PyProtectedMember
-    for tu in k._superv_notify_value_list:
+    for tu in k.superv_notify_value_list:
         counter_key = tu[0]
         d_tags = tu[1]
         counter_value = tu[2]
@@ -123,17 +120,16 @@ def expect_value(self, k, key, value, operator, d_tags_expected=None, cast_to_fl
     self.assertEqual(True, True, msg='%s %s %s' % (key, value, operator))
 
 
-# noinspection PyProtectedMember
-def _exec_helper(self, exec_class):
+def exec_helper(self, exec_class):
     """
     Exec helper
     """
 
     # Reset
-    self.k._superv_notify_value_list = list()
+    self.k.superv_notify_value_list = list()
 
     count = 0
-    for p in self.k._probe_list:
+    for p in self.k.probe_list:
         if isinstance(p, exec_class) or exec_class.__name__ == p.__class__.__name__:
             for k, v in self.conf_probe_override.items():
                 setattr(p, k, v)
@@ -146,8 +142,5 @@ def _exec_helper(self, exec_class):
     self.assertGreater(count, 0)
     logger.info("Exec ok")
 
-    for tu in self.k._superv_notify_value_list:
+    for tu in self.k.superv_notify_value_list:
         logger.info("Having tu=%s", tu)
-
-    for k, tu in self.k._superv_notify_disco_hash.items():
-        logger.info("Having disco, k=%s, tu=%s", k, tu)

@@ -29,8 +29,6 @@ import unittest
 from os.path import dirname, abspath
 
 import redis
-# noinspection PyUnresolvedReferences,PyPackageRequirements
-
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
@@ -54,9 +52,10 @@ from knockdaemon2.Probes.Uwsgi.UwsgiStat import UwsgiStat
 from knockdaemon2.Probes.Varnish.VarnishStat import VarnishStat
 from knockdaemon2.Transport.InfluxAsyncTransport import InfluxAsyncTransport
 
+# noinspection PyUnresolvedReferences,PyPackageRequirements
+
 SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
-
 
 
 class TestRealAll(unittest.TestCase):
@@ -195,7 +194,7 @@ class TestRealAll(unittest.TestCase):
         # Start, without starting manager, then cleanup manager probe list
         self._start_all()
         self.h._paranoid_enabled = True
-        self.k._probe_list = list()
+        self.k.probe_list = list()
         self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_send_min_interval_ms = 1000
         self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_network_timeout_ms = 60000
 
@@ -226,12 +225,6 @@ class TestRealAll(unittest.TestCase):
             # Execute
             p.execute()
 
-            # Check how many disco do we have
-            disco_count = len(self.k._superv_notify_disco_hash)
-            for (superv_key, dd, v, timestamp, d_opt_tags) in self.k._superv_notify_value_list:
-                if superv_key.find(".discovery") >= 0:
-                    disco_count += 1
-
             # Manager : request a send
             self.k._process_superv_notify()
 
@@ -245,24 +238,6 @@ class TestRealAll(unittest.TestCase):
                     break
                 else:
                     SolBase.sleep(100)
-
-            # If we got at least disco_count + 1 ok, we are fine
-            processed_ok = Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed")
-            if processed_ok > disco_count:
-                logger.info(
-                    "Success, having=%s, target=%s, delay=%s",
-                    processed_ok,
-                    disco_count + 1,
-                    SolBase.msdiff(ms_start_loop)
-                )
-                break
-
-            # NOT OK
-            logger.warning(
-                "Re-looping, having=%s, target=%s",
-                processed_ok,
-                disco_count + 1
-            )
 
         self.assertGreaterEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count"), 1)
         self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_exception_count"), 0)

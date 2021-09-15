@@ -29,8 +29,6 @@ import unittest
 from os.path import dirname, abspath
 
 import redis
-# noinspection PyUnresolvedReferences,PyPackageRequirements
-
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
@@ -40,9 +38,10 @@ from knockdaemon2.HttpMock.HttpMock import HttpMock
 from knockdaemon2.Platform.PTools import PTools
 from knockdaemon2.Transport.InfluxAsyncTransport import InfluxAsyncTransport
 
+# noinspection PyUnresolvedReferences,PyPackageRequirements
+
 SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
-
 
 
 class TestRealAllUsingHttpMock(unittest.TestCase):
@@ -181,7 +180,7 @@ class TestRealAllUsingHttpMock(unittest.TestCase):
         while SolBase.msdiff(ms_start) < timeout_ms:
             # Transport
             if Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count") >= 1 \
-                    and not self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_pending and len(self.k._superv_notify_value_list) == 0:
+                    and not self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_pending and len(self.k.superv_notify_value_list) == 0:
                 break
 
             SolBase.sleep(50)
@@ -191,7 +190,7 @@ class TestRealAllUsingHttpMock(unittest.TestCase):
 
         # Check
         logger.info("*** CHECK")
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             logger.debug("p=%s", p)
             c = self.k._get_probe_context(p)
             self.assertGreater(c.initial_ms_start, 0)
@@ -208,10 +207,8 @@ class TestRealAllUsingHttpMock(unittest.TestCase):
         self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), 0)
         self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
-        # Validate discovery (must be empty since notified)
-        self.assertEqual(len(self.k._superv_notify_disco_hash), 0)
         # Validate values (must be empty since notified)
-        self.assertEqual(len(self.k._superv_notify_value_list), 0, self.k._superv_notify_value_list)
+        self.assertEqual(len(self.k.superv_notify_value_list), 0, self.k.superv_notify_value_list)
 
         # Validate to superv (critical)
         self.assertGreater(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed"), 0)

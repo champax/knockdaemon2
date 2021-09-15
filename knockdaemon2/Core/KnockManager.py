@@ -119,7 +119,7 @@ class KnockManager(object):
         self._ar_knock_transport = list()
 
         # Probe list
-        self._probe_list = list()
+        self.probe_list = list()
 
         # Probe context
         self._hash_context = dict()
@@ -132,7 +132,7 @@ class KnockManager(object):
         self._timestamp_override_use_expected = True
 
         # Value list
-        self._superv_notify_value_list = list()
+        self.superv_notify_value_list = list()
 
         # Account management
         self._account_hash = dict()
@@ -361,7 +361,7 @@ class KnockManager(object):
         p.init_from_config(k, self._d_yaml_config, d)
 
         # Ok, register it
-        self._probe_list.append(p)
+        self.probe_list.append(p)
         logger.info("Probe registered, p=%s", p)
 
     def _init_udp_server(self):
@@ -526,7 +526,7 @@ class KnockManager(object):
         """
 
         # Exec all
-        for p in self._probe_list:
+        for p in self.probe_list:
             self._try_execute_probe_go(p)
 
         # Notify all
@@ -584,7 +584,7 @@ class KnockManager(object):
         logger.debug("Entering")
         ms = SolBase.mscurrent()
         try:
-            for p in self._probe_list:
+            for p in self.probe_list:
                 try:
                     self._try_execute_probe(p)
                 except Exception as e:
@@ -750,7 +750,7 @@ class KnockManager(object):
         if not ts:
             ts = time()
 
-        self._superv_notify_value_list.append((counter_key, d_tags, counter_value, ts, d_values))
+        self.superv_notify_value_list.append((counter_key, d_tags, counter_value, ts, d_values))
 
     # ==============================
     # SUPERV : TOOLS
@@ -761,11 +761,11 @@ class KnockManager(object):
         Reset Superv pending notify
         """
 
-        if self._superv_notify_value_list and len(self._superv_notify_value_list) > 0:
-            logger.warning("Discarding pending _superv_notify_value_list=%s", self._superv_notify_value_list)
+        if self.superv_notify_value_list and len(self.superv_notify_value_list) > 0:
+            logger.warning("Discarding pending superv_notify_value_list=%s", self.superv_notify_value_list)
 
         # Reset
-        self._superv_notify_value_list = list()
+        self.superv_notify_value_list = list()
 
     def _process_superv_notify(self):
         """
@@ -784,7 +784,7 @@ class KnockManager(object):
             b = t.process_notify(
                 self._account_hash,
                 node_hash,
-                self._superv_notify_value_list)
+                self.superv_notify_value_list)
             if not b:
                 if len(self._ar_knock_transport) == 1:
                     # Only only one transport and failed, do not clear the hashes
@@ -796,7 +796,7 @@ class KnockManager(object):
 
         # We reset if required
         if clear_hash:
-            self._superv_notify_value_list = list()
+            self.superv_notify_value_list = list()
 
     def get_first_transport_by_type(self, transport_class):
         """
@@ -920,7 +920,7 @@ class KnockManager(object):
         :return:
         """
         ms = sys.float_info.max
-        for p in self._probe_list:
+        for p in self.probe_list:
             c = self._get_probe_context(p)
             ms = min(ms, self._need_exec_ms(p, c))
         return ms
