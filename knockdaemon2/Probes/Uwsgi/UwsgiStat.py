@@ -419,6 +419,7 @@ class UwsgiStat(KnockProbe):
         """
         Execute
         """
+        self._execute_native()
 
     def _execute_native(self):
         """
