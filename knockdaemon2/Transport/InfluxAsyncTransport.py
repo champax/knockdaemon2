@@ -44,7 +44,6 @@ lifecyclelogger = logging.getLogger("LifeCycle")
 class InfluxAsyncTransport(KnockTransport):
     """
     Influx Http transport
-    We override only required method and re-use HttpAsyncTransport implementation.
     """
 
     QUEUE_WAIT_SEC_PER_LOOP = None
@@ -388,10 +387,6 @@ class InfluxAsyncTransport(KnockTransport):
         # NOTE :
         # _queue_to_send : it's a queue of  pre-serialized line buffer (binary buffer) to send
         # So, _queue_to_send => queue of list(bytes)
-        #
-        # We use the line protocol to handle stuff similar to HttpAsyncTransport (which works with pre-serialized json buffers)
-        #
-        # Most of the code is copy/pasted from HttpAsyncTransport here (with is under heavy unittests)
 
         try:
             ms_extract = SolBase.mscurrent()

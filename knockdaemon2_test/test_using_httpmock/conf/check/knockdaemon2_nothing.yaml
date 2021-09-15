@@ -2,6 +2,3 @@ knockd:
   exectimeout_ms: 1000
 
 transports:
-  HttpAsyncTransport:
-    class_name: knockdaemon2.Transport.HttpAsyncTransport.HttpAsyncTransport
-    http_uri: theuri

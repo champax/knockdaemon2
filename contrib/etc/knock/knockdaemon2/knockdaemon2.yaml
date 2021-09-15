@@ -2,9 +2,6 @@ knockd:
 exectimeout_ms: 5000
 
 transports:
-  HttpAsyncTransport:
-    class_name: knockdaemon2.Transport.HttpAsyncTransport.HttpAsyncTransport
-    http_uri: "http://api.knock.center:80/pv2"
 
 probes:
   # ============================

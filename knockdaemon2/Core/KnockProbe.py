@@ -64,7 +64,7 @@ class KnockProbe(object):
 
         self.class_name = SolBase.get_classname(self)
 
-        # Category. Not used for HttpAsyncTransport, push toward Influx tag "category".
+        # Category. Pushed toward Influx tag "category".
         # To be overriden at higher level.
         # Format is : "/categ<0>/.../categ<n>"
         self.category = "/undef"

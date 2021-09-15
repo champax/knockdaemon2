@@ -30,7 +30,7 @@ from os.path import dirname, abspath
 
 import redis
 # noinspection PyUnresolvedReferences,PyPackageRequirements
-from nose.plugins.attrib import attr
+
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
@@ -44,7 +44,7 @@ SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
 
 
-@attr('prov')
+
 class TestRealAllUsingHttpMock(unittest.TestCase):
     """
     Test description

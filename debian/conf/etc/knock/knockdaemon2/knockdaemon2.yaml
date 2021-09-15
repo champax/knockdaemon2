@@ -18,19 +18,6 @@ knockd:
 transports: {}
 
   # ============================
-  # Managed instance transport
-  # - requires knockd acc_namespace and acc_key provided
-  # - refer to ./conf.d/10_auth.yaml.sample
-  # ============================
-  # HttpAsyncTransport:
-  #   class_name: knockdaemon2.Transport.HttpAsyncTransport.HttpAsyncTransport
-  #   http_uri: "https://api.knock.center:443/pv2"
-  #   # Http min interval : 30 sec
-  #   http_send_min_interval_ms: 30000
-  #   # Http max bytes : 128K
-  #  http_send_max_bytes: 131072
-
-  # ============================
   # Influxdb direct transport
   # ============================
 

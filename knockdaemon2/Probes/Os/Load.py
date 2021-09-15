@@ -65,7 +65,7 @@ class Load(KnockProbe):
         """
 
         # Base
-        KnockProbe.__init__(self, linux_support=True, windows_support=True)
+        KnockProbe.__init__(self, linux_support=True, windows_support=False)
 
         # Init
         self._cpu_count = None

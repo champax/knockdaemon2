@@ -4,9 +4,6 @@ knockd:
   acc_key: 970KGA4GH571ZK2UDQPL
 
 transports:
-  HttpAsyncTransport:
-    class_name: knockdaemon2.Transport.HttpAsyncTransport.HttpAsyncTransport
-    http_uri: "http://127.0.0.1:7900/pv2"
 
 probes:
   # ============================

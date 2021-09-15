@@ -58,7 +58,7 @@ class Netstat(KnockProbe):
         """
         Init
         """
-        KnockProbe.__init__(self, linux_support=True, windows_support=True)
+        KnockProbe.__init__(self, linux_support=True, windows_support=False)
 
         self.counter = dict()
         self.pinghost = None

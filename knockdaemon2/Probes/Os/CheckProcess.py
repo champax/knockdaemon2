@@ -49,7 +49,7 @@ class CheckProcess(KnockProbe):
         """
         Init
         """
-        KnockProbe.__init__(self, linux_support=True, windows_support=True)
+        KnockProbe.__init__(self, linux_support=True, windows_support=False)
 
         self.json_config_file = None
         self.process_config = None
@@ -83,7 +83,8 @@ class CheckProcess(KnockProbe):
         logger.info("Rebased json_config_file=%s", self.json_config_file)
 
         # Ok
-        self.process_config = json.load(open(self.json_config_file, 'r'))
+        with open(self.json_config_file, 'r') as f:
+            self.process_config = json.load(f)
         logger.info("process_config=%s", self.process_config)
 
         # Default to linux

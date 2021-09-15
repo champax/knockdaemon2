@@ -44,7 +44,7 @@ class Memory(KnockProbe):
         """
 
         # Base
-        KnockProbe.__init__(self, linux_support=True, windows_support=True)
+        KnockProbe.__init__(self, linux_support=True, windows_support=False)
         self.mem_info = MEMINFO_PATH
 
         # Go

@@ -2,10 +2,6 @@ knockd:
   exectimeout_ms: 1000
 
 transports:
-  HttpAsyncTransport:
-    class_name: knockdaemon2.Transport.HttpAsyncTransport.HttpAsyncTransport
-    http_uri: "http://127.0.0.1:7900/pv2"
-    max_items_in_queue: 7900
 
 probes:
   TestProbe1:

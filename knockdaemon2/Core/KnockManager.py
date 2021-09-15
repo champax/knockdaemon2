@@ -40,6 +40,7 @@ from greenlet import GreenletExit
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
+from yaml import SafeLoader
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Core.KnockProbeContext import KnockProbeContext
@@ -177,7 +178,7 @@ class KnockManager(object):
         for cur_file in ar_to_load:
             logger.info("Loading cur_file=%s", cur_file)
             with open(cur_file, 'r') as yml_file:
-                cur_d = yaml.load(yml_file)
+                cur_d = yaml.load(yml_file, Loader=SafeLoader)
 
             logger.info("Merging cur_d=%s", cur_d)
 
@@ -253,7 +254,7 @@ class KnockManager(object):
 
                 logger.info("Account hash=%s", self._account_hash)
             else:
-                logger.warning("No acc_namespace defined in configuration, using default, HttpAsyncTransport will not be able to push datas to remote managed instance")
+                logger.warning("No acc_namespace defined in configuration, using default, transports may not be able to push datas to remote managed instance")
                 self._account_hash = {
                     "acc_namespace": "unset",
                     "acc_key": "unset"
@@ -281,7 +282,7 @@ class KnockManager(object):
 
             # Init transports
             logger.info("Init transports")
-            if "transports" in self._d_yaml_config:
+            if "transports" in self._d_yaml_config and self._d_yaml_config["transports"] is not None:
                 for k, d in self._d_yaml_config["transports"].items():
                     self._init_transport(k, d)
             else:

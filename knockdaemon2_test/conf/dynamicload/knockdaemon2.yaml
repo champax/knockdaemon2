@@ -3,11 +3,3 @@ knockd:
   lifecycle_interval_ms: 6
 
 transports:
-  HttpAsyncTransport:
-    class_name: knockdaemon2.Transport.HttpAsyncTransport.HttpAsyncTransport
-    http_uri: theuri
-    max_items_in_queue: 1
-    http_ko_interval_ms: 2
-    http_send_min_interval_ms: 3
-    http_send_max_bytes: 4
-    http_send_bypass_wait_ms: 5

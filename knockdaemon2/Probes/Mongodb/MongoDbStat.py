@@ -31,6 +31,7 @@ import pymongo
 import yaml
 from pymongo.errors import OperationFailure
 from pysolbase.SolBase import SolBase
+from yaml import SafeLoader
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
 
@@ -138,7 +139,7 @@ class MongoDbStat(KnockProbe):
 
             with open(conf_file, 'r') as stream:
                 try:
-                    config = yaml.load(stream)
+                    config = yaml.load(stream, Loader=SafeLoader)
                 except yaml.YAMLError as e:
                     logger.warning('Error loadding %s %s ', conf_file, SolBase.extostr(e))
                     continue

@@ -47,7 +47,7 @@ class HddStatus(KnockProbe):
         Init
         """
         # Base
-        KnockProbe.__init__(self, linux_support=True, windows_support=True)
+        KnockProbe.__init__(self, linux_support=True, windows_support=False)
 
         # override timeout since we are slow
         self.exec_timeout_override_ms = 30000

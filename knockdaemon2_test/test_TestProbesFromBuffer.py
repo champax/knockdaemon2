@@ -21,6 +21,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
+
+# MONKEY ASAP
+from pysolbase.SolBase import SolBase
+
+SolBase.voodoo_init()
+
 import glob
 import logging
 import os
@@ -32,12 +38,8 @@ from os.path import dirname, abspath
 import distro
 import psutil
 import ujson
-# noinspection PyPackageRequirements
 from dns.resolver import Resolver
-# noinspection PyPackageRequirements,PyUnresolvedReferences
-
 from pysolbase.FileUtility import FileUtility
-from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
@@ -70,15 +72,13 @@ from knockdaemon2.Probes.Rabbitmq.RabbitmqStat import RabbitmqStat
 from knockdaemon2.Probes.Redis.RedisStat import RedisStat
 from knockdaemon2.Probes.Uwsgi.UwsgiStat import UwsgiStat
 from knockdaemon2.Probes.Varnish.VarnishStat import VarnishStat
-# noinspection PyProtectedMember
 from knockdaemon2.Tests.TestHelpers import _exec_helper
 from knockdaemon2.Tests.TestHelpers import expect_value
 
-SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
 
 
-class TestProbesDirect(unittest.TestCase):
+class TestProbesFromBuffer(unittest.TestCase):
     """
     Test description
     """
@@ -92,6 +92,9 @@ class TestProbesDirect(unittest.TestCase):
 
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
         self.config_file = self.current_dir + "conf" + SolBase.get_pathseparator() + "realall" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
+
+        self.sample_dir = self.current_dir + "../z_docs/samples/"
+        self.assertTrue(FileUtility.is_dir_exist(self.sample_dir))
 
         # Config files
         for f in [
@@ -478,7 +481,6 @@ class TestProbesDirect(unittest.TestCase):
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     @unittest.skipIf(MemCachedStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % MemCachedStat())
-
     def test_MemCachedStat(self):
         """
         Test
@@ -685,7 +687,6 @@ class TestProbesDirect(unittest.TestCase):
             expect_value(self, self.k, "k.os.uptime", 1, "gte")
 
     @unittest.skipIf(PhpFpmStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % PhpFpmStat())
-
     def test_PhpFpmStat(self):
         """
         Test
@@ -704,58 +705,47 @@ class TestProbesDirect(unittest.TestCase):
                 elif knock_type == "str":
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-    @unittest.skipIf(ApacheStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % ApacheStat())
-
-    def test_Apache(self):
+    def test_from_buffer_apache(self):
         """
         Test
         """
 
-        # Exec it
-        _exec_helper(self, ApacheStat)
-
-        for _, knock_type, knock_key in ApacheStat.KEYS:
-            dd = {"ID": "default"}
-            if knock_type == "int":
-                expect_value(self, self.k, knock_key, 0, "gte", dd)
-            elif knock_type == "float":
-                expect_value(self, self.k, knock_key, 0.0, "gte", dd)
-            elif knock_type == "str":
-                expect_value(self, self.k, knock_key, 0, "exists", dd)
-
-    @unittest.skipIf(ApacheStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % ApacheStat())
-
-    def test_Apache_from_dict_1(self):
-        """
-        Test
-        """
-        d = {'k.apache.status.ms': 100, 'k.apache.sc.send_reply': 3, 'Uptime': 599634.0, 'IdleWorkers': 12.0, 'k.apache.sc.waiting_for_connection': 12, 'k.apache.sc.keepalive': 0,
-             'k.apache.sc.dns_lookup': 0, 'Total Accesses': 11934709.0, 'k.apache.sc.closing': 1, 'Total kBytes': 33635364.0, 'BytesPerReq': 2885.92, 'k.apache.sc.reading_request': 0, 'CPULoad': 0.06,
-             'BytesPerSec': 57439.4, 'k.apache.sc.gracefully': 0, 'k.apache.sc.starting_up': 0, 'ReqPerSec': 19.9, 'k.apache.sc.open': 240, 'k.apache.sc.idle': 0, 'k.apache.sc.logging': 0,
-             'BusyWorkers': 4.0}
+        # Init
         ap = ApacheStat()
         ap.set_manager(self.k)
-        ap.process_apache_dict(d, "default")
 
-        # Log
-        for tu in self.k._superv_notify_value_list:
-            logger.info("Having tu=%s", tu)
+        # Go
+        for fn in [
+            "apache/apache_24.out",
+        ]:
+            # Path
+            fn = self.sample_dir + fn
 
-        # Check
-        for _, knock_type, knock_key in ApacheStat.KEYS:
-            dd = {"ID": "default"}
-            if knock_type == "int":
-                expect_value(self, self.k, knock_key, 0, "gte", dd)
-            elif knock_type == "float":
-                expect_value(self, self.k, knock_key, 0.0, "gte", dd)
-            elif knock_type == "str":
-                expect_value(self, self.k, knock_key, 0, "exists", dd)
+            # Reset
+            Meters.reset()
 
-        # Discovery is fired outside this, do not check it here
-        pass
+            # Load
+            self.assertTrue(FileUtility.is_file_exist(fn))
+            buf = FileUtility.file_to_binary(fn)
+
+            # Process
+            ap.process_apache_buffer(apache_buf=buf, pool_id="default", ms_http=11)
+
+            # Log
+            for tu in self.k._superv_notify_value_list:
+                logger.info("Having tu=%s", tu)
+
+            # Check
+            for _, knock_type, knock_key in ApacheStat.KEYS:
+                dd = {"ID": "default"}
+                if knock_type == "int":
+                    expect_value(self, self.k, knock_key, 0, "gte", dd)
+                elif knock_type == "float":
+                    expect_value(self, self.k, knock_key, 0.0, "gte", dd)
+                elif knock_type == "str":
+                    expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
-
     def test_Rabbitmq(self):
         """
         Test
@@ -774,7 +764,6 @@ class TestProbesDirect(unittest.TestCase):
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
-
     def test_Varnish(self):
         """
         Test
@@ -793,7 +782,6 @@ class TestProbesDirect(unittest.TestCase):
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
-
     def test_Varnish_via_invoke_json(self):
         """
         Test
@@ -824,7 +812,6 @@ class TestProbesDirect(unittest.TestCase):
         pass
 
     @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
-
     def test_Varnish_via_invoke_text(self):
         """
         Test
@@ -855,7 +842,6 @@ class TestProbesDirect(unittest.TestCase):
         pass
 
     @unittest.skipIf(UwsgiStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % UwsgiStat())
-
     def test_UwsgiStat(self):
         """
         Test
@@ -938,7 +924,6 @@ class TestProbesDirect(unittest.TestCase):
                     logger.warning("io_counters failed, bypassing checks, ex=%s", SolBase.extostr(e))
 
     @unittest.skipIf(Mysql().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Mysql())
-
     def test_Mysql(self):
         """
         Test
@@ -961,7 +946,7 @@ class TestProbesDirect(unittest.TestCase):
 
     @unittest.skipIf(MongoDbStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % MongoDbStat())
     # @unittest.skip("zzz")
-    
+
     def test_MongoDbStat(self):
         """
         Test

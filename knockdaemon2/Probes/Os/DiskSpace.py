@@ -68,7 +68,7 @@ class DiskSpace(KnockProbe):
         """
 
         # Base
-        KnockProbe.__init__(self, linux_support=True, windows_support=True)
+        KnockProbe.__init__(self, linux_support=True, windows_support=False)
 
         self.hash_fs = dict()
         self.previous_stat = dict()

@@ -123,89 +123,90 @@ class ApacheStat(KnockProbe):
 
         # Go
         if self.ar_url:
-            logger.info("Skip loading ar_url from config (already set), ar_url=%s", self.ar_url)
+            logger.info("Got (set) ar_url=%s", self.ar_url)
             return
-
-        if "url" in d:
+        elif "url" in d:
             logger.info("Loading url from config")
             url = d["url"]
             url = url.strip()
 
             if url.lower() == "auto":
-                logger.info("Auto url from config, using default")
                 self.ar_url = ["http://127.0.0.1/server-status?auto"]
+                logger.info("Got (auto) ar_url=%s", self.ar_url)
             else:
                 self.ar_url = url.split("|")
+                logger.info("Got (load) ar_url=%s", self.ar_url)
         else:
-            logger.info("No url from config, using default")
             self.ar_url = ["http://127.0.0.1/server-status?auto"]
-
-        logger.info("Set ar_url=%s", self.ar_url)
+            logger.info("Got (default) ar_url=%s", self.ar_url)
 
     def _execute_linux(self):
         """
         Exec
         """
+        pass
+
+    def _execute_native(self):
+        """
+        Execute native
+        """
+
+        # -------------------------------
+        # Detect apache
+        # -------------------------------
         conf_files = ['/etc/apache2/apache2.conf', '/etc/httpd/conf/httpd.conf']
         found = False
+        conf_file = None
         for conf_file in conf_files:
-
             if FileUtility.is_file_exist(conf_file):
                 found = True
                 break
         if not found:
             logger.info('apache not found')
             return
-
-        logger.info("Apache detected (/etc/apache2/apache2.conf found)")
+        logger.info("Apache detected, using=%s", conf_file)
 
         # -------------------------------
-        # P0 : Fire discoveries
+        # Try uris and try process
         # -------------------------------
-        logger.info("Firing discoveries (default)")
+
         pool_id = "default"
-
-        # -------------------------------
-        # Loop and try uris
-        # -------------------------------
 
         for u in self.ar_url:
             logger.info("Trying u=%s", u)
 
-            # Fetch
+            # Try fetch
             ms_http_start = SolBase.mscurrent()
-            d_apache = self.fetch_url(u)
-            ms_http = SolBase.msdiff(ms_http_start)
-
-            # Check
-            if not d_apache:
-                logger.info("Url failed, skip, u=%s", u)
+            buf_apache = self.fetch_apache_url(u)
+            if buf_apache is None:
                 continue
 
-            # Add http millis
-            d_apache["k.apache.status.ms"] = ms_http
-
-            # -------------------------------
-            # Got a dict, fine, send everything browsing our keys
-            # -------------------------------
-            ok = self.process_apache_dict(d_apache, pool_id)
-            if ok:
+            # Try process
+            if self.process_apache_buffer(buf_apache, pool_id, SolBase.msdiff(ms_http_start)):
                 return
 
         # Here we are NOT ok
         logger.warning("All Uri down, notify started=0 and return, pool_id=%s", pool_id)
         self.notify_value_n("k.apache.started", {"ID": pool_id}, 0)
 
-    def process_apache_dict(self, d_apache, pool_id):
+    def process_apache_buffer(self, apache_buf, pool_id, ms_http):
         """
         Process apache dict, return True if ok
-        :param d_apache: dict
-        :type d_apache: dict
+        :param apache_buf: bytes
+        :type apache_buf: bytes
         :param pool_id: str
         :type pool_id: str
+        :param ms_http: float
+        :type ms_http: float
         :return bool
         :rtype bool
         """
+
+        # Populate
+        d_apache = self.parse_apache_buffer(apache_buf.decode("utf8"))
+
+        # Add ms
+        d_apache["k.apache.status.ms"] = ms_http
 
         logger.info("Processing, d_apache=%s, pool_id=%s", d_apache, pool_id)
         for k, knock_type, knock_key in ApacheStat.KEYS:
@@ -214,7 +215,7 @@ class ApacheStat(KnockProbe):
                 if k.find("k.apache.") != 0:
                     logger.warning("Unable to locate k=%s in d_apache", k)
                 else:
-                    logger.info("Unable to locate k=%s in d_apache (this is expected)", k)
+                    logger.debug("Unable to locate k=%s in d_apache (this is expected)", k)
                 continue
 
             # Ok, fetch and cast
@@ -239,62 +240,58 @@ class ApacheStat(KnockProbe):
         self.notify_value_n("k.apache.started", {"ID": pool_id}, 1)
         return True
 
-    def parser_apache_buffer(self, pd):
+    @classmethod
+    def parse_apache_buffer(cls, buf_apache):
         """
         Parse apache buffer and return a dict
-        :param pd: str
-        :type pd: str
+        :param buf_apache: str
+        :type buf_apache: str
         :return dict
         :rtype dict
         """
 
         d_apache = dict()
-        logger.debug("Parsing pd=%s", repr(pd))
-        for line in pd.split("\n"):
+        logger.debug("Parsing buf_apache=%s", repr(buf_apache))
+        for line in buf_apache.split("\n"):
             line = line.strip()
-
             if len(line) == 0:
-                logger.debug("Skip line=%s", line)
                 continue
-
             c_name = None
             c_value = None
             try:
                 logger.debug("Parsing line=%s", line)
-                (c_name, c_value) = line.split(':', 2)
-
+                c_name, c_value = line.split(':', 2)
                 c_name = c_name.strip()
-
                 c_value = c_value.strip()
                 c_value = c_value.replace("%", "")
 
                 if c_name == 'Scoreboard':
-                    self.populate_scoreboard(c_value, d_apache)
+                    cls.populate_scoreboard(c_value, d_apache)
                 else:
                     d_apache[c_name] = round(float(c_value), 2)
-                    logger.info("c_name=%s, c_value=%s, h_value=%s", c_name, c_value, d_apache[c_name])
+                    logger.debug("c_name=%s, c_value=%s, h_value=%s", c_name, c_value, d_apache[c_name])
             except Exception as e:
-                logger.warning("Parsing failed, line=%s, c_name=%s, c_value=%s, ex=%s", line, c_name, c_value, e)
+                logger.info("Skip line (exception), line=%s, c_name=%s, c_value=%s, ex=%s", line, c_name, c_value, e)
                 continue
-
         return d_apache
 
-    def fetch_url(self, url_status):
+    @classmethod
+    def fetch_apache_url(cls, url):
         """
-        Fetch url and return a dict, or None if failure
-        :param url_status: str
-        :type url_status: str
-        :return: dict,None
-        :rtype: dict,None
+        Fetch url and return bytes, or None if failure
+        :param url: str
+        :type url: str
+        :return: bytes,None
+        :rtype: bytes,None
         """
 
         try:
             # Fix status url (we need ?auto)
-            if url_status.find("?auto") < 0:
-                url_status += "?auto"
+            if url.find("?auto") < 0:
+                url += "?auto"
 
             # Go
-            logger.info("Processing url_status=%s", url_status)
+            logger.info("Trying url=%s", url)
 
             # Client
             hclient = HttpClient()
@@ -315,50 +312,42 @@ class ApacheStat(KnockProbe):
             hreq.headers["Cache-Control"] = "no-cache"
 
             # Uri
-            hreq.uri = url_status
+            hreq.uri = url
 
             # Fire http now
-            logger.info("Firing http now, hreq=%s", hreq)
+            logger.debug("Firing http now, hreq=%s", hreq)
             hresp = hclient.go_http(hreq)
-            logger.info("Got reply, hresp=%s", hresp)
+            logger.debug("Got reply, hresp=%s", hresp)
 
             # Get response
             if hresp.status_code != 200:
-                logger.warning("No http 200, give up")
+                logger.info("Give up (no http 200), sc=%s", hresp.status_code)
                 return None
-
-            # Get buffer
-            pd = hresp.buffer
 
             # Check
-            if not pd:
-                logger.warning("No buffer, give up")
+            if not hresp.buffer:
+                logger.info("Give up (buffer None)")
                 return None
-            elif pd.find("Scoreboard") < 0:
-                logger.warning("Invalid buffer (no Scoreboard), give up")
+            elif hresp.buffer.find("Scoreboard") < 0:
+                logger.info("Give up (no Scoreboard)")
                 return None
-
-            # Got it : parse
-            d_apache = self.parser_apache_buffer(pd)
-
-            # Over
-            logger.info("Url hit, d_apache=%s", d_apache)
-            return d_apache
+            else:
+                logger.info("Success, len.buffer=%s", len(hresp.buffer))
+                return hresp.buffer
 
         except Exception as e:
-            logger.warning("Exception, ex=%s", SolBase.extostr(e))
+            logger.warning("Give up (exception), ex=%s", SolBase.extostr(e))
             return None
 
-    def populate_scoreboard(self, string, d_apache):
+    @classmethod
+    def populate_scoreboard(cls, s, d_apache):
         """
         Get score by type and populate d_apache
-        :param string: str
-        :type string: str
+        :param s: str
+        :type s: str
         :param d_apache: dict
         :type d_apache: dict
         """
-
-        logger.info("Populate scoreboard now")
 
         # Scoreboard Key
         # "_" Waiting for Connectio
@@ -373,24 +362,27 @@ class ApacheStat(KnockProbe):
         # "I" Idle cleanup of worker
         # "." Open slot with no current process
 
-        d_apache["k.apache.sc.waiting_for_connection"] = self.get_scoreboard_metric(string, "_")
-        d_apache["k.apache.sc.starting_up"] = self.get_scoreboard_metric(string, "S")
-        d_apache["k.apache.sc.reading_request"] = self.get_scoreboard_metric(string, "R")
-        d_apache["k.apache.sc.send_reply"] = self.get_scoreboard_metric(string, "W")
-        d_apache["k.apache.sc.keepalive"] = self.get_scoreboard_metric(string, "K")
-        d_apache["k.apache.sc.dns_lookup"] = self.get_scoreboard_metric(string, "D")
-        d_apache["k.apache.sc.closing"] = self.get_scoreboard_metric(string, "C")
-        d_apache["k.apache.sc.logging"] = self.get_scoreboard_metric(string, "L")
-        d_apache["k.apache.sc.gracefully"] = self.get_scoreboard_metric(string, "G")
-        d_apache["k.apache.sc.idle"] = self.get_scoreboard_metric(string, "I")
-        d_apache["k.apache.sc.open"] = self.get_scoreboard_metric(string, ".")
+        d_apache["k.apache.sc.waiting_for_connection"] = cls.get_scoreboard_metric(s, "_")
+        d_apache["k.apache.sc.starting_up"] = cls.get_scoreboard_metric(s, "S")
+        d_apache["k.apache.sc.reading_request"] = cls.get_scoreboard_metric(s, "R")
+        d_apache["k.apache.sc.send_reply"] = cls.get_scoreboard_metric(s, "W")
+        d_apache["k.apache.sc.keepalive"] = cls.get_scoreboard_metric(s, "K")
+        d_apache["k.apache.sc.dns_lookup"] = cls.get_scoreboard_metric(s, "D")
+        d_apache["k.apache.sc.closing"] = cls.get_scoreboard_metric(s, "C")
+        d_apache["k.apache.sc.logging"] = cls.get_scoreboard_metric(s, "L")
+        d_apache["k.apache.sc.gracefully"] = cls.get_scoreboard_metric(s, "G")
+        d_apache["k.apache.sc.idle"] = cls.get_scoreboard_metric(s, "I")
+        d_apache["k.apache.sc.open"] = cls.get_scoreboard_metric(s, ".")
 
-    # noinspection PyMethodMayBeStatic
-    def get_scoreboard_metric(self, string, metric):
+    @classmethod
+    def get_scoreboard_metric(cls, s, metric):
         """
-        doc
-        :param metric: metric
-        :param string: string
-        :return:
+        Get metric
+        :param s: str
+        :type s: str
+        :param metric: str
+        :type metric: str
+        :return int
+        :rtype int
         """
-        return string.count(metric)
+        return s.count(metric)

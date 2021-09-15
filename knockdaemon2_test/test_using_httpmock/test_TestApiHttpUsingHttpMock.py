@@ -29,7 +29,7 @@ from urllib.parse import urlencode
 
 import redis
 # noinspection PyUnresolvedReferences,PyPackageRequirements
-from nose.plugins.attrib import attr
+
 from pysolbase.SolBase import SolBase
 from pysolhttpclient.Http.HttpClient import HttpClient
 from pysolhttpclient.Http.HttpRequest import HttpRequest
@@ -41,7 +41,7 @@ SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
 
 
-@attr('prov')
+
 class TestApiHttpUsingHttpMock(unittest.TestCase):
     """
     Test description

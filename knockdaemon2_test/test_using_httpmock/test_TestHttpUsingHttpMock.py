@@ -30,7 +30,7 @@ from urllib.parse import urlencode
 import ujson
 from geventhttpclient import HTTPClient, URL
 # noinspection PyUnresolvedReferences,PyPackageRequirements
-from nose.plugins.attrib import attr
+
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
 
@@ -40,7 +40,7 @@ SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
 
 
-@attr('prov')
+
 class TestHttp(unittest.TestCase):
     """
     Test description

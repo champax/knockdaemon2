@@ -27,14 +27,14 @@ import unittest
 from os.path import dirname, abspath
 
 # noinspection PyUnresolvedReferences,PyPackageRequirements
-from nose.plugins.attrib import attr
+
 from pysolbase.SolBase import SolBase
 
 SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
 
 
-@attr('prov')
+
 class TestHttpAsyncTransportConfig(unittest.TestCase):
     """
     Test description
