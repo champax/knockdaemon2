@@ -56,7 +56,31 @@ class RabbitmqStat(KnockProbe):
         ("k.rabbitmq.queue.synchronised_slave_nodes", "int", "k.rabbitmq.queue.synchronised_slave_nodes", "sum"),
 
         # Rates (copyright NASA?)
+    ]
 
+    AR_QUEUES = [
+        ("backing_queue_status.avg_ack_egress_rate", 13),
+        ("backing_queue_status.avg_ack_ingress_rate", 14),
+        ("backing_queue_status.avg_egress_rate", 15),
+        ("backing_queue_status.avg_ingress_rate", 16),
+        ("message_stats.ack_details.rate", 17),
+        ("message_stats.confirm_details.rate", 18),
+        ("message_stats.deliver_details.rate", 19),
+        ("message_stats.deliver_get_details.rate", 20),
+        ("message_stats.deliver_no_ack_details.rate", 21),
+        ("message_stats.disk_reads_details.rate", 22),
+        ("message_stats.disk_writes_details.rate", 23),
+        ("message_stats.get_details.rate", 24),
+        ("message_stats.get_no_ack_details.rate", 25),
+        ("message_stats.publish_details.rate", 26),
+        ("message_stats.publish_in_details.rate", 27),
+        ("message_stats.publish_out_details.rate", 28),
+        ("message_stats.redeliver_details.rate", 29),
+        ("message_stats.return_unroutable_details.rate", 30),
+        ("messages_details.rate", 31),
+        ("messages_ready_details.rate", 32),
+        ("messages_unacknowledged_details.rate", 33),
+        ("reductions_details.rate", 34),
     ]
 
     def __init__(self):
@@ -73,6 +97,20 @@ class RabbitmqStat(KnockProbe):
         Execute
         """
 
+        self._execute_native()
+
+    def _notify_down(self):
+        """
+        Notify down
+        """
+
+        self.notify_value_n("k.rabbitmq.started", {"PORT": "default"}, 0)
+
+    def _execute_native(self):
+        """
+        Exec, native
+        :return:
+        """
         # ---------------------------
         # DETECT CONFIGS
         # ---------------------------
@@ -95,71 +133,64 @@ class RabbitmqStat(KnockProbe):
         ec, so, se = ButcherTools.invoke("rabbitmqadmin --help")
         if ec != 0:
             logger.error("Unable to invoke rabbitmqadmin (you may have to install it), signaling down, ec=%s, so=%s, se=%s", ec, repr(so), repr(so))
-            self.notify_value_n("k.rabbitmq.started", {"PORT": "default"}, 0)
+            self._notify_down()
             return
 
         # ----------------
         # NODES
         # ----------------
-        ec, so, se = ButcherTools.invoke("rabbitmqadmin list nodes name type running uptime")
-        if ec != 0:
+        nodes_ec, nodes_so, nodes_se = ButcherTools.invoke("rabbitmqadmin list nodes name type running uptime")
+        if nodes_ec != 0:
             logger.error("Nodes : invoke failed toward rabbitmqadmin (you may have to install it), signaling down, ec=%s, so=%s, se=%s", ec, repr(so), repr(so))
-            self.notify_value_n("k.rabbitmq.started", {"PORT": "default"}, 0)
-        else:
-            node_count, node_running_count = self._process_nodes_buffer(so)
-            logger.info("Got node_count=%s, node_running_count=%s", node_count, node_running_count)
-            self.notify_value_n("k.rabbitmq.node.count", {"PORT": "default"}, node_count)
-            self.notify_value_n("k.rabbitmq.node.running.count", {"PORT": "default"}, node_running_count)
+            self._notify_down()
+            return
 
         # ----------------
         # QUEUES
         # ----------------
-        ec, so, se = ButcherTools.invoke(
+        queues_ec, queues_so, queues_se = ButcherTools.invoke(
             "rabbitmqadmin list queues vhost name auto_delete consumers durable idle_since messages message_ready messages_unacknowledged node slave_nodes synchronised_slave_nodes "
             "backing_queue_status.avg_ack_egress_rate backing_queue_status.avg_ack_ingress_rate backing_queue_status.avg_egress_rate backing_queue_status.avg_ingress_rate "
             "message_stats.ack_details.rate message_stats.confirm_details.rate message_stats.deliver_details.rate message_stats.deliver_get_details.rate message_stats.deliver_no_ack_details.rate "
             "message_stats.disk_reads_details.rate message_stats.disk_writes_details.rate message_stats.get_details.rate message_stats.get_no_ack_details.rate message_stats.publish_details.rate "
             "message_stats.publish_in_details.rate message_stats.publish_out_details.rate message_stats.redeliver_details.rate message_stats.return_unroutable_details.rate messages_details.rate messages_ready_details.rate messages_unacknowledged_details.rate reductions_details.rate")
-        if ec != 0:
+        if queues_ec != 0:
             logger.error("Queues : invoke failed toward rabbitmqadmin (you may have to install it), signaling down, ec=%s, so=%s, se=%s", ec, repr(so), repr(so))
-            self.notify_value_n("k.rabbitmq.started", {"PORT": "default"}, 0)
-        else:
-            d_global, d_perqueue = self._process_queues_buffer(so)
-            for k, v in d_global.items():
-                self.notify_value_n("k.rabbitmq.queue." + k, {"PORT": "default"}, v)
-            for queue, counters in d_perqueue.items():
-                additional_fields = {}
-                for k in counters.keys():
-                    matches = self.FILTER_COUNTER_PER_QUEUE.match(k)
-                    if matches:
-                        knock_key = "m.%s.persec" % matches.groups()[0]
-                        additional_fields[knock_key] = counters[k]
-                for k in ('messages',):
-                    self.notify_value_n("k.rabbitmq.per_queue." + k, {"PORT": "default", 'QUEUE': queue}, counters[k], d_values=additional_fields)
+            self._notify_down()
+            return
 
         # ----------------
-        # Signal started
+        # Process buffer
         # ----------------
+        if not self.process_rabbitmq_buffers(nodes_se, queues_so):
+            self._notify_down()
+            return
+
+    def process_rabbitmq_buffers(self, nodes_buf, queues_buf):
+        """
+        Process buffers
+        :param nodes_buf: str
+        :type nodes_buf: str
+        :param queues_buf: str
+        :type queues_buf: str
+        :return bool
+        :rtype bool
+        """
+
+        self._process_nodes_buffer(nodes_buf)
+        self._process_queues_buffer(queues_buf)
+
+        # Signal started
         self.notify_value_n("k.rabbitmq.started", {"PORT": "default"}, 1)
 
-    # noinspection PyMethodMayBeStatic
+        # Over
+        return True
+
     def _process_nodes_buffer(self, s):
         """
         Process nodes buffers
         :param s: str
         :type s: str
-        :return tuple node_count, node_running_count
-        :rtype tuple
-        """
-
-        """
-        +-----------------------------+------+---------+------------+
-        |            name             | type | running |   uptime   |
-        +-----------------------------+------+---------+------------+
-        | rabbit@SVR-001-1a | disc | True    | 415087196  |
-        | rabbit@SVR-002-1b | disc | True    | 3515146647 |
-        | rabbit@SVR-003-1c | disc | True    | 415176475  |
-        +-----------------------------+------+---------+------------
         """
 
         # Init
@@ -193,30 +224,15 @@ class RabbitmqStat(KnockProbe):
                 node_running_count += 1
 
         # Over
-        return node_count, node_running_count
+        self.notify_value_n("k.rabbitmq.node.count", {"PORT": "default"}, node_count)
+        self.notify_value_n("k.rabbitmq.node.running.count", {"PORT": "default"}, node_running_count)
 
     # noinspection PyMethodMayBeStatic
-    def _process_queues_buffer(self, output_rabbitmq_admin):
+    def _process_queues_buffer(self, s):
         """
         Process queues buffers
-        :param output_rabbitmq_admin: str
-        :type output_rabbitmq_admin: str
-        :return dict
-        :rtype dict, dict
-        """
-
-        """
-        +-------+----------------------------+-------------+-----------+---------+--------------------+----------+---------------+-------------------------+-----------------------------+---------------------------------------------------------+---------------------------------------------------------+
-        | vhost |            name            | auto_delete | consumers | durable |     idle_since     | messages | message_ready | messages_unacknowledged |            node             |                       slave_nodes                       |                synchronised_slave_nodes                 |
-        +-------+----------------------------+-------------+-----------+---------+--------------------+----------+---------------+-------------------------+-----------------------------+---------------------------------------------------------+---------------------------------------------------------+
-        | /     | knock.queue.billing        | False       | 0         | True    | 2017-10-17 7:27:27 | 0        |               | 0                       | rabbit@SVR-001-1a | rabbit@SVR-002-1b rabbit@SVR-003-1c | rabbit@SVR-002-1b rabbit@SVR-003-1c |
-        | /     | knock.queue.event.mail     | False       | 2         | True    | 2017-10-17 7:27:27 | 0        |               | 0                       | rabbit@SVR-001-1a | rabbit@SVR-002-1b rabbit@SVR-003-1c | rabbit@SVR-003-1c rabbit@SVR-002-1b |
-        | /     | knock.queue.noroute        | False       | 0         | True    | 2017-10-17 7:27:27 | 0        |               | 0                       | rabbit@SVR-001-1a |                                                         |                                                         |
-        | /     | knock.queue.raw            | False       | 0         | True    | 2017-10-17 7:27:26 | 0        |               | 0                       | rabbit@SVR-001-1a | rabbit@SVR-002-1b rabbit@SVR-003-1c | rabbit@SVR-003-1c rabbit@SVR-002-1b |
-        | /     | knock.queue.securesend.elk | False       | 0         | True    | 2017-10-17 7:27:27 | 0        |               | 0                       | rabbit@SVR-001-1a | rabbit@SVR-002-1b rabbit@SVR-003-1c | rabbit@SVR-003-1c rabbit@SVR-002-1b |
-        | /     | knock.queue.wakeup         | False       | 2         | True    | 2017-10-17 7:27:26 | 0        |               | 0                       | rabbit@SVR-001-1a | rabbit@SVR-002-1b rabbit@SVR-003-1c | rabbit@SVR-003-1c rabbit@SVR-002-1b |
-        | /     | knock.queue.wakeup.voda    | False       | 2         | True    | 2017-10-17 7:27:26 | 0        |               | 0                       | rabbit@SVR-001-1a | rabbit@SVR-002-1b rabbit@SVR-003-1c | rabbit@SVR-003-1c rabbit@SVR-002-1b |
-        +-------+----------------------------+-------------+-----------+---------+--------------------+----------+---------------+-------------------------+-----------------------------+---------------------------------------------------------+---------------------------------------------------------+
+        :param s: str
+        :type s: str
         """
 
         # per queue
@@ -256,7 +272,7 @@ class RabbitmqStat(KnockProbe):
         d_global["reductions_details.rate"] = 0.0
 
         # Parse line by line
-        for cur_line in output_rabbitmq_admin.split("\n"):
+        for cur_line in s.split("\n"):
             # Clean and check
             cur_line = cur_line.strip()
             if len(cur_line) == 0:
@@ -303,31 +319,7 @@ class RabbitmqStat(KnockProbe):
                 d["synchronised_slave_nodes"] = 0
 
             # Rates (to float)
-            ar_tuple = [
-                ("backing_queue_status.avg_ack_egress_rate", 13),
-                ("backing_queue_status.avg_ack_ingress_rate", 14),
-                ("backing_queue_status.avg_egress_rate", 15),
-                ("backing_queue_status.avg_ingress_rate", 16),
-                ("message_stats.ack_details.rate", 17),
-                ("message_stats.confirm_details.rate", 18),
-                ("message_stats.deliver_details.rate", 19),
-                ("message_stats.deliver_get_details.rate", 20),
-                ("message_stats.deliver_no_ack_details.rate", 21),
-                ("message_stats.disk_reads_details.rate", 22),
-                ("message_stats.disk_writes_details.rate", 23),
-                ("message_stats.get_details.rate", 24),
-                ("message_stats.get_no_ack_details.rate", 25),
-                ("message_stats.publish_details.rate", 26),
-                ("message_stats.publish_in_details.rate", 27),
-                ("message_stats.publish_out_details.rate", 28),
-                ("message_stats.redeliver_details.rate", 29),
-                ("message_stats.return_unroutable_details.rate", 30),
-                ("messages_details.rate", 31),
-                ("messages_ready_details.rate", 32),
-                ("messages_unacknowledged_details.rate", 33),
-                ("reductions_details.rate", 34),
-            ]
-            for cur_name, cur_idx in ar_tuple:
+            for cur_name, cur_idx in RabbitmqStat.AR_QUEUES:
                 cur_s = ar_temp[cur_idx].strip()
                 # noinspection PyBroadException
                 try:
@@ -342,4 +334,14 @@ class RabbitmqStat(KnockProbe):
             d_per_queue[queue] = d
 
         # Over
-        return d_global, d_per_queue
+        for k, v in d_global.items():
+            self.notify_value_n("k.rabbitmq.queue." + k, {"PORT": "default"}, v)
+        for queue, counters in d_per_queue.items():
+            additional_fields = {}
+            for k in counters.keys():
+                matches = self.FILTER_COUNTER_PER_QUEUE.match(k)
+                if matches:
+                    knock_key = "m.%s.persec" % matches.groups()[0]
+                    additional_fields[knock_key] = counters[k]
+            for k in ('messages',):
+                self.notify_value_n("k.rabbitmq.per_queue." + k, {"PORT": "default", 'QUEUE': queue}, counters[k], d_values=additional_fields)

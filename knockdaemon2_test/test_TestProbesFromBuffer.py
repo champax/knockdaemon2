@@ -830,22 +830,49 @@ class TestProbesFromBuffer(unittest.TestCase):
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
-    def test_Rabbitmq(self):
+    def test_from_buffer_rabbitmq(self):
         """
         Test
         """
 
-        # Exec it
-        exec_helper(self, RabbitmqStat)
+        # Init
+        rs = RabbitmqStat()
+        rs.set_manager(self.k)
 
-        for _, knock_type, knock_key, _ in RabbitmqStat.KEYS:
+        # Go
+        for f_node, f_queue in [
+            ("rabbitmq/node.out", "/rabbitmq/queue.out"),
+        ]:
+            # Path
+            f_node = self.sample_dir + f_node
+            f_queue = self.sample_dir + f_queue
+
+            # Reset
+            self.k._reset_superv_notify()
+            Meters.reset()
+
+            # Load
+            self.assertTrue(FileUtility.is_file_exist(f_node))
+            node_buf = FileUtility.file_to_textbuffer(f_node, "utf8")
+            self.assertTrue(FileUtility.is_file_exist(f_queue))
+            queue_buf = FileUtility.file_to_textbuffer(f_queue, "utf8")
+
+            # Process
+            rs.process_rabbitmq_buffers(node_buf, queue_buf)
+
+            # Log
+            for tu in self.k.superv_notify_value_list:
+                logger.info("Having tu=%s", tu)
+
+            # Check
             dd = {"PORT": "default"}
-            if knock_type == "int":
-                expect_value(self, self.k, knock_key, 0, "gte", dd)
-            elif knock_type == "float":
-                expect_value(self, self.k, knock_key, 0.0, "gte", dd)
-            elif knock_type == "str":
-                expect_value(self, self.k, knock_key, 0, "exists", dd)
+            for _, knock_type, knock_key, _ in RabbitmqStat.KEYS:
+                if knock_type == "int":
+                    expect_value(self, self.k, knock_key, 0, "gte", dd)
+                elif knock_type == "float":
+                    expect_value(self, self.k, knock_key, 0.0, "gte", dd)
+                elif knock_type == "str":
+                    expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
     def test_Varnish(self):

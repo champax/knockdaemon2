@@ -1,3 +1,0 @@
-rabbitmqadmin list nodes name type running uptime
-
-rabbitmqadmin list queues vhost name auto_delete consumers durable idle_since messages message_ready messages_unacknowledged node slave_nodes synchronised_slave_nodes
