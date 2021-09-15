@@ -280,7 +280,7 @@ class Service(KnockProbe):
         """
 
         # We are logging for uwsgi command line formatted as :
-        # /usr/bin/uwsgi --ini /usr/share/uwsgi/conf/default.ini --ini /etc/uwsgi/apps-enabled/vulogboapi.ini --daemonize /var/log/uwsgi/app/vulogboapi.log
+        # /usr/bin/uwsgi --ini /usr/share/uwsgi/conf/default.ini --ini /etc/uwsgi/apps-enabled/zzz.ini --daemonize /var/log/uwsgi/app/zz.log
 
         # We store a dict : uwsgi_type => PARENT PID (only)
         d_uwsgi = dict()
