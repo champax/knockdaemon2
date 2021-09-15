@@ -172,7 +172,7 @@ class Tools(object):
         http_req.headers = {
             "Accept-Encoding": "gzip",
             "Accept": "text / plain",
-            'Content-type': u'application/json'
+            'Content-type': 'application/json'
         }
         d_auth = cls.influx_get_auth_header(username, password)
         http_req.headers.update(d_auth)
@@ -238,7 +238,7 @@ class Tools(object):
         http_req.headers = {
             "Accept-Encoding": "gzip",
             "Accept": "text / plain",
-            'Content-type': u'application/json'
+            'Content-type': 'application/json'
         }
         d_auth = cls.influx_get_auth_header(username, password)
         http_req.headers.update(d_auth)
@@ -306,7 +306,7 @@ class Tools(object):
         http_req.headers = {
             "Accept-Encoding": "gzip",
             "Accept": "text / plain",
-            'Content-type': u'application/octet-stream'
+            'Content-type': 'application/octet-stream'
         }
         d_auth = cls.influx_get_auth_header(username, password)
         http_req.headers.update(d_auth)

@@ -69,7 +69,7 @@ class TestMdstat(unittest.TestCase):
         result = Mdstat.parse(self.mdstat_results['rebuild'])
         result = list(result)
         logger.info("result=%s", result)
-        self.assertEquals(result, [(u'md0', 2), (u'md127', 2)])
+        self.assertEquals(result, [('md0', 2), ('md127', 2)])
 
     def test_check(self):
         """
@@ -79,7 +79,7 @@ class TestMdstat(unittest.TestCase):
         result = Mdstat.parse(self.mdstat_results['check'])
         result = list(result)
         logger.info("result=%s", result)
-        self.assertEquals(result, [(u'md0', 1), (u'md127', 1)])
+        self.assertEquals(result, [('md0', 1), ('md127', 1)])
 
     def test_failed(self):
         """
@@ -89,7 +89,7 @@ class TestMdstat(unittest.TestCase):
         result = Mdstat.parse(self.mdstat_results['failed'])
         result = list(result)
         logger.info("result=%s", result)
-        self.assertEquals(result, [(u'md0', 3), (u'md127', 3)])
+        self.assertEquals(result, [('md0', 3), ('md127', 3)])
 
     def test_missing(self):
         """
@@ -99,7 +99,7 @@ class TestMdstat(unittest.TestCase):
         result = Mdstat.parse(self.mdstat_results['missing'])
         result = list(result)
         logger.info("result=%s", result)
-        self.assertEquals(result, [(u'md0', 3), (u'md127', 3)])
+        self.assertEquals(result, [('md0', 3), ('md127', 3)])
 
     def test_ok(self):
         """
@@ -109,4 +109,4 @@ class TestMdstat(unittest.TestCase):
         result = Mdstat.parse(self.mdstat_results['ok'])
         result = list(result)
         logger.info("result=%s", result)
-        self.assertEquals(result, [(u'md0', 0)])
+        self.assertEquals(result, [('md0', 0)])

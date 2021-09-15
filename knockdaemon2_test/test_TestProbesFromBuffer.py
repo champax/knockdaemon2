@@ -833,83 +833,45 @@ class TestProbesFromBuffer(unittest.TestCase):
                 elif knock_type == "str":
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-    @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
-    def test_Varnish(self):
+    def test_from_buffer_varnish(self):
         """
         Test
         """
 
-        # Exec it
-        exec_helper(self, VarnishStat)
+        # Init
+        vs = VarnishStat()
+        vs.set_manager(self.k)
 
-        for _, knock_type, knock_key in VarnishStat.KEYS:
-            dd = {"ID": "default"}
-            if knock_type == "int":
-                expect_value(self, self.k, knock_key, 0, "gte", dd)
-            elif knock_type == "float":
-                expect_value(self, self.k, knock_key, 0.0, "gte", dd)
-            elif knock_type == "str":
-                expect_value(self, self.k, knock_key, 0, "exists", dd)
+        # Go
+        for fn in [
+            "varnish/varnish_4.json",
+        ]:
+            # Path
+            fn = self.sample_dir + fn
 
-    @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
-    def test_Varnish_via_invoke_json(self):
-        """
-        Test
-        """
+            # Reset
+            self.k._reset_superv_notify()
+            Meters.reset()
 
-        vp = VarnishStat()
-        vp.set_manager(self.k)
+            # Load
+            self.assertTrue(FileUtility.is_file_exist(fn))
+            buf = FileUtility.file_to_binary(fn)
 
-        # ---------
-        # JSON
-        # ---------
-        d_json = vp.try_load_json()
-        vp.process_json(d_json, "default")
-        # Log
-        for tu in self.k.superv_notify_value_list:
-            logger.info("Having tu=%s", tu)
+            # Process
+            vs.process_varnish_buffer(buf, "default", ms_invoke=11)
 
-        for _, knock_type, knock_key in VarnishStat.KEYS:
-            dd = {"ID": "default"}
-            if knock_type == "int":
-                expect_value(self, self.k, knock_key, 0, "gte", dd)
-            elif knock_type == "float":
-                expect_value(self, self.k, knock_key, 0.0, "gte", dd)
-            elif knock_type == "str":
-                expect_value(self, self.k, knock_key, 0, "exists", dd)
+            # Log
+            for tu in self.k.superv_notify_value_list:
+                logger.info("Having tu=%s", tu)
 
-        # Discovery is fired outside this, do not check it here
-        pass
-
-    @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
-    def test_Varnish_via_invoke_text(self):
-        """
-        Test
-        """
-
-        vp = VarnishStat()
-        vp.set_manager(self.k)
-
-        # ---------
-        # JSON
-        # ---------
-        d_json = vp.try_load_text()
-        vp.process_json(d_json, "default")
-        # Log
-        for tu in self.k.superv_notify_value_list:
-            logger.info("Having tu=%s", tu)
-
-        for _, knock_type, knock_key in VarnishStat.KEYS:
-            dd = {"ID": "default"}
-            if knock_type == "int":
-                expect_value(self, self.k, knock_key, 0, "gte", dd)
-            elif knock_type == "float":
-                expect_value(self, self.k, knock_key, 0.0, "gte", dd)
-            elif knock_type == "str":
-                expect_value(self, self.k, knock_key, 0, "exists", dd)
-
-        # Discovery is fired outside this, do not check it here
-        pass
+            for _, knock_type, knock_key in VarnishStat.KEYS:
+                dd = {"ID": "default"}
+                if knock_type == "int":
+                    expect_value(self, self.k, knock_key, 0, "gte", dd)
+                elif knock_type == "float":
+                    expect_value(self, self.k, knock_key, 0.0, "gte", dd)
+                elif knock_type == "str":
+                    expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     def test_from_buffer_uwsgi(self):
         """
