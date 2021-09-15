@@ -7,7 +7,7 @@
         "pid":74133,
         "uid":33,
         "gid":33,
-        "cwd":"/var/www/totoo_frontends",
+        "cwd":"/var/www/toto01_frontends",
         "locks":[
                 {
                         "user 0":0
@@ -36,7 +36,7 @@
         ],
         "sockets":[
                 {
-                        "name":"/run/uwsgi/app/totoo_frontends/socket",
+                        "name":"/run/uwsgi/app/toto01_frontends/socket",
                         "proto":"uwsgi",
                         "queue":0,
                         "max_queue":0,

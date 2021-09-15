@@ -952,27 +952,56 @@ class TestProbesFromBuffer(unittest.TestCase):
         # Discovery is fired outside this, do not check it here
         pass
 
-    @unittest.skipIf(UwsgiStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % UwsgiStat())
-    def test_UwsgiStat(self):
+    def test_from_buffer_uwsgi(self):
         """
         Test
         """
 
-        # Exec it
-        exec_helper(self, UwsgiStat)
+        # Init
+        us = UwsgiStat()
+        us.set_manager(self.k)
 
-        for cur_p in [
-            'z_frontends',
-            'ALL'
+        # Go
+        for ar_files in [
+            ("uwsgi/sample.1.out", "uwsgi/sample.2.out"),
         ]:
-            for _, knock_type, knock_key in UwsgiStat.KEYS:
-                dd = {"ID": cur_p}
-                if knock_type == "int":
-                    expect_value(self, self.k, knock_key, 0, "gte", dd)
-                elif knock_type == "float":
-                    expect_value(self, self.k, knock_key, 0.0, "gte", dd)
-                elif knock_type == "str":
-                    expect_value(self, self.k, knock_key, 0, "exists", dd)
+            # Load + init dicts
+            idx = 0
+            d_id_to_buffer = dict()
+            d_id_to_ms = dict()
+            for s in ar_files:
+                s = self.sample_dir + s
+                self.assertTrue(FileUtility.is_file_exist(s))
+                buf = FileUtility.file_to_textbuffer(s, "utf8")
+                cur_id = "%s" % idx
+                d_id_to_buffer[cur_id] = buf
+                d_id_to_ms[cur_id] = idx
+                idx += 1
+
+            # Reset
+            self.k._reset_superv_notify()
+            Meters.reset()
+
+            # Process
+            us.process_uwsgi_buffers(d_id_to_buffer, d_id_to_ms)
+
+            # Log
+            for tu in self.k.superv_notify_value_list:
+                logger.info("Having tu=%s", tu)
+
+            # Browse all ids and "ALL"
+            ar = list(range(0, len(ar_files)))
+            ar.append("ALL")
+            for cur_p in ar:
+                cur_p = str(cur_p)
+                for _, knock_type, knock_key in UwsgiStat.KEYS:
+                    dd = {"ID": cur_p}
+                    if knock_type == "int":
+                        expect_value(self, self.k, knock_key, 0, "gte", dd)
+                    elif knock_type == "float":
+                        expect_value(self, self.k, knock_key, 0.0, "gte", dd)
+                    elif knock_type == "str":
+                        expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     @unittest.skipIf(CheckProcess().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % CheckProcess())
     def test_CheckProcess(self):
