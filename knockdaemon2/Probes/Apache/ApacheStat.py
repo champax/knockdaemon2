@@ -141,7 +141,7 @@ class ApacheStat(KnockProbe):
         """
         Exec
         """
-        pass
+        self._execute_native()
 
     def _execute_native(self):
         """
