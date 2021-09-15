@@ -39,7 +39,6 @@ To run unittests, you will need:
 - port 7900 free and available on your computer (HttpMock will listen onto it)
 - apache running, with a status page replying on "http://127.0.0.1:80/server-status", "http://127.0.0.1:8080/server-status", or "http://127.0.0.1:8090/server-status"
 - varnish running, "varnishstat -1" and "varnishstat -j" working
-- phpfpm running, with a pool "www" backed by a status page replying on "http://127.0.0.1:80/status", "http://127.0.0.1:8080/status", or "http://127.0.0.1:8090/status"
 - mysql running
 - uwsgi running, with at least one application named z_frontends and stats enabled in configuration
 - memcached running, listening on localhost or unix domain socket

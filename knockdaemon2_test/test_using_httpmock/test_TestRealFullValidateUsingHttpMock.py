@@ -47,7 +47,6 @@ from knockdaemon2.Probes.Os.NetStat import Netstat
 from knockdaemon2.Probes.Os.Network import Network
 from knockdaemon2.Probes.Os.ProcNum import NumberOfProcesses
 from knockdaemon2.Probes.Os.UpTime import Uptime
-from knockdaemon2.Probes.PhpFpm.PhpFpmStat import PhpFpmStat
 from knockdaemon2.Probes.Uwsgi.UwsgiStat import UwsgiStat
 from knockdaemon2.Probes.Varnish.VarnishStat import VarnishStat
 from knockdaemon2.Transport.InfluxAsyncTransport import InfluxAsyncTransport
@@ -483,60 +482,6 @@ class TestRealAll(unittest.TestCase):
 
         # start Unit test
         self._validate_internal(NginxStat(url='http://127.0.0.1:' + str(server_port) + '/nginx_status'))
-
-        # stop server
-        http_server.stop(timeout=2)
-
-    @unittest.skipIf(PhpFpmStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % ApacheStat())
-    def test_probe_full_phpfpm(self):
-        """
-        Test
-        :return:
-        """
-        logger.info("GO")
-
-        from gevent import pywsgi
-
-        def http_process(request, response):
-            """
-            Internal http method
-            :param request:
-            :param response
-            :return:
-            """
-            status_buffer = '{' \
-                            '"pool":"www",' \
-                            '"process manager":"dynamic",' \
-                            '"start time":1415829290,' \
-                            '"start since":2615,' \
-                            '"accepted conn":271839,' \
-                            '"listen queue":0,' \
-                            '"max listen queue":0,' \
-                            '"listen queue len":0,' \
-                            '"idle processes":2,' \
-                            '"active processes":1,' \
-                            '"total processes":3,' \
-                            '"max active processes":5,' \
-                            '"max children reached":6,' \
-                            '"slow requests":0}'
-
-            # request['PATH_INFO'] => 'http://127.0.0.1:48168/status'
-            if request['PATH_INFO'].endswith('/status'):
-                logger.info("/status CALLED")
-                response("200 OK", [('Content-Type', 'application/json')])
-                return status_buffer
-            else:
-                self.fail("No /status CALLED")
-
-        # start Web server
-        http_server = pywsgi.WSGIServer(('127.0.0.1', 0), http_process)
-        http_server.start()
-        server_port = http_server.server_port
-
-        # start Unit test
-        self._validate_internal(PhpFpmStat(
-            d_pool_from_url={'www': ['http://127.0.0.1:' + str(server_port) + '/status?json']}
-        ))
 
         # stop server
         http_server.stop(timeout=2)

@@ -48,7 +48,6 @@ from knockdaemon2.Platform.PTools import PTools
 from knockdaemon2.Probes.Apache.ApacheStat import ApacheStat
 from knockdaemon2.Probes.Haproxy.Haproxy import Haproxy
 from knockdaemon2.Probes.Inventory.Inventory import Inventory
-from knockdaemon2.Probes.MemCached.MemCachedStat import MemCachedStat
 from knockdaemon2.Probes.Mongodb.MongoDbStat import MongoDbStat
 from knockdaemon2.Probes.Mysql.Mysql import Mysql
 from knockdaemon2.Probes.Nginx.NGinxStat import NginxStat
@@ -66,7 +65,6 @@ from knockdaemon2.Probes.Os.ProcNum import NumberOfProcesses
 from knockdaemon2.Probes.Os.Service import Service
 from knockdaemon2.Probes.Os.TimeDiff import TimeDiff
 from knockdaemon2.Probes.Os.UpTime import Uptime
-from knockdaemon2.Probes.PhpFpm.PhpFpmStat import PhpFpmStat
 from knockdaemon2.Probes.Rabbitmq.RabbitmqStat import RabbitmqStat
 from knockdaemon2.Probes.Redis.RedisStat import RedisStat
 from knockdaemon2.Probes.Uwsgi.UwsgiStat import UwsgiStat
@@ -563,26 +561,6 @@ class TestProbesFromBuffer(unittest.TestCase):
                     elif knock_type == "str":
                         expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-    @unittest.skipIf(MemCachedStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % MemCachedStat())
-    def test_MemCachedStat(self):
-        """
-        Test
-        """
-
-        # Exec it
-        exec_helper(self, MemCachedStat)
-
-        # Validate KEYS
-        for cur_connect_to in ["11211", "ALL"]:
-            dd = {"MC": cur_connect_to}
-            for _, knock_type, knock_key, _ in MemCachedStat.KEYS:
-                if knock_type == "int":
-                    expect_value(self, self.k, knock_key, -1, "gte", dd)
-                elif knock_type == "float":
-                    expect_value(self, self.k, knock_key, 0.0, "gte", dd)
-                elif knock_type == "str":
-                    expect_value(self, self.k, knock_key, 0, "exists", dd)
-
     @unittest.skipIf(DiskSpace().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % DiskSpace())
     def test_DiskSpace(self):
         """
@@ -768,25 +746,6 @@ class TestProbesFromBuffer(unittest.TestCase):
 
             expect_value(self, self.k, "k.os.knock", 1, "gte")
             expect_value(self, self.k, "k.os.uptime", 1, "gte")
-
-    @unittest.skipIf(PhpFpmStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % PhpFpmStat())
-    def test_PhpFpmStat(self):
-        """
-        Test
-        """
-
-        # Exec it
-        exec_helper(self, PhpFpmStat)
-
-        for _, knock_type, knock_key in PhpFpmStat.KEYS:
-            for pool_id in ["www", "ALL"]:
-                dd = {"ID": pool_id}
-                if knock_type == "int":
-                    expect_value(self, self.k, knock_key, 0, "gte", dd)
-                elif knock_type == "float":
-                    expect_value(self, self.k, knock_key, 0.0, "gte", dd)
-                elif knock_type == "str":
-                    expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     def test_from_buffer_apache(self):
         """

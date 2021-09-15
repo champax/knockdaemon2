@@ -131,22 +131,6 @@ probes:
     exec_interval_sec: 60
     exec_enabled: true
   
-  
-  # ============================
-  # PHP-FPM
-  # url format : fpm_pool_id|uri0|...|uriN
-  # each url target a pool, multiple pools possible
-  #
-  # uri0: pool_id_0|http://127.0.0.1:80/status|http://127.0.0.1:8080/status
-  # ....
-  # uriN: pool_id_N|http://127.0.0.1:80/statusN|http://127.0.0.1:8080/statusN
-  # ============================
-  PhpFpm:
-    class_name: knockdaemon2.Probes.PhpFpm.PhpFpmStat.PhpFpmStat
-    exec_interval_sec: 60
-    exec_enabled: true
-    url0: www|http://127.0.0.1:80/status|http://127.0.0.1:8080/status|http://127.0.0.1:8090/status
-  
   # ============================
   # MYSQL
   # ============================

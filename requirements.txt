@@ -30,7 +30,6 @@ ujson
 redis
 pymongo
 influxdb
-pymemcache
 
 # tools
 psutil

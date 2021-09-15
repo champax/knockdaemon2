@@ -99,13 +99,6 @@ probes:
     exec_interval_sec: 60
     exec_enabled: true
 
-  # ============================
-  # PHP-FPM
-  # ============================
-  PhpFpm:
-    class_name: knockdaemon2.Probes.PhpFpm.PhpFpmStat.PhpFpmStat
-    exec_interval_sec: 60
-    exec_enabled: true
 
 
 
