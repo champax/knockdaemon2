@@ -1,0 +1,394 @@
+{
+        "host" : "mongos",
+        "version" : "4.2.14",
+        "process" : "mongos",
+        "pid" : NumberLong(30484),
+        "uptime" : 772349,
+        "uptimeMillis" : NumberLong(772349720),
+        "uptimeEstimate" : NumberLong(772349),
+        "localTime" : ISODate("2021-09-16T08:12:00.002Z"),
+        "asserts" : {
+                "regular" : 0,
+                "warning" : 0,
+                "msg" : 0,
+                "user" : 32,
+                "rollovers" : 0
+        },
+        "connections" : {
+                "current" : 104,
+                "available" : 51096,
+                "totalCreated" : 761731,
+                "active" : 1
+        },
+        "extra_info" : {
+                "note" : "fields vary by platform",
+                "user_time_us" : NumberLong(1789586852),
+                "system_time_us" : NumberLong(827089409),
+                "maximum_resident_set_kb" : NumberLong(120516),
+                "input_blocks" : NumberLong(97264),
+                "output_blocks" : NumberLong(0),
+                "page_reclaims" : NumberLong(392131),
+                "page_faults" : NumberLong(766),
+                "voluntary_context_switches" : NumberLong(29115392),
+                "involuntary_context_switches" : NumberLong(5677440)
+        },
+        "logicalSessionRecordCache" : {
+                "activeSessionsCount" : 5,
+                "sessionsCollectionJobCount" : 2575,
+                "lastSessionsCollectionJobDurationMillis" : 454,
+                "lastSessionsCollectionJobTimestamp" : ISODate("2021-09-16T08:09:34.070Z"),
+                "lastSessionsCollectionJobEntriesRefreshed" : 13,
+                "lastSessionsCollectionJobEntriesEnded" : 24,
+                "lastSessionsCollectionJobCursorsClosed" : 0,
+                "transactionReaperJobCount" : 2575,
+                "lastTransactionReaperJobDurationMillis" : 1,
+                "lastTransactionReaperJobTimestamp" : ISODate("2021-09-16T08:09:34.066Z"),
+                "lastTransactionReaperJobEntriesCleanedUp" : 0,
+                "sessionCatalogSize" : 0
+        },
+        "network" : {
+                "bytesIn" : NumberLong(1899981047),
+                "bytesOut" : NumberLong("4199415635"),
+                "physicalBytesIn" : NumberLong(1899981047),
+                "physicalBytesOut" : NumberLong("4177235663"),
+                "numRequests" : NumberLong(6327819),
+                "compression" : {
+                        "snappy" : {
+                                "compressor" : {
+                                        "bytesIn" : NumberLong(1717417873),
+                                        "bytesOut" : NumberLong(1299846878)
+                                },
+                                "decompressor" : {
+                                        "bytesIn" : NumberLong(849034059),
+                                        "bytesOut" : NumberLong("3017926816")
+                                }
+                        },
+                        "zstd" : {
+                                "compressor" : {
+                                        "bytesIn" : NumberLong(0),
+                                        "bytesOut" : NumberLong(0)
+                                },
+                                "decompressor" : {
+                                        "bytesIn" : NumberLong(0),
+                                        "bytesOut" : NumberLong(0)
+                                }
+                        },
+                        "zlib" : {
+                                "compressor" : {
+                                        "bytesIn" : NumberLong(0),
+                                        "bytesOut" : NumberLong(0)
+                                },
+                                "decompressor" : {
+                                        "bytesIn" : NumberLong(0),
+                                        "bytesOut" : NumberLong(0)
+                                }
+                        }
+                },
+                "serviceExecutorTaskStats" : {
+                        "executor" : "passthrough",
+                        "threadsRunning" : 104
+                }
+        },
+        "opcounters" : {
+                "insert" : NumberLong(719110),
+                "query" : NumberLong(58528),
+                "update" : NumberLong(50),
+                "delete" : NumberLong(4),
+                "getmore" : NumberLong(437),
+                "command" : NumberLong(6268848)
+        },
+        "sharding" : {
+                "configsvrConnectionString" : "shardConfigA/zzz001:27019,zzz002:27019,zzz003:27019",
+                "lastSeenConfigServerOpTime" : {
+                        "ts" : Timestamp(1631779918, 11),
+                        "t" : NumberLong(40)
+                },
+                "maxChunkSizeInBytes" : NumberLong(67108864)
+        },
+        "shardingStatistics" : {
+                "catalogCache" : {
+                        "numDatabaseEntries" : NumberLong(7),
+                        "numCollectionEntries" : NumberLong(1),
+                        "countStaleConfigErrors" : NumberLong(0),
+                        "totalRefreshWaitTimeMicros" : NumberLong(17751922),
+                        "numActiveIncrementalRefreshes" : NumberLong(0),
+                        "countIncrementalRefreshesStarted" : NumberLong(3463),
+                        "numActiveFullRefreshes" : NumberLong(0),
+                        "countFullRefreshesStarted" : NumberLong(1),
+                        "countFailedRefreshes" : NumberLong(0),
+                        "operationsBlockedByRefresh" : {
+                                "countAllOperations" : NumberLong(0),
+                                "countInserts" : NumberLong(0),
+                                "countQueries" : NumberLong(0),
+                                "countUpdates" : NumberLong(0),
+                                "countDeletes" : NumberLong(0),
+                                "countCommands" : NumberLong(0)
+                        }
+                }
+        },
+        "tcmalloc" : {
+                "generic" : {
+                        "current_allocated_bytes" : 14648480,
+                        "heap_size" : 102658048
+                },
+                "tcmalloc" : {
+                        "pageheap_free_bytes" : 77443072,
+                        "pageheap_unmapped_bytes" : 319488,
+                        "max_total_thread_cache_bytes" : 1045430272,
+                        "current_total_thread_cache_bytes" : 5727336,
+                        "total_free_bytes" : 10247008,
+                        "central_cache_free_bytes" : 1045368,
+                        "transfer_cache_free_bytes" : 3474304,
+                        "thread_cache_free_bytes" : 5727336,
+                        "aggressive_memory_decommit" : 0,
+                        "pageheap_committed_bytes" : 102338560,
+                        "pageheap_scavenge_count" : 298,
+                        "pageheap_commit_count" : 4370,
+                        "pageheap_total_commit_bytes" : 176316416,
+                        "pageheap_decommit_count" : 298,
+                        "pageheap_total_decommit_bytes" : 73977856,
+                        "pageheap_reserve_count" : 54,
+                        "pageheap_total_reserve_bytes" : 102658048,
+                        "spinlock_total_delay_ns" : NumberLong(1245159495),
+                        "release_rate" : 1,
+                        "formattedString" : "------------------------------------------------\nMALLOC:       14649056 (   14.0 MiB) Bytes in use by application\nMALLOC: +     77443072 (   73.9 MiB) Bytes in page heap freelist\nMALLOC: +      1045368 (    1.0 MiB) Bytes in central cache freelist\nMALLOC: +      3474304 (    3.3 MiB) Bytes in transfer cache freelist\nMALLOC: +      5726760 (    5.5 MiB) Bytes in thread cache freelists\nMALLOC: +      3538944 (    3.4 MiB) Bytes in malloc metadata\nMALLOC:   ------------\nMALLOC: =    105877504 (  101.0 MiB) Actual memory used (physical + swap)\nMALLOC: +       319488 (    0.3 MiB) Bytes released to OS (aka unmapped)\nMALLOC:   ------------\nMALLOC: =    106196992 (  101.3 MiB) Virtual address space used\nMALLOC:\nMALLOC:           1790              Spans in use\nMALLOC:            127              Thread heaps in use\nMALLOC:           4096              Tcmalloc page size\n------------------------------------------------\nCall ReleaseFreeMemory() to release freelist memory to the OS (via madvise()).\nBytes released to the OS take up virtual address space but no physical memory.\n"
+                }
+        },
+        "trafficRecording" : {
+                "running" : false
+        },
+        "transactions" : {
+                "currentOpen" : NumberLong(0),
+                "currentActive" : NumberLong(0),
+                "currentInactive" : NumberLong(0),
+                "totalStarted" : NumberLong(0),
+                "totalCommitted" : NumberLong(0),
+                "totalAborted" : NumberLong(0),
+                "abortCause" : {
+
+                },
+                "totalContactedParticipants" : NumberLong(0),
+                "totalParticipantsAtCommit" : NumberLong(0),
+                "totalRequestsTargeted" : NumberLong(0),
+                "commitTypes" : {
+                        "noShards" : {
+                                "initiated" : NumberLong(0),
+                                "successful" : NumberLong(0),
+                                "successfulDurationMicros" : NumberLong(0)
+                        },
+                        "singleShard" : {
+                                "initiated" : NumberLong(0),
+                                "successful" : NumberLong(0),
+                                "successfulDurationMicros" : NumberLong(0)
+                        },
+                        "singleWriteShard" : {
+                                "initiated" : NumberLong(0),
+                                "successful" : NumberLong(0),
+                                "successfulDurationMicros" : NumberLong(0)
+                        },
+                        "readOnly" : {
+                                "initiated" : NumberLong(0),
+                                "successful" : NumberLong(0),
+                                "successfulDurationMicros" : NumberLong(0)
+                        },
+                        "twoPhaseCommit" : {
+                                "initiated" : NumberLong(0),
+                                "successful" : NumberLong(0),
+                                "successfulDurationMicros" : NumberLong(0)
+                        },
+                        "recoverWithToken" : {
+                                "initiated" : NumberLong(0),
+                                "successful" : NumberLong(0),
+                                "successfulDurationMicros" : NumberLong(0)
+                        }
+                }
+        },
+        "transportSecurity" : {
+                "1.0" : NumberLong(0),
+                "1.1" : NumberLong(0),
+                "1.2" : NumberLong(0),
+                "1.3" : NumberLong(0),
+                "unknown" : NumberLong(0)
+        },
+        "mem" : {
+                "bits" : 64,
+                "resident" : 117,
+                "virtual" : 448,
+                "supported" : true
+        },
+        "metrics" : {
+                "cursor" : {
+                        "timedOut" : NumberLong(1),
+                        "open" : {
+                                "multiTarget" : NumberLong(0),
+                                "singleTarget" : NumberLong(0),
+                                "pinned" : NumberLong(0),
+                                "total" : NumberLong(0)
+                        }
+                },
+                "aggStageCounters" : {
+                        "$_internalInhibitOptimization" : NumberLong(0),
+                        "$_internalSplitPipeline" : NumberLong(0),
+                        "$addFields" : NumberLong(0),
+                        "$bucket" : NumberLong(0),
+                        "$bucketAuto" : NumberLong(0),
+                        "$changeStream" : NumberLong(0),
+                        "$collStats" : NumberLong(0),
+                        "$count" : NumberLong(0),
+                        "$currentOp" : NumberLong(0),
+                        "$facet" : NumberLong(0),
+                        "$geoNear" : NumberLong(0),
+                        "$graphLookup" : NumberLong(0),
+                        "$group" : NumberLong(59824),
+                        "$indexStats" : NumberLong(0),
+                        "$limit" : NumberLong(8),
+                        "$listLocalSessions" : NumberLong(0),
+                        "$listSessions" : NumberLong(0),
+                        "$lookup" : NumberLong(0),
+                        "$match" : NumberLong(59832),
+                        "$merge" : NumberLong(0),
+                        "$mergeCursors" : NumberLong(0),
+                        "$out" : NumberLong(0),
+                        "$planCacheStats" : NumberLong(0),
+                        "$project" : NumberLong(59829),
+                        "$redact" : NumberLong(0),
+                        "$replaceRoot" : NumberLong(0),
+                        "$replaceWith" : NumberLong(0),
+                        "$sample" : NumberLong(0),
+                        "$set" : NumberLong(0),
+                        "$skip" : NumberLong(0),
+                        "$sort" : NumberLong(2),
+                        "$sortByCount" : NumberLong(0),
+                        "$unset" : NumberLong(0),
+                        "$unwind" : NumberLong(0)
+                },
+                "commands" : {
+                        "<UNKNOWN>" : NumberLong(5),
+                        "aggregate" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(59832)
+                        },
+                        "balancerStatus" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(1)
+                        },
+                        "buildInfo" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(128447)
+                        },
+                        "count" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(775)
+                        },
+                        "createIndexes" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(921)
+                        },
+                        "delete" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(4)
+                        },
+                        "distinct" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(236)
+                        },
+                        "endSessions" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(57828)
+                        },
+                        "find" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(58528)
+                        },
+                        "findAndModify" : {
+                                "arrayFilters" : NumberLong(0),
+                                "failed" : NumberLong(0),
+                                "pipeline" : NumberLong(0),
+                                "total" : NumberLong(5)
+                        },
+                        "getCmdLineOpts" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(5)
+                        },
+                        "getLastError" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(128420)
+                        },
+                        "getLog" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(5)
+                        },
+                        "getMore" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(437)
+                        },
+                        "hello" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(1)
+                        },
+                        "insert" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(719110)
+                        },
+                        "isMaster" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(3397082)
+                        },
+                        "listCollections" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(8)
+                        },
+                        "listDatabases" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(1)
+                        },
+                        "ping" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(2692)
+                        },
+                        "replSetGetStatus" : {
+                                "failed" : NumberLong(30),
+                                "total" : NumberLong(30)
+                        },
+                        "saslContinue" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(1173670)
+                        },
+                        "saslStart" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(586835)
+                        },
+                        "serverStatus" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(12875)
+                        },
+                        "update" : {
+                                "arrayFilters" : NumberLong(0),
+                                "failed" : NumberLong(0),
+                                "pipeline" : NumberLong(0),
+                                "total" : NumberLong(50)
+                        },
+                        "usersInfo" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(4)
+                        },
+                        "whatsmyuri" : {
+                                "failed" : NumberLong(0),
+                                "total" : NumberLong(11)
+                        }
+                },
+                "query" : {
+                        "planCacheTotalSizeEstimateBytes" : NumberLong(0),
+                        "updateOneOpStyleBroadcastWithExactIDCount" : NumberLong(0)
+                }
+        },
+        "ok" : 1,
+        "operationTime" : Timestamp(1631779918, 11),
+        "$clusterTime" : {
+                "clusterTime" : Timestamp(1631779918, 11),
+                "signature" : {
+                        "hash" : BinData(0,"mPIrxO2yyOyZgIXyYGL7awzFgKo="),
+                        "keyId" : NumberLong("6970055494123651073")
+                }
+        }
+}

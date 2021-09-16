@@ -27,6 +27,9 @@ from pysolbase.SolBase import SolBase
 
 SolBase.voodoo_init()
 
+import re
+import dateutil.parser
+import ujson
 import glob
 import logging
 import os
@@ -1074,11 +1077,116 @@ class TestProbesFromBuffer(unittest.TestCase):
                 elif knock_type == "str":
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-    @unittest.skipIf(MongoDbStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % MongoDbStat())
-    def test_MongoDbStat(self):
+    @classmethod
+    def mongo_cleanup_buffer(cls, buf):
+        """
+        Mongo cleanup buffer
+        :param buf: str
+        :type buf: str
+        :return: str
+        :rtype str
+        """
+
+        # NumberLong(772349720)
+        # NumberLong("6970055494123651073")
+        # ISODate("2021-09-16T08:12:00.002Z")
+        # Timestamp(1631779918, 11)
+        # BinData(0,"mPIrxO2yyOyZgIXyYGL7awzFgKo="),
+        ar_regex = [
+            r'NumberLong\(\d+\)',
+            r'NumberLong\("\d+"\)',
+            r'ISODate\(".*"\)',
+            r'Timestamp\(\d+, \d+\)',
+            r'BinData\(.*\)',
+        ]
+
+        # Totally sub-optimal, unittests, we dont care
+        for s in ar_regex:
+            for ss in re.findall(s, buf):
+                if 'NumberLong("' in ss:
+                    buf = buf.replace(ss, ss.replace('NumberLong("', '').replace('")', ''))
+                elif 'NumberLong(' in ss:
+                    buf = buf.replace(ss, ss.replace('NumberLong(', '').replace(')', ''))
+                elif 'ISODate("' in ss:
+                    buf_dt = ss.replace('ISODate("', "").replace('")', "")
+                    dt = dateutil.parser.parse(buf_dt)
+                    epoch = SolBase.dt_to_epoch(SolBase.dt_ensure_utc_naive(dt))
+                    buf = buf.replace(ss, str(epoch))
+                elif 'Timestamp(' in ss:
+                    ts = ss.replace('Timestamp(', '').replace(')', '').split(',')[0]
+                    buf = buf.replace(ss, ts)
+                elif 'BinData(' in ss:
+                    buf = buf.replace(ss, '"bin_data"')
+                else:
+                    raise Exception("Invalid ss=%s" % ss)
+
+        return buf
+
+    def test_from_buffer_mongo(self):
         """
         Test
         """
 
-        # Exec it
-        exec_helper(self, MongoDbStat)
+        # Init
+        md = MongoDbStat()
+        md.set_manager(self.k)
+
+        # Go
+        cur_port = 27017
+        for fn, d_expected in [
+            (
+                    "mongodb/mongo.out",
+                    {
+                        'k.mongodb.version': '4.2.14',
+                        'k.mongodb.uptimeMillis': 772349720,
+                        'k.mongodb.asserts_regular': 0,
+                        'k.mongodb.asserts_warning': 0,
+                        'k.mongodb.asserts_msg': 0,
+                        'k.mongodb.asserts_user': 32,
+                        'k.mongodb.asserts_rollovers': 0,
+                        'k.mongodb.connections_current': 104,
+                        'k.mongodb.connections_available': 51096,
+                        'k.mongodb.connections_totalCreated': 761731,
+                        'k.mongodb.extra_info_page_faults': 766,
+                        'k.mongodb.network_bytesIn': 1899981047,
+                        'k.mongodb.network_bytesOut': 4199415635,
+                        'k.mongodb.network_numRequests': 6327819,
+                        'k.mongodb.opcounters_insert': 719110,
+                        'k.mongodb.opcounters_query': 58528,
+                        'k.mongodb.opcounters_update': 50,
+                        'k.mongodb.opcounters_delete': 4,
+                        'k.mongodb.opcounters_getmore': 437,
+                        'k.mongodb.opcounters_command': 6268848,
+                        'k.mongodb.mem_bits': 64,
+                        'k.mongodb.mem_resident': 117,
+                        'k.mongodb.mem_virtual': 448,
+                        'k.mongodb.mem_supported': 1,
+                        'k.mongodb.metrics_cursor_timedOut': 1,
+                        'k.mongodb.metrics_cursor_open_pinned': 0,
+                        'k.mongodb.metrics_cursor_open_total': 0,
+                        'k.mongodb.ok': 1.0,
+                        'k.mongodb.metrics_commands_total': 6327813,
+                        'k.mongodb.metrics_commands_failed': 30,
+                    }
+            ),
+        ]:
+            # Path
+            fn = self.sample_dir + fn
+            self.assertTrue(FileUtility.is_file_exist(fn))
+
+            buf = FileUtility.file_to_textbuffer(fn, "utf8")
+            buf = self.mongo_cleanup_buffer(buf)
+            d_json = ujson.loads(buf)
+
+            md.process_mongo_server_status(d_json, str(cur_port))
+
+            # Log
+            for tu in self.k.superv_notify_value_list:
+                logger.info("Having tu=%s", tu)
+
+            # Check
+            dd = {'PORT': str(cur_port)}
+            cur_port += 1
+
+            for k, v in d_expected.items():
+                expect_value(self, self.k, k, v, "eq", dd)
