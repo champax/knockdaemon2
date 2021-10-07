@@ -48,3 +48,6 @@ mdstat
 # services check
 # aptitude install libdbus-1-dev libglib2.0-dev
 dbus-python
+
+# patches
+pymysql==0.9.3
