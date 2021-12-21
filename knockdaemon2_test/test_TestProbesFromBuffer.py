@@ -30,7 +30,6 @@ SolBase.voodoo_init()
 import re
 import dateutil.parser
 import ujson
-import glob
 import logging
 import os
 import shutil
@@ -372,43 +371,66 @@ class TestProbesFromBuffer(unittest.TestCase):
             logger.info("Assuming dmidecode KO")
 
     @unittest.skipIf(HddStatus().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % HddStatus())
-    def test_HddStatus(self):
+    def test_from_buffer_hdd_status(self):
         """
         Test
         """
 
-        # Requires SUDO :
-        # user ALL=(ALL:ALL) NOPASSWD: /usr/sbin/smartctl
+        # Init
+        us = HddStatus()
+        us.set_manager(self.k)
 
-        # Exec it
-        exec_helper(self, HddStatus)
+        # Init
+        us.init_all_hash()
 
-        # CANNOT VALIDATE ON vm, requires a PHYSICAL server (need /dev/sd*)
-        hds = glob.glob('/dev/sd[a-z]')
-        hds.extend(glob.glob('/dev/sd[a-z][a-z]'))
-        if len(hds) == 0:
-            logger.info("Assuming VM, lightweight checks")
-            dd = {"HDD": "ALL"}
-            expect_value(self, self.k, "k.hard.hd.status", "OK", "eq", dd)
-            expect_value(self, self.k, "k.hard.hd.user_capacity", "ALL", "eq", dd)
-            expect_value(self, self.k, "k.hard.hd.reallocated_sector_ct", 0, "eq", dd)
-            expect_value(self, self.k, "k.hard.hd.user_capacity", "ALL", "eq", dd)
-            expect_value(self, self.k, "k.hard.hd.serial_number", "ALL", "eq", dd)
-            expect_value(self, self.k, "k.hard.hd.model_family", "ALL", "eq", dd)
-            expect_value(self, self.k, "k.hard.hd.total_lbas_written", 0, "eq", dd)
-            expect_value(self, self.k, "k.hard.hd.health", "KNOCKOK", "eq", dd)
-            expect_value(self, self.k, "k.hard.hd.device_model", "ALL", "eq", dd)
+        # Parse hdd list
+        s = self.sample_dir + "hdd_status/all_hdd.txt"
+        self.assertTrue(FileUtility.is_file_exist(s))
+        buf = FileUtility.file_to_textbuffer(s, "utf8")
+        ar_hdd = list(HddStatus.scan_all_hdd_buffer(buf))
+        self.assertIsNotNone(ar_hdd)
+        self.assertEqual(ar_hdd, ["/dev/sda"])
 
-        else:
-            # Try invoke on first sdX
-            ec, so, se = ButcherTools.invoke("smartctl -q errorsonly -H -l selftest -b " + hds[0], timeout_ms=120000)
-            logger.info("Got ec=%s, so=%s, se=%s", ec, so, se)
-            if ec == 0:
-                logger.info("Assuming PHYSICAL, heavy checks")
-                self.assertFalse("Physical server heavy checks NOT implemented")
-                # TODO : Implement unittest on a physical server please
-            else:
-                logger.info("smartctl invoke failed, bypassing checks")
+        # Parse hdd error
+        us.process_smartctl_error_only_buffer("sda", "")
+        us.process_smartctl_error_only_buffer("sdb", "got_errors")
+
+        # Parse hdd full buffer
+        for hdd in ["sda", "sdb"]:
+            s = self.sample_dir + "hdd_status/%s.txt" % hdd
+            self.assertTrue(FileUtility.is_file_exist(s))
+            buf = FileUtility.file_to_textbuffer(s, "utf8")
+            us.process_smartctl_full_buffer(hdd, buf)
+
+        # Finish
+        us.push_all_hash()
+
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
+
+        # Check sda
+        dd = {"HDD": "sda"}
+        expect_value(self, self.k, "k.hard.hd.status", None, "exists", dd)
+        expect_value(self, self.k, "k.hard.hd.user_capacity", 500107862016.0, "eq", dd)
+        expect_value(self, self.k, "k.hard.hd.reallocated_sector_ct", 0, "eq", dd)
+        expect_value(self, self.k, "k.hard.hd.serial_number", "WD-WCC1U0437567", "eq", dd)
+        expect_value(self, self.k, "k.hard.hd.health", "KNOCKOK", "eq", dd)
+        expect_value(self, self.k, "k.hard.hd.device_model", "WDC WD5000AZRX-00A8LB0", "eq", dd)
+
+        # Check sdb
+        dd = {"HDD": "sdb"}
+        expect_value(self, self.k, "k.hard.hd.status", None, "exists", dd)
+        expect_value(self, self.k, "k.hard.hd.user_capacity", 512110190592.0, "eq", dd)
+        expect_value(self, self.k, "k.hard.hd.reallocated_sector_ct", 99, "eq", dd)
+        expect_value(self, self.k, "k.hard.hd.serial_number", "982S107CT5ZQ", "eq", dd)
+        expect_value(self, self.k, "k.hard.hd.total_lbas_written", 384582, "eq", dd)
+        expect_value(self, self.k, "k.hard.hd.health", "got_errors", "eq", dd)
+        expect_value(self, self.k, "k.hard.hd.device_model", "TOSHIBA KSG60ZMV512G M.2 2280 512GB", "eq", dd)
+
+        # Check ALL
+        dd = {"HDD": "ALL"}
+        expect_value(self, self.k, "k.hard.hd.reallocated_sector_ct", 99, "eq", dd)
 
     @unittest.skipIf(Load().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Load())
     def test_Load(self):
