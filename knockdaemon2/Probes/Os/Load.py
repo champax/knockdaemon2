@@ -29,29 +29,8 @@ from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockProbe import KnockProbe
-from knockdaemon2.Platform.PTools import PTools
 
 logger = logging.getLogger(__name__)
-
-if PTools.get_distribution_type() == "windows":
-    pass
-
-try:
-    from os import getloadavg
-except ImportError:
-    # some systems don't provide getloadavg, try reading /proc/loadavg directly as fallback
-    LOADAVG_PATH = '/proc/loadavg'
-
-
-    def getloadavg():
-        """
-        Doc
-        """
-        loadavg_file = open(LOADAVG_PATH)
-        content = loadavg_file.read()
-        loadavg = content.split()
-        loadavg_file.close()
-        return map(float, loadavg[:3])
 
 
 class Load(KnockProbe):
@@ -67,12 +46,7 @@ class Load(KnockProbe):
         # Base
         KnockProbe.__init__(self, linux_support=True, windows_support=False)
 
-        # Init
         self._cpu_count = None
-        self._ar_proc_qlen = list()
-        self._last_run_ms = SolBase.mscurrent()
-        self._d_accu = None
-
         self.category = "/os/load"
 
     def _execute_linux(self):
@@ -80,87 +54,186 @@ class Load(KnockProbe):
         Exec
         """
 
-        # Set cpu count if needed
+        # Load
+        load1, load5, load15 = self.get_load_avg()
+
+        # Cpu
+        d_cpu = self.get_cpu_stats()
+
+        # Sysctl
+        d_sysctl = self.get_sysctl()
+
+        # User count
+        n_users = self.get_users_count()
+
+        # Set cpu count
         self._linux_set_cpu_count()
 
+        # Host name
+        hostname = os.uname()[1]
+
+        # Local time
+        local_time = int(time.time())
+
         # Go
+        self.process_parsed(hostname, local_time, self._cpu_count, load1, load5, load15, d_cpu, d_sysctl, n_users)
 
-        cpu_count = self._cpu_count
-        load1, load5, load15 = getloadavg()
-        self.notify_value_n("k.os.cpu.load.percpu.avg1", None, load1 / cpu_count)
-        self.notify_value_n("k.os.cpu.load.percpu.avg5", None, load5 / cpu_count)
-        self.notify_value_n("k.os.cpu.load.percpu.avg15", None, load15 / cpu_count)
-        self.notify_value_n("k.os.cpu.core", None, cpu_count)
+    def process_parsed(self, hostname, local_time, n_cpu, load1, load5, load15, d_cpu, d_sysctl, n_users):
+        """
+        Process parsed
+        :param hostname: str
+        :type hostname: str
+        :param local_time: int
+        :type local_time: int
+        :param n_cpu: int
+        :type n_cpu: int
+        :param load1: int
+        :type load1: int
+        :param load5: int
+        :type load5: int
+        :param load15: int
+        :type load15: int
+        :param d_cpu: dict
+        :type d_cpu: dict
+        :param d_sysctl: dict
+        :type d_sysctl: dict
+        :param n_users: int
+        :type n_users: int
+        """
 
-        cpu = self.get_stat()
+        # Direct
+        self.notify_value_n("k.os.hostname", None, hostname)
+        self.notify_value_n("k.os.localtime", None, local_time)
 
-        for key, value in cpu.items():
+        # From load
+        self.notify_value_n("k.os.cpu.load.percpu.avg1", None, load1 / n_cpu)
+        self.notify_value_n("k.os.cpu.load.percpu.avg5", None, load5 / n_cpu)
+        self.notify_value_n("k.os.cpu.load.percpu.avg15", None, load15 / n_cpu)
+        self.notify_value_n("k.os.cpu.core", None, n_cpu)
+
+        # From cpu
+        for key, value in d_cpu.items():
             if isinstance(value, (int, float)):
                 if key not in "total,guest":
                     if value < 0:
                         value = 0
-                    self.notify_value_n("k.os.cpu.util." + key, None, value / cpu_count)
+                    self.notify_value_n("k.os.cpu.util." + key, None, value / n_cpu)
 
-        self.notify_value_n("k.os.cpu.switches", None, int(cpu["ctxt"]))
-        self.notify_value_n("k.os.cpu.intr", None, int(cpu["softirqcount"]))
-        self.notify_value_n("k.os.boottime", None, int(cpu["btime"]))
-        self.notify_value_n("k.os.processes.running", None, int(cpu["proc_running"]))
+        self.notify_value_n("k.os.cpu.switches", None, int(d_cpu["ctxt"]))
+        self.notify_value_n("k.os.cpu.intr", None, int(d_cpu["softirqcount"]))
+        self.notify_value_n("k.os.boottime", None, int(d_cpu["btime"]))
+        self.notify_value_n("k.os.processes.running", None, int(d_cpu["proc_running"]))
 
-        self.notify_value_n("k.os.hostname", None, os.uname()[1])
-        self.notify_value_n("k.os.localtime", None, int(time.time()))
+        # From sysctl
+        self.notify_value_n("k.os.maxfiles", None, int(d_sysctl["max_open_files"]))
+        self.notify_value_n("k.os.maxproc", None, int(d_sysctl["max_proc"]))
+        self.notify_value_n("k.os.openfiles", None, int(d_sysctl["open_file"]))
 
-        sysctl = self.get_sysctl()
-        self.notify_value_n("k.os.maxfiles", None, int(sysctl["max_open_files"]))
-        self.notify_value_n("k.os.maxproc", None, int(sysctl["max_proc"]))
-        self.notify_value_n("k.os.openfiles", None, int(sysctl["open_file"]))
-        self.notify_value_n("k.os.users.connected", None, self.get_users_count())
+        # From user count
+        self.notify_value_n("k.os.users.connected", None, n_users)
 
-    # noinspection PyMethodMayBeStatic
-    def get_sysctl(self):
+    @classmethod
+    def get_load_avg(cls):
         """
-        Get
-        :return:
+        Get load average
+        :return: tuple 1,5,15 min
+        :rtype tuple
+        """
+
+        try:
+            from os import getloadavg
+            return getloadavg()
+        except ImportError:
+            # some systems don't provide getloadavg, try reading /proc/loadavg directly as fallback
+            with open("/proc/loadavg") as f1:
+                buf = f1.read()
+            return cls.get_load_avg_from_buffer(buf)
+
+    @classmethod
+    def get_load_avg_from_buffer(cls, buf):
+        """
+        Get load avg from buffer
+        :return: tuple 1,5,15 min
+        :rtype tuple
+        """
+        loadavg = buf.split()
+        return map(float, loadavg[:3])
+
+    @classmethod
+    def get_sysctl(cls):
+        """
+        Get sysctl infos
+        :return: dict
+        :rtype dict
+        """
+        with open("/proc/sys/fs/file-max") as f1:
+            with open("/proc/sys/kernel/pid_max") as f2:
+                with open("/proc/sys/fs/file-nr") as f3:
+                    return cls.get_sys_ctl_from_buffer(f1.read(), f2.read(), f3.read())
+
+    @classmethod
+    def get_sys_ctl_from_buffer(cls, buf_file_max, buf_pid_max, buf_file_nr):
+        """
+        Get sysctl from buffer
+        :param buf_file_max: str
+        :type buf_file_max: str
+        :param buf_pid_max: str
+        :type buf_pid_max: str
+        :param buf_file_nr: str
+        :type buf_file_nr: str
+        :return: dict
+        :rtype dict
         """
         result = dict()
-        result["max_open_files"] = open("/proc/sys/fs/file-max").read().strip()
-        result["max_proc"] = open("/proc/sys/kernel/pid_max").read().strip()
-        result["open_file"] = open("/proc/sys/fs/file-nr").read().strip().split()[0]
-
+        result["max_open_files"] = buf_file_max.strip()
+        result["max_proc"] = buf_pid_max.strip()
+        result["open_file"] = buf_file_nr.strip().split()[0]
         return result
 
-    # noinspection PyMethodMayBeStatic
-    def get_stat(self):
+    @classmethod
+    def get_tick(cls):
         """
-        Get
-        :return:
+        Get tick
+        :return: float
+        :rtype float
         """
-        # noinspection PyUnresolvedReferences
-        tick = 1.0 / os.sysconf(os.sysconf_names["SC_CLK_TCK"])
+        return 1.0 / os.sysconf(os.sysconf_names["SC_CLK_TCK"])
+
+    @classmethod
+    def get_cpu_stats_from_buffer(cls, buf_proc_stat):
+        """
+        Get cpu from buffer
+        :param buf_proc_stat: str
+        :type buf_proc_stat: str
+        :return: dict
+        :rtype dict
+        """
+
+        tick = cls.get_tick()
+        ar = buf_proc_stat.split("\n")
         cpu = dict()
-        lines = open("/proc/stat").read().splitlines()
 
         try:
             # kernel 3
-            cpu["name"], cpu["user"], cpu["nice"], cpu["system"], cpu["idle"], cpu["iowait"], cpu["interrupt"], cpu["softirq"], cpu["steal"], cpu["guest"], unused = lines[0].replace("  ", " ").split(" ", 10)
+            cpu["name"], cpu["user"], cpu["nice"], cpu["system"], cpu["idle"], cpu["iowait"], cpu["interrupt"], cpu["softirq"], cpu["steal"], cpu["guest"], unused = ar[0].replace("  ", " ").split(" ", 10)
         except ValueError:
             # kernel 2.6
-            cpu["name"], cpu["user"], cpu["nice"], cpu["system"], cpu["idle"], cpu["iowait"], cpu["interrupt"], cpu["softirq"], unused = lines[0].replace("  ", " ").split(" ", 8)
+            cpu["name"], cpu["user"], cpu["nice"], cpu["system"], cpu["idle"], cpu["iowait"], cpu["interrupt"], cpu["softirq"], unused = ar[0].replace("  ", " ").split(" ", 8)
             cpu["guest"] = 0
             cpu["steal"] = 0
 
         cpu["total"] = 0
         total = 0
         for key, value in cpu.items():
-            # noinspection PyBroadException
             try:
                 int_value = int(value)
                 cpu[key] = int_value
                 total += int_value
-            except Exception:
+            except ValueError:
                 pass
 
         cpu["total"] = total * tick
-        for line in lines:
+        for line in ar:
             if line.startswith("ctxt"):
                 cpu["ctxt"] = line.split()[1]
             elif line.startswith("softirq"):
@@ -172,6 +245,16 @@ class Load(KnockProbe):
 
         return cpu
 
+    @classmethod
+    def get_cpu_stats(cls):
+        """
+        Get cpu
+        :return: dict
+        :rtype dict
+        """
+        with open("/proc/stat") as f1:
+            return cls.get_cpu_stats_from_buffer(f1.read())
+
     def _linux_set_cpu_count(self):
         """
         Number of virtual or physical CPUs on this system, i.e.
@@ -182,12 +265,12 @@ class Load(KnockProbe):
         # If done, exit
         if self._cpu_count:
             return
-        self._cpu_count = self._linux_get_cpu_count_internal()
+        self._cpu_count = self.get_cpu_count()
 
-    # noinspection PyMethodMayBeStatic
-    def _linux_get_cpu_count_internal(self):
+    @classmethod
+    def get_cpu_count(cls):
         """
-        Internal method
+        Get cpu count
         :return int
         :rtype int
         """
@@ -199,8 +282,6 @@ class Load(KnockProbe):
             return multiprocessing.cpu_count()
         except (ImportError, NotImplementedError):
             pass
-
-        # TODO : unittest : split in methods
 
         # POSIX
         try:
@@ -240,10 +321,9 @@ class Load(KnockProbe):
 
         # Linux
         try:
-            res = open("/proc/cpuinfo").read().count("processor\t:")
-
-            if res > 0:
-                return res
+            with open("/proc/cpuinfo") as f1:
+                buf = f1.read()
+            return cls.get_cpu_count_from_buffer(buf)
         except IOError:
             pass
 
@@ -253,8 +333,6 @@ class Load(KnockProbe):
             try:
                 dmesg = open("/var/run/dmesg.boot").read()
             except IOError:
-                # dmesg_process = subprocess.Popen(["dmesg"], stdout=subprocess.PIPE)
-                # dmesg = dmesg_process.communicate()[0]
                 ec, so, se = ButcherTools.invoke("dmesg")
                 if ec != 0:
                     logger.warning("ex=%s, so=%s, se=%s", ec, so, se)
@@ -272,8 +350,30 @@ class Load(KnockProbe):
 
         raise Exception("Can not determine number of CPUs on this system")
 
-    # noinspection PyMethodMayBeStatic
-    def get_users_count(self):
+    @classmethod
+    def get_cpu_count_from_buffer(cls, buf):
+        """
+        Get cpu count from buffer
+        :param buf: str
+        :type buf: str
+        :return: int
+        :rtype int
+        """
+
+        res = buf.count("processor       :")
+        if res == 0:
+            res = buf.count("processor\t:")
+        if res == 0:
+            res = buf.count("processor:")
+        if res == 0:
+            res = buf.count("processor")
+        if res == 0:
+            return 1
+        else:
+            return res
+
+    @classmethod
+    def get_users_count(cls):
         """
         Get
         :return:
@@ -287,12 +387,23 @@ class Load(KnockProbe):
         if ec != 0:
             logger.warning("ex=%s, so=%s, se=%s", ec, so, se)
         else:
-            buf = so.strip()
-            if len(buf) > 0:
-                number = len(buf.split(' '))
-            else:
-                number = 0
-            return number
+            return cls.get_users_count_from_buffer(so.decode("utf8"))
+
+    @classmethod
+    def get_users_count_from_buffer(cls, buf):
+        """
+        Get user count from buffer
+        :param buf: str
+        :type buf: str
+        :return: int
+        :rtype int
+        """
+
+        buf = buf.strip()
+        if len(buf) > 0:
+            return len(buf.split(" "))
+        else:
+            return 0
 
     @classmethod
     def process_ar_queue(cls, ar, ms_current):

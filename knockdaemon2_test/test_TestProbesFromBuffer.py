@@ -433,7 +433,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         expect_value(self, self.k, "k.hard.hd.reallocated_sector_ct", 99, "eq", dd)
 
     @unittest.skipIf(Load().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Load())
-    def test_Load(self):
+    def test_from_buffer_load(self):
         """
         Test
         """
@@ -459,64 +459,86 @@ class TestProbesFromBuffer(unittest.TestCase):
         self.assertEqual(KnockHelpers.trick_instant_value_to_cumulative(v_prev, v_cur, 100.0), 202.0)
 
         # ----------------------------
-        # VALIDATE WINDOWS LOAD API
-        # ----------------------------
-
-        # Keep current ms
-        ms_cur = 1489440100000
-
-        # Validate windows queue length processing
-        ar = list()
-        for min_back in range(20, 0, -1):
-            ms_back = min_back * 60 * 1000
-            ms_set = ms_cur - ms_back
-            ar.append({"ms": ms_set, "q": min_back * 10})
-        logger.info("ar_in=%s", ar)
-        len_in = len(ar)
-
-        # Get load
-        load1, load5, load15 = Load.process_ar_queue(ar, ms_cur)
-        logger.info("ar_out=%s", ar)
-        len_out = len(ar)
-
-        # We must have evictions
-        self.assertLess(len_out, len_in)
-        for d in ar:
-            # All items must be less than 15 minutes
-            self.assertLessEqual(SolBase.msdiff(d["ms"], ms_cur), 15 * 60 * 1000)
-
-        # Check load
-        self.assertEqual(load1, 10.0)
-        self.assertEqual(load5, 10.0)
-        self.assertEqual(load15, 80.0)
-
-        # ----------------------------
         # Exec it
         # ----------------------------
-        for _ in range(2):
-            exec_helper(self, Load)
-            expect_value(self, self.k, "k.os.cpu.load.percpu.avg1", None, "exists")
-            expect_value(self, self.k, "k.os.cpu.load.percpu.avg5", None, "exists")
-            expect_value(self, self.k, "k.os.cpu.load.percpu.avg15", None, "exists")
-            expect_value(self, self.k, "k.os.cpu.core", 1, "gte")
-            expect_value(self, self.k, "k.os.cpu.util.softirq", None, "exists")
-            expect_value(self, self.k, "k.os.cpu.util.iowait", None, "exists")
-            expect_value(self, self.k, "k.os.cpu.util.system", None, "exists")
-            expect_value(self, self.k, "k.os.cpu.util.idle", None, "exists")
-            expect_value(self, self.k, "k.os.cpu.util.user", None, "exists")
-            expect_value(self, self.k, "k.os.cpu.util.interrupt", None, "exists")
-            expect_value(self, self.k, "k.os.cpu.util.steal", None, "exists")
-            expect_value(self, self.k, "k.os.cpu.util.nice", None, "exists")
-            expect_value(self, self.k, "k.os.cpu.switches", None, "exists")
-            expect_value(self, self.k, "k.os.cpu.intr", None, "exists")
-            expect_value(self, self.k, "k.os.boottime", None, "exists")
-            expect_value(self, self.k, "k.os.processes.running", None, "exists")
-            expect_value(self, self.k, "k.os.hostname", None, "exists")
-            expect_value(self, self.k, "k.os.localtime", None, "exists")
-            expect_value(self, self.k, "k.os.maxfiles", None, "exists")
-            expect_value(self, self.k, "k.os.openfiles", None, "exists")
-            expect_value(self, self.k, "k.os.maxproc", None, "exists")
-            expect_value(self, self.k, "k.os.users.connected", 0, "gte")
+
+        # Init
+        us = Load()
+        us.set_manager(self.k)
+
+        # Load files
+        fd = dict()
+        for fs in ["cpu_info.txt", "file-max.txt", "file-nr.txt", "pid_max.txt", "proc_stat.txt", "users.txt", "loadavg.txt"]:
+            s = self.sample_dir + "load/%s" % fs
+            self.assertTrue(FileUtility.is_file_exist(s))
+            buf = FileUtility.file_to_textbuffer(s, "utf8")
+            fd[fs] = buf
+
+        # Load
+        load1, load5, load15 = us.get_load_avg()
+        self.assertIsNotNone(load1)
+        self.assertIsNotNone(load5)
+        self.assertIsNotNone(load15)
+        self.assertGreaterEqual(load1, 0)
+        self.assertGreaterEqual(load5, 0)
+        self.assertGreaterEqual(load15, 0)
+
+        # Load again (from buffer this time)
+        load1, load5, load15 = us.get_load_avg_from_buffer(fd["loadavg.txt"])
+        self.assertIsNotNone(load1)
+        self.assertIsNotNone(load5)
+        self.assertIsNotNone(load15)
+        self.assertGreaterEqual(load1, 0)
+        self.assertGreaterEqual(load5, 0)
+        self.assertGreaterEqual(load15, 0)
+
+        # Cpu count
+        n_cpu = us.get_cpu_count()
+        self.assertGreater(n_cpu, 1)
+
+        # Cpu count again (from buffer this time)
+        n_cpu = us.get_cpu_count_from_buffer(fd["cpu_info.txt"])
+        self.assertEqual(n_cpu, 12)
+
+        # Cpu
+        d_cpu = us.get_cpu_stats_from_buffer(fd["proc_stat.txt"])
+
+        # Sysctl
+        d_sysctl = us.get_sys_ctl_from_buffer(fd["file-max.txt"], fd["pid_max.txt"], fd["file-nr.txt"])
+
+        # Users
+        n_users = us.get_users_count_from_buffer(fd["users.txt"])
+
+        # Push
+        us.process_parsed("zzz", 999, n_cpu, load1, load5, load15, d_cpu, d_sysctl, n_users)
+
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
+
+        # Check
+        expect_value(self, self.k, "k.os.cpu.load.percpu.avg1", 0.19583333333333333, "eq")
+        expect_value(self, self.k, "k.os.cpu.load.percpu.avg5", 0.1575, "eq")
+        expect_value(self, self.k, "k.os.cpu.load.percpu.avg15", 0.14916666666666667, "eq")
+        expect_value(self, self.k, "k.os.cpu.core", 12, "eq")
+        expect_value(self, self.k, "k.os.cpu.util.softirq", 523697.75, "eq")
+        expect_value(self, self.k, "k.os.cpu.util.iowait", 46485.333333333336, "eq")
+        expect_value(self, self.k, "k.os.cpu.util.system", 737093.5, "eq")
+        expect_value(self, self.k, "k.os.cpu.util.idle", 53666677.5, "eq")
+        expect_value(self, self.k, "k.os.cpu.util.user", 3414344.6666666665, "eq")
+        expect_value(self, self.k, "k.os.cpu.util.interrupt", 0.0, "eq")
+        expect_value(self, self.k, "k.os.cpu.util.steal", 0.0, "eq")
+        expect_value(self, self.k, "k.os.cpu.util.nice", 185.58333333333334, "eq")
+        expect_value(self, self.k, "k.os.cpu.switches", 4943625465, "eq")
+        expect_value(self, self.k, "k.os.cpu.intr", 2495152497, "eq")
+        expect_value(self, self.k, "k.os.boottime", 1639501438, "eq")
+        expect_value(self, self.k, "k.os.processes.running", 2, "eq")
+        expect_value(self, self.k, "k.os.hostname", "zzz", "eq")
+        expect_value(self, self.k, "k.os.localtime", 999, "eq")
+        expect_value(self, self.k, "k.os.maxfiles", 1048576, "eq")
+        expect_value(self, self.k, "k.os.openfiles", 19552, "eq")
+        expect_value(self, self.k, "k.os.maxproc", 32768, "eq")
+        expect_value(self, self.k, "k.os.users.connected", 4, "eq")
 
     def test_from_buffer_redis(self):
         """
