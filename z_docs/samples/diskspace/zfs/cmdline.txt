@@ -1,0 +1,1 @@
+BOOT_IMAGE=/vmlinuz-4.9.0-4-amd64 root=/dev/mapper/vg0-root ro quiet

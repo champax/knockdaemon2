@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -123,19 +123,19 @@ class ApacheStat(KnockProbe):
 
         # Go
         if self.ar_url:
-            logger.info("Got (set) ar_url=%s", self.ar_url)
+            logger.debug("Got (set) ar_url=%s", self.ar_url)
             return
         elif "url" in d:
             url = d["url"].strip().lower()
             if url == "auto":
                 self.ar_url = ["http://127.0.0.1/server-status?auto"]
-                logger.info("Got (auto) ar_url=%s", self.ar_url)
+                logger.debug("Got (auto) ar_url=%s", self.ar_url)
             else:
                 self.ar_url = url.split("|")
-                logger.info("Got (load) ar_url=%s", self.ar_url)
+                logger.debug("Got (load) ar_url=%s", self.ar_url)
         else:
             self.ar_url = ["http://127.0.0.1/server-status?auto"]
-            logger.info("Got (default) ar_url=%s", self.ar_url)
+            logger.debug("Got (default) ar_url=%s", self.ar_url)
 
     def _execute_linux(self):
         """
@@ -159,9 +159,9 @@ class ApacheStat(KnockProbe):
                 found = True
                 break
         if not found:
-            logger.info('apache not found')
+            logger.debug('apache not found')
             return
-        logger.info("Apache detected, using=%s", conf_file)
+        logger.debug("Apache detected, using=%s", conf_file)
 
         # -------------------------------
         # Try uris and try process
@@ -170,7 +170,7 @@ class ApacheStat(KnockProbe):
         pool_id = "default"
 
         for u in self.ar_url:
-            logger.info("Trying u=%s", u)
+            logger.debug("Trying u=%s", u)
 
             # Try fetch
             ms_http_start = SolBase.mscurrent()
@@ -205,7 +205,7 @@ class ApacheStat(KnockProbe):
         # Add ms
         d_apache["k.apache.status.ms"] = ms_http
 
-        logger.info("Processing, d_apache=%s, pool_id=%s", d_apache, pool_id)
+        logger.debug("Processing, d_apache=%s, pool_id=%s", d_apache, pool_id)
         for k, knock_type, knock_key in ApacheStat.KEYS:
             # Try
             if k not in d_apache:
@@ -233,7 +233,7 @@ class ApacheStat(KnockProbe):
             self.notify_value_n(knock_key, {"ID": pool_id}, v)
 
         # Good, notify & exit
-        logger.info("Processing ok, notify started=1 and return, pool_id=%s", pool_id)
+        logger.debug("Processing ok, notify started=1 and return, pool_id=%s", pool_id)
         self.notify_value_n("k.apache.started", {"ID": pool_id}, 1)
         return True
 
@@ -268,7 +268,7 @@ class ApacheStat(KnockProbe):
                     d_apache[c_name] = round(float(c_value), 2)
                     logger.debug("c_name=%s, c_value=%s, h_value=%s", c_name, c_value, d_apache[c_name])
             except Exception as e:
-                logger.info("Skip line (exception), line=%s, c_name=%s, c_value=%s, ex=%s", line, c_name, c_value, e)
+                logger.debug("Skip line (exception), line=%s, c_name=%s, c_value=%s, ex=%s", line, c_name, c_value, e)
                 continue
         return d_apache
 
@@ -288,7 +288,7 @@ class ApacheStat(KnockProbe):
                 url += "?auto"
 
             # Go
-            logger.info("Trying url=%s", url)
+            logger.debug("Trying url=%s", url)
 
             # Client
             hclient = HttpClient()
@@ -318,18 +318,18 @@ class ApacheStat(KnockProbe):
 
             # Get response
             if hresp.status_code != 200:
-                logger.info("Give up (no http 200), sc=%s", hresp.status_code)
+                logger.debug("Give up (no http 200), sc=%s", hresp.status_code)
                 return None
 
             # Check
             if not hresp.buffer:
-                logger.info("Give up (buffer None)")
+                logger.debug("Give up (buffer None)")
                 return None
             elif hresp.buffer.find("Scoreboard") < 0:
-                logger.info("Give up (no Scoreboard)")
+                logger.debug("Give up (no Scoreboard)")
                 return None
             else:
-                logger.info("Success, len.buffer=%s", len(hresp.buffer))
+                logger.debug("Success, len.buffer=%s", len(hresp.buffer))
                 return hresp.buffer
 
         except Exception as e:

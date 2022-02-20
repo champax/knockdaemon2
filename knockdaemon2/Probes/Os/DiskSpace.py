@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -29,32 +29,20 @@ import stat
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
-from knockdaemon2.Platform.PTools import PTools
-
-if not PTools.get_distribution_type() == "windows":
-    from os import statvfs
-else:
-    # Windows
-    pass
 
 logger = logging.getLogger(__name__)
 
 
-def resolv_root():
+def get_zpool_io_buffer(file_name):
     """
-    Convert obscure /dev/root to something more usable
-    :return:
-    :rtype:
+    Get zpool io
+    :param file_name: str
+    :type file_name: str
+    :return: str
+    :rtype str
     """
-    try:
-        cmdline = open('/proc/cmdline').read().strip()
-        for block in cmdline.split(' '):
-            if block.startswith('root='):
-                _, device = block.split('=')
-                return device
-    except Exception as e:
-        SolBase.extostr(e)
-        return None
+    with open(file_name) as f:
+        return f.read()
 
 
 class DiskSpace(KnockProbe):
@@ -79,8 +67,45 @@ class DiskSpace(KnockProbe):
 
         self.category = "/os/disk"
 
-    # noinspection PyMethodMayBeStatic
-    def add_to_hash(self, h, key, value):
+    @classmethod
+    def get_cmdline_buffer(cls):
+        """
+        Get cmdline buffer
+        :return: None,str
+        :rtype None,str
+        """
+        try:
+            with open('/proc/cmdline') as f:
+                return f.read()
+        except Exception as e:
+            logger.warning("Ex=%s", SolBase.extostr(e))
+            return None
+
+    @classmethod
+    def resolv_root(cls, cmdline_buf):
+        """
+        Convert obscure /dev/root to something more usable
+        :param cmdline_buf: str,None
+        :type cmdline_buf: str,None
+        :return list,None
+        :rtype list,None
+        """
+        try:
+            if cmdline_buf is None:
+                return None
+            cmdline_buf = cmdline_buf.strip()
+            if len(cmdline_buf) == 0:
+                return None
+            for block in cmdline_buf.strip().split(' '):
+                if block.startswith('root='):
+                    _, device = block.split('=')
+                    return device
+        except Exception as e:
+            logger.warning("Ex=%s", SolBase.extostr(e))
+            return None
+
+    @classmethod
+    def add_to_hash(cls, h, key, value):
         """
         Add to specified hash ("max" for dev.io.percentused, "sum" for others)
         :param h: Hash
@@ -139,116 +164,173 @@ class DiskSpace(KnockProbe):
         Exec
         """
 
-        diskstats = open('/proc/diskstats', mode='r').readlines()
-        # for line in diskstats:
-        # 8       0 sda 2807673 12466207 1954097630 27802504 19338044
-        # 9831352 413166224 119655124 0 98639412 147430664
-        # statvalue=line.split()
-        # statsdevice[statvalue[2]][]
+        # READ : cmdline
+        buf_cmdline = self.get_cmdline_buffer()
 
+        # READ : diskstats
+        with open('/proc/diskstats', mode='r') as f:
+            buf_diskstats = f.read()
+
+        # READ: mtab
+        with open('/etc/mtab', mode='r') as f:
+            buf_mtab = f.read()
+
+        # Process
+        self.process_from_buffer(buf_cmdline, buf_diskstats, buf_mtab)
+
+    @classmethod
+    def can_be_processed(cls, fstype, mountpoint):
+        """
+        Check if we can process this file system
+        :param fstype: str
+        :type fstype: str
+        :param mountpoint: str
+        :type mountpoint: str
+        :return: bool
+        :rtype bool
+        """
+        if fstype in ('ext2', 'ext3', 'ext4', 'zfs', 'xfs', 'btrfs'):
+            if mountpoint.startswith('/mnt/') or \
+                    mountpoint.startswith('/tmp/') or \
+                    mountpoint.startswith('/media/') or \
+                    "/.zfs/snapshot/" in mountpoint:
+                return False
+            else:
+                return True
+        else:
+            return False
+
+    def process_from_buffer(self, buf_cmdline, buf_diskstats, buf_mtab):
+        """
+        Process from buffer
+        :param buf_cmdline: str,None
+        :type buf_cmdline: str,None
+        :param buf_diskstats: str
+        :type buf_diskstats: str
+        :param buf_mtab: str
+        :type buf_mtab: str
+        """
+
+        # Reset
         self.hash_file_reset()
-
-        mount = open('/etc/mtab', mode='r')
-
-        # All init
         all_hash = dict()
 
-        for line in mount.readlines():
-            # noinspection PyUnusedLocal
+        # Split
+        ar_diskstats = buf_diskstats.split("\n")
+
+        # Root resolve
+        resolved_root = self.resolv_root(buf_cmdline)
+
+        # PROCESS : mtab
+        for line in buf_mtab.split("\n"):
+            line = line.strip()
+            if len(line) == 0:
+                continue
+            # Split
             device, mountpoint, fstype, options, order, prio = line.split()
-            if fstype in ('ext2', 'ext3', 'ext4', 'zfs', 'xfs', 'btrfs'):
-                logger.debug('processing device=%s mountpoint=%s fstype=%s', device, mountpoint, fstype)
-                if mountpoint.startswith('/mnt/') or \
-                        mountpoint.startswith('/tmp/') or \
-                        mountpoint.startswith('/media/') or \
-                        "/.zfs/snapshot/" in mountpoint:
-                    continue
 
-                self._disk_usage(mountpoint)
-                current_time_ms = SolBase.mscurrent()
-                if fstype in 'zfs':
-                    if '/' in device:
-                        device = device.split('/')[0]
+            # Check
+            if not self.can_be_processed(fstype, mountpoint):
+                continue
 
-                    # only zpool have stat
-                    try:
-                        stats_disk = open('/proc/spl/kstat/zfs/' + device + '/io').readlines()[2]
-                        """
-                        u_longlong_t     nread;       /* number of bytes read */
-                        u_longlong_t     nwritten;    /* number of bytes written */
-                        uint_t           reads;       /* number of read operations */
-                        uint_t           writes;      /* number of write operations */
-                        hrtime_t         wtime;       /* cumulative wait (pre-service) time nanosec*/
-                        hrtime_t         wlentime;    /* cumulative wait length*time product*/
-                        hrtime_t         wlastupdate; /* last time wait queue changed */
-                        hrtime_t         rtime;       /* cumulative run (service) time nanosec*/
-                        hrtime_t         rlentime;    /* cumulative run length*time product */
-                        hrtime_t         rlastupdate; /* last time run queue changed */
-                        uint_t           wcnt;        /* count of elements in wait state */
-                        uint_t           rcnt;        /* count of elements in run state */
-                        """
-                        # parse stat_disk and cast to float
-                        nread, nwritten, reads, writes, wtime, wlentime, wlastupdate, rtime, rlentime, rlastupdate, wcnt, rcnt = map(lambda x: float(x), stats_disk.split())
+            # Usage
+            self.notify_disk_usage(mountpoint)
 
-                        if mountpoint not in self.previous_stat:
-                            self.previous_stat[mountpoint] = dict()
-                        cumulative_wait_rtime_ms = rtime * 10 ** -6
+            # Go
+            current_time_ms = SolBase.mscurrent()
+            # CHECK ZFS
+            if fstype in 'zfs':
+                # ----------------------------------
+                # ZFS
+                # ----------------------------------
+                if '/' in device:
+                    device = device.split('/')[0]
 
-                        if 'cumulative_wait_rtime_ms' in self.previous_stat[mountpoint]:
-                            last_rtime_used = cumulative_wait_rtime_ms - self.previous_stat[mountpoint]['cumulative_wait_rtime_ms']
-                            last_time_elapsed = current_time_ms - self.previous_stat[mountpoint]['current_time_ms']
+                # only zpool have stat
+                try:
+                    # FILE_OP : mocked in unittest
+                    zpool_io_buf = get_zpool_io_buffer('/proc/spl/kstat/zfs/' + device + '/io')
+                    stats_disk = zpool_io_buf.split("\n")[2]
 
-                            percent_io_used_rtime = last_rtime_used / last_time_elapsed * 100
+                    """
+                    u_longlong_t     nread;       /* number of bytes read */
+                    u_longlong_t     nwritten;    /* number of bytes written */
+                    uint_t           reads;       /* number of read operations */
+                    uint_t           writes;      /* number of write operations */
+                    hrtime_t         wtime;       /* cumulative wait (pre-service) time nanosec*/
+                    hrtime_t         wlentime;    /* cumulative wait length*time product*/
+                    hrtime_t         wlastupdate; /* last time wait queue changed */
+                    hrtime_t         rtime;       /* cumulative run (service) time nanosec*/
+                    hrtime_t         rlentime;    /* cumulative run length*time product */
+                    hrtime_t         rlastupdate; /* last time run queue changed */
+                    uint_t           wcnt;        /* count of elements in wait state */
+                    uint_t           rcnt;        /* count of elements in run state */
+                    """
+                    # parse stat_disk and cast to float
+                    nread, nwritten, reads, writes, wtime, wlentime, wlastupdate, rtime, rlentime, rlastupdate, wcnt, rcnt = map(lambda x: float(x), stats_disk.split())
 
-                            self.notify_value_n("k.vfs.dev.io.percentused", {"FSNAME": mountpoint}, percent_io_used_rtime)
+                    if mountpoint not in self.previous_stat:
+                        self.previous_stat[mountpoint] = dict()
+                    cumulative_wait_rtime_ms = rtime * 10 ** -6
 
-                            self.add_to_hash(all_hash, 'k.vfs.dev.io.percentused', percent_io_used_rtime)
+                    if 'cumulative_wait_rtime_ms' in self.previous_stat[mountpoint]:
+                        last_rtime_used = cumulative_wait_rtime_ms - self.previous_stat[mountpoint]['cumulative_wait_rtime_ms']
+                        last_time_elapsed = current_time_ms - self.previous_stat[mountpoint]['current_time_ms']
 
-                        self.previous_stat[mountpoint]['cumulative_wait_rtime_ms'] = cumulative_wait_rtime_ms
-                        self.previous_stat[mountpoint]['current_time_ms'] = current_time_ms
+                        percent_io_used_rtime = last_rtime_used / last_time_elapsed * 100
 
-                        self.notify_value_n("k.vfs.dev.read.totalcount", {"FSNAME": mountpoint}, int(reads))
-                        self.notify_value_n("k.vfs.dev.read.totalbytes", {"FSNAME": mountpoint}, int(nread))
+                        self.notify_value_n("k.vfs.dev.io.percentused", {"FSNAME": mountpoint}, percent_io_used_rtime)
 
-                        self.notify_value_n("k.vfs.dev.write.totalcount", {"FSNAME": mountpoint}, int(writes))
-                        self.notify_value_n("k.vfs.dev.write.totalbytes", {"FSNAME": mountpoint}, int(nwritten))
+                        self.add_to_hash(all_hash, 'k.vfs.dev.io.percentused', percent_io_used_rtime)
 
-                        self.notify_value_n("k.vfs.dev.io.currentcount", {"FSNAME": mountpoint}, int(rcnt))
-                        self.notify_value_n("k.vfs.dev.io.totalms", {"FSNAME": mountpoint}, int(cumulative_wait_rtime_ms))
+                    self.previous_stat[mountpoint]['cumulative_wait_rtime_ms'] = cumulative_wait_rtime_ms
+                    self.previous_stat[mountpoint]['current_time_ms'] = current_time_ms
 
-                        # All
-                        self.add_to_hash(all_hash, 'k.vfs.dev.read.totalcount', int(reads))
-                        self.add_to_hash(all_hash, 'k.vfs.dev.read.totalbytes', int(nread))
+                    self.notify_value_n("k.vfs.dev.read.totalcount", {"FSNAME": mountpoint}, int(reads))
+                    self.notify_value_n("k.vfs.dev.read.totalbytes", {"FSNAME": mountpoint}, int(nread))
 
-                        self.add_to_hash(all_hash, 'k.vfs.dev.write.totalcount', int(writes))
-                        self.add_to_hash(all_hash, 'k.vfs.dev.write.totalbytes', int(nwritten))
+                    self.notify_value_n("k.vfs.dev.write.totalcount", {"FSNAME": mountpoint}, int(writes))
+                    self.notify_value_n("k.vfs.dev.write.totalbytes", {"FSNAME": mountpoint}, int(nwritten))
 
-                        self.add_to_hash(all_hash, 'k.vfs.dev.io.currentcount', int(rcnt))
-                        self.add_to_hash(all_hash, 'k.vfs.dev.io.totalms', int(cumulative_wait_rtime_ms))
+                    self.notify_value_n("k.vfs.dev.io.currentcount", {"FSNAME": mountpoint}, int(rcnt))
+                    self.notify_value_n("k.vfs.dev.io.totalms", {"FSNAME": mountpoint}, int(cumulative_wait_rtime_ms))
 
-                    except Exception as e:
-                        logger.warning(SolBase.extostr(e))
-                        continue
-                    continue
-                # END ZFS PROCESSING
-                # get minor major of device
+                    # All
+                    self.add_to_hash(all_hash, 'k.vfs.dev.read.totalcount', int(reads))
+                    self.add_to_hash(all_hash, 'k.vfs.dev.read.totalbytes', int(nread))
+
+                    self.add_to_hash(all_hash, 'k.vfs.dev.write.totalcount', int(writes))
+                    self.add_to_hash(all_hash, 'k.vfs.dev.write.totalbytes', int(nwritten))
+
+                    self.add_to_hash(all_hash, 'k.vfs.dev.io.currentcount', int(rcnt))
+                    self.add_to_hash(all_hash, 'k.vfs.dev.io.totalms', int(cumulative_wait_rtime_ms))
+
+                except Exception as e:
+                    logger.warning("Ex=%s", SolBase.extostr(e))
+            else:
+                # ----------------------------------
+                # NON ZFS
+                # ----------------------------------
 
                 # Convert obscure /dev/root to something more usable
                 if device == '/dev/root':
-                    device = resolv_root()
+                    device = resolved_root
                     if device is None:
                         continue
 
+                # FILE_OP : mocked in unittest
                 mode = os.stat(device)
                 if stat.S_ISLNK(mode.st_mode):
                     device = os.path.realpath(device)
                     mode = os.stat(device)
 
-                # noinspection PyUnresolvedReferences
+                # FILE_OP (indirect) : both mocked in unittest
                 major = os.major(mode.st_rdev)
-                # noinspection PyUnresolvedReferences
                 minor = os.minor(mode.st_rdev)
-                for line2 in diskstats:
+                for line2 in ar_diskstats:
+                    line2 = line2.strip()
+                    if len(line2) == 0:
+                        continue
                     regex = r"^\s*" + str(major) + r"\s+" + str(minor) + r"\s+"
                     if not re.search(regex, line2):
                         continue
@@ -256,30 +338,18 @@ class DiskSpace(KnockProbe):
 
                     # line is THE good line
                     self.notify_value_n("k.vfs.dev.read.totalcount", {"FSNAME": mountpoint}, int(temp_ar[3]))
-
                     self.notify_value_n("k.vfs.dev.read.totalsectorcount", {"FSNAME": mountpoint}, int(temp_ar[5]))
-
                     self.notify_value_n("k.vfs.dev.read.totalbytes", {"FSNAME": mountpoint}, int(temp_ar[5]) * 512)
-
                     self.notify_value_n("k.vfs.dev.read.totalms", {"FSNAME": mountpoint}, int(temp_ar[6]))
-
                     self.notify_value_n("k.vfs.dev.write.totalcount", {"FSNAME": mountpoint}, int(temp_ar[7]))
-
                     self.notify_value_n("k.vfs.dev.write.totalsectorcount", {"FSNAME": mountpoint}, int(temp_ar[9]))
-
                     self.notify_value_n("k.vfs.dev.write.totalbytes", {"FSNAME": mountpoint}, int(temp_ar[9]) * 512)
-
                     self.notify_value_n("k.vfs.dev.write.totalms", {"FSNAME": mountpoint}, int(temp_ar[10]))
-
                     self.notify_value_n("k.vfs.dev.io.currentcount", {"FSNAME": mountpoint}, int(temp_ar[11]))
-
                     self.notify_value_n("k.vfs.dev.io.totalms", {"FSNAME": mountpoint}, int(temp_ar[12]))
 
                     # ALL handling
                     self.add_to_hash(all_hash, 'k.vfs.dev.read.totalcount', int(temp_ar[3]))
-                    # Not useful, not in templates
-                    # self.add_to_hash(all_hash,
-                    #                 'k.vfs.dev.read.totalcountmerged', int(temp_ar[4]))
                     self.add_to_hash(all_hash, 'k.vfs.dev.read.totalsectorcount', int(temp_ar[5]))
                     self.add_to_hash(all_hash, 'k.vfs.dev.read.totalbytes', (int(temp_ar[5]) * 512))
                     self.add_to_hash(all_hash, 'k.vfs.dev.read.totalms', int(temp_ar[6]))
@@ -311,8 +381,6 @@ class DiskSpace(KnockProbe):
                     self.previous_stat[mountpoint]['current_time_ms'] = current_time_ms
                     break
 
-        mount.close()
-
         # -----------------------------
         # Handle "ALL" keys
         # -----------------------------
@@ -324,13 +392,17 @@ class DiskSpace(KnockProbe):
             value = v[1]
             self.notify_value_n(key, d_disco, value)
 
-    def _disk_usage(self, path):
-        """Return disk usage statistics about the given path.
+    def notify_disk_usage(self, path):
+        """
+        Push disk usage statistics about the given path.
 
         Returned valus is a named tuple with attributes 'total', 'used' and
         'free', which are the amount of total, used and free space, in bytes.
+        :param path: str
+        :type path: str
         """
-        st = statvfs(path)
+        # FILE_OP : mocked in unittest
+        st = os.statvfs(path)
         free = st.f_bavail * st.f_frsize
         total = st.f_blocks * st.f_frsize
         used = (st.f_blocks - st.f_bfree) * st.f_frsize
@@ -339,8 +411,6 @@ class DiskSpace(KnockProbe):
             inodepfree = 100.0
         else:
             inodepfree = 100.0 * st.f_ffree / st.f_files
-
-        # TODO : NON COMPATIBLE DISCO PROBES : k.vfs.fs.size[DISCO, type]
 
         self.notify_value_n("k.vfs.fs.size.free", {"FSNAME": path}, free)
         self.notify_value_n("k.vfs.fs.size.pfree", {"FSNAME": path}, pfree)
@@ -354,54 +424,3 @@ class DiskSpace(KnockProbe):
         self.hash_file('k.vfs.fs.inode.pfree', {"FSNAME": "ALL"}, inodepfree, "min")
         self.hash_file('k.vfs.fs.size.total', {"FSNAME": "ALL"}, total, "sum")
         self.hash_file('k.vfs.fs.size.used', {"FSNAME": "ALL"}, used, "sum")
-
-    # noinspection PyMethodMayBeStatic
-    def _get_logicaldisk(self, d_wmi, deviceid):
-        """
-        Get logical disk
-        :param d_wmi dict
-        :type d_wmi dict
-        :param deviceid: str
-        :type: deviceid: str
-        :return dict
-        :rtype dict
-        """
-
-        for d in d_wmi["Win32_LogicalDisk"]:
-            if deviceid == d["DeviceID"]:
-                return d
-        return None
-
-    # noinspection PyMethodMayBeStatic
-    def _get_logicalperf(self, d_wmi, deviceid):
-        """
-        Get logical perf
-        :param d_wmi dict
-        :type d_wmi dict
-        :param deviceid: str
-        :type: deviceid: str
-        :return dict
-        :rtype dict
-        """
-
-        for d in d_wmi["Win32_PerfFormattedData_PerfDisk_LogicalDisk"]:
-            if deviceid == d["Name"]:
-                return d
-        return None
-
-    # noinspection PyMethodMayBeStatic
-    def _get_rawperf(self, d_wmi, deviceid):
-        """
-        Get raw perf
-        :param d_wmi dict
-        :type d_wmi dict
-        :param deviceid: str
-        :type: deviceid: str
-        :return dict
-        :rtype dict
-        """
-
-        for d in d_wmi["Win32_PerfRawData_PerfDisk_LogicalDisk"]:
-            if deviceid == d["Name"]:
-                return d
-        return None

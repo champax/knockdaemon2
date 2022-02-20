@@ -2,7 +2,7 @@
 -*- coding: utf-8 -*-
 ===============================================================================
 
-Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 
 
 
@@ -28,7 +28,6 @@ import socket
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.UDPBusinessServerBase import UDPBusinessServerBase
-from knockdaemon2.Platform.PTools import PTools
 
 logger = logging.getLogger(__name__)
 
@@ -76,14 +75,6 @@ class UDPBusinessServerDomainLinux(UDPBusinessServerBase):
 
         # Listen
         logger.info("Binding")
-
-        # Alloc
-        if PTools.get_distribution_type() == "windows":
-            # ==========================
-            # Ahah, no support for domain socket on Windows
-            # ==========================
-            logger.warning("Windows detected, discarding domain linux socket listening. You may move to linux, it rocks.")
-            return
 
         # ==========================
         # Linux rocks (and debian rocks more)

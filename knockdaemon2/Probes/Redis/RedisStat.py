@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -211,7 +211,7 @@ class RedisStat(KnockProbe):
             self._push_result(knock_key, port, v, aggreg_op)
 
         # Notify up
-        logger.info("Redis info ok, notifying started=1, d_info=%s", d_info)
+        logger.debug("Redis info ok, notifying started=1, d_info=%s", d_info)
         self.notify_value_n("k.redis.started", {"RDPORT": str(port)}, 1)
         self.notify_value_n("k.redis.started", {"RDPORT": "ALL"}, 1)
 
@@ -271,7 +271,7 @@ class RedisStat(KnockProbe):
 
         # If no instance, give up
         if len(redis_ports) == 0:
-            logger.info("No redis instance detected, give up")
+            logger.debug("No redis instance detected, give up")
             return
 
         # ---------------------------

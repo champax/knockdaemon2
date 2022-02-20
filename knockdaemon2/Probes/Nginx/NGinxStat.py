@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -38,8 +38,6 @@ class NginxStat(KnockProbe):
     """
     Probe
     """
-
-    # TODO : Max connection from config + trigger
 
     KEYS = [
         # float => per second
@@ -101,19 +99,19 @@ class NginxStat(KnockProbe):
 
         # Go
         if self.ar_url:
-            logger.info("Got (set) ar_url=%s", self.ar_url)
+            logger.debug("Got (set) ar_url=%s", self.ar_url)
             return
         elif "url" in d:
             url = d["url"].strip().lower()
             if url == "auto":
                 self.ar_url = ["http://127.0.0.1/nginx_status"]
-                logger.info("Got (auto) ar_url=%s", self.ar_url)
+                logger.debug("Got (auto) ar_url=%s", self.ar_url)
             else:
                 self.ar_url = url.split("|")
-                logger.info("Got (load) ar_url=%s", self.ar_url)
+                logger.debug("Got (load) ar_url=%s", self.ar_url)
         else:
             self.ar_url = ["http://127.0.0.1/nginx_status"]
-            logger.info("No url from config, using default")
+            logger.debug("No url from config, using default")
 
     def _execute_linux(self):
         """
@@ -129,9 +127,9 @@ class NginxStat(KnockProbe):
 
         # Detect nginx
         if not FileUtility.is_file_exist('/etc/nginx/nginx.conf'):
-            logger.info("Give up (/etc/nginx/nginx.conf not found)")
+            logger.debug("Give up (/etc/nginx/nginx.conf not found)")
             return
-        logger.info("Nginx detected (/etc/nginx/nginx.conf found)")
+        logger.debug("Nginx detected (/etc/nginx/nginx.conf found)")
 
         pool_id = "default"
 
@@ -140,7 +138,7 @@ class NginxStat(KnockProbe):
         # -------------------------------
 
         for u in self.ar_url:
-            logger.info("Trying u=%s", u)
+            logger.debug("Trying u=%s", u)
 
             # Fetch
             ms_http_start = SolBase.mscurrent()
@@ -169,41 +167,46 @@ class NginxStat(KnockProbe):
         :rtype bool
         """
 
-        d_nginx = self.parse_nginx_buffer(nginx_buf.decode("utf8"))
+        try:
+            d_nginx = self.parse_nginx_buffer(nginx_buf.decode("utf8"))
 
-        # Add http millis
-        d_nginx["k.nginx.status.ms"] = ms_http
+            # Add http millis
+            d_nginx["k.nginx.status.ms"] = ms_http
 
-        # Go
-        for k, knock_type, knock_key in NginxStat.KEYS:
-            # Try
-            if k not in d_nginx:
-                if k.find("k.nginx.") != 0:
-                    logger.warning("Unable to locate k=%s in d_nginx", k)
+            # Go
+            for k, knock_type, knock_key in NginxStat.KEYS:
+                # Try
+                if k not in d_nginx:
+                    if k.find("k.nginx.") != 0:
+                        logger.warning("Unable to locate k=%s in d_nginx", k)
+                    else:
+                        logger.debug("Unable to locate k=%s in d_nginx (this is expected)", k)
+                    continue
+
+                # Ok, fetch and cast
+                v = d_nginx[k]
+                if knock_type == "int":
+                    v = int(v)
+                elif knock_type == "float":
+                    v = float(v)
+                elif knock_type == "str":
+                    v = str(v)
+                elif knock_type == "skip":
+                    logger.debug("Skipping type=%s", knock_type)
+                    continue
                 else:
-                    logger.debug("Unable to locate k=%s in d_nginx (this is expected)", k)
-                continue
+                    logger.warning("Not managed type=%s", knock_type)
 
-            # Ok, fetch and cast
-            v = d_nginx[k]
-            if knock_type == "int":
-                v = int(v)
-            elif knock_type == "float":
-                v = float(v)
-            elif knock_type == "str":
-                v = str(v)
-            elif knock_type == "skip":
-                logger.debug("Skipping type=%s", knock_type)
-                continue
-            else:
-                logger.warning("Not managed type=%s", knock_type)
+                # Notify
+                self.notify_value_n(knock_key, {"ID": pool_id}, v)
 
-            # Notify
-            self.notify_value_n(knock_key, {"ID": pool_id}, v)
-
-        # Good, notify & exit
-        logger.info("Processing, notify started=1 and return, pool_id=%s", pool_id)
-        self.notify_value_n("k.nginx.started", {"ID": pool_id}, 1)
+            # Good, notify & exit
+            logger.debug("Processing, notify started=1 and return, pool_id=%s", pool_id)
+            self.notify_value_n("k.nginx.started", {"ID": pool_id}, 1)
+            return True
+        except Exception as e:
+            logger.debug("Ex=%s", SolBase.extostr(e))
+            return False
 
     @classmethod
     def fetch_nginx_url(cls, url):
@@ -217,7 +220,7 @@ class NginxStat(KnockProbe):
 
         try:
             # Go
-            logger.info("Processing url=%s", url)
+            logger.debug("Processing url=%s", url)
 
             # Client
             hclient = HttpClient()
@@ -228,9 +231,8 @@ class NginxStat(KnockProbe):
             # Config (low timeout here + general timeout at 2000, backend by gevent with_timeout)
             # TODO Timeout by config
             hreq.general_timeout_ms = 2000
-            hreq.connection_timeout_ms = 1000
-            hreq.network_timeout_ms = 1000
-            hreq.general_timeout_ms = 1000
+            hreq.connection_timeout_ms = 1500
+            hreq.network_timeout_ms = 1500
             hreq.keep_alive = False
             hreq.https_insecure = False
 
@@ -270,7 +272,7 @@ class NginxStat(KnockProbe):
         """
 
         if buf_nginx.find("Active connections") < 0:
-            logger.info("Give up (no Active connections)")
+            logger.debug("Give up (no Active connections)")
             return None
 
         # Got it : parse
@@ -282,7 +284,7 @@ class NginxStat(KnockProbe):
         match3 = re.search(r'Reading:\s*(\d+)\s*Writing:\s*(\d+)\s*Waiting:\s*(\d+)', buf_nginx)
 
         if not match1 or not match2 or not match3:
-            logger.info("Unable to parse (re miss), match1=%s, match2=%s, match3=%s", match1, match2, match3)
+            logger.debug("Unable to parse (re miss), match1=%s, match2=%s, match3=%s", match1, match2, match3)
             return None
 
         d_nginx['connections'] = int(match1.group(1))

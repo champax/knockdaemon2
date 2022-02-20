@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -21,9 +21,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
-import logging
 
 from pysolbase.SolBase import SolBase
+SolBase.voodoo_init()
+
+import logging
 
 from knockdaemon2.Core.KnockManager import KnockManager
 # CMD : /opt/knock/knockdaemon2/bin/python /opt/knock/knockdaemon2/bin/knockdaemon2
@@ -36,7 +38,6 @@ from knockdaemon2.Core.UDPServer import UDPServer
 
 logger = logging.getLogger(__name__)
 
-SolBase.voodoo_init()
 SolBase.logging_init(log_level="INFO", force_reset=True)
 
 

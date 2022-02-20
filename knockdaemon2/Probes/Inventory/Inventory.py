@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -95,6 +95,27 @@ class Inventory(KnockProbe):
         Exec
         """
 
+        # dmidecode
+        dmi_buffer = self.get_dmi_buffer()
+
+        # dmesg
+        if len(dmi_buffer) == 0:
+            dmesg_buffer = self.get_dmesg_buffer()
+        else:
+            dmesg_buffer = ""
+
+        # Go
+        self.process_from_data(dmi_buffer, dmesg_buffer)
+
+    def process_from_data(self, dmi_buffer, dmesg_buffer):
+        """
+        Process from data
+        :param dmi_buffer: str
+        :type dmi_buffer: str
+        :param dmesg_buffer: str
+        :type dmesg_buffer: str
+        """
+
         (sysname, nodename, kernel, version, machine) = os.uname()
         distribution = distro.id()
         dversion = distro.version()
@@ -102,50 +123,40 @@ class Inventory(KnockProbe):
         self.notify_value_n("k.inventory.kernel", None, kernel)
         self.notify_value_n("k.inventory.name", None, nodename)
 
-        # dmidecode
-        return_empty = True
-        for k, v in self._get_dmi().items():
-            return_empty = False
-            self.notify_value_n("k.inventory." + k, None, v)
+        # Parse dmi_buffer
+        d_dmi = self.get_dmi_dict(dmi_buffer)
+        if len(d_dmi) > 0:
+            # From dmi
+            for k, v in d_dmi.items():
+                self.notify_value_n("k.inventory." + k, None, v)
+        else:
+            # From dmesg
+            if dmesg_buffer.find('Booting paravirtualized kernel on Xen'):
+                self.notify_value_n("k.inventory.chassis", None, "Virtual Server XEN")
 
-        # fallback dmesg
-        if return_empty:
-            try:
-                # TODO : Why PATH before??
-                ec, so, se = ButcherTools.invoke("dmesg")
-                if ec != 0:
-                    # Non-zero exit code
-                    logger.warning("dmesg invoke failed, ec=%s, so=%s, se=%s", ec, so, se)
-                else:
-                    # Ok, parse
-                    if so.find('Booting paravirtualized kernel on Xen'):
-                        self.notify_value_n("k.inventory.chassis", None, "Virtual Server XEN")
-            except Exception as e:
-                logger.warning("Ex=%s", SolBase.extostr(e))
-
-    def _parse_dmi(self, content):
+    def dmi_parse(self, dmi_buffer):
         """
         Parse the whole dmidecode output.
         Returns a list of tuples of (type int, value dict).
-        :param content: str
-        :type content: str
-        :return info: list
+        :param dmi_buffer: str
+        :type dmi_buffer: str
+        :return list
         :rtype list
 
         """
-        info = []
+        ar_out = []
         idx = 0
-        ar = content.strip().splitlines()
+        ar = dmi_buffer.strip().splitlines()
         for line in ar:
             if line.startswith('Handle 0x'):
                 typ = int(line.split(',', 2)[1].strip()[len('DMI type'):])
                 if typ in DMI_TYPE:
-                    info.append((typ, self._dmi_parse_handle_section(ar[idx:])))
+                    ar_out.append((typ, self.dmi_parse_handle_section(ar[idx:])))
             idx += 1
-        return info
+        return ar_out
 
-    # noinspection PyMethodMayBeStatic
-    def _dmi_parse_handle_section(self, lines):
+    @classmethod
+    def dmi_parse_handle_section(cls, lines):
         """
         Parse a section of dmidecode output
 
@@ -160,15 +171,16 @@ class Inventory(KnockProbe):
         :rtype dict
         """
         data = {
-            '_title': lines[0].rstrip(),
+            '_title': lines[1].rstrip(),
         }
         k = 0
-        for line in lines[1:]:
+        for line in lines[2:]:
             line = line.rstrip()
-            if line.startswith('\t\t'):
+            # We replace tabs by spaces in the IDE
+            if line.startswith('\t\t') or line.startswith("                "):
                 if isinstance(data[k], list):
                     data[k].append(line.lstrip())
-            elif line.startswith('\t'):
+            elif line.startswith('\t') or line.startswith("        "):
                 k, v = [i.strip() for i in line.lstrip().split(':', 1)]
                 if v:
                     data[k] = v
@@ -179,17 +191,18 @@ class Inventory(KnockProbe):
 
         return data
 
-    # noinspection PyMethodMayBeStatic
-    def _filter_dmi(self, info):
+    @classmethod
+    def dmi_filter(cls, ar_dmi):
         """
-        LA DOC MARRAUD
-        Doc not found
-        :param info:
-        :return:
+        Filter dmi
+        :param ar_dmi: list
+        :type ar_dmi: list
+        :return: dict
+        :rtype: dict
         """
 
         def _get(ix):
-            return [v for j, v in info if j == ix]
+            return [v for j, v in ar_dmi if j == ix]
 
         # Output
         dmi = dict()
@@ -250,54 +263,61 @@ class Inventory(KnockProbe):
 
         return dmi
 
-    def _get_dmi(self):
+    @classmethod
+    def get_dmesg_buffer(cls):
         """
-        Get DMI information
+        Get dmsg buffer
+        :return: str
+        :rtype str
+        """
+        try:
+            ec, so, se = ButcherTools.invoke("dmesg")
+            if ec != 0:
+                # Non-zero exit code
+                logger.warning("dmesg invoke failed, ec=%s, so=%s, se=%s", ec, so, se)
+                return ""
+            else:
+                return ec
+        except Exception as e:
+            logger.warning("Ex=%s", SolBase.extostr(e))
+            return ""
+
+    @classmethod
+    def get_dmi_buffer(cls):
+        """
+        Get dmi buffer
+        :return: str (return "" if failed)
+        :rtype str
+        """
+
+        ec, so, se = ButcherTools.invoke("dmidecode")
+        if ec != 0:
+            # Non-zero exit code, retry sudo
+            logger.debug("dmidecode invoke failed, retry sudo, ec=%s, so=%s, se=%s", ec, so, se)
+            ec, so, se = ButcherTools.invoke("sudo dmidecode")
+            if ec != 0:
+                logger.warning("dmidecode invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)
+                return ""
+            else:
+                return so
+        else:
+            return so
+
+    def get_dmi_dict(self, dmi_buffer):
+        """
+        Get dmi dict from buffer
+        :param dmi_buffer: str
+        :type dmi_buffer: str
         :return dict
         :rtype dict
         """
 
-        # Requires SUDO :
-        # user ALL=(ALL:ALL) NOPASSWD: /usr/sbin/dmidecode
-
         try:
-            # TODO : Why PATH before??
-            ec, so, se = ButcherTools.invoke("dmidecode")
-            if ec != 0:
-                # Non-zero exit code, retry sudo
-                logger.info("dmidecode invoke failed, retry sudo, ec=%s, so=%s, se=%s", ec, so, se)
-                ec, so, se = ButcherTools.invoke("sudo dmidecode")
-                if ec != 0:
-                    logger.warning("dmidecode invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)
-                    return dict()
-
-            if so.find("sorry") >= 0:
+            if dmi_buffer.find("sorry") >= 0:
                 return dict()
-
-            # Ok, parse
-            logger.debug("so=%s", so)
-
-            o = self._parse_dmi(so)
-            logger.info("o=%s", o)
-
-            o2 = self._filter_dmi(o)
-            logger.info("o2=%s", o2)
+            ar = self.dmi_parse(dmi_buffer)
+            o2 = self.dmi_filter(ar)
             return o2
-
         except Exception as e:
             logger.warning("Ex=%s", SolBase.extostr(e))
             return dict()
-
-            # output = ''
-            # try:
-            #     output = subprocess.check_output(
-            #         'PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin '
-            #         'sudo dmidecode', shell=True)
-            # except subprocess.CalledProcessError as e:
-            #     logger.debug(SolBase.extostr(e))
-            #
-            # if len(output) < 100:
-            #     return dict()
-            # output = self._parse_dmi(output)
-            #
-            # return self._filter_dmi(output)

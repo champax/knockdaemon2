@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -22,10 +22,15 @@
 # ===============================================================================
 """
 
-# MONKEY ASAP
 from pysolbase.SolBase import SolBase
 
 SolBase.voodoo_init()
+
+import glob
+from unittest.mock import patch
+
+# noinspection PyProtectedMember
+from psutil._pslinux import pmem, pcputimes, pio
 
 import re
 import dateutil.parser
@@ -38,12 +43,9 @@ import unittest
 from os.path import dirname, abspath
 
 import distro
-import psutil
-from dns.resolver import Resolver
 from pysolbase.FileUtility import FileUtility
 from pysolmeters.Meters import Meters
 
-from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockHelpers import KnockHelpers
 from knockdaemon2.Core.KnockManager import KnockManager
 from knockdaemon2.Platform.PTools import PTools
@@ -53,7 +55,7 @@ from knockdaemon2.Probes.Inventory.Inventory import Inventory
 from knockdaemon2.Probes.Mongodb.MongoDbStat import MongoDbStat
 from knockdaemon2.Probes.Mysql.Mysql import Mysql
 from knockdaemon2.Probes.Nginx.NGinxStat import NginxStat
-from knockdaemon2.Probes.Os.CheckDns import CheckDns
+from knockdaemon2.Probes.Os.CheckDns import CheckDns, get_resolv
 from knockdaemon2.Probes.Os.CheckProcess import CheckProcess
 from knockdaemon2.Probes.Os.DiskSpace import DiskSpace
 from knockdaemon2.Probes.Os.HddStatus import HddStatus
@@ -75,6 +77,216 @@ from knockdaemon2.Tests.TestHelpers import exec_helper
 from knockdaemon2.Tests.TestHelpers import expect_value
 
 logger = logging.getLogger(__name__)
+
+
+def get_zpool_io_buffer_mocked(file_name):
+    """
+    Get zpool io
+    :param file_name: str
+    :type file_name: str
+    :return: str
+    :rtype str
+    """
+    current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
+    sample_dir = current_dir + "../z_docs/samples/"
+
+    with open(sample_dir + file_name) as f:
+        return f.read()
+
+
+class MockProcessForCheckProcess(object):
+    """
+    Mock process
+    """
+
+    def __init__(self):
+        """
+        Init
+        """
+        self.name = None
+        self.pid = 0
+        self._pid = 0
+        self.ppid = 0
+
+
+class MockProcessForService(object):
+    """
+    Mock process
+    """
+
+    def __init__(self):
+        """
+        Init
+        """
+        self.cmd_line = None
+        self.pid = 0
+        self._pid = 0
+        self.v_ppid = 0
+
+    def cmdline(self):
+        """
+        Get
+        :return: str
+        :rtype str
+        """
+        return self.cmd_line
+
+    def ppid(self):
+        """
+        Get
+        :return: int
+        :rtype int
+        """
+        return self.v_ppid
+
+
+def get_service_running_services_mocked():
+    """
+    Get
+    :return: set of str
+    :rtype set
+    """
+    return {
+        "systemd_01_running",
+        "sysv_03_running",
+    }
+
+
+def get_service_systemd_services_mocked():
+    """
+    Get
+    :return: set of str
+    :rtype set
+    """
+    return {
+        "systemd_01_running",
+        "systemd_02_not_running",
+    }
+
+
+def get_service_sysv_services_mocked():
+    """
+    Get
+    :return: set of str
+    :rtype set
+    """
+    return {
+        "sysv_03_running",
+        "sysv_04_not_running",
+    }
+
+
+def get_service_process_stat_mocked():
+    """
+    Get process stats
+    :return: dict
+    :rtype dict
+    """
+    return get_checkprocess_process_stat_mocked()
+
+
+def get_service_get_process_list_mocked():
+    """
+    Get process iter
+    :return: list
+    :rtype list
+    """
+    ar = list()
+
+    m = MockProcessForService()
+    m.cmd_line = "/usr/bin/uwsgi --ini /usr/share/uwsgi/conf/default.ini --ini /etc/uwsgi/apps-enabled/a01.ini --daemonize /var/log/uwsgi/app/a01.log"
+    m.cmd_line = m.cmd_line.split(" ")
+    m.pid = m._pid = 1
+    m.v_ppid = 1
+    ar.append(m)
+
+    m = MockProcessForService()
+    m.cmd_line = "/usr/bin/uwsgi --ini /usr/share/uwsgi/conf/default.ini --ini /etc/uwsgi/apps-enabled/a02.ini --daemonize /var/log/uwsgi/app/a02.log"
+    m.cmd_line = m.cmd_line.split(" ")
+    m.pid = m._pid = 1
+    m.v_ppid = 1
+    ar.append(m)
+
+    m = MockProcessForService()
+    m.cmd_line = "/usr/bin/toto"
+    m.cmd_line = m.cmd_line.split(" ")
+    m.pid = m._pid = 1
+    m.v_ppid = 1
+    ar.append(m)
+
+    return ar
+
+
+def get_service_process_child_mocked():
+    """
+    Get process child
+    :return: list of Process
+    :rtype list
+    """
+    ar = list()
+
+    m = MockProcessForService()
+    m.cmd_line = "/aaa"
+    m.pid = 1
+    m.v_ppid = 0
+    ar.append(m)
+
+    return ar
+
+
+def get_service_io_counters_mocked():
+    """
+    Get io counters
+    :return: psutil._pslinux.pio
+    :rtype psutil._pslinux.pio
+    """
+    return get_checkprocess_io_counters_mocked()
+
+
+def get_checkprocess_process_list_mocked():
+    """
+    Get process list
+    :return: list of Process
+    :rtype list
+    """
+    p1 = MockProcessForCheckProcess()
+    p1.name = "nginx"
+    p1.pid = p1._pid = 0
+    p1.ppid = 99999
+
+    p2 = MockProcessForCheckProcess()
+    p2.name = "nginx"
+    p2.pid = p2._pid = 99999
+    p2.ppid = 0
+
+    p3 = MockProcessForCheckProcess()
+    p3.name = "tamer"
+    p3.pid = p3._pid = 0
+    p3.ppid = 88888
+    return [p1, p2, p3]
+
+
+def get_checkprocess_io_counters_mocked():
+    """
+    Get io counters
+    :return: psutil._pslinux.pio
+    :rtype psutil._pslinux.pio
+    """
+    return pio(read_count=3, write_count=0, read_bytes=77, write_bytes=88, read_chars=1377, write_chars=0)
+
+
+def get_checkprocess_process_stat_mocked():
+    """
+    Get process stats
+    :return: dict
+    :rtype dict
+    """
+    return {
+        # 3.0 = cpu_used
+        "cpu_times": pcputimes(1.0, 2.0, 3.0, 4.0, 5.0),
+        "memory_info": pmem(1736704, 67235840, 49152, 847872, 0, 1757184, 0),
+        "num_fds": 10,
+    }
 
 
 class TestProbesFromBuffer(unittest.TestCase):
@@ -184,24 +396,57 @@ class TestProbesFromBuffer(unittest.TestCase):
             expect_value(self, self.k, "k.nginx.requests", 1, "gte", dd)
             expect_value(self, self.k, "k.nginx.accepted", 1, "gte", dd)
 
-    @unittest.skipIf(SolBase.get_machine_name() == 'admin01', 'Not compatible jessie')
-    @unittest.skipIf(Service().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Service())
-    @unittest.skip("TODO : Re-enable later")
-    def test_Service(self):
+    @patch('knockdaemon2.Probes.Os.Service.get_process_list', return_value=get_service_get_process_list_mocked())
+    @patch('knockdaemon2.Probes.Os.Service.get_io_counters', return_value=get_service_io_counters_mocked())
+    @patch('knockdaemon2.Probes.Os.Service.get_process_child', return_value=get_service_process_child_mocked())
+    @patch('knockdaemon2.Probes.Os.Service.get_running_services', return_value=get_service_running_services_mocked())
+    @patch('knockdaemon2.Probes.Os.Service.get_systemd_services', return_value=get_service_systemd_services_mocked())
+    @patch('knockdaemon2.Probes.Os.Service.get_sysv_services', return_value=get_service_sysv_services_mocked())
+    @patch('knockdaemon2.Probes.Os.Service.get_process_stat', return_value=get_service_process_stat_mocked())
+    @patch('knockdaemon2.Probes.Os.Service.systemd_is_active', return_value=True)
+    @patch('knockdaemon2.Probes.Os.Service.systemd_get_pid', return_value=999901)
+    def test_from_buffer_service_with_mock(self, m1, m2, m3, m4, m5, m6, m7, m8, m9):
         """
         Test
         """
 
-        # Exec it
-        exec_helper(self, Service)
+        self.assertIsNotNone(m1)
+        self.assertIsNotNone(m2)
+        self.assertIsNotNone(m3)
+        self.assertIsNotNone(m4)
+        self.assertIsNotNone(m5)
+        self.assertIsNotNone(m6)
+        self.assertIsNotNone(m7)
+        self.assertIsNotNone(m8)
+        self.assertIsNotNone(m9)
 
-        # Validate results - disco
+        # Init
+        s = Service()
+        s.set_manager(self.k)
+        s.patern_list = [".*"]
 
-        expect_value(self, self.k, "k.os.service.running", 1, 'eq', {"SERVICE": "rsyslog"})
-        expect_value(self, self.k, "k.os.service.running", 1, 'eq', {"SERVICE": "cron"})
-        expect_value(self, self.k, "k.os.service.running_count", 2, 'eq', None)
+        # Exec
+        s.execute()
 
-    def test_uwsgi_get_type(self):
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
+
+        # Validate results
+        expect_value(self, self.k, "k.os.service.running", 0, 'eq', {"SERVICE": "systemd_02_not_running"})
+        expect_value(self, self.k, "k.os.service.running", 0, 'eq', {"SERVICE": "sysv_04_not_running"})
+        expect_value(self, self.k, "k.os.service.running_count", 4, 'eq', None)
+
+        # Validate results : uwsgi
+        for s in ["systemd_01_running", "sysv_03_running", "uwsgi_default_a01", "uwsgi_default_a02"]:
+            expect_value(self, self.k, "k.os.service.running", 1, 'eq', {"SERVICE": s})
+            expect_value(self, self.k, "k.proc.io.read_bytes", 154, 'eq', {"PROCNAME": s})
+            expect_value(self, self.k, "k.proc.io.write_bytes", 176, 'eq', {"PROCNAME": s})
+            expect_value(self, self.k, "k.proc.io.num_fds", 20, 'eq', {"PROCNAME": s})
+            expect_value(self, self.k, "k.proc.memory_used", 3473408, 'eq', {"PROCNAME": s})
+            expect_value(self, self.k, "k.proc.cpu_used", 6.0, 'eq', {"PROCNAME": s})
+
+    def test_from_mem_uwsgi_get_type(self):
         """
         Test
         """
@@ -213,35 +458,6 @@ class TestProbesFromBuffer(unittest.TestCase):
         ar = "/usr/bin/uwsgi".split(" ")
         s_uwsgi = Service.uwsgi_get_type(ar)
         self.assertEquals(s_uwsgi, "uwsgi_na")
-
-    def test_uwsgi_get_processes(self):
-        """
-        Test
-        """
-
-        d = Service.uwsgi_get_processes()
-        for k, v in d.items():
-            logger.info("Got %s=%s", k, v)
-        self.assertIsNotNone(d)
-        if len(d) > 0:
-            for k, v in d.items():
-                self.assertIsNotNone(k)
-                self.assertIsNotNone(v)
-                self.assertIsInstance(k, str)
-                self.assertTrue(k.startswith("uwsgi_"))
-                self.assertIsInstance(v, int)
-
-    @unittest.skipIf(Service().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Service())
-    def test_Mdstat(self):
-        """
-        Test
-        """
-
-        # Exec it
-        exec_helper(self, Mdstat)
-
-        # Validate results - disco
-        pass
 
     def test_from_buffer_haproxy(self):
         """
@@ -302,73 +518,61 @@ class TestProbesFromBuffer(unittest.TestCase):
             expect_value(self, self.k, "k.haproxy.status_ok", 0.0, "gte", dd)
             expect_value(self, self.k, "k.haproxy.status_ko", 0.0, "gte", dd)
 
-            # expect_value(self, self.k, "k.haproxy.backend", 0.0, "exists", {"PROXY": "nodes"})
-            # expect_value(self, self.k, "k.haproxy.frontend", 0.0, "exists", {"PROXY": "localnodes"})
-
-    @unittest.skipIf(CheckDns().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % CheckDns())
-    def test_CheckDns(self):
+    def test_from_buffer_checkdns(self):
         """
         Test
         """
 
-        # Exec it
+        # Init
+        cd = CheckDns()
+        cd.set_manager(self.k)
 
-        exec_helper(self, CheckDns)
-        ns = Resolver().nameservers[0]
+        # Set
+        cd.host_to_check = "www.google.com,knock.center".split(",")
 
-        # Validate results - disco
-        dd = {"HOST": "knock.center", "SERVER": ns}
+        # Exec
+        cd.execute()
 
-        # Validate results - data
-        expect_value(self, self.k, "k.dns.resolv", "198.27.81.204", "eq", dd)
-        expect_value(self, self.k, "k.dns.time", 0, "gte", dd)
+        # Get nameserver
+        ar_ns = get_resolv()
+        logger.info("Using ar_ns=%s", ar_ns)
 
-    @unittest.skipIf(TimeDiff().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % TimeDiff())
-    def test_TimeDiff(self):
-        """
-        Test
-        """
-
-        # Exec it
-
-        exec_helper(self, TimeDiff)
-
-        expect_value(self, self.k, "k.os.timediff", 10, "lte", None, cast_to_float=True)
-
-    @unittest.skipIf(Inventory().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Inventory())
-    def test_Inventory(self):
-        """
-        Test
-        """
-
-        # Requires SUDO :
-        # user ALL=(ALL:ALL) NOPASSWD: /usr/sbin/dmidecode
-
-        # Prepare
-        (sysname, nodename, kernel, version, machine) = os.uname()
-        distribution = distro.id()
-        dversion = distro.version()
-
-        # Exec it
-        exec_helper(self, Inventory)
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
 
         # Check
-        expect_value(self, self.k, "k.inventory.os", "%s %s %s" % (sysname, distribution, dversion), "eq", cast_to_float=False)
-        expect_value(self, self.k, "k.inventory.kernel", kernel, "eq")
-        expect_value(self, self.k, "k.inventory.name", nodename, "eq")
+        for ns in ar_ns:
+            for hn in ["www.google.com", "knock.center"]:
+                dd = {"HOST": hn, "SERVER": ns}
+                if hn == "knock.center":
+                    expect_value(self, self.k, "k.dns.resolv", "198.27.81.204", "eq", dd)
+                    expect_value(self, self.k, "k.dns.time", 0, "gte", dd)
+                else:
+                    expect_value(self, self.k, "k.dns.resolv", "198.27.81.204", "exists", dd)
+                    expect_value(self, self.k, "k.dns.time", 0, "gte", dd)
 
-        # Run dmidecode
-        ec, so, si = ButcherTools.invoke("sudo dmidecode")
-        if ec == 0 and so.find("sorry") == -1:
-            logger.info("Assuming dmidecode OK")
-            expect_value(self, self.k, "k.inventory.vendor", None, "exists")
-            expect_value(self, self.k, "k.inventory.mem", None, "exists")
-            expect_value(self, self.k, "k.inventory.system", None, "exists")
-            expect_value(self, self.k, "k.inventory.chassis", None, "exists")
-            expect_value(self, self.k, "k.inventory.serial", None, "exists")
-            expect_value(self, self.k, "k.inventory.cpu", None, "exists")
-        else:
-            logger.info("Assuming dmidecode KO")
+    @patch('knockdaemon2.Probes.Os.TimeDiff.get_ntp_offset', return_value=88.7)
+    def test_from_buffer_timediff_with_mock(self, m1):
+        """
+        Test
+        """
+
+        self.assertIsNotNone(m1)
+
+        # Init
+        td = TimeDiff()
+        td.set_manager(self.k)
+
+        # Exec
+        td._execute_linux()
+
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
+
+        # Check
+        expect_value(self, self.k, "k.os.timediff", 88.7, "eq", None, cast_to_float=True)
 
     @unittest.skipIf(HddStatus().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % HddStatus())
     def test_from_buffer_hdd_status(self):
@@ -608,191 +812,303 @@ class TestProbesFromBuffer(unittest.TestCase):
                     elif knock_type == "str":
                         expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-    @unittest.skipIf(DiskSpace().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % DiskSpace())
-    def test_DiskSpace(self):
+    @patch('os.statvfs', return_value=os.statvfs_result((4096, 4096, 3920499, 2485124, 2281041, 1001712, 840635, 840635, 4096, 255)))
+    @patch('os.stat', return_value=os.stat_result((25008, 12343, 6, 1, 0, 6, 0, 1644476999, 1644476947, 1644476947)))
+    @patch('os.major', return_value=254)
+    @patch('os.minor', return_value=0)
+    def test_from_buffer_diskspace_with_mock(self, mock_statvfs, mock_stat, mock_os_major, mock_os_minor):
         """
         Test
         """
+        self.assertIsNotNone(mock_statvfs)
+        self.assertIsNotNone(mock_stat)
+        self.assertIsNotNone(mock_os_major)
+        self.assertIsNotNone(mock_os_minor)
 
-        # Exec it
-        exec_helper(self, DiskSpace)
-        SolBase.sleep(1000)
-        exec_helper(self, DiskSpace)
-        ar = ["/", "ALL"]
+        # Check the mocks
+        self.assertEqual(os.statvfs("/tamer").f_blocks, 3920499)
+        self.assertEqual(os.stat("/tamer").st_atime, 1644476999)
+        self.assertEqual(os.major(0), 254)
+        self.assertEqual(os.minor(0), 0)
 
+        # ------------------------------------
+        # We must mock
+        # - statvfs
+        # - os.stat
+        # - os.major and os.minor (os.stat mock badly set st_rdev)
+        # - stat.S_ISLNK => not in our case
+        # - os.path.realpath
+        # ------------------------------------
+
+        # Init
+        ds = DiskSpace()
+        ds.set_manager(self.k)
+
+        # Load files
+        fn = self.sample_dir + "diskspace/cmdline.txt"
+        with open(fn) as f:
+            buf_cmdline = f.read()
+
+        fn = self.sample_dir + "diskspace/diskstats.txt"
+        with open(fn) as f:
+            buf_diskstats = f.read()
+
+        fn = self.sample_dir + "diskspace/mtab.txt"
+        with open(fn) as f:
+            buf_mtab = f.read()
+
+        # Process (with mocks)
+        ds.process_from_buffer(buf_cmdline, buf_diskstats, buf_mtab)
+
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
+
+        # Check
+        ar = ["/var/log", "/var/lib/vbox", "/tmp", "/var", "/home", "/boot", "/usr", "/"]
         for cur_p in ar:
+            logger.info("*** Checking, cur_p=%s", cur_p)
             dd = {"FSNAME": cur_p}
-            expect_value(self, self.k, "k.vfs.fs.size.free", 1, "gte", dd)
+            expect_value(self, self.k, "k.vfs.fs.size.free", 9343143936, "eq", dd)
+            expect_value(self, self.k, "k.vfs.fs.size.pfree", 58.18, "eq", dd)
+            expect_value(self, self.k, "k.vfs.fs.inode.pfree", 83.91982925232003, "eq", dd)
+            expect_value(self, self.k, "k.vfs.fs.size.total", 16058363904, "eq", dd)
+            expect_value(self, self.k, "k.vfs.fs.size.used", 5879296000, "eq", dd)
 
-            expect_value(self, self.k, "k.vfs.fs.size.pfree", 0.0, "gte", dd)
-            expect_value(self, self.k, "k.vfs.fs.size.pfree", 101.0, "lte", dd)
+            expect_value(self, self.k, "k.vfs.dev.read.totalcount", 15843, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.read.totalsectorcount", 149362, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.read.totalbytes", 76473344, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.read.totalms", 10712, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalcount", 985, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalsectorcount", 7840, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalbytes", 4014080, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalms", 464, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.currentcount", 0, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.totalms", 3516, "eq", dd)
 
-            expect_value(self, self.k, "k.vfs.fs.inode.pfree", 0.0, "gte", dd)
-            expect_value(self, self.k, "k.vfs.fs.inode.pfree", 101.0, "lte", dd)
+        # Check ALL
+        for cur_p in ["ALL"]:
+            factor = len(ar)
+            logger.info("*** Checking, cur_p=%s, factor=%s", cur_p, factor)
+            dd = {"FSNAME": cur_p}
+            expect_value(self, self.k, "k.vfs.dev.read.totalcount", 15843 * factor, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.read.totalsectorcount", 149362 * factor, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.read.totalbytes", 76473344 * factor, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.read.totalms", 10712 * factor, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalcount", 985 * factor, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalsectorcount", 7840 * factor, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalbytes", 4014080 * factor, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalms", 464 * factor, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.currentcount", 0 * factor, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.totalms", 3516 * factor, "eq", dd)
 
-            expect_value(self, self.k, "k.vfs.fs.size.total", 1, "gte", dd)
-            expect_value(self, self.k, "k.vfs.fs.size.used", 1, "gte", dd)
-
-            expect_value(self, self.k, "k.vfs.dev.read.totalcount", 0, "gte", dd)
-            expect_value(self, self.k, "k.vfs.dev.read.totalsectorcount", 0, "gte", dd)
-            expect_value(self, self.k, "k.vfs.dev.read.totalbytes", 0, "gte", dd)
-            expect_value(self, self.k, "k.vfs.dev.read.totalms", 0, "gte", dd)
-            expect_value(self, self.k, "k.vfs.dev.write.totalcount", 0, "gte", dd)
-            expect_value(self, self.k, "k.vfs.dev.write.totalsectorcount", 0, "gte", dd)
-            expect_value(self, self.k, "k.vfs.dev.write.totalbytes", 0, "gte", dd)
-            expect_value(self, self.k, "k.vfs.dev.write.totalms", 0, "gte", dd)
-            expect_value(self, self.k, "k.vfs.dev.io.currentcount", 0, "gte", dd)
-            expect_value(self, self.k, "k.vfs.dev.io.totalms", 0, "gte", dd)
-
-    @unittest.skipIf(IpvsAdm().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % IpvsAdm())
-    def test_IpvsAdm(self):
+    @patch('os.statvfs', return_value=os.statvfs_result((4096, 4096, 3920499, 2485124, 2281041, 1001712, 840635, 840635, 4096, 255)))
+    @patch('os.stat', return_value=os.stat_result((25008, 12343, 6, 1, 0, 6, 0, 1644476999, 1644476947, 1644476947)))
+    @patch('os.major', return_value=254)
+    @patch('os.minor', return_value=0)
+    @patch('knockdaemon2.Probes.Os.DiskSpace.get_zpool_io_buffer', return_value=get_zpool_io_buffer_mocked("diskspace/zfs/ZPOOL01_io.txt"))
+    def test_from_buffer_diskspace_zfs_with_mock(self, mock_statvfs, mock_stat, mock_os_major, mock_os_minor, mock_get_zpool_io_buffer):
         """
         Test
         """
 
-        # Exec it
-        exec_helper(self, IpvsAdm)
+        self.assertIsNotNone(mock_statvfs)
+        self.assertIsNotNone(mock_stat)
+        self.assertIsNotNone(mock_os_major)
+        self.assertIsNotNone(mock_os_minor)
+        self.assertIsNotNone(mock_get_zpool_io_buffer)
+
+        # Check the mocks
+        self.assertEqual(os.statvfs("/tamer").f_blocks, 3920499)
+        self.assertEqual(os.stat("/tamer").st_atime, 1644476999)
+        self.assertEqual(os.major(0), 254)
+        self.assertEqual(os.minor(0), 0)
+
+        # ------------------------------------
+        # We must mock
+        # - statvfs
+        # - os.stat
+        # - os.major and os.minor (os.stat mock badly set st_rdev)
+        # - stat.S_ISLNK => not in our case
+        # - os.path.realpath
+        # ------------------------------------
+
+        # Init
+        ds = DiskSpace()
+        ds.set_manager(self.k)
+
+        # Load files
+        fn = self.sample_dir + "diskspace/zfs/cmdline.txt"
+        with open(fn) as f:
+            buf_cmdline = f.read()
+
+        fn = self.sample_dir + "diskspace/zfs/diskstats.txt"
+        with open(fn) as f:
+            buf_diskstats = f.read()
+
+        fn = self.sample_dir + "diskspace/zfs/mtab.txt"
+        with open(fn) as f:
+            buf_mtab = f.read()
+
+        # Process (with mocks)
+        ds.process_from_buffer(buf_cmdline, buf_diskstats, buf_mtab)
+
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
+
+        # Check
+        ar = ["/", "/opt", "/home", "/var", "/boot", "/tmp", "/var/log"]
+        for cur_p in ar:
+            logger.info("*** Checking, cur_p=%s", cur_p)
+            dd = {"FSNAME": cur_p}
+            expect_value(self, self.k, "k.vfs.fs.size.free", 9343143936, "eq", dd)
+            expect_value(self, self.k, "k.vfs.fs.size.pfree", 58.18, "eq", dd)
+            expect_value(self, self.k, "k.vfs.fs.inode.pfree", 83.91982925232003, "eq", dd)
+            expect_value(self, self.k, "k.vfs.fs.size.total", 16058363904, "eq", dd)
+            expect_value(self, self.k, "k.vfs.fs.size.used", 5879296000, "eq", dd)
+
+            expect_value(self, self.k, "k.vfs.dev.read.totalcount", 83794, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.read.totalsectorcount", 2267426, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.read.totalbytes", 1160922112, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.read.totalms", 48884, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalcount", 6942111, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalsectorcount", 57400744, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalbytes", 29389180928, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalms", 7249412, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.currentcount", 0, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.totalms", 2633332, "eq", dd)
+
+        # Check ZFS
+        ar_zfs = ["/var/zzz", "/ZPOOL01", "/var/lib/rsyslog"]
+        for cur_p in ar_zfs:
+            logger.info("*** Checking, cur_p=%s", cur_p)
+            dd = {"FSNAME": cur_p}
+            expect_value(self, self.k, "k.vfs.fs.size.free", 9343143936, "eq", dd)
+            expect_value(self, self.k, "k.vfs.fs.size.pfree", 58.18, "eq", dd)
+            expect_value(self, self.k, "k.vfs.fs.inode.pfree", 83.91982925232003, "eq", dd)
+            expect_value(self, self.k, "k.vfs.fs.size.total", 16058363904, "eq", dd)
+            expect_value(self, self.k, "k.vfs.fs.size.used", 5879296000, "eq", dd)
+
+            expect_value(self, self.k, "k.vfs.dev.read.totalcount", 110382657, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.read.totalbytes", 6891006030848, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalcount", 609136971, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalbytes", 20120417043456, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.currentcount", 0, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.totalms", 441702066, "eq", dd)
+
+        # Check ALL
+        for cur_p in ["ALL"]:
+            factor = len(ar)
+            factor_zfs = len(ar_zfs)
+            logger.info("*** Checking, cur_p=%s, factor=%s", cur_p, factor)
+            dd = {"FSNAME": cur_p}
+            expect_value(self, self.k, "k.vfs.dev.read.totalcount", 83794 * factor + 110382657 * factor_zfs, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.read.totalsectorcount", 2267426 * factor + 0 * factor_zfs, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.read.totalbytes", 1160922112 * factor + 6891006030848 * factor_zfs, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.read.totalms", 48884 * factor + 0 * factor_zfs, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalcount", 6942111 * factor + 609136971 * factor_zfs, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalsectorcount", 57400744 * factor + 0 * factor_zfs, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalbytes", 29389180928 * factor + 20120417043456 * factor_zfs, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.write.totalms", 7249412 * factor + 0 * factor_zfs, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.currentcount", 0 * factor + 0 * factor_zfs, "eq", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.totalms", 2633332 * factor + 441702066 * factor_zfs, "eq", dd)
 
     @unittest.skipIf(Memory().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Memory())
-    def test_Memory(self):
+    def test_from_buffer_memory(self):
         """
         Test
         """
 
-        # Exec it
-        for _ in range(2):
-            exec_helper(self, Memory)
+        # Init
+        us = Memory()
+        us.set_manager(self.k)
 
-            expect_value(self, self.k, "k.os.memory.size.available", 0, "gte")
-            expect_value(self, self.k, "k.os.swap.size.free", 0, "gte")
+        # Load
+        s = self.sample_dir + "memory/meminfo.txt"
+        self.assertTrue(FileUtility.is_file_exist(s))
+        buf = FileUtility.file_to_textbuffer(s, "utf8")
 
-            expect_value(self, self.k, "k.os.swap.size.pfree", 0.0, "gte")
-            expect_value(self, self.k, "k.os.swap.size.pfree", 101.0, "lte")
+        # Get
+        memory_total, memory_used, swap_total, swap_used, memory_free, swap_free, memory_buffers, memory_cached, memory_available = us.get_mem_info_from_buffer(buf)
 
-            expect_value(self, self.k, "k.os.memory.size.total", 0, "gte")
-            expect_value(self, self.k, "k.os.swap.size.total", 0, "gte")
-            expect_value(self, self.k, "k.os.memory.size.buffers", 0, "gte")
-            expect_value(self, self.k, "k.os.memory.size.cached", 0, "gte")
-            expect_value(self, self.k, "k.os.memory.size.used", 0, "gte")
-            expect_value(self, self.k, "k.os.swap.size.used", 0, "gte")
+        # Notify
+        us.notify_mem_info(
+            memory_total=memory_total,
+            memory_used=memory_used,
+            memory_available=memory_available,
+            memory_cached=memory_cached,
+            memory_buffers=memory_buffers,
+            memory_free=memory_free,
+            swap_total=swap_total,
+            swap_used=swap_used,
+            swap_free=swap_free,
+        )
 
-    @unittest.skipIf(Memory().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Memory())
-    def test_Memory_mock(self):
-        """
-        Test
-        """
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
 
-        # Exec it
-        mem_file = os.path.join(dirname(abspath(__file__)), 'conf/mock_mem.txt')
-        self.conf_probe_override['mem_info'] = mem_file
+        # Check
+        expect_value(self, self.k, "k.os.swap.size.free", 0, "eq")
+        expect_value(self, self.k, "k.os.swap.size.total", 0, "eq")
+        expect_value(self, self.k, "k.os.swap.size.used", 0, "eq")
+        expect_value(self, self.k, "k.os.swap.size.pfree", 100.0, "eq")
+
+        expect_value(self, self.k, "k.os.memory.size.total", 33538961408, "eq")
+        expect_value(self, self.k, "k.os.memory.size.available", 6242091008, "eq")
+        expect_value(self, self.k, "k.os.memory.size.buffers", 900038656, "eq")
+        expect_value(self, self.k, "k.os.memory.size.cached", 4487995392, "eq")
+        expect_value(self, self.k, "k.os.memory.size.used", 26628276224, "eq")
+        expect_value(self, self.k, "k.os.memory.size.free", 1522651136, "eq")
+
+        # With override
+        self.conf_probe_override["mem_info_file"] = s
+
+        # Exec
         exec_helper(self, Memory)
 
-        expect_value(self, self.k, "k.os.memory.size.available", 0, "gte")
-        expect_value(self, self.k, "k.os.swap.size.free", 0, "gte")
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
 
-        expect_value(self, self.k, "k.os.swap.size.pfree", 0.0, "gte")
-        expect_value(self, self.k, "k.os.swap.size.pfree", 101.0, "lte")
+        # Check
+        expect_value(self, self.k, "k.os.swap.size.free", 0, "eq")
+        expect_value(self, self.k, "k.os.swap.size.total", 0, "eq")
+        expect_value(self, self.k, "k.os.swap.size.used", 0, "eq")
+        expect_value(self, self.k, "k.os.swap.size.pfree", 100.0, "eq")
 
-        expect_value(self, self.k, "k.os.memory.size.total", 0, "gte")
-        expect_value(self, self.k, "k.os.swap.size.total", 0, "gte")
-        expect_value(self, self.k, "k.os.memory.size.buffers", 0, "gte")
-        expect_value(self, self.k, "k.os.memory.size.cached", 0, "gte")
-        expect_value(self, self.k, "k.os.memory.size.used", 0, "gte")
-        expect_value(self, self.k, "k.os.swap.size.used", 0, "gte")
+        expect_value(self, self.k, "k.os.memory.size.total", 33538961408, "eq")
+        expect_value(self, self.k, "k.os.memory.size.available", 6242091008, "eq")
+        expect_value(self, self.k, "k.os.memory.size.buffers", 900038656, "eq")
+        expect_value(self, self.k, "k.os.memory.size.cached", 4487995392, "eq")
+        expect_value(self, self.k, "k.os.memory.size.used", 26628276224, "eq")
+        expect_value(self, self.k, "k.os.memory.size.free", 1522651136, "eq")
 
-    @unittest.skipIf(Netstat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Netstat())
-    def test_Netstat(self):
+    @patch('knockdaemon2.Probes.Os.ProcNum.get_proc_list', return_value=["1", "2", "3", "zzz"])
+    @patch('knockdaemon2.Probes.Os.ProcNum.is_dir', return_value=True)
+    @patch('knockdaemon2.Probes.Os.ProcNum.read_file_line', return_value="z")
+    def test_from_buffer_numberofprocesses_with_mock(self, m1, m2, m3):
         """
         Test
         """
+        self.assertIsNotNone(m1)
+        self.assertIsNotNone(m2)
+        self.assertIsNotNone(m3)
 
-        # Exec it
-        exec_helper(self, Netstat)
+        # Init
+        np = NumberOfProcesses()
+        np.set_manager(self.k)
 
-        expect_value(self, self.k, "k.net.netstat.SYN_SENT", 0, "gte")
-        expect_value(self, self.k, "k.net.netstat.LISTEN", 0, "gte")
-        expect_value(self, self.k, "k.net.netstat.TIME_WAIT", 0, "gte")
-        expect_value(self, self.k, "k.net.netstat.SYN_RECV", 0, "gte")
-        expect_value(self, self.k, "k.net.netstat.LAST_ACK", 0, "gte")
-        expect_value(self, self.k, "k.net.netstat.CLOSE_WAIT", 0, "gte")
-        expect_value(self, self.k, "k.net.netstat.CLOSED", 0, "gte")
-        expect_value(self, self.k, "k.net.netstat.FIN_WAIT2", 0, "gte")
-        expect_value(self, self.k, "k.net.netstat.FIN_WAIT1", 0, "gte")
-        expect_value(self, self.k, "k.net.netstat.ESTABLISHED", 0, "gte")
-        expect_value(self, self.k, "k.net.netstat.CLOSING", 0, "gte")
+        # Go
+        np.execute()
 
-    @unittest.skipIf(Network().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Network())
-    def test_Network(self):
-        """
-        Test
-        """
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
 
-        # Exec it
-        exec_helper(self, Network)
-
-        ar = ("lo", "LoopBack")
-        for cur_n, cur_type in [ar]:
-            # --------------------
-            # If dynamic, extract first stuff
-            # --------------------
-            if cur_n == "dynamic":
-                # Windows, fetch first and extract
-                for tu in self.k.superv_notify_value_list:
-                    k = tu[0]
-                    v = tu[2]
-                    if k.startswith("k.net.if.type"):
-                        cur_n = k.replace("k.net.if.type[", "").replace("]", "")
-                        cur_type = v
-                        logger.info("Got cur_n=%s, cur_type=%s", cur_n, cur_type)
-                        break
-
-            # --------------------
-            # GO
-            # --------------------
-            dd = {"IFNAME": cur_n}
-            expect_value(self, self.k, "k.net.if.status.status", "ok", "eq", dd)
-            expect_value(self, self.k, "k.eth.bytes.recv", 0, "gte", dd)
-            expect_value(self, self.k, "k.eth.bytes.sent", 0, "gte", dd)
-            expect_value(self, self.k, "k.net.if.status.duplex", "full", "eq", dd)
-            expect_value(self, self.k, "k.net.if.status.speed", 100.0, "gte", dd)
-            expect_value(self, self.k, "k.net.if.type", cur_type, "eq", dd)
-            expect_value(self, self.k, "k.net.if.status.mtu", 0, "gte", dd)
-            # expect_value(self, self.k, "k.net.if.status.address", None, "exists", dd)
-            expect_value(self, self.k, "k.net.if.status.tx_queue_len", 0, "gte", dd)
-            expect_value(self, self.k, "k.eth.errors.recv", 0, "gte", dd)
-            expect_value(self, self.k, "k.eth.errors.sent", 0, "gte", dd)
-            expect_value(self, self.k, "k.eth.missederrors.recv", 0, "gte", dd)
-            expect_value(self, self.k, "k.eth.packet.recv", 0, "gte", dd)
-            expect_value(self, self.k, "k.eth.packet.sent", 0, "gte", dd)
-            expect_value(self, self.k, "k.eth.packetdrop.recv", 0, "gte", dd)
-            expect_value(self, self.k, "k.eth.packetdrop.sent", 0, "gte", dd)
-            expect_value(self, self.k, "k.net.if.collisions", 0, "gte", dd)
-
-    @unittest.skipIf(NumberOfProcesses().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % NumberOfProcesses())
-    def test_NumberOfProcesses(self):
-        """
-        Test
-        """
-
-        # Exec it
-        exec_helper(self, NumberOfProcesses)
-
-        expect_value(self, self.k, "k.os.processes.total", 1, "gte")
-
-    @unittest.skipIf(Uptime().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Uptime())
-    def test_Uptime(self):
-        """
-        Test
-        """
-
-        # ---------------------------
-        # Exec it
-        # ---------------------------
-        for _ in range(2):
-            exec_helper(self, Uptime)
-
-            expect_value(self, self.k, "k.os.knock", 1, "gte")
-            expect_value(self, self.k, "k.os.uptime", 1, "gte")
+        # Check
+        expect_value(self, self.k, "k.os.processes.total", 3, "eq")
 
     def test_from_buffer_apache(self):
         """
@@ -920,6 +1236,338 @@ class TestProbesFromBuffer(unittest.TestCase):
                 elif knock_type == "str":
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
 
+    def test_from_buffer_netstat(self):
+        """
+        Test
+        """
+
+        # Init
+        ns = Netstat()
+        ns.set_manager(self.k)
+
+        # Load files
+        fn = self.sample_dir + "netstat/proc_net_tcp.txt"
+        self.assertTrue(FileUtility.is_file_exist(fn))
+        proc_net_tcp = FileUtility.file_to_textbuffer(fn, "utf8")
+        ar_proc_net_tcp = proc_net_tcp.split("\n")
+
+        fn = self.sample_dir + "netstat/nf_conntrack_count.txt"
+        self.assertTrue(FileUtility.is_file_exist(fn))
+        nf_conntrack_count = float(FileUtility.file_to_textbuffer(fn, "utf8"))
+        self.assertEqual(nf_conntrack_count, 100.0)
+
+        fn = self.sample_dir + "netstat/nf_conntrack_max.txt"
+        self.assertTrue(FileUtility.is_file_exist(fn))
+        nf_conntrack_max = float(FileUtility.file_to_textbuffer(fn, "utf8"))
+        self.assertEqual(nf_conntrack_max, 200.0)
+
+        ns.process_net_tcp_from_list(ar_proc_net_tcp)
+        ns.process_conntrack(nf_conntrack_count, nf_conntrack_max)
+
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
+
+        expect_value(self, self.k, "k.net.netstat.SYN_SENT", 0, "eq")
+        expect_value(self, self.k, "k.net.netstat.LISTEN", 58, "eq")
+        expect_value(self, self.k, "k.net.netstat.TIME_WAIT", 58, "eq")
+        expect_value(self, self.k, "k.net.netstat.SYN_RECV", 0, "eq")
+        expect_value(self, self.k, "k.net.netstat.LAST_ACK", 0, "eq")
+        expect_value(self, self.k, "k.net.netstat.CLOSE_WAIT", 16, "eq")
+        expect_value(self, self.k, "k.net.netstat.CLOSED", 0, "eq")
+        expect_value(self, self.k, "k.net.netstat.FIN_WAIT2", 0, "eq")
+        expect_value(self, self.k, "k.net.netstat.FIN_WAIT1", 0, "eq")
+        expect_value(self, self.k, "k.net.netstat.ESTABLISHED", 84, "eq")
+        expect_value(self, self.k, "k.net.netstat.CLOSING", 0, "eq")
+
+        expect_value(self, self.k, "k.net.conntrack.count", 100.0, "eq")
+        expect_value(self, self.k, "k.net.conntrack.max", 200.0, "eq")
+        expect_value(self, self.k, "k.net.conntrack.used", 50.0, "eq")
+
+    def test_from_buffer_network(self):
+        """
+        Test
+        """
+        # Init
+        ns = Network()
+        ns.set_manager(self.k)
+
+        d_expect = {
+            "wlo1": {
+                "k.net.if.status.status": "ok",
+                "k.net.if.status.speed": 1000,
+                "k.eth.bytes.recv": 363777128,
+                "k.eth.bytes.sent": 72638640,
+                "k.net.if.status.duplex": "full",
+                "k.net.if.type": "Ethernet",
+                "k.net.if.status.mtu": 1500,
+                "k.net.if.status.tx_queue_len": 1000,
+                "k.eth.errors.recv": 0,
+                "k.eth.errors.sent": 0,
+                "k.eth.missederrors.recv": 0,
+                "k.eth.packet.recv": 520883,
+                "k.eth.packet.sent": 293213,
+                "k.eth.packetdrop.recv": 0,
+                "k.eth.packetdrop.sent": 0,
+                "k.net.if.collisions": 0,
+            },
+            "eno2": {
+                "k.net.if.status.status": "ok",
+                "k.net.if.status.speed": -1,
+                "k.eth.bytes.recv": 0,
+                "k.eth.bytes.sent": 0,
+                "k.net.if.status.duplex": "unknown",
+                "k.net.if.type": "Ethernet",
+                "k.net.if.status.mtu": 1500,
+                "k.net.if.status.tx_queue_len": 1000,
+                "k.eth.errors.recv": 0,
+                "k.eth.errors.sent": 0,
+                "k.eth.missederrors.recv": 0,
+                "k.eth.packet.recv": 0,
+                "k.eth.packet.sent": 0,
+                "k.eth.packetdrop.recv": 0,
+                "k.eth.packetdrop.sent": 0,
+                "k.net.if.collisions": 0,
+            },
+            "docker0": {
+                "k.net.if.status.status": "ok",
+                "k.net.if.status.speed": 1000,
+                "k.eth.bytes.recv": 0,
+                "k.eth.bytes.sent": 0,
+                "k.net.if.status.duplex": "full",
+                "k.net.if.type": "Ethernet",
+                "k.net.if.status.mtu": 1500,
+                "k.net.if.status.tx_queue_len": 0,
+                "k.eth.errors.recv": 0,
+                "k.eth.errors.sent": 0,
+                "k.eth.missederrors.recv": 0,
+                "k.eth.packet.recv": 0,
+                "k.eth.packet.sent": 0,
+                "k.eth.packetdrop.recv": 0,
+                "k.eth.packetdrop.sent": 0,
+                "k.net.if.collisions": 0,
+            },
+            "lo": {
+                "k.net.if.status.status": "ok",
+                "k.net.if.status.speed": 1000,
+                "k.eth.bytes.recv": 265052542,
+                "k.eth.bytes.sent": 265054283,
+                "k.net.if.status.duplex": "full",
+                "k.net.if.type": "LoopBack",
+                "k.net.if.status.mtu": 65536,
+                "k.net.if.status.tx_queue_len": 1000,
+                "k.eth.errors.recv": 0,
+                "k.eth.errors.sent": 0,
+                "k.eth.missederrors.recv": 0,
+                "k.eth.packet.recv": 1671728,
+                "k.eth.packet.sent": 1671736,
+                "k.eth.packetdrop.recv": 0,
+                "k.eth.packetdrop.sent": 0,
+                "k.net.if.collisions": 0,
+            }
+        }
+
+        # Browse samples
+        interfaces = glob.glob(self.sample_dir + "network/sys/class/net/*")
+        for interface_dir in interfaces:
+            # GET : name
+            interface_name = os.path.basename(interface_dir)
+            logger.info("*** Testing, name=%s, dir=%s", interface_name, interface_dir)
+
+            # RESET
+            self.k._reset_superv_notify()
+            Meters.reset()
+
+            # READ : /type
+            n_local_type = int(ns.try_read(interface_dir + "/type", default=-1))
+
+            # READ : operstate
+            operstate = ns.try_read(interface_dir + "/operstate", default="")
+
+            # READ : address
+            address = ns.try_read(interface_dir + "/address", default=None)
+
+            # READ : carrier
+            carrier = ns.try_read(interface_dir + "/carrier", default=None)
+
+            # READ : rx_bytes / tx_bytes
+            recv = int(ns.try_read(interface_dir + "/statistics/rx_bytes", default=0))
+            sent = int(ns.try_read(interface_dir + "/statistics/tx_bytes", default=0))
+
+            # READ : duplex
+            duplex = ns.try_read(interface_dir + "/duplex", default="full")
+
+            # READ : speed
+            speed = int(ns.try_read(interface_dir + "/speed", default="1000"))
+
+            # READ : mtu
+            mtu = int(ns.try_read(interface_dir + "/mtu", default="0"))
+
+            # READ : tx_queue_len
+            tx_queue_len = int(ns.try_read(interface_dir + "/tx_queue_len", default="0"))
+
+            # READ : statistics
+            rx_errors = int(ns.try_read(interface_dir + "/statistics/rx_errors", default="0"))
+            tx_errors = int(ns.try_read(interface_dir + "/statistics/tx_errors", default="0"))
+            rx_packets = int(ns.try_read(interface_dir + "/statistics/rx_packets", default="0"))
+            tx_packets = int(ns.try_read(interface_dir + "/statistics/tx_packets", default="0"))
+            rx_dropped = int(ns.try_read(interface_dir + "/statistics/rx_dropped", default="0"))
+            tx_dropped = int(ns.try_read(interface_dir + "/statistics/tx_dropped", default="0"))
+            collisions = int(ns.try_read(interface_dir + "/statistics/collisions", default="0"))
+            rx_missed_errors = int(ns.try_read(interface_dir + "/statistics/rx_missed_errors", default="0"))
+
+            # READ VIA SOCKET if not UP
+            if operstate != "up":
+                operstate = ns.get_interface_status_from_socket(interface_name)
+
+            # PROCESS IT
+            ns.process_interface_from_datas(
+                interface_name=interface_name,
+                carrier=carrier,
+                n_local_type=n_local_type,
+                address=address,
+                operstate=operstate,
+                speed=speed,
+                recv=recv,
+                sent=sent,
+                duplex=duplex,
+                mtu=mtu,
+                tx_queue_len=tx_queue_len,
+                rx_errors=rx_errors, tx_errors=tx_errors,
+                rx_missed_errors=rx_missed_errors,
+                rx_packets=rx_packets, tx_packets=tx_packets,
+                rx_dropped=rx_dropped, tx_dropped=tx_dropped,
+                collisions=collisions,
+            )
+
+            # Log
+            for tu in self.k.superv_notify_value_list:
+                logger.info("Having tu=%s", tu)
+
+            # Check
+            dd = {"IFNAME": interface_name}
+            for k, v in d_expect[interface_name].items():
+                expect_value(self, self.k, k, v, "eq", dd)
+
+    def test_from_buffer_inventory(self):
+        """
+        Test
+        """
+
+        # Get
+        (sysname, nodename, kernel, version, machine) = os.uname()
+        distribution = distro.id()
+        dversion = distro.version()
+
+        # Load
+        fn = self.sample_dir + "inventory/dmidecode.txt"
+        self.assertTrue(FileUtility.is_file_exist(fn))
+        buf_dmidecode = FileUtility.file_to_textbuffer(fn, "utf8")
+
+        fn = self.sample_dir + "inventory/dmesg.txt"
+        self.assertTrue(FileUtility.is_file_exist(fn))
+        buf_dmesg = FileUtility.file_to_textbuffer(fn, "utf8")
+
+        # Init
+        iv = Inventory()
+        iv.set_manager(self.k)
+
+        # Process
+        iv.process_from_data(buf_dmidecode, buf_dmesg)
+
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
+
+        # Check
+        expect_value(self, self.k, "k.inventory.os", "%s %s %s" % (sysname, distribution, dversion), "eq", cast_to_float=False)
+        expect_value(self, self.k, "k.inventory.kernel", kernel, "eq")
+        expect_value(self, self.k, "k.inventory.name", nodename, "eq")
+        expect_value(self, self.k, "k.inventory.vendor", "Dell Inc.", "eq")
+        expect_value(self, self.k, "k.inventory.mem", "2 memory stick(s), 32768 MB in total, Max 32 GB", "eq")
+        expect_value(self, self.k, "k.inventory.system", "Dell Inc. Latitude 5591 (SN: TAMER, UUID: TAMER)", "eq")
+        expect_value(self, self.k, "k.inventory.chassis", "Notebook", "eq")
+        expect_value(self, self.k, "k.inventory.serial", "TAMER", "eq")
+        expect_value(self, self.k, "k.inventory.cpu", "Intel(R) Corporation Core i7 4300 MHz (Core: 6, Thead: 12)", "eq")
+
+    def test_from_buffer_uptime(self):
+        """
+        Test
+        """
+
+        # Init
+        ut = Uptime()
+        ut.set_manager(self.k)
+
+        # Load
+        fn = self.sample_dir + "uptime/uptime.txt"
+        self.assertTrue(FileUtility.is_file_exist(fn))
+        buf = FileUtility.file_to_textbuffer(fn, "utf8")
+
+        # Process
+        ut.process_uptime_buffer(buf)
+
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
+
+        # Check
+        expect_value(self, self.k, "k.os.knock", 1, "eq")
+        expect_value(self, self.k, "k.os.uptime", 24625, "eq")
+
+    def test_from_buffer_mdstat(self):
+        """
+        Test
+        """
+
+        # Init
+        ms = Mdstat()
+        ms.set_manager(self.k)
+
+        # Process from path
+        ms.process_from_path(self.sample_dir + "mdstat/mdstat.txt")
+
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
+
+        # Check
+        expect_value(self, self.k, "k.os.disk.mdstat", 0, "eq", {"md": "md1"})
+        expect_value(self, self.k, "k.os.disk.mdstat", 0, "eq", {"md": "md5"})
+
+    def test_from_buffer_ipvsadm(self):
+        """
+        Test
+        """
+
+        # Init
+        ia = IpvsAdm()
+        ia.set_manager(self.k)
+
+        # Load
+        fn = self.sample_dir + "ipvsadm/ip_vs.txt"
+        self.assertTrue(FileUtility.is_file_exist(fn))
+        buf = FileUtility.file_to_textbuffer(fn, "utf8")
+
+        # Process it
+        ia.process_ipvsadm_buffer(buf)
+
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
+
+        # Check
+        dd = {"VIP": "10.4.103.40:11406"}
+        expect_value(self, self.k, "knock.ipvsadm.activerip", "10.66.103.21:11406 - 10.66.103.20:11406", "eq", dd)
+        expect_value(self, self.k, "knock.ipvsadm.weightRip", 2, "eq", dd)
+        expect_value(self, self.k, "knock.ipvsadm.activeConRip", 0, "eq", dd)
+        expect_value(self, self.k, "knock.ipvsadm.InActConnRip", 0, "eq", dd)
+        dd = {"VIP": "ALL"}
+        expect_value(self, self.k, "knock.ipvsadm.activerip", "10.66.103.21:11406 - 10.66.103.20:11406", "eq", dd)
+        expect_value(self, self.k, "knock.ipvsadm.weightRip", 2, "eq", dd)
+        expect_value(self, self.k, "knock.ipvsadm.activeConRip", 0, "eq", dd)
+        expect_value(self, self.k, "knock.ipvsadm.InActConnRip", 0, "eq", dd)
+
     def test_from_buffer_uwsgi(self):
         """
         Test
@@ -971,65 +1619,44 @@ class TestProbesFromBuffer(unittest.TestCase):
                     elif knock_type == "str":
                         expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-    @unittest.skipIf(CheckProcess().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % CheckProcess())
-    def test_CheckProcess(self):
+    @patch('knockdaemon2.Probes.Os.CheckProcess.read_pid', return_value=99999)
+    @patch('knockdaemon2.Probes.Os.CheckProcess.call_psutil_process', return_value=None)
+    @patch('knockdaemon2.Probes.Os.CheckProcess.get_process_stat', return_value=get_checkprocess_process_stat_mocked())
+    @patch('knockdaemon2.Probes.Os.CheckProcess.get_io_counters', return_value=get_checkprocess_io_counters_mocked())
+    @patch('knockdaemon2.Probes.Os.CheckProcess.get_process_list', return_value=get_checkprocess_process_list_mocked())
+    def test_from_buffer_checkprocess_with_mock(self, m1, m2, m3, m4, m5):
         """
         Test
         """
+        self.assertIsNotNone(m1)
+        self.assertIsNotNone(m2)
+        self.assertIsNotNone(m3)
+        self.assertIsNotNone(m4)
+        self.assertIsNotNone(m5)
 
-        # Exec it
-        exec_helper(self, CheckProcess)
+        # Init
+        cp = CheckProcess()
+        cp.set_manager(self.k)
+        cp.load_json_config(self.current_dir + "/conf/realall/k.CheckProcess.json")
 
-        # Ar
-        ar = ["nginx"]
+        # Go
+        cp.execute()
 
-        # Using direct
-        for cur_p in ar:
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
+
+        # Check
+        for cur_p in ["nginx", "nginx_array"]:
             dd = {"PROCNAME": cur_p}
             expect_value(self, self.k, "k.proc.pidfile", "ok", "eq", dd)
             expect_value(self, self.k, "k.proc.running", "ok", "eq", dd)
-            expect_value(self, self.k, "k.proc.io.num_fds", 0, "gte", dd)
-            expect_value(self, self.k, "k.proc.memory_used", 0, "gte", dd)
-            expect_value(self, self.k, "k.proc.cpu_used", 0, "gte", dd)
-            expect_value(self, self.k, "k.proc.nbprocess", 0, "gte", dd)
-
-            # Kernel too old may not support that (Couldn't find /proc/xxxx/io)
-            # If OUR process has them, check them, otherwise discard
-            self_pid = str(os.getpid())
-            if FileUtility.is_file_exist("/proc/" + self_pid + "/io"):
-                try:
-                    p = psutil.Process(int(self_pid))
-                    _ = p.io_counters()
-                    # Working, check
-                    expect_value(self, self.k, "k.proc.io.read_bytes", 0, "gte", dd)
-                    expect_value(self, self.k, "k.proc.io.write_bytes", 0, "gte", dd)
-                except Exception as e:
-                    logger.warning("io_counters failed, bypassing checks, ex=%s", SolBase.extostr(e))
-
-        # Using arrays
-        # Ar
-        ar = ["nginx_array"]
-        for cur_p in ar:
-            dd = {"PROCNAME": cur_p}
-            expect_value(self, self.k, "k.proc.pidfile", "ok", "eq", dd)
-            expect_value(self, self.k, "k.proc.running", "ok", "eq", dd)
-            expect_value(self, self.k, "k.proc.io.num_fds", 0, "gte", dd)
-            expect_value(self, self.k, "k.proc.memory_used", 0, "gte", dd)
-            expect_value(self, self.k, "k.proc.cpu_used", 0, "gte", dd)
-            expect_value(self, self.k, "k.proc.nbprocess", 0, "gte", dd)
-
-            # Kernel too old may not support that (Couldn't find /proc/xxxx/io)
-            # If OUR process has them, check them, otherwise discard
-            self_pid = str(os.getpid())
-            if FileUtility.is_file_exist("/proc/" + self_pid + "/io"):
-                try:
-                    p = psutil.Process(int(self_pid))
-                    _ = p.io_counters()
-                    # Working, check
-                    expect_value(self, self.k, "k.proc.io.read_bytes", 0, "gte", dd)
-                    expect_value(self, self.k, "k.proc.io.write_bytes", 0, "gte", dd)
-                except Exception as e:
-                    logger.warning("io_counters failed, bypassing checks, ex=%s", SolBase.extostr(e))
+            expect_value(self, self.k, "k.proc.io.read_bytes", 77, "eq", dd)
+            expect_value(self, self.k, "k.proc.io.write_bytes", 88, "eq", dd)
+            expect_value(self, self.k, "k.proc.io.num_fds", 10 * 2, "eq", dd)
+            expect_value(self, self.k, "k.proc.memory_used", 1736704 * 2, "eq", dd)
+            expect_value(self, self.k, "k.proc.cpu_used", 3.0 * 2, "eq", dd)
+            expect_value(self, self.k, "k.proc.nbprocess", 2, "eq", dd)
 
     def test_from_buffer_mysql(self):
         """
@@ -1234,3 +1861,5 @@ class TestProbesFromBuffer(unittest.TestCase):
 
             for k, v in d_expected.items():
                 expect_value(self, self.k, k, v, "eq", dd)
+
+    # TODO : CheckDns

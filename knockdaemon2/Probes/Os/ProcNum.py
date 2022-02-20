@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -26,12 +26,41 @@ from os import listdir
 from os.path import isdir, join
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
-from knockdaemon2.Platform.PTools import PTools
-
-if PTools.get_distribution_type() == "windows":
-    pass
 
 logger = logging.getLogger(__name__)
+
+
+def read_file_line(file_name):
+    """
+    Read file line
+    :param file_name: str
+    :type file_name: str
+    :return: str
+    :rtype str
+    """
+    with open(file_name) as f:
+        return f.readline()
+
+
+def is_dir(path):
+    """
+    Is dir
+    :param path: str
+    :rtype path: str
+    :return: bool
+    :rtype bool
+    """
+    return isdir(path)
+
+
+def get_proc_list():
+    """
+    Get proc list
+    :return: list of str
+    :rtype list
+    """
+
+    return listdir("/proc")
 
 
 class NumberOfProcesses(KnockProbe):
@@ -56,16 +85,16 @@ class NumberOfProcesses(KnockProbe):
         # This is in fact the number of running processes
         self.notify_value_n("k.os.processes.total", None, self._get_process_count())
 
-    # noinspection PyMethodMayBeStatic
-    def _get_process_count(self):
+    @classmethod
+    def _get_process_count(cls):
         """
         Get
         :return:
         """
         result = 0
-        for name in listdir("/proc"):
+        for name in get_proc_list():
             path = join("/proc", name)
-            if isdir(path) and name.isdigit():
-                if len(open(path + "/cmdline").readline()) > 0:
+            if is_dir(path) and name.isdigit():
+                if len(read_file_line(path + "/cmdline")) > 0:
                     result += 1
         return result

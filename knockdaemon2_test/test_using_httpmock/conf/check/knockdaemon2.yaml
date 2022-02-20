@@ -1,5 +1,0 @@
-knockd:
-  exectimeout_ms: 1000
-  lifecycle_interval_ms: 6
-
-transports:

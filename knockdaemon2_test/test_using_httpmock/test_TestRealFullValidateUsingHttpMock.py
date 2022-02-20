@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -22,6 +22,10 @@
 # ===============================================================================
 """
 
+from pysolbase.SolBase import SolBase
+
+SolBase.voodoo_init()
+
 import logging
 import os
 import shutil
@@ -30,7 +34,7 @@ from os.path import dirname, abspath
 
 import redis
 from pysolbase.FileUtility import FileUtility
-from pysolbase.SolBase import SolBase
+
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.KnockManager import KnockManager
@@ -51,9 +55,6 @@ from knockdaemon2.Probes.Uwsgi.UwsgiStat import UwsgiStat
 from knockdaemon2.Probes.Varnish.VarnishStat import VarnishStat
 from knockdaemon2.Transport.InfluxAsyncTransport import InfluxAsyncTransport
 
-# noinspection PyUnresolvedReferences,PyPackageRequirements
-
-SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
 
 
@@ -78,9 +79,9 @@ class TestRealAll(unittest.TestCase):
 
         # Config files
         for f in [
+            "knockdaemon2.yaml",
             "k.CheckProcess.json",
             "k.CheckDns.json",
-            "knockdaemon2.yaml",
             SolBase.get_pathseparator().join(["conf.d", "10_auth.yaml"])
         ]:
             src = self.current_dir + "conf" + SolBase.get_pathseparator() + "realall" + SolBase.get_pathseparator() + f
@@ -119,12 +120,10 @@ class TestRealAll(unittest.TestCase):
         Setup (called after each test)
         """
         if self.k:
-            logger.warning("k set, stopping, not normal")
             self.k.stop()
             self.k = None
 
         if self.h:
-            logger.warning("h set, stopping, not normal")
             self.h.stop()
             self.h = None
 
@@ -229,7 +228,6 @@ class TestRealAll(unittest.TestCase):
 
             # Wait for everything pushed and processed
             logger.info("***** WAITING PASS ONE [%s]", loop_idx)
-            timeout_ms = timeout_ms
             ms_start = SolBase.mscurrent()
             while SolBase.msdiff(ms_start) < timeout_ms:
                 if self.k.get_first_transport_by_type(InfluxAsyncTransport)._queue_to_send.qsize() == 0 \
@@ -237,6 +235,9 @@ class TestRealAll(unittest.TestCase):
                     break
                 else:
                     SolBase.sleep(100)
+
+            # Ok
+            break
 
         self.assertGreaterEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count"), 1)
         self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_exception_count"), 0)
@@ -272,10 +273,6 @@ class TestRealAll(unittest.TestCase):
         self.assertFalse(self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_pending)
         self.assertGreaterEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed"), 1)
         self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_failed"), 0)
-        self.assertEqual(
-            Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_total"),
-            Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed"))
-
         self.assertGreaterEqual(
             Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed"),
             Meters.aig(self.ft_meters_prefix + "knock_stat_notify_simple_value") +
@@ -473,7 +470,8 @@ class TestRealAll(unittest.TestCase):
 
             if request['PATH_INFO'].endswith('/nginx_status'):
                 response("200 OK", [('Content-Type', 'text/html')])
-                return status_buffer
+                o = status_buffer.encode("utf8")
+                return [o]
 
         # start Web server
         http_server = pywsgi.WSGIServer(('127.0.0.1', 0), http_process)

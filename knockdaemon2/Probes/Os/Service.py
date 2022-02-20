@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -33,10 +33,6 @@ from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockHelpers import KnockHelpers
 from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Core.systemd import SystemdManager
-from knockdaemon2.Platform.PTools import PTools
-
-if PTools.get_distribution_type() == "windows":
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -44,17 +40,209 @@ logger = logging.getLogger(__name__)
 SYSTEM_CONFIG_PATHS = ('/lib/systemd/system', '/usr/lib/systemd/system')
 LOCAL_CONFIG_PATH = '/etc/systemd/system'
 INITSCRIPT_PATH = '/etc/init.d'
-VALID_UNIT_TYPES = ('service', 'socket', 'device', 'mount', 'automount',
-                    'swap', 'target', 'path', 'timer')
+VALID_UNIT_TYPES = ('service', 'socket', 'device', 'mount', 'automount', 'swap', 'target', 'path', 'timer')
 
 
-# noinspection PyMethodMayBeStatic
+def systemd_get_pid(unit_name):
+    """
+    Get pid
+    :param unit_name: str
+    :type unit_name: str
+    :return: int
+    :rtype int
+    """
+    # Manager
+    manager = SystemdManager()
+
+    return manager.get_pid(unit_name)
+
+
+def systemd_is_active(unit_name):
+    """
+    Check if it is systemd active
+    :param unit_name: str
+    :type unit_name: str
+    :return: bool
+    :rtype bool
+    """
+    # Manager
+    manager = SystemdManager()
+
+    # Check active
+    if not manager.is_active("%s.service" % unit_name):
+        logger.warning("unit %s is not active", unit_name)
+        return False
+    else:
+        return True
+
+
+def get_process_list():
+    """
+    Get process iter
+    :return: generator / list of object (must have cmdline / ppid / pid)
+    :rtype list,Generator
+    """
+    return psutil.process_iter()
+
+
+def get_io_counters(pid):
+    """
+    Get io counters
+    :param pid: int
+    :type pid: int
+    :return: psutil._pslinux.pio
+    :rtype psutil._pslinux.pio
+    """
+    return psutil.Process(pid).io_counters()
+
+
+def get_process_child(pid):
+    """
+    Get process child
+    :param pid: int
+    :type pid: int
+    :return: list of Process
+    :rtype list
+    """
+
+    return psutil.Process(pid).children(recursive=True)
+
+
+def get_process_stat(pid):
+    """
+    Get process stats
+    :param pid: int
+    :type pid: int
+    :return: dict
+    :rtype dict
+    """
+    return psutil.Process(pid).as_dict()
+
+
+def get_local_services():
+    """
+    Get local services list (systemd and sysv, dpkg-new filtered)
+    :return set of str
+    :rtype set
+    """
+    ret = get_systemd_services()
+    ret.update(get_sysv_services(systemd_services=ret))
+
+    # Filter .dpkg-new service
+    ret = [service for service in ret if not service.find(".dpkg-new") > 0]
+
+    return set(ret)
+
+
+def get_running_services():
+    """
+    Return a list of all running services, so far as systemd is concerned
+
+    :return: set of str
+    :rtype set
+    """
+    ret = set()
+    # Get running systemd units
+    cmd = "systemctl --full --no-legend --no-pager"
+    ec, out, se = ButcherTools.invoke(cmd, shell=False, timeout_ms=10 * 1000)
+    if ec != 0:
+        logger.warning("Invoke failed, ec=%s, so=%s, se=%s", ec, out, se)
+        return list()
+    else:
+        logger.debug("Invoke ok, ec=%s, so=%s, se=%s", ec, str(out.split('\n')[0:10]) + "...", se)
+
+    for line in ButcherTools.split(out, '\n'):
+        active_state = ''
+        fullname = ''
+        if line == "":
+            continue
+        try:
+            comps = line.strip().split()
+            fullname = comps[0]
+            if len(comps) > 3:
+                active_state = comps[3]
+        except ValueError as exc:
+            logger.error("Ex=%s", SolBase.extostr(exc))
+            continue
+        except IndexError as e:
+            logger.warning("Ex=%s", SolBase.extostr(e))
+        else:
+            if active_state != 'running':
+                continue
+        try:
+            unit_name, unit_type = fullname.rsplit('.', 1)
+        except ValueError:
+            continue
+        if unit_type in VALID_UNIT_TYPES:
+            ret.add(unit_name if unit_type == 'service' else fullname)
+
+    return set(ret)
+
+
+def get_systemd_services():
+    """
+    Use os.listdir() to get all the unit files
+
+    :return: set of str
+    :rtype set
+    """
+    ret = set()
+    for path in SYSTEM_CONFIG_PATHS + (LOCAL_CONFIG_PATH,):
+        # Make sure user has access to the path, and if the path is a link
+        # it's likely that another entry in SYSTEM_CONFIG_PATHS or LOCAL_CONFIG_PATH
+        # points to it, so we can ignore it.
+        if not os.access(path, os.R_OK):
+            continue
+        elif os.path.islink(path):
+            continue
+        for fullname in os.listdir(path):
+            try:
+                unit_name, unit_type = fullname.rsplit('.', 1)
+            except ValueError:
+                continue
+            if unit_type in VALID_UNIT_TYPES:
+                ret.add(unit_name if unit_type == 'service' else fullname)
+    return ret
+
+
+def get_sysv_services(systemd_services=None):
+    """
+    Use os.listdir() and os.access() to get all the initscripts
+
+    :param systemd_services: set,None
+    :type systemd_services: set,None
+    :return: set of str
+    :rtype set
+    """
+    try:
+        sysv_services = os.listdir(INITSCRIPT_PATH)
+    except OSError as exc:
+        if exc.errno == errno.ENOENT:
+            pass
+        elif exc.errno == errno.EACCES:
+            logger.error('Unable to check sysvinit scripts, permission denied to %s, ex=%s', INITSCRIPT_PATH, SolBase.extostr(exc))
+        else:
+            logger.error('Error %d encountered trying to check sysvinit scripts: %s, ex=%s', exc.errno, exc.strerror, SolBase.extostr(exc))
+        return []
+
+    if systemd_services is None:
+        systemd_services = get_systemd_services()
+
+    ret = []
+    for sysv_service in sysv_services:
+        if os.access(os.path.join(INITSCRIPT_PATH, sysv_service), os.X_OK):
+            if sysv_service in systemd_services:
+                logger.debug('sysvinit script \'%s\' found, but systemd unit \'%s.service\' already exists', sysv_service, sysv_service)
+                continue
+            ret.append(sysv_service)
+    return set(ret)
+
+
 class Service(KnockProbe):
     """
     Doc
     """
-    SERVICE_PATERNS = list()
-    regex_find_pid = re.compile(r' Main PID: ([0-9]+)')
+    REGEX_FIND_PID = re.compile(r' Main PID: ([0-9]+)')
 
     def __init__(self):
         """
@@ -63,6 +251,7 @@ class Service(KnockProbe):
         KnockProbe.__init__(self, linux_support=True, windows_support=False)
         self.helpers = KnockHelpers()
 
+        self.ar_service = list()
         self.patern_list = list()
         self.category = "/os/services"
 
@@ -89,187 +278,73 @@ class Service(KnockProbe):
         Exec
         """
 
-        if len(Service.SERVICE_PATERNS) == 0:
+        # Init if required
+        if len(self.ar_service) == 0:
             for p in self.patern_list:
                 try:
-                    Service.SERVICE_PATERNS.append(re.compile(p))
+                    self.ar_service.append(re.compile(p))
                 except Exception as e:
-                    logger.warning(SolBase.extostr(e))
+                    logger.warning("Ex=%s", SolBase.extostr(e))
 
-        installed_service = set(self._get_local_services())
+        # Get local services
+        d_services_local = get_local_services()
 
-        ######################
-        #  Build service to check
-        ######################
-        service_to_check = set()
-        for p in self.SERVICE_PATERNS:
-            for s in installed_service:
+        # Get running services
+        d_services_running = get_running_services()
+
+        # Services to check
+        d_services_to_check = set()
+        for p in self.ar_service:
+            for s in d_services_local:
                 if p.match(s):
-                    service_to_check.update([s])
+                    d_services_to_check.add(s)
 
-        running_service = set(self._get_running())
-        not_running_service = installed_service - running_service
-        running_checked = running_service.intersection(service_to_check)
-        for s in not_running_service.intersection(service_to_check):
+        # Not running services
+        d_services_not_running = d_services_local - d_services_running
+
+        # Not running, to check => signal DOWN
+        d_services_not_running_to_check = d_services_not_running.intersection(d_services_to_check)
+        for s in d_services_not_running_to_check:
             self.notify_value_n("k.os.service.running", {"SERVICE": s}, 0)
-        for s in running_checked:
-            self.notify_value_n("k.os.service.running", {"SERVICE": s}, 1)
-            # noinspection PyBroadException
-            try:
-                self._service_meters(s)
-            except Exception:
-                # Low level log.
-                pass
 
-        self.notify_value_n("k.os.service.running_count", None, len(running_checked))
+        # Running, to check => signal UP
+        d_services_running_to_check = d_services_running.intersection(d_services_to_check)
+        for s in d_services_running_to_check:
+            self.notify_value_n("k.os.service.running", {"SERVICE": s}, 1)
+            try:
+                self.notify_service(s)
+            except Exception as e:
+                logger.debug("Exception, s=%s, ex=%s", s, SolBase.extostr(e))
 
         # -----------------------------
         # Handle uwsgi
         # -----------------------------
-        # TODO : handle not running uwsgi process based on app-enabled configurations files versus processes enumerated
         d_uwsgi = self.uwsgi_get_processes()
         for uwsgi_type, uwsgi_pid in d_uwsgi.items():
             # Notify running
             self.notify_value_n("k.os.service.running", {"SERVICE": uwsgi_type}, 1)
             # Notify processes
-            self._notify_process(pid=uwsgi_pid, service=uwsgi_type)
+            self.notify_service_pid(pid=uwsgi_pid, service=uwsgi_type)
 
-    def _get_local_services(self):
+        # Running count
+        self.notify_value_n("k.os.service.running_count", None, len(d_services_running_to_check) + len(d_uwsgi))
+
+    def notify_service(self, service_name):
+        """
+        Notify
+        :param service_name: Service name
+        :type service_name: str
         """
 
-        :return:
-        """
-        ret = self._get_systemd_services()
-        ret.update(set(self._get_sysv_services(systemd_services=ret)))
-
-        # Filter .dpkg-new service
-        ret = [service for service in ret if not service.find(".dpkg-new") > 0]
-
-        return sorted(ret)
-
-    def _get_running(self):
-        """
-        Return a list of all running services, so far as systemd is concerned
-
-        :return:
-        """
-        ret = set()
-        # Get running systemd units
-        cmd = "systemctl --full --no-legend --no-pager"
-        ec, out, se = ButcherTools.invoke(cmd, shell=False, timeout_ms=10 * 1000)
-        if ec != 0:
-            logger.warning("Invoke failed, ec=%s, so=%s, se=%s", ec, out, se)
-            return list()
-        else:
-            logger.info("Invoke ok, ec=%s, so=%s, se=%s", ec, str(out.split('\n')[0:10]) + "...", se)
-
-        for line in ButcherTools.split(out, '\n'):
-            active_state = ''
-            fullname = ''
-            if line == "":
-                continue
-            try:
-                comps = line.strip().split()
-                fullname = comps[0]
-                if len(comps) > 3:
-                    active_state = comps[3]
-            except ValueError as exc:
-                logger.error(SolBase.extostr(exc))
-                continue
-            except IndexError as e:
-                logger.warning(SolBase.extostr(e))
-            else:
-                if active_state != 'running':
-                    continue
-            try:
-                unit_name, unit_type = fullname.rsplit('.', 1)
-            except ValueError:
-                continue
-            if unit_type in VALID_UNIT_TYPES:
-                ret.add(unit_name if unit_type == 'service' else fullname)
-
-        return ret
-
-    def _get_systemd_services(self):
-        """
-        Use os.listdir() to get all the unit files
-
-        :return:
-        """
-        ret = set()
-        for path in SYSTEM_CONFIG_PATHS + (LOCAL_CONFIG_PATH,):
-            # Make sure user has access to the path, and if the path is a link
-            # it's likely that another entry in SYSTEM_CONFIG_PATHS or LOCAL_CONFIG_PATH
-            # points to it, so we can ignore it.
-            if os.access(path, os.R_OK) and not os.path.islink(path):
-                for fullname in os.listdir(path):
-                    try:
-                        unit_name, unit_type = fullname.rsplit('.', 1)
-                    except ValueError:
-                        continue
-                    if unit_type in VALID_UNIT_TYPES:
-                        ret.add(unit_name if unit_type == 'service' else fullname)
-        return ret
-
-    def _get_sysv_services(self, systemd_services=None):
-        """
-        Use os.listdir() and os.access() to get all the initscripts
-
-        :param systemd_services:
-        :return:
-        """
-        try:
-            sysv_services = os.listdir(INITSCRIPT_PATH)
-        except OSError as exc:
-            if exc.errno == errno.ENOENT:
-                pass
-            elif exc.errno == errno.EACCES:
-                logger.error(
-                    'Unable to check sysvinit scripts, permission denied to %s',
-                    INITSCRIPT_PATH
-                )
-            else:
-                logger.error(
-                    'Error %d encountered trying to check sysvinit scripts: %s',
-                    exc.errno,
-                    exc.strerror
-                )
-            return []
-
-        if systemd_services is None:
-            systemd_services = self._get_systemd_services()
-
-        ret = []
-        for sysv_service in sysv_services:
-            if os.access(os.path.join(INITSCRIPT_PATH, sysv_service), os.X_OK):
-                if sysv_service in systemd_services:
-                    logger.debug(
-                        'sysvinit script \'%s\' found, but systemd unit '
-                        '\'%s.service\' already exists',
-                        sysv_service, sysv_service
-                    )
-                    continue
-                ret.append(sysv_service)
-        return ret
-
-    def _service_meters(self, s):
-        """
-        notif file open, memory
-
-        :param s: Service name
-        :type s: str
-        :return:
-        """
-        # get pid
-        manager = SystemdManager()
-
-        if not manager.is_active("%s.service" % s):
-            logger.warning("service %s is not active", s)
+        # Check
+        if not systemd_is_active(service_name):
             return
 
-        pid = manager.get_pid("%s.service" % s)
-        logger.debug("notify process %s pid %s", s, pid)
-        self._notify_process(pid, s)
+        # Get running pid
+        pid = systemd_get_pid("%s.service" % service_name)
+
+        # Notify
+        self.notify_service_pid(pid, service_name)
 
     @classmethod
     def uwsgi_get_processes(cls):
@@ -286,7 +361,7 @@ class Service(KnockProbe):
         d_uwsgi = dict()
 
         # Enumerate all processes
-        for proc in psutil.process_iter():
+        for proc in get_process_list():
             # Command line
             cmd_line = proc.cmdline()
 
@@ -309,10 +384,10 @@ class Service(KnockProbe):
             c_pid = proc.pid
             d_uwsgi[s_type] = c_pid
 
-            logger.info("Uwsgi detected, s_type=%s, pid=%s")
+            logger.debug("Uwsgi detected, type=%s, pid=%s", s_type, c_pid)
 
         # Ok
-        logger.info("Got d_uwsgi.keys=%s", d_uwsgi.keys())
+        logger.debug("Got d_uwsgi.keys=%s", d_uwsgi.keys())
         return d_uwsgi
 
     @classmethod
@@ -343,63 +418,56 @@ class Service(KnockProbe):
         else:
             return "uwsgi_na"
 
-    def _notify_process(self, pid, service):
+    def notify_service_pid(self, pid, service):
         """
-
-        :param pid:
+        Notify service with pid
+        :param pid: int
         :type pid: int
         :param service: service name
         :type service: str
-        :return:
         """
-        p = psutil.Process(pid)
-        children = p.children(recursive=True)
 
         try:
-            io_stat = p.io_counters()
+            # Main process
+            io_stat = get_io_counters(pid)
+            d_stat = get_process_stat(pid)
+
             read_bytes = io_stat[2]
             write_bytes = io_stat[3]
+            cpu_user = d_stat["cpu_times"].user
+            cpu_system = d_stat["cpu_times"].system
+            rss_memory = d_stat["memory_info"].rss
+            num_fds = d_stat.get("num_fds")
+            if num_fds is None:
+                num_fds = 0
 
-            for c in children:
-                c_io_stat = c.io_counters()
-                read_bytes += c_io_stat[2]
-                write_bytes += c_io_stat[3]
+            # Child processes
+            ar_child = get_process_child(pid)
+            for p_child in ar_child:
+                # noinspection PyProtectedMember
+                io_stat_child = get_io_counters(p_child._pid)
+                # noinspection PyProtectedMember
+                d_stat_child = get_process_stat(p_child._pid)
 
+                read_bytes += io_stat_child[2]
+                write_bytes += io_stat_child[3]
+                cpu_user += d_stat_child["cpu_times"].user
+                cpu_system += d_stat_child["cpu_times"].system
+                rss_memory += d_stat_child["memory_info"].rss
+                c_num_fds = d_stat_child.get("num_fds")
+                if c_num_fds is not None:
+                    num_fds += c_num_fds
+
+            # Notify
+            cpu_used = cpu_system + cpu_user
             self.notify_value_n("k.proc.io.read_bytes", {"PROCNAME": service}, read_bytes)
             self.notify_value_n("k.proc.io.write_bytes", {"PROCNAME": service}, write_bytes)
-            logger.debug("notify read/write %s/%s service %s", read_bytes, write_bytes, service)
+            self.notify_value_n("k.proc.io.num_fds", {"PROCNAME": service}, num_fds)
+            self.notify_value_n("k.proc.memory_used", {"PROCNAME": service}, rss_memory)
+            self.notify_value_n("k.proc.cpu_used", {"PROCNAME": service}, cpu_used)
 
         except psutil.AccessDenied as e:
-            logger.warning(
-                "io_counters failed, pid=%s, e=%s",
-                pid,
-                SolBase.extostr(e))
+            logger.warning("io_counters failed, pid=%s, e=%s", pid, SolBase.extostr(e))
         except NotImplementedError:
             # patch rapsberry NotImplementedError: couldn't find /proc/xxxx/io (kernel too old?)
-            logger.info("Couldn't find /proc/xxxx/io (possible kernel too old), discarding k.proc.io.read_bytes / k.proc.io.write_bytes")
-
-        d = p.as_dict()
-
-        cpu_user = d["cpu_times"].user
-        cpu_system = d["cpu_times"].system
-
-        rss_memory = d["memory_info"].rss
-
-        num_fds = d.get("num_fds")
-        if num_fds is None:
-            num_fds = 0
-        for c in children:
-            d = c.as_dict()
-            cpu_user += d["cpu_times"].user
-            cpu_system += d["cpu_times"].system
-
-            rss_memory += d["memory_info"].rss
-
-            c_num_fds = d.get("num_fds")
-            if c_num_fds is not None:
-                num_fds += c_num_fds
-
-        cpu_used = cpu_system + cpu_user
-        self.notify_value_n("k.proc.io.num_fds", {"PROCNAME": service}, num_fds)
-        self.notify_value_n("k.proc.memory_used", {"PROCNAME": service}, rss_memory)
-        self.notify_value_n("k.proc.cpu_used", {"PROCNAME": service}, cpu_used)
+            logger.debug("Couldn't find /proc/xxxx/io (possible kernel too old), discarding k.proc.io.read_bytes / k.proc.io.write_bytes")

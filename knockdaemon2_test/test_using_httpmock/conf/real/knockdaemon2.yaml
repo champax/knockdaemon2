@@ -2,6 +2,26 @@ knockd:
   exectimeout_ms: 1000
 
 transports:
+  influx_mock:
+    class_name: knockdaemon2.Transport.InfluxAsyncTransport.InfluxAsyncTransport
+    # Max item in queue (default 36000)
+    max_items_in_queue: 8192
+    # Send interval in ms (can be enforced if queue is full)
+    http_send_min_interval_ms: 5000
+    # Wait time after http failure (default 10000)
+    http_ko_interval_ms: 5000
+    # Send max bytes
+    http_send_max_bytes: 65536
+    # Influx timeout in millis (default: 20000)
+    influx_timeout_ms: 20000
+    # Influx connection
+    influx_host: 127.0.0.1
+    influx_port: 7900
+    influx_login: tamer
+    influx_password: tamer
+    influx_database: tamer
+    influx_ssl: False
+    influx_ssl_verify: False
 
 probes:
   Memory:

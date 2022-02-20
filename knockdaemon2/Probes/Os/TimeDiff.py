@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -22,21 +22,31 @@
 # ===============================================================================
 """
 
-import email.utils as eut
 import logging
-from datetime import datetime
 
 import ntplib
 from gevent import monkey
 from pysolbase.SolBase import SolBase
-from pysolhttpclient.Http.HttpClient import HttpClient
-from pysolhttpclient.Http.HttpRequest import HttpRequest
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
 
 monkey.patch_all()
 
 logger = logging.getLogger(__name__)
+
+
+def get_ntp_offset(server_host):
+    """
+    Get ntp offset
+    :param server_host: str
+    :type server_host: str
+    :return: float
+    :rtype float
+    """
+    ntp = ntplib.NTPClient()
+    response = ntp.request(server_host, version=2, timeout=3)
+    value = round(response.offset, ndigits=6)
+    return value
 
 
 class TimeDiff(KnockProbe):
@@ -50,8 +60,7 @@ class TimeDiff(KnockProbe):
         """
         KnockProbe.__init__(self, linux_support=True, windows_support=False)
 
-        self.serverhost = None
-        self.server_http = None
+        self.server_host = None
 
         self.category = "/os/misc"
 
@@ -70,46 +79,16 @@ class TimeDiff(KnockProbe):
         KnockProbe.init_from_config(self, k, d_yaml_config, d)
 
         # Go
-        self.serverhost = d["time_target_server"]
-        self.server_http = d["time_http_target_server"]
+        self.server_host = d["time_target_server"]
 
     def _execute_linux(self):
         """
-        Doc
+        Execute
         """
 
         try:
-            ntp = ntplib.NTPClient()
-            response = ntp.request(self.serverhost, version=2, timeout=3)
-            value = round(response.offset, ndigits=6)
+            self.notify_value_n("k.os.timediff", None, abs(get_ntp_offset(self.server_host)))
         except ntplib.NTPException as e:
-            logger.debug(SolBase.extostr(e))
-            value = self.get_time_from_http()
+            logger.warning("Ex=%s", SolBase.extostr(e))
         except Exception as e:
-            logger.warning("Exception=%s", SolBase.extostr(e))
-            value = self.get_time_from_http()
-        self.notify_value_n("k.os.timediff", None, abs(value))
-
-    def get_time_from_http(self):
-        """
-        Get net time over http
-        :return:
-        """
-
-        hc = HttpClient()
-
-        for _ in range(0, 2):
-            try:
-                # Setup request
-                hreq = HttpRequest()
-                hreq.force_http_implementation = HttpClient.HTTP_IMPL_URLLIB3
-                hreq.uri = self.server_http
-
-                hresp = hc.go_http(hreq)
-
-                remote_date = hresp.headers["Date"]
-                remote_date = datetime(*eut.parsedate(remote_date)[:6])
-                timediff = (remote_date - datetime.utcnow()).total_seconds()
-                return float(timediff)
-            except Exception as e:
-                logger.debug("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))

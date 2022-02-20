@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -126,7 +126,7 @@ class RabbitmqStat(KnockProbe):
 
         # Check
         if not rabbit_found:
-            logger.info("No rabbitmq detected, give up")
+            logger.debug("No rabbitmq detected, give up")
             return
 
         # Must have rabbitmqadmin installed (otherwise signal DOWN)

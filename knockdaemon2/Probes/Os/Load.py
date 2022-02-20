@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -387,7 +387,7 @@ class Load(KnockProbe):
         if ec != 0:
             logger.warning("ex=%s, so=%s, se=%s", ec, so, se)
         else:
-            return cls.get_users_count_from_buffer(so.decode("utf8"))
+            return cls.get_users_count_from_buffer(so)
 
     @classmethod
     def get_users_count_from_buffer(cls, buf):
@@ -472,7 +472,7 @@ class Load(KnockProbe):
             sm_15 = ar[-1]["q"]
 
         # Compute
-        logger.info(
+        logger.debug(
             "Got (%s/%s), (%s/%s), (%s/%s)",
             sm_1, c_1,
             sm_5, c_5,
@@ -483,7 +483,7 @@ class Load(KnockProbe):
         avg_15 = float(sm_15) / float(c_15)
 
         # Over
-        logger.info(
+        logger.debug(
             "Got avg1=%.2f (%s/%s), avg5=%.2f (%s/%s), avg15=%.2f (%s/%s)",
             avg_1, sm_1, c_1,
             avg_5, sm_5, c_5,

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -24,8 +24,6 @@
 
 import logging
 
-from pysolbase.SolBase import SolBase
-
 from knockdaemon2.Core.KnockProbe import KnockProbe
 
 logger = logging.getLogger(__name__)
@@ -41,17 +39,17 @@ class Netstat(KnockProbe):
 
     PROC_TCP = "/proc/net/tcp"
     STATE = {
-        '01': 'ESTABLISHED',
-        '02': 'SYN_SENT',
-        '03': 'SYN_RECV',
-        '04': 'FIN_WAIT1',
-        '05': 'FIN_WAIT2',
-        '06': 'TIME_WAIT',
-        '07': 'CLOSE',
-        '08': 'CLOSE_WAIT',
-        '09': 'LAST_ACK',
-        '0A': 'LISTEN',
-        '0B': 'CLOSING'
+        "01": "ESTABLISHED",
+        "02": "SYN_SENT",
+        "03": "SYN_RECV",
+        "04": "FIN_WAIT1",
+        "05": "FIN_WAIT2",
+        "06": "TIME_WAIT",
+        "07": "CLOSE",
+        "08": "CLOSE_WAIT",
+        "09": "LAST_ACK",
+        "0A": "LISTEN",
+        "0B": "CLOSING"
     }
 
     def __init__(self):
@@ -61,8 +59,6 @@ class Netstat(KnockProbe):
         KnockProbe.__init__(self, linux_support=True, windows_support=False)
 
         self.counter = dict()
-        self.pinghost = None
-        self.ping_host = None
 
         self.category = "/os/network"
 
@@ -80,17 +76,34 @@ class Netstat(KnockProbe):
         # Base
         KnockProbe.init_from_config(self, k, d_yaml_config, d)
 
-        # Go
-        self.ping_host = d["ping_target_server"]
-
     def _execute_linux(self):
         """
         Exec
         """
-        content = self._load()
+
+        # Tco
+        ar_tcp = self.load_proc_net_tcp()
+        self.process_net_tcp_from_list(ar_tcp)
+
+        # Conntrack
+        with open("/proc/sys/net/netfilter/nf_conntrack_count") as f:
+            nf_conntrack_count = float(f.readline())
+        with open("/proc/sys/net/netfilter/nf_conntrack_max") as f:
+            nf_conntrack_max = float(f.readline())
+        self.process_conntrack(nf_conntrack_count, nf_conntrack_max)
+
+    def process_net_tcp_from_list(self, ar_tcp):
+        """
+        Process tcp from buffer
+        :param ar_tcp: list of str
+        :type ar_tcp: list
+        """
         self.counter = dict()
-        for line in content:
-            line_array = self._remove_empty(line.split(' '))  # Split lines and remove empty space.
+        for line in ar_tcp:
+            line = line.strip()
+            if len(line) == 0:
+                continue
+            line_array = self._remove_empty(line.split(" "))  # Split lines and remove empty space.
             if self.STATE[line_array[3]] in self.counter:
                 self.counter[self.STATE[line_array[3]]] += 1
             else:
@@ -108,17 +121,19 @@ class Netstat(KnockProbe):
         self.notify_value_n("k.net.netstat.ESTABLISHED", None, self._get_counter_value("ESTABLISHED"))
         self.notify_value_n("k.net.netstat.CLOSING", None, self._get_counter_value("CLOSING"))
 
-        # parse connection Tracker
-        try:
-            nf_conntrack_count = float(open('/proc/sys/net/netfilter/nf_conntrack_count').readline())
-            nf_conntrack_max = float(open('/proc/sys/net/netfilter/nf_conntrack_max').readline())
-            self.notify_value_n("k.net.conntrack.count", None, nf_conntrack_count)
-            self.notify_value_n("k.net.conntrack.max", None, nf_conntrack_max)
-            # Ration
-            self.notify_value_n("k.net.conntrack.used", None, 100.0 * nf_conntrack_count / nf_conntrack_max)
+    def process_conntrack(self, nf_conntrack_count, nf_conntrack_max):
+        """
+        Process conntrack
+        :param nf_conntrack_count: float
+        :type nf_conntrack_count: float
+        :param nf_conntrack_max: float
+        :type nf_conntrack_max: float
+        """
 
-        except Exception as e:
-            logger.warning(SolBase.extostr(e))
+        self.notify_value_n("k.net.conntrack.count", None, nf_conntrack_count)
+        self.notify_value_n("k.net.conntrack.max", None, nf_conntrack_max)
+        # Ratio
+        self.notify_value_n("k.net.conntrack.used", None, 100.0 * nf_conntrack_count / nf_conntrack_max)
 
     def _get_counter_value(self, state):
         """
@@ -131,20 +146,24 @@ class Netstat(KnockProbe):
         else:
             return 0
 
-    def _load(self):
+    def load_proc_net_tcp(self):
         """
         Read the table of tcp connections & remove header
+        :return list of str
+        :rtype list
         """
-        with open(self.PROC_TCP, 'r') as f:
+        with open(self.PROC_TCP, "r") as f:
             content = f.readlines()
             content.pop(0)
         return content
 
-    # noinspection PyMethodMayBeStatic
-    def _remove_empty(self, array):
+    @classmethod
+    def _remove_empty(cls, array):
         """
         Doc
-        :param array:
-        :return:
+        :param array: list
+        :type array: list
+        :return list
+        :rtype list
         """
-        return [x for x in array if x != '']
+        return [x for x in array if x != ""]

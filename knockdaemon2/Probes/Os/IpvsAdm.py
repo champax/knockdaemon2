@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -32,7 +32,6 @@ from knockdaemon2.Core.KnockProbe import KnockProbe
 logger = logging.getLogger(__name__)
 
 
-# noinspection PyMethodMayBeStatic
 class IpvsAdm(KnockProbe):
     """
     Doc
@@ -51,13 +50,29 @@ class IpvsAdm(KnockProbe):
 
     def _execute_linux(self):
         """
-        LA DOC PD DU FION
-        :return:
+        Execute
         """
+
+        # Load
+        buf = self.get_ipvsadm_buffer("/proc/net/ip_vs")
+
+        # Process
+        self.process_ipvsadm_buffer(buf)
+
+    def process_ipvsadm_buffer(self, buf):
+        """
+        Process
+        :param buf: str
+        :type buf: str
+        """
+
+        # Reset
         self._agregate = dict()
 
-        hashtab, resulttab = self._parse()
+        # Parse
+        hashtab, resulttab = self.parse_ipvsadm_buffer(buf)
 
+        # Check
         if not hashtab:
             logger.debug('keepalive stopped')
             return
@@ -71,9 +86,27 @@ class IpvsAdm(KnockProbe):
 
         self._send_all_result()
 
-    def _parse(self, file_ip_vs='/proc/net/ip_vs'):
+    @classmethod
+    def get_ipvsadm_buffer(cls, file_name):
         """
-        to test file_ip_vs = 'knock/ip_vs'
+        Get buffer
+        :param file_name: str
+        :type file_name: str
+        :return: str,None
+        :rtype str,None
+        """
+        if not os.path.isfile(file_name):
+            return None
+        with open(file_name, "r") as f:
+            return f.read()
+
+    def parse_ipvsadm_buffer(self, buf):
+        """
+        Process buffer
+        :param buf: str,None
+        :type buf: str,None
+        :return tuple bool,bool
+        :rtype tuple
         """
         # MASK
         vip_exp = r"^...\s+([0-9A-F]{8}):([0-9A-F]{4}).*$"
@@ -87,12 +120,12 @@ class IpvsAdm(KnockProbe):
         active_con_rip = ''
         in_act_conn_rip = ''
 
-        if not os.path.isfile(file_ip_vs):
+        if buf is None or len(buf) == 0:
             return False, False
 
         vip = None
         portvip = None
-        for line in open(file_ip_vs):
+        for line in buf.split("\n"):
             line = line.strip()
             # vip
             # TCP  256EC116:01BB rr
@@ -121,8 +154,10 @@ class IpvsAdm(KnockProbe):
                     type_line = "info"
 
             if type_line == "rip":
-                hashtab[vip + ':' + str(portvip)] = "-".join(
-                    rip + ':' + str(portrip) + hashtab[vip + ':' + str(portvip)])
+                if (len(hashtab[vip + ':' + str(portvip)])) > 0:
+                    hashtab[vip + ':' + str(portvip)] = rip + ':' + str(portrip) + " - " + hashtab[vip + ':' + str(portvip)]
+                else:
+                    hashtab[vip + ':' + str(portvip)] = rip + ':' + str(portrip)
                 resulttab[vip + ':' + str(portvip) + '_weightRip'] += weight_rip
                 resulttab[vip + ':' + str(portvip) + '_activeConRip'] += active_con_rip
                 resulttab[vip + ':' + str(portvip) + '_InActConnRip'] += in_act_conn_rip
@@ -152,21 +187,27 @@ class IpvsAdm(KnockProbe):
         else:
             self._agregate[key] += value
 
-        self.notify_value_n(key, id_vip, value)
+        self.notify_value_n(key, {"VIP": id_vip}, value)
 
-    def _hex2ip(self, hex_ip):
+    @classmethod
+    def _hex2ip(cls, hex_ip):
         """
         Doc
-        :param hex_ip:
-        :return:
+        :param hex_ip: str
+        :type hex_ip: str
+        :return: str
+        :rtype str
         """
         return ".".join(socket.inet_ntoa(
             struct.pack("<L", int("0x" + hex_ip, 16))).split(".")[::-1])
 
-    def _hex2port(self, s):
+    @classmethod
+    def _hex2port(cls, s):
         """
-        Doc
-        :param s:
-        :return:
+        To port
+        :param s: str
+        :type s: str
+        :return: int
+        :rtype int
         """
         return int(s, 16)

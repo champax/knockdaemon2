@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -169,17 +169,17 @@ class UwsgiStat(KnockProbe):
 
                 ar_temp = line.split("=", 1)
                 if len(ar_temp) != 2:
-                    logger.info("Found, split failed (non fatal), stuff_found=%s, ar_temp=%s", stuff_found, ar_temp)
+                    logger.debug("Found, split failed (non fatal), stuff_found=%s, ar_temp=%s", stuff_found, ar_temp)
                     continue
 
                 stuff_found = ar_temp[1].strip()
-                logger.info("Found, stuff_found=%s", stuff_found)
+                logger.debug("Found, stuff_found=%s", stuff_found)
                 count += 1
 
             if count > 1:
                 logger.warning("Found multiple stuff in buffer, count=%s", count)
 
-            logger.info("Return stuff=%s, stuff_found=%s", stuff_to_look_for, stuff_found)
+            logger.debug("Return stuff=%s, stuff_found=%s", stuff_to_look_for, stuff_found)
             return stuff_found
 
         except Exception as e:
@@ -439,15 +439,15 @@ class UwsgiStat(KnockProbe):
                 located_f = cur_f
 
         if not located_f:
-            logger.info("No uwsgi (no file in %s)", UwsgiStat.AR_UWSGI_CONF)
+            logger.debug("No uwsgi (no file in %s)", UwsgiStat.AR_UWSGI_CONF)
             return
 
-        logger.info("Located uwsgi, located_f=%s", located_f)
+        logger.debug("Located uwsgi, located_f=%s", located_f)
 
         # ---------------------------
         # A) Default stats socket
         default_stats_soc = self._get_stuff_from_file(located_f, "stats")
-        logger.info("Got default_stats_soc=%s", default_stats_soc)
+        logger.debug("Got default_stats_soc=%s", default_stats_soc)
 
         # ---------------------------
         # B) Instances stats sockets
@@ -458,7 +458,7 @@ class UwsgiStat(KnockProbe):
             # App id
             cur_uwsgi_id = self._get_stuff_from_file(cur_app_file, "id")
             if not cur_uwsgi_id:
-                logger.info("Cannot locate id (bypass), cur_app_file=%s", cur_app_file)
+                logger.debug("Cannot locate id (bypass), cur_app_file=%s", cur_app_file)
                 continue
 
             # Socket
@@ -466,12 +466,12 @@ class UwsgiStat(KnockProbe):
 
             # If none, fallback default
             if cur_stats_soc is None:
-                # TODO : i don't know what this is doing
-                cur_stats_soc = re.sub(r"%\(deb-confname\)", cur_uwsgi_id, default_stats_soc)
+                if default_stats_soc is not None:
+                    cur_stats_soc = re.sub(r"%\(deb-confname\)", cur_uwsgi_id, default_stats_soc)
 
             # If none, signal down for this instance
             if cur_stats_soc is None:
-                logger.info("No stats, signal down and reloop, cur_uwsgi_id=%s", cur_uwsgi_id)
+                logger.debug("No stats, signal down and reloop, cur_uwsgi_id=%s", cur_uwsgi_id)
                 self._push_result("k.uwsgi.started", cur_uwsgi_id, 0)
                 continue
 
@@ -487,7 +487,7 @@ class UwsgiStat(KnockProbe):
             ms = SolBase.mscurrent()
             ec, so, se = ButcherTools.invoke("uwsgi --connect-and-read %s" % cur_stats_soc)
             if ec != 0:
-                logger.info("Invoke fail, trying sudo, ex=%s, so=%s, se=%s", ec, so, se)
+                logger.debug("Invoke fail, trying sudo, ex=%s, so=%s, se=%s", ec, so, se)
                 ec, so, se = ButcherTools.invoke("sudo uwsgi --connect-and-read %s" % cur_stats_soc)
                 if ec != 0:
                     logger.warning("Invoke fail, signal down, cur_uwsgi_id=%s, ex=%s, so=%s, se=%s", cur_uwsgi_id, ec, so, se)
@@ -566,7 +566,7 @@ class UwsgiStat(KnockProbe):
 
         if len(self.d_uwsgi_aggregate) == 0:
             # Go nothing, possible no uwsgi instance, over
-            logger.info("No d_uwsgi_aggregate, give up")
+            logger.debug("No d_uwsgi_aggregate, give up")
             return
 
         # Aggreg firing

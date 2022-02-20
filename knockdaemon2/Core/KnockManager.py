@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -83,8 +83,7 @@ class KnockManager(object):
         logger.info("PTools, is_cpu_arm=%s", PTools.is_cpu_arm())
         logger.info("PTools, is_os_64=%s", PTools.is_os_64())
 
-        if PTools.get_distribution_type() != "windows":
-            logger.info("Os, uname=%s", os.uname())
+        logger.info("Os, uname=%s", os.uname())
 
         logger.info("Manager launching now")
 
@@ -126,10 +125,6 @@ class KnockManager(object):
 
         # Timeout per probe
         self._exectimeout_ms = 10000
-
-        # Timestamp override
-        self._timestamp_override = True
-        self._timestamp_override_use_expected = True
 
         # Value list
         self.superv_notify_value_list = list()
@@ -236,16 +231,6 @@ class KnockManager(object):
             # Init us
             if "exectimeout_ms" in self._d_yaml_config["knockd"]:
                 self._exectimeout_ms = self._d_yaml_config["knockd"]["exectimeout_ms"]
-
-            if "timestamp_override" in self._d_yaml_config["knockd"]:
-                self._timestamp_override = self._d_yaml_config["knockd"]["timestamp_override"]
-            if self._timestamp_override:
-                logger.warning("_timestamp_override enabled (this is experimental)")
-
-            if "timestamp_override_use_expected" in self._d_yaml_config["knockd"]:
-                self._timestamp_override_use_expected = self._d_yaml_config["knockd"]["timestamp_override"]
-            if self._timestamp_override_use_expected:
-                logger.warning("_timestamp_override_use_expected enabled (this is experimental)")
 
             # Account for managed instance, which is optional now due to influx support
             if "acc_namespace" in self._d_yaml_config["knockd"]:
@@ -646,9 +631,6 @@ class KnockManager(object):
         if c.initial_ms_start == 0.0:
             c.initial_ms_start = SolBase.mscurrent()
 
-        # Get expected ms
-        expected_ms = self._need_exec_compute_next_start_ms(p, c)
-
         # Increment
         c.exec_count_so_far += 1.0
 
@@ -659,13 +641,6 @@ class KnockManager(object):
             if p.exec_timeout_override_ms:
                 exec_timeout_ms = p.exec_timeout_override_ms
                 logger.info("Exec timeout override set at probe end, using exec_timeout_ms=%s", exec_timeout_ms)
-
-            # If config specify to use timestamp override by manager, we force
-            if self._timestamp_override:
-                if self._timestamp_override_use_expected:
-                    p.notify_ts_override = float(expected_ms / 1000.0)
-                else:
-                    p.notify_ts_override = time()
 
             # FIRE
             with Timeout(exec_timeout_ms * 0.001):
@@ -788,7 +763,7 @@ class KnockManager(object):
             if not b:
                 if len(self._ar_knock_transport) == 1:
                     # Only only one transport and failed, do not clear the hashes
-                    logger.info("Got false from process_notify and only one transport, will not empty the hashes, t=%s", t)
+                    logger.debug("Got false from process_notify and only one transport, will not empty the hashes, t=%s", t)
                     clear_hash = False
                 else:
                     # Several transport, we clear in call cases
@@ -875,11 +850,33 @@ class KnockManager(object):
         # Compute next start ms
         next_start_ms = self._need_exec_compute_next_start_ms(p, c)
 
-        # Check
+        # Interval in ms
+        exec_interval_ms = p.exec_interval_ms
+
+        # Current
         cur_ms = SolBase.mscurrent()
+
+        # Diff
+        diff_ms = cur_ms - next_start_ms
+
+        # Check
         if next_start_ms <= cur_ms:
-            # Interval reached => yes
-            return True
+            if diff_ms > (exec_interval_ms * 2):
+                # Interval reached, but GREATER than exec_interval_ms * 2
+                # This mean we are late, we skip this one (and we full reset, so we execute again asap)
+                logger.warning(
+                    "Interval reached but diff_ms > exec_interval_ms*2 (full skip / full reset), cur_ms=%s, next_start_ms=%s, interval*2=%s, diff=%s",
+                    cur_ms,
+                    next_start_ms,
+                    exec_interval_ms * 2,
+                    cur_ms - next_start_ms,
+                )
+                c.exec_count_so_far = 0.0
+                c.initial_ms_start = 0.0
+                return False
+            else:
+                # Interval reached and we are not later => yes
+                return True
         else:
             # Interval not reached => no
             return False
@@ -973,7 +970,7 @@ class KnockManager(object):
 
         # Check
         if not self._lifecycle_greenlet:
-            logger.warning("_lifecycle_greenlet not set, doing nothing")
+            logger.debug("_lifecycle_greenlet not set, doing nothing")
             return
 
         # Kill
@@ -1020,8 +1017,9 @@ class KnockManager(object):
                     for cur_transport in self._ar_knock_transport:
                         # noinspection PyProtectedMember
                         lifecyclelogger.info(
-                            "Running, %s, "
-                            "q.cur/max/di=%s/%s/%s, "
+                            "Running (pf=%s), "
+                            "q.bytes=%s, "
+                            "q.cur/max/di=%s/%s/.%s, "
                             "pbuf.pend/limit=%s/%s, "
                             "pbuf.last/max=%s/%s, "
                             "wbuf.last/max=%s/%s, "
@@ -1030,6 +1028,7 @@ class KnockManager(object):
                             "s.ok/ko=%s/%s, "
                             "t=%s",
                             cur_transport.meters_prefix,
+                            cur_transport._current_queue_bytes,
                             cur_transport._queue_to_send.qsize(),
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_queue_max_size"),
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_queue_discard"),
@@ -1051,8 +1050,8 @@ class KnockManager(object):
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_exception_count"),
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_failed_count"),
 
-                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_client_spv_processed"),
-                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_client_spv_failed"),
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_spv_processed"),
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_spv_failed"),
                             id(cur_transport),
                         )
 

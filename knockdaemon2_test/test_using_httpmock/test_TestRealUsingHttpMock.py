@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -22,23 +22,24 @@
 # ===============================================================================
 """
 
+from pysolbase.SolBase import SolBase
+
+SolBase.voodoo_init()
+
 import logging
 import os
 import unittest
 from os.path import dirname, abspath
 
 import redis
-from pysolbase.SolBase import SolBase
+
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.KnockManager import KnockManager
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 from knockdaemon2.Transport.InfluxAsyncTransport import InfluxAsyncTransport
 
-# noinspection PyUnresolvedReferences,PyPackageRequirements
-
 logger = logging.getLogger(__name__)
-SolBase.voodoo_init()
 
 
 class TestRealUsingHttpMock(unittest.TestCase):
@@ -177,7 +178,6 @@ class TestRealUsingHttpMock(unittest.TestCase):
 
         # Validate to superv (critical)
         self.assertGreater(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed"), 0)
-        self.assertGreater(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_total"), 0)
 
         self.k = None
 

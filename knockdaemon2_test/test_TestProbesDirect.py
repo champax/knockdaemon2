@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -21,6 +21,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
+from pysolbase.SolBase import SolBase
+
+SolBase.voodoo_init()
+
 import glob
 import logging
 import os
@@ -32,10 +36,8 @@ from os.path import dirname, abspath
 import distro
 import psutil
 import ujson
-# noinspection PyPackageRequirements
 from dns.resolver import Resolver
 from pysolbase.FileUtility import FileUtility
-from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
@@ -69,7 +71,6 @@ from knockdaemon2.Probes.Varnish.VarnishStat import VarnishStat
 from knockdaemon2.Tests.TestHelpers import exec_helper
 from knockdaemon2.Tests.TestHelpers import expect_value
 
-SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
 
 
@@ -136,8 +137,7 @@ class TestProbesDirect(unittest.TestCase):
         if self.debug_stat:
             Meters.write_to_logger()
 
-    @unittest.skipIf(NginxStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % NginxStat())
-    @unittest.skip("TODO : Re-enable later")
+    @unittest.skipIf(NginxStat().is_supported_on_platform() is False or not os.access("/etc/nginx/nginx.conf", os.R_OK), "Not support on current platform, probe=%s" % NginxStat())
     def test_NginxStat(self):
         """
         Test
@@ -146,25 +146,25 @@ class TestProbesDirect(unittest.TestCase):
         # Exec it
         exec_helper(self, NginxStat)
 
-        # Validate results - disco
-
         dd = {"ID": "default"}
 
         # Validate results - data
-        expect_value(self, self.k, "k.nginx.started", 1, "eq", dd)
+        try:
+            expect_value(self, self.k, "k.nginx.started", 1, "eq", dd)
 
-        expect_value(self, self.k, "k.nginx.reading", 0, "gte", dd)
-        expect_value(self, self.k, "k.nginx.writing", 0, "gte", dd)
+            expect_value(self, self.k, "k.nginx.reading", 0, "gte", dd)
+            expect_value(self, self.k, "k.nginx.writing", 0, "gte", dd)
 
-        expect_value(self, self.k, "k.nginx.connections", 0, "gte", dd)
+            expect_value(self, self.k, "k.nginx.connections", 0, "gte", dd)
 
-        expect_value(self, self.k, "k.nginx.waiting", 0, "gte", dd)
-        expect_value(self, self.k, "k.nginx.requests", 1, "gte", dd)
-        expect_value(self, self.k, "k.nginx.accepted", 1, "gte", dd)
+            expect_value(self, self.k, "k.nginx.waiting", 0, "gte", dd)
+            expect_value(self, self.k, "k.nginx.requests", 1, "gte", dd)
+            expect_value(self, self.k, "k.nginx.accepted", 1, "gte", dd)
+        except AssertionError:
+            # Nginx status not available
+            expect_value(self, self.k, "k.nginx.started", 0, "eq", dd)
 
-    @unittest.skipIf(SolBase.get_machine_name() == 'admin01', 'Not compatible jessie')
     @unittest.skipIf(Service().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Service())
-    @unittest.skip("TODO : Re-enable later")
     def test_Service(self):
         """
         Test
@@ -173,11 +173,9 @@ class TestProbesDirect(unittest.TestCase):
         # Exec it
         exec_helper(self, Service)
 
-        # Validate results - disco
-
         expect_value(self, self.k, "k.os.service.running", 1, 'eq', {"SERVICE": "rsyslog"})
         expect_value(self, self.k, "k.os.service.running", 1, 'eq', {"SERVICE": "cron"})
-        expect_value(self, self.k, "k.os.service.running_count", 2, 'eq', None)
+        expect_value(self, self.k, "k.os.service.running_count", 2, 'gte', None)
 
     def test_uwsgi_get_type(self):
         """
@@ -209,7 +207,7 @@ class TestProbesDirect(unittest.TestCase):
                 self.assertTrue(k.startswith("uwsgi_"))
                 self.assertIsInstance(v, int)
 
-    @unittest.skipIf(Service().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Service())
+    @unittest.skipIf(Service().is_supported_on_platform() is False or not os.access("/proc/mdstat", os.R_OK), "Not support on current platform, probe=%s" % Service())
     def test_Mdstat(self):
         """
         Test
@@ -218,11 +216,7 @@ class TestProbesDirect(unittest.TestCase):
         # Exec it
         exec_helper(self, Mdstat)
 
-        # Validate results - disco
-        pass
-
-    @unittest.skipIf(Haproxy().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % NginxStat())
-    @unittest.skip("TODO : Re-enable later")
+    @unittest.skipIf(Haproxy().is_supported_on_platform() is False or not os.access("/etc/haproxy/haproxy.cfg", os.R_OK), "Not support on current platform, probe=%s" % NginxStat())
     def test_Haproxy(self):
         """
         Test
@@ -231,7 +225,6 @@ class TestProbesDirect(unittest.TestCase):
         # Exec it
         exec_helper(self, Haproxy)
 
-        # Validate results - disco
         dd = {"PROXY": "ALL"}
 
         # Validate results - data
@@ -272,7 +265,6 @@ class TestProbesDirect(unittest.TestCase):
         exec_helper(self, CheckDns)
         ns = Resolver().nameservers[0]
 
-        # Validate results - disco
         dd = {"HOST": "knock.center", "SERVER": ns}
 
         # Validate results - data
@@ -361,7 +353,6 @@ class TestProbesDirect(unittest.TestCase):
             if ec == 0:
                 logger.info("Assuming PHYSICAL, heavy checks")
                 self.assertFalse("Physical server heavy checks NOT implemented")
-                # TODO : Implement unittest on a physical server please
             else:
                 logger.info("smartctl invoke failed, bypassing checks")
 
@@ -451,8 +442,7 @@ class TestProbesDirect(unittest.TestCase):
             expect_value(self, self.k, "k.os.maxproc", None, "exists")
             expect_value(self, self.k, "k.os.users.connected", 0, "gte")
 
-    @unittest.skipIf(RedisStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % RedisStat())
-    @unittest.skip("TODO : Re-enable later")
+    @unittest.skipIf(RedisStat().is_supported_on_platform() is False or not os.access("/etc/redis/redis.conf", os.R_OK), "Not support on current platform, probe=%s" % RedisStat())
     def test_RedisStat(self):
         """
         Test
@@ -508,7 +498,7 @@ class TestProbesDirect(unittest.TestCase):
             expect_value(self, self.k, "k.vfs.dev.io.currentcount", 0, "gte", dd)
             expect_value(self, self.k, "k.vfs.dev.io.totalms", 0, "gte", dd)
 
-    @unittest.skipIf(IpvsAdm().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % IpvsAdm())
+    @unittest.skipIf(IpvsAdm().is_supported_on_platform() is False or not os.access("/proc/net/ip_vs", os.R_OK), "Not support on current platform, probe=%s" % IpvsAdm())
     def test_IpvsAdm(self):
         """
         Test
@@ -658,7 +648,7 @@ class TestProbesDirect(unittest.TestCase):
             expect_value(self, self.k, "k.os.knock", 1, "gte")
             expect_value(self, self.k, "k.os.uptime", 1, "gte")
 
-    @unittest.skipIf(ApacheStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % ApacheStat())
+    @unittest.skipIf(ApacheStat().is_supported_on_platform() is False or not FileUtility.is_file_exist("/etc/apache2/apache2.conf"), "Not support on current platform, probe=%s" % ApacheStat())
     def test_Apache(self):
         """
         Test
@@ -676,7 +666,7 @@ class TestProbesDirect(unittest.TestCase):
             elif knock_type == "str":
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-    @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
+    @unittest.skipIf(VarnishStat().is_supported_on_platform() is False or not os.access("rabbitmqadmin", os.R_OK), "Not support on current platform, probe=%s" % VarnishStat())
     def test_Rabbitmq(self):
         """
         Test
@@ -694,7 +684,7 @@ class TestProbesDirect(unittest.TestCase):
             elif knock_type == "str":
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-    @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
+    @unittest.skipIf(VarnishStat().is_supported_on_platform() is False or not FileUtility.is_dir_exist("/etc/varnish"), "Not support on current platform, probe=%s" % VarnishStat())
     def test_Varnish(self):
         """
         Test
@@ -712,67 +702,7 @@ class TestProbesDirect(unittest.TestCase):
             elif knock_type == "str":
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-    @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
-    def test_Varnish_via_invoke_json(self):
-        """
-        Test
-        """
-
-        vp = VarnishStat()
-        vp.set_manager(self.k)
-
-        # ---------
-        # JSON
-        # ---------
-        d_json = vp.try_load_json()
-        vp.process_json(d_json, "default")
-        # Log
-        for tu in self.k.superv_notify_value_list:
-            logger.info("Having tu=%s", tu)
-
-        for _, knock_type, knock_key in VarnishStat.KEYS:
-            dd = {"ID": "default"}
-            if knock_type == "int":
-                expect_value(self, self.k, knock_key, 0, "gte", dd)
-            elif knock_type == "float":
-                expect_value(self, self.k, knock_key, 0.0, "gte", dd)
-            elif knock_type == "str":
-                expect_value(self, self.k, knock_key, 0, "exists", dd)
-
-        # Discovery is fired outside this, do not check it here
-        pass
-
-    @unittest.skipIf(VarnishStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % VarnishStat())
-    def test_Varnish_via_invoke_text(self):
-        """
-        Test
-        """
-
-        vp = VarnishStat()
-        vp.set_manager(self.k)
-
-        # ---------
-        # JSON
-        # ---------
-        d_json = vp.try_load_text()
-        vp.process_json(d_json, "default")
-        # Log
-        for tu in self.k.superv_notify_value_list:
-            logger.info("Having tu=%s", tu)
-
-        for _, knock_type, knock_key in VarnishStat.KEYS:
-            dd = {"ID": "default"}
-            if knock_type == "int":
-                expect_value(self, self.k, knock_key, 0, "gte", dd)
-            elif knock_type == "float":
-                expect_value(self, self.k, knock_key, 0.0, "gte", dd)
-            elif knock_type == "str":
-                expect_value(self, self.k, knock_key, 0, "exists", dd)
-
-        # Discovery is fired outside this, do not check it here
-        pass
-
-    @unittest.skipIf(UwsgiStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % UwsgiStat())
+    @unittest.skipIf(UwsgiStat().is_supported_on_platform() is False or not os.access("/etc/default/uwsgi", os.R_OK), "Not support on current platform, probe=%s" % UwsgiStat())
     def test_UwsgiStat(self):
         """
         Test
@@ -782,7 +712,6 @@ class TestProbesDirect(unittest.TestCase):
         exec_helper(self, UwsgiStat)
 
         for cur_p in [
-            'z_frontends',
             'ALL'
         ]:
             for _, knock_type, knock_key in UwsgiStat.KEYS:
@@ -794,7 +723,7 @@ class TestProbesDirect(unittest.TestCase):
                 elif knock_type == "str":
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-    @unittest.skipIf(CheckProcess().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % CheckProcess())
+    @unittest.skipIf(CheckProcess().is_supported_on_platform() is False or not os.access("/etc/nginx/nginx.conf", os.R_OK), "Not support on current platform, probe=%s" % CheckProcess())
     def test_CheckProcess(self):
         """
         Test
@@ -854,7 +783,7 @@ class TestProbesDirect(unittest.TestCase):
                 except Exception as e:
                     logger.warning("io_counters failed, bypassing checks, ex=%s", SolBase.extostr(e))
 
-    @unittest.skipIf(Mysql().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Mysql())
+    @unittest.skipIf(Mysql().is_supported_on_platform() is False or not os.access(Mysql.MYSQL_CONFIG_FILE, os.R_OK), "Not support on current platform, probe=%s" % Mysql())
     def test_Mysql(self):
         """
         Test
@@ -875,7 +804,10 @@ class TestProbesDirect(unittest.TestCase):
             elif knock_type == "str":
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-    @unittest.skipIf(MongoDbStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % MongoDbStat())
+    @unittest.skipIf(
+        MongoDbStat().is_supported_on_platform() is False or not os.access("/etc/mongod.conf", os.R_OK),
+        "Not support on current platform, probe=%s" % MongoDbStat()
+    )
     def test_MongoDbStat(self):
         """
         Test

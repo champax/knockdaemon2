@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -167,22 +167,22 @@ class Mysql(KnockProbe):
             # Check
             if not buf:
                 # IOError 13 possible (file is root only) Retry invoke, invoke sudo (unittest mainly)
-                logger.info("Load failed, retry invoke, fallback invoke now")
+                logger.debug("Load failed, retry invoke, fallback invoke now")
                 cmd = "cat {0}".format(Mysql.MYSQL_CONFIG_FILE)
                 ec, so, se = ButcherTools.invoke(cmd)
                 if ec != 0:
-                    logger.info("invoke failed, retry sudo, ec=%s, so=%s, se=%s", ec, so, se)
+                    logger.debug("invoke failed, retry sudo, ec=%s, so=%s, se=%s", ec, so, se)
                     # Retry sudo
                     cmd = "sudo cat {0}".format(Mysql.MYSQL_CONFIG_FILE)
                     ec, so, se = ButcherTools.invoke(cmd)
                     if ec != 0:
-                        logger.warning("invoke failed, give up, ec=%s, so=%s, se=%s", ec, so, se)
+                        logger.warning("invoke failed (sudo fallback), give up, ec=%s, so=%s, se=%s", ec, so, se)
                         return None, None, None
                 # Ok
                 buf = so
 
             # Split
-            logger.info("Buffer loaded, parsing...")
+            logger.debug("Buffer loaded, parsing...")
             ar = buf.split("\n")
             cur_section = None
             cur_login = None
@@ -202,7 +202,7 @@ class Mysql(KnockProbe):
                 if r.find("[") == 0:
                     # Section start
                     cur_section = r
-                    logger.info("Section set, cur_section=%s", cur_section)
+                    logger.debug("Section set, cur_section=%s", cur_section)
                     continue
 
                 if not cur_section == "[client]":
@@ -210,7 +210,7 @@ class Mysql(KnockProbe):
 
                 # Item in cur_section
                 # Do not log this... (pwd)
-                # logger.info("Parsing now, r=%s", r)
+                # logger.debug("Parsing now, r=%s", r)
                 row_ar = r.split("=", 1)
                 row_ar[0] = row_ar[0].strip()
                 row_ar[1] = row_ar[1].strip()
@@ -228,7 +228,7 @@ class Mysql(KnockProbe):
 
             # Ok
             t_out = cur_login, cur_pwd, cur_socket
-            logger.info("Located stuff, t_out=%s", t_out)
+            logger.debug("Located stuff, t_out=%s", t_out)
             return t_out
 
         except Exception as e:
@@ -251,7 +251,7 @@ class Mysql(KnockProbe):
         try:
             # Check file
             if not FileUtility.is_file_exist(Mysql.MYSQL_CONFIG_FILE) and not FileUtility.is_file_exist(Mysql.CENTOS_CONFIG_FILE):
-                logger.info("No mysql located (no file=%s)", Mysql.MYSQL_CONFIG_FILE)
+                logger.debug("No mysql located (no file=%s)", Mysql.MYSQL_CONFIG_FILE)
                 return
 
             # Fetch (MUST NOT FAILS)
@@ -284,13 +284,13 @@ class Mysql(KnockProbe):
             # Fetch variables
             ms = SolBase.mscurrent()
 
-            logger.info("Mysql connect/exec now")
+            logger.debug("Mysql connect/exec now")
             ar_show_global_status = MysqlApi.exec_n(d_conf, "show global status;")
 
-            logger.info("Mysql connect/exec now")
+            logger.debug("Mysql connect/exec now")
             ar_show_slave_status = MysqlApi.exec_n(d_conf, "show slave status;")
 
-            logger.info("Mysql connect/exec now")
+            logger.debug("Mysql connect/exec now")
             ar_show_global_variables = MysqlApi.exec_n(d_conf, "show global variables;")
 
             # Process
@@ -328,7 +328,7 @@ class Mysql(KnockProbe):
         # -----------------------------
 
         # Process
-        logger.info("Mysql global status ok, got ar_show_global_status, values below, building output")
+        logger.debug("Mysql global status ok, got ar_show_global_status, values below, building output")
         for d in ar_show_global_status:
             logger.debug("Got row")
             for k, v in d.items():
@@ -343,7 +343,7 @@ class Mysql(KnockProbe):
         # -----------------------------
 
         # Process
-        logger.info("Mysql global variables ok, got ar_show_global_variables, values below, building output")
+        logger.debug("Mysql global variables ok, got ar_show_global_variables, values below, building output")
         for d in ar_show_global_variables:
             logger.debug("Got row")
             for k, v in d.items():
@@ -375,7 +375,7 @@ class Mysql(KnockProbe):
                 q_enabled = False
             else:
                 q_enabled = True
-            logger.info("q_enabled=%s, q_type=%s, q_max=%s", q_enabled, q_type, q_max)
+            logger.debug("q_enabled=%s, q_type=%s, q_max=%s", q_enabled, q_type, q_max)
 
             # Special processing : Connection allocated ram (Threads_connected * bytes per connection)
             # Bytes per connection approx : join_buffer_size + sort_buffer_size + read_buffer_size + read_rnd_buffer_size + binlog_cache_size
@@ -414,16 +414,17 @@ class Mysql(KnockProbe):
             debug_thread_pool = int(d_out.get("k.mysql.thread.pool.cur_bytes", 0)) / 1024 / 1024
             debug_total += debug_thread_pool
 
-            logger.info("total=%s, inno.clean/dirty/logbuf/add=%s/%s/%s/%s, isam=%s, qcache=%s, conn=%s, thread=%s",
-                        debug_total,
-                        debug_inno_clean,
-                        debug_inno_dirty,
-                        debug_inno_logbuf,
-                        debug_inno_addmem,
-                        debug_isam_keybuf,
-                        debug_qcache,
-                        debug_conn_pool,
-                        debug_thread_pool)
+            logger.debug(
+                "total=%s, inno.clean/dirty/logbuf/add=%s/%s/%s/%s, isam=%s, qcache=%s, conn=%s, thread=%s",
+                debug_total,
+                debug_inno_clean,
+                debug_inno_dirty,
+                debug_inno_logbuf,
+                debug_inno_addmem,
+                debug_isam_keybuf,
+                debug_qcache,
+                debug_conn_pool,
+                debug_thread_pool)
         except Exception as e:
             logger.warning("Abnormal exception in special processing, ex=%s", SolBase.extostr(e))
 
@@ -432,7 +433,7 @@ class Mysql(KnockProbe):
         # -----------------------------
 
         # Process (we got one dict in ar_out, fetch direct)
-        logger.info("Mysql slave status ok, got ar_show_slave_status, building output")
+        logger.debug("Mysql slave status ok, got ar_show_slave_status, building output")
         logger.debug("Mysql ar_show_slave_status=%s", ar_show_slave_status)
         try:
             repli_lag_sec = 0
@@ -450,30 +451,30 @@ class Mysql(KnockProbe):
 
                 # Seconds lag : None, null, or set
                 if not v:
-                    logger.info("Found direct v=None")
+                    logger.debug("Found direct v=None")
                     if s_all_running:
                         repli_lag_sec = 0
                     else:
                         # Not all threads running, signal it
                         repli_lag_sec = -2
                 elif isinstance(v, str) and v.lower() == "null":
-                    logger.info("Found direct bytes/str null, v=%s", v)
+                    logger.debug("Found direct bytes/str null, v=%s", v)
                     if s_all_running:
                         repli_lag_sec = 0
                     else:
                         # Not all threads running, signal it
                         repli_lag_sec = -2
                 elif isinstance(v, int):
-                    logger.info("Found direct int, v=%s", v)
+                    logger.debug("Found direct int, v=%s", v)
                     repli_lag_sec = v
                 else:
-                    logger.info("Found indirect int, v=%s, type=%s", v, type(v))
+                    logger.debug("Found indirect int, v=%s, type=%s", v, type(v))
                     repli_lag_sec = int(v)
 
                 # Ok
-                logger.info("Found v=%s, repli_lag_sec=%s, io/sql/all=%s/%s/%s", v, repli_lag_sec, s_io_running, s_sql_running, s_all_running)
+                logger.debug("Found v=%s, repli_lag_sec=%s, io/sql/all=%s/%s/%s", v, repli_lag_sec, s_io_running, s_sql_running, s_all_running)
             else:
-                logger.info("Found no record, repli_lag_sec=%s", repli_lag_sec)
+                logger.debug("Found no record, repli_lag_sec=%s", repli_lag_sec)
 
             # Set in output dict
             d_out["Seconds_Behind_Master"] = repli_lag_sec
@@ -483,7 +484,7 @@ class Mysql(KnockProbe):
             d_out["Seconds_Behind_Master"] = -1
 
         # Log
-        logger.info("Got d_out[Seconds_Behind_Master]=%s", d_out["Seconds_Behind_Master"])
+        logger.debug("Got d_out[Seconds_Behind_Master]=%s", d_out["Seconds_Behind_Master"])
 
         # -----------------------------
         # Debug
@@ -512,5 +513,5 @@ class Mysql(KnockProbe):
             self.notify_value_n(knock_key, {"ID": mysql_id}, v)
 
         # Over, instance up
-        logger.info("Execute ok, signaling instance up, started=1")
+        logger.debug("Execute ok, signaling instance up, started=1")
         self.notify_value_n("k.mysql.started", {"ID": mysql_id}, 1)

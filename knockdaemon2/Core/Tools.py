@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -95,9 +95,11 @@ class Tools(object):
             dt_temp = SolBase.dt_ensure_utc_naive(SolBase.epoch_to_dt(timestamp))
             s_dt_temp = dt_temp.strftime('%Y-%m-%dT%H:%M:%SZ')
 
-            # Init
-            d_tags = {"host": c_host, "ns": account_hash["acc_namespace"]}
+            # Tags dict
+            d_tags_effective = {"host": c_host, "ns": account_hash["acc_namespace"]}
+            d_tags_effective.update(d_tags)
 
+            # Value dict
             f_dict = {"value": value}
             if d_values:
                 if "value" in d_values:
@@ -107,7 +109,7 @@ class Tools(object):
             # Build
             d_temp = {
                 "measurement": counter_key,
-                "tags": d_tags,
+                "tags": d_tags_effective,
                 "time": s_dt_temp,
                 "fields": f_dict
             }
@@ -190,17 +192,18 @@ class Tools(object):
             else:
                 http_req.https_insecure = False
         else:
+            # noinspection HttpUrlsUsage
             http_req.uri = "http://{0}:{1}/query?{2}".format(host, port, s_qs)
         http_req.method = "POST"
 
         # Go
-        logger.info("Influx, http go, req=%s", http_req)
-        logger.info("Influx, http go, post_data=%s", repr(http_req.post_data))
+        logger.debug("Influx, http go, req=%s", http_req)
+        logger.debug("Influx, http go, post_data=%s", repr(http_req.post_data))
         http_rep = http_client.go_http(http_req)
 
         # Ok
-        logger.info("Influx, http reply, rep=%s", http_rep)
-        logger.info("Influx, http reply, buf=%s", repr(http_rep.buffer))
+        logger.debug("Influx, http reply, rep=%s", http_rep)
+        logger.debug("Influx, http reply, buf=%s", repr(http_rep.buffer))
         return http_rep
 
     @classmethod
@@ -256,17 +259,18 @@ class Tools(object):
             else:
                 http_req.https_insecure = False
         else:
+            # noinspection HttpUrlsUsage
             http_req.uri = "http://{0}:{1}/query?{2}".format(host, port, s_qs)
         http_req.method = "POST"
 
         # Go
-        logger.info("Influx, http go, req=%s", http_req)
-        logger.info("Influx, http go, post_data=%s", repr(http_req.post_data))
+        logger.debug("Influx, http go, req=%s", http_req)
+        logger.debug("Influx, http go, post_data=%s", repr(http_req.post_data))
         http_rep = http_client.go_http(http_req)
 
         # Ok
-        logger.info("Influx, http reply, rep=%s", http_rep)
-        logger.info("Influx, http reply, buf=%s", repr(http_rep.buffer))
+        logger.debug("Influx, http reply, rep=%s", http_rep)
+        logger.debug("Influx, http reply, buf=%s", repr(http_rep.buffer))
         return http_rep
 
     @classmethod
@@ -323,6 +327,7 @@ class Tools(object):
             else:
                 http_req.https_insecure = False
         else:
+            # noinspection HttpUrlsUsage
             http_req.uri = "http://{0}:{1}/write?{2}".format(host, port, s_qs)
         http_req.method = "POST"
         http_req.post_data = ('\n'.join(ar_data) + '\n').encode('utf8')
@@ -330,11 +335,11 @@ class Tools(object):
             raise Exception("Need \n\n ended post_data, got={0}".format(http_req.post_data[:-16]))
 
         # Go
-        logger.info("Influx, http go, req=%s", http_req)
+        logger.debug("Influx, http go, req=%s", http_req)
         logger.debug("Influx, http go, post_data=%s", repr(http_req.post_data))
         http_rep = http_client.go_http(http_req)
 
         # Ok
-        logger.info("Influx, http reply, rep=%s", http_rep)
-        logger.info("Influx, http reply, buf=%s", repr(http_rep.buffer))
+        logger.debug("Influx, http reply, rep=%s", http_rep)
+        logger.debug("Influx, http reply, buf=%s", repr(http_rep.buffer))
         return http_rep

@@ -4,15 +4,19 @@ echo "=========================="
 echo "build_client_debian.sh called"
 echo "=========================="
 
+if [ -z "$V_ENV_ROOT" ]; then
+  V_ENV_ROOT="/var/lib/jenkins/.virtualenvs"
+fi
+echo "Using V_ENV_ROOT=${V_ENV_ROOT}"
 echo "=========================="
 echo "Init"
 echo "=========================="
 
-echo "Python native (using python 27 for virtualenv source)"
+echo "Python native"
 /usr/bin/python --version
 
 export VIRTUALENVWRAPPER_ENV_BIN_DIR=bin
-export VIRTUALENVWRAPPER_HOOK_DIR=/var/lib/jenkins/.virtualenvs
+export VIRTUALENVWRAPPER_HOOK_DIR=${V_ENV_ROOT}
 export VIRTUALENVWRAPPER_LAZY_LOADED=1
 export VIRTUALENVWRAPPER_PROJECT_FILENAME=.project
 export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python
@@ -86,6 +90,9 @@ fi
 echo "setuptools"
 pip install setuptools --upgrade --no-cache-dir
 
+echo "pipdeptree"
+pip install pipdeptree --upgrade --no-cache-dir
+
 echo "=========================="
 echo "Installing requirements.txt"
 echo "=========================="
@@ -117,6 +124,12 @@ echo "DEBUG : pip freeze"
 echo "=========================="
 
 pip freeze
+
+echo "=========================="
+echo "DEBUG : pipdeptree"
+echo "=========================="
+
+pipdeptree
 
 echo "=========================="
 echo "Firing nosetests"

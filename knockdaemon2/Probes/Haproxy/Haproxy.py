@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -256,7 +256,7 @@ class Haproxy(KnockProbe):
             )
 
         # Success, notify started (global only)
-        logger.info("Run ok (signaling up)")
+        logger.debug("Run ok (signaling up)")
         self.notify_value_n(
             counter_key="k.haproxy.started",
             d_tags={"PROXY": "ALL"},
@@ -271,21 +271,21 @@ class Haproxy(KnockProbe):
         # Detect haproxy
         try:
             if not FileUtility.is_file_exist('/etc/haproxy/haproxy.cfg'):
-                logger.info("Give up (/etc/haproxy/haproxy.cfg not found)")
+                logger.debug("Give up (/etc/haproxy/haproxy.cfg not found)")
                 return
-            logger.info("Haproxy detected (/etc/haproxy/haproxy.cfg found)")
+            logger.debug("Haproxy detected (/etc/haproxy/haproxy.cfg found)")
 
             # Get stat socket
             soc_name = self.try_get_socket_name(FileUtility.file_to_textbuffer("/etc/haproxy/haproxy.cfg", "utf8"))
             if not soc_name:
-                logger.info("Give up (unable to locate stats socket)")
+                logger.debug("Give up (unable to locate stats socket)")
                 self._notify_down()
                 return
 
             # Read all
             ha_buf = self.try_read_socket(soc_name, "show stat")
             if ha_buf is None:
-                logger.info("Give up (read_soc None)")
+                logger.debug("Give up (read_soc None)")
                 self._notify_down()
                 return
 
@@ -331,10 +331,10 @@ class Haproxy(KnockProbe):
             logger.debug("Recv (over) socket, soc_name=%s", soc_name)
             return ha_buf
         except Exception as e:
-            logger.info("Give up (exception), soc_name=%s, ex=%s", soc_name, SolBase.extostr(e))
+            logger.debug("Give up (exception), soc_name=%s, ex=%s", soc_name, SolBase.extostr(e))
             return None
         finally:
-            logger.info("Closing socket, soc_name=%s", soc_name)
+            logger.debug("Closing socket, soc_name=%s", soc_name)
             SolBase.safe_close_socket(soc)
             SolBase.sleep(0)
 

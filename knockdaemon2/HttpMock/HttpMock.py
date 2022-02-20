@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -22,12 +22,12 @@
 # ===============================================================================
 """
 
+from pysolbase.SolBase import SolBase
+
+SolBase.voodoo_init()
+
 import logging
-# noinspection PyProtectedMember
 import zlib
-from collections import OrderedDict
-from os.path import abspath
-from os.path import dirname
 from threading import Lock
 from urllib.parse import parse_qsl
 
@@ -37,18 +37,10 @@ import ujson
 from gevent.baseserver import _parse_address
 from gevent.event import Event
 from gevent.pywsgi import WSGIServer
-from pysolbase.FileUtility import FileUtility
-from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
-
-SolBase.voodoo_init()
 
 logger = logging.getLogger(__name__)
 lifecyclelogger = logging.getLogger("LifeCycle")
-
-
-class NotSupportedVersion(Exception):
-    pass
 
 
 class HttpMock(object):
@@ -287,7 +279,7 @@ class HttpMock(object):
                 logger.debug("Unable to decode zlib, should be a normal buffer, ex=%s",
                              SolBase.extostr(ex))
 
-        return wi
+        return wi.decode("utf8")
 
     # ==============================
     # MAIN REQUEST CALLBACK
@@ -318,20 +310,14 @@ class HttpMock(object):
             # Sometimes PATH_INFO come with full uri (urllib3) (?!)
             # http://127.0.0.1:7900/unittest
 
-            if pi.endswith("/mockdeb"):
-                return self._on_mockdeb(environ, start_response)
-            elif pi.endswith("/mockrpm"):
-                return self._on_mockrpm(environ, start_response)
-            elif pi.endswith("/pv2"):
-                return self._on_probe_v2(environ, start_response)
-            elif pi.endswith("/logv1"):
-                return self._on_log_v1(environ, start_response)
-            elif pi.endswith("/unittest"):
+            if pi.endswith("/unittest"):
                 return self._on_unit_test(environ, start_response)
             elif pi.endswith("/junittest"):
                 return self._on_json_unit_test(environ, start_response)
-            elif pi.endswith("/kdversion"):
-                return self._on_kdversion(environ, start_response)
+            elif pi.endswith("/write"):
+                return self._on_influx_mock_write(environ, start_response)
+            elif pi.endswith("/query"):
+                return self._on_influx_mock_query(environ, start_response)
             else:
                 return self._on_invalid(start_response)
         except Exception as e:
@@ -340,7 +326,7 @@ class HttpMock(object):
             body = status
             headers = [('Content-Type', 'text/plain')]
             start_response(status, headers)
-            return [body]
+            return [body.encode("utf8")]
         finally:
             self._lifecycle_log_status()
 
@@ -363,7 +349,7 @@ class HttpMock(object):
         body = status
         headers = [('Content-Type', 'text/txt')]
         start_response(status, headers)
-        return [body]
+        return [body.encode("utf8")]
 
     # ==============================
     # REQUEST : UNITTEST
@@ -391,69 +377,7 @@ class HttpMock(object):
         body += "from_post=" + str(from_post) + " -EOL\n"
         headers = [('Content-Type', 'text/txt')]
         start_response(status, headers)
-        return [body]
-
-    # ==============================
-    # REQUEST : UNITTEST
-    # ==============================
-
-    # noinspection PyUnusedLocal,PyMethodMayBeStatic
-    def _on_mockdeb(self, environ, start_response):
-        """
-        On request callback
-        :param environ: environ
-        :type environ: dict
-        :param start_response: start_response
-        :type start_response: instancemethod
-        :return: list
-        :rtype: list
-        """
-
-        # Get the .deb full path
-        s = SolBase.get_pathseparator()
-        current_dir = dirname(abspath(__file__)) + s
-        deb_file = current_dir + "../../knockdaemon2_test/ForTest/knockdaemon2_mock.deb"
-
-        # Load it (binary)
-        buf = FileUtility.file_to_binary(deb_file)
-
-        # Send it
-
-        # Debug
-        status = "200 OK"
-        headers = [('Content-Type', 'application/octet-stream')]
-        body = buf
-        start_response(status, headers)
-        return [body]
-
-    # noinspection PyUnusedLocal,PyMethodMayBeStatic
-    def _on_mockrpm(self, environ, start_response):
-        """
-        On request callback
-        :param environ: environ
-        :type environ: dict
-        :param start_response: start_response
-        :type start_response: instancemethod
-        :return: list
-        :rtype: list
-        """
-
-        # Get the .deb full path
-        s = SolBase.get_pathseparator()
-        current_dir = dirname(abspath(__file__)) + s
-        rpm_file = current_dir + "../../knockdaemon2_test/ForTest/knockdaemon2_mock.rpm"
-
-        # Load it (binary)
-        buf = FileUtility.file_to_binary(rpm_file)
-
-        # Send it
-
-        # Debug
-        status = "200 OK"
-        headers = [('Content-Type', 'application/octet-stream')]
-        body = buf
-        start_response(status, headers)
-        return [body]
+        return [body.encode("utf8")]
 
     # ==============================
     # REQUEST : PROBES
@@ -491,15 +415,11 @@ class HttpMock(object):
         body = ujson.dumps(rd)
         headers = [('Content-Type', 'application/json')]
         start_response(status, headers)
-        return [body]
+        return [body.encode("utf8")]
 
-    # ==============================
-    # REQUEST : PROBES
-    # ==============================
-
-    def _on_probe_v2(self, environ, start_response):
+    def _on_influx_mock_write(self, environ, start_response):
         """
-        Probe v2 (array)
+        Influx mock
         :param environ: environ
         :type environ: dict
         :param start_response: start_response
@@ -508,157 +428,61 @@ class HttpMock(object):
         :rtype: list
         """
 
-        try:
-            # We expect POST DATA, not url encoded
-            post_data = self._get_post_data(environ)
+        # /write?db=zzz2
+        # with post_data
 
-            # Ok, post_data are json buffer, process it
-            d = ujson.loads(post_data)
-            logger.debug("d=%s", d)
+        d_qs = self._get_param_from_qs(environ)
+        if "db" not in d_qs:
+            raise Exception("Invalid d_qs (db miss)=%s" % d_qs)
 
-            # Options
-            protocol_array = d["par"]
-            options = d["o"]
-
-            # Allocate
-            account_hash = dict()
-            node_hash = dict()
-            notify_hash = dict()
-            notify_values = list()
-
-            # Browse chunks
-            for cur_buf in protocol_array:
-                cur_d = ujson.loads(cur_buf)
-                account_hash.update(cur_d["a"])
-                node_hash.update(cur_d["n"])
-                notify_hash.update(cur_d["h"])
-                notify_values.extend(cur_d["v"])
-
-            # Process options
-            zip_support = options["zip"]
-
-            # Go to supervision
-            ms_start = SolBase.mscurrent()
-            b, ok_count, ko_count = self._go_to_supervision(
-                account_hash, node_hash, notify_hash, notify_values)
-
-            # Reply
-            rd = dict()
-            rd["st"] = 200
-            rd["ac"] = len(account_hash)
-            rd["nc"] = len(node_hash)
-            rd["hc"] = len(notify_hash)
-            rd["vc"] = len(notify_values)
-            rd["sp"] = {"ok": ok_count, "ko": ko_count, "ms": int(SolBase.msdiff(ms_start))}
-            status = "200 OK"
-            body = ujson.dumps(rd)
-            if self._zip_enabled and zip_support:
-                body = body.encode("zlib")
-            headers = [('Content-Type', 'application/json')]
-            start_response(status, headers)
-            return [body]
-        except Exception as e:
-            logger.warning("Ex=%s", SolBase.extostr(e))
-            # Reply success to avoid client enqueing stuff if we are buggy
-            rd = dict()
-            rd["st"] = 200
-            status = "200"
-            body = ujson.dumps(rd)
-            if self._zip_enabled:
-                body = body.encode("zlib")
-            headers = [('Content-Type', 'application/json')]
-            start_response(status, headers)
-            return [body]
-
-    # ==============================
-    # REQUEST : VERSION
-    # ==============================
-
-    def _on_kdversion(self, environ, start_response):
-        """
-         Knock daemon get last version
-        :param environ: environ
-        :type environ: dict
-        :param start_response: start_response
-        :type start_response: instancemethod
-        :return: list
-        :rtype: list
-        """
-        # We expect POST DATA, not url encoded
         post_data = self._get_post_data(environ)
-        return_status_code = 200
-        return_status_message = "OK"
-        version = 'UNK'
-        from_cache = False
-        package_url = None
-        client_os_name = None
+        if not post_data.endswith("\n\n"):
+            raise Exception("Invalid post_data (no \n\n final)")
+        ar_post_data = post_data.split("\n")
+        for s in ar_post_data:
+            s = s.strip()
+            if len(s) == 0:
+                continue
 
-        try:
-            # We fallback to QS for debug only
-            if len(post_data) == 0:
-                # Process and decode QS
-                p = self._get_param_from_qs(environ)
+            # Format
+            # 'k.os.hostname,host=lchdebhome2,ns=unittest value="lchdebhome2" 1645093662000000000'
+            ar = s.split(" ")
+            ar_key_tags = ar[0].split(",")
+            counter = ar_key_tags[0]
+            d_tags = dict()
+            for s2 in ar_key_tags[1:]:
+                ar_s2 = s2.split("=")
+                d_tags[ar_s2[0]] = ar_s2[1]
 
-            else:
-                p = ujson.loads(post_data)
+            vk = ar[1].split("=")[0]
+            vv = ar[1].split("=")[1].replace("\"", "")
+            ts = int(ar[2])
 
-            # Just log
-            client_os_name = p['os_name']
-            client_os_version = p['os_version']
-            client_os_arch = p['os_arch']
-            logger.info("GOT OS name=%s, version=%s, arch=%s", client_os_name, client_os_version, client_os_arch)
-
-        except KeyError:
-            logger.warning("Missing parameters")
-            return_status_code = 418
-            return_status_message = "I'm a teapot"
-
-        except Exception as e:
-            logger.warning(SolBase.extostr(e))
-            return_status_code = 500
-            return_status_message = 'Internal error'
-
-        if return_status_code == 200:
-            try:
-                # Mock, we hard code and target our local mock handler
-                if client_os_name == "debian":
-                    version = "0.1.1-406"
-                    package_url = "http://127.0.0.1:7900/mockdeb"
-                    from_cache = False
-                elif client_os_name == "redhat" or client_os_name == "centos":
-                    version = "0.1.1-452"
-                    package_url = "http://127.0.0.1:7900/mockrpm"
-                    from_cache = False
-
-            except NotSupportedVersion as e:
-                logger.warning(SolBase.extostr(e))
-                return_status_message = 'Version not supported'
-                return_status_code = 404
-            except Exception as e:
-                package_url = None
-                logger.warning(SolBase.extostr(e))
+            if vk != "value":
+                raise Exception("Invalid vk=%s" % vk)
+            if len(vv) == 0:
+                raise Exception("Invalid vv=%s" % vv)
+            if not isinstance(ts, int):
+                raise Exception("Invalid ts=%s" % ts)
+            if "host" not in d_tags:
+                raise Exception("Invalid d_tags.host")
+            if "ns" not in d_tags:
+                raise Exception("Invalid d_tags.ns")
+            if len(counter) == 0:
+                raise Exception("Invalid counter")
 
         # Reply
         rd = dict()
-        rd["st"] = return_status_code
-        rd["message"] = return_status_message
-        if return_status_code == 200:
-            rd["version"] = version
-            rd["url"] = package_url
-            rd['fc'] = from_cache
+        rd["st"] = 200
         status = "200 OK"
         body = ujson.dumps(rd)
         headers = [('Content-Type', 'application/json')]
         start_response(status, headers)
-        return [body]
+        return [body.encode("utf8")]
 
-    # ==============================
-    # REQUEST : LOGS
-    # ==============================
-
-    def _on_log_v1(self, environ, start_response):
+    def _on_influx_mock_query(self, environ, start_response):
         """
-        Logs v1
+        Influx mock
         :param environ: environ
         :type environ: dict
         :param start_response: start_response
@@ -667,543 +491,26 @@ class HttpMock(object):
         :rtype: list
         """
 
-        try:
-            # We expect POST DATA, not url encoded
-            post_data = self._get_post_data(environ)
-
-            # Ok, post_data are json buffer, process it
-            d = ujson.loads(post_data)
-            logger.debug("d=%s", d)
-
-            # We expect "logs" as a list of dict["type", "data"] and "nm" as str
-            if "main_type" not in d:
-                raise Exception("main_type required")
-            main_type = d["main_type"]
-            namespace = d.get("namespace", "")
-            host = d.get("host", "")
-            for d_log in d["logs"]:
-                t = d_log["type"]
-                data = d_log["data"]
-                logger.info("Got main_type=%s, namespace=%s, host=%s, t=%s, data=%s", main_type, namespace, host, t, repr(data))
-
-            # Reply
-            rd = dict()
-            rd["st"] = 200
-            rd["log_count"] = len(d["logs"])
-            status = "200 OK"
-            body = ujson.dumps(rd)
-            if self._zip_enabled:
-                body = body.encode("zlib")
-            headers = [('Content-Type', 'application/json')]
-            start_response(status, headers)
-            return [body]
-        except Exception as e:
-            logger.warning("Ex=%s", SolBase.extostr(e))
-            rd = dict()
-            rd["st"] = 500
-            status = "500"
-            body = ujson.dumps(rd)
-            if self._zip_enabled:
-                body = body.encode("zlib")
-            headers = [('Content-Type', 'application/json')]
-            start_response(status, headers)
-            return [body]
-
-    def _go_to_supervision(self, account_hash, node_hash, notify_hash, notify_values):
-        """
-        Go to supervision
-        :param account_hash: dict
-        :type account_hash: dict
-        :param node_hash: dict
-        :type node_hash: dict
-        :param notify_hash: Hash str to (disco_key, disco_id, tag)
-        :type notify_hash; dict
-        :param notify_values: List of (superv_key, tag, value)
-        :type notify_values; list
-        :return tuple (True if all success, processed, failed)
-        :rtype tuple
-        """
-
-        # ----------------------------
-        # NODES
-        # ----------------------------
-        for k, v in node_hash.items():
-            logger.debug("Node %s: %s", k, v)
-
-        # Get host
-        host = node_hash["host"]
-
-        # Get namespace
-        account_ns = account_hash["acc_namespace"]
-
-        # Ok, push all
-        return self._go_to_supervision_internal(account_ns, host, notify_hash,
-                                                notify_values)
-
-    # noinspection PyMethodMayBeStatic
-    def _go_to_supervision_internal(self, account_ns, host, notify_hash, notify_values):
-        """
-        Go to supervision
-        :param account_ns: str
-        :type account_ns: str
-        :param notify_hash: Hash str to (disco_key, disco_id, tag)
-        :type notify_hash; dict
-        :param notify_values: List of (superv_key, tag, value)
-        :type notify_values; list
-        :return tuple (success, processed, failed)
-        :rtype tuple
-        """
-
-        # ----------------------------
-        # A) DISCOVERY (aka notify_hash)
-        # ----------------------------
-
-        # Prefix with namespace (dirty, to clean)
-        # noinspection PyAugmentAssignment
-        host = account_ns + "." + host
-
-        # {
-        # "host": "LLABATUT",
-        # "value": "{"data": [{"{#RDPORT}": "6380"}, {"{#RDPORT}": "ALL"}]}",
-        # "key": "test.dummy.discovery",
-        # "clock": 1369399569.651645
-        # }
-
-        # Merge disco key to list
-        hash_disco_key_to_list = dict()
-        for k, tu in notify_hash.items():
-
-            # OLD FORMAT :
-            # Key => tuple (disco_key, disco_id, tag)
-            #
-            # NEW FORMAT :
-            # Key => tuple (disco_key, OrderedDict)
-
-            if len(tu) == 3:
-                # -----------------------
-                # OLD FORMAT
-                # -----------------------
-                disco_key = tu[0]
-                disco_id = tu[1]
-                tag = tu[2]
-                logger.debug("Got %s : %s, %s, %s", k, disco_key, disco_id, tag)
-
-                # Hash
-                superv_disco_key = disco_key + ".discovery"
-                if superv_disco_key not in hash_disco_key_to_list:
-                    hash_disco_key_to_list[superv_disco_key] = list()
-
-                # Local dict
-                local_dict = dict()
-                d_key = "{#" + disco_id + "}"
-                d_value = tag
-                local_dict[d_key] = d_value
-
-                # Add to list of dict
-                hash_disco_key_to_list[superv_disco_key].append(local_dict)
-            elif len(tu) == 2:
-                # -----------------------
-                # NEW FORMAT
-                # -----------------------
-                disco_key = tu[0]
-                dd = tu[1]
-                if not isinstance(dd, dict):
-                    raise Exception("dd must be a dict, got={0}, value={1}".format(SolBase.get_classname(dd), dd))
-                elif not disco_key.endswith(".discovery"):
-                    raise Exception("disco_key must end with .discovery, got={0}".format(disco_key))
-
-                # Switch to ordered dict
-                od = OrderedDict(sorted(dd.items(), key=lambda z: z[0]))
-
-                # Hash
-                if disco_key not in hash_disco_key_to_list:
-                    hash_disco_key_to_list[disco_key] = list()
-
-                # Browse
-                local_dict = dict()
-                for disco_id, disco_tag in od.items():
-                    # Create dict
-                    local_dict["{#" + disco_id + "}"] = disco_tag
-
-                # Add it
-                hash_disco_key_to_list[disco_key].append(local_dict)
-
-            else:
-                raise Exception("Unknown format, tu={0}".format(tu))
-
-        # ----------------------------
-        # B) BUILD data_list using DISCO, browse hash_disco_key_to_list
-        # ----------------------------
-        disco_list = list()
-        for superv_disco_key, localList in hash_disco_key_to_list.items():
-            # Value is a JSON { "data" : [ list of dict ]
-            json_dict = dict()
-            json_dict["data"] = localList
-            json_local_buf = ujson.dumps(json_dict)
-            # Set
-            local_dict = dict()
-            local_dict["host"] = host  # unittest.LLABATUT
-            local_dict["key"] = superv_disco_key  # test.dummy.discovery
-            local_dict["value"] = json_local_buf
-            local_dict["clock"] = 1
-
-            # Add
-            disco_list.append(local_dict)
-
-        # ----------------------------------
-        # C) PROCESS VALUES (aka notify_values)
-        # 4 possibilities :
-        #
-        # A - simple value
-        #   => key=k.apache.dummy[default], tag=None, value=value, t=ms)
-        #
-        # B - discovery simple value
-        #   => (key=k.apache.discovery, tag=None, value={"data":[{"{#ID}":"www"}]}, t=ms)
-        #
-        # C - tag value
-        #   => (key=k.apache.dummy, tag=ID, value=www, t=ms)
-        #
-        # D - tag value as OrderedDict
-        #   => (key=k.apache.dummy, tag={ID:www, SERVER:s1}, value=value, t=ms)
-        # ----------------------------------
-
-        # Data : probes values
-        local_list_disco = list()
-        local_list_data = list()
-        for tu in notify_values:
-            superv_key = tu[0]
-            tag = tu[1]
-            value = tu[2]
-            t = tu[3]
-            d_opts_tags = tu[4]
-
-            # Debug
-            logger.debug("Got %s, %s, %s, %s, %s", superv_key, tag, value, t, d_opts_tags)
-
-            # Set
-            local_dict = dict()
-            local_dict["host"] = host
-            local_dict["value"] = value
-            local_dict["clock"] = t
-
-            if tag:
-                if isinstance(tag, dict):
-                    # --------------------
-                    # D) NEW FORMAT
-                    # --------------------
-                    # We DONT need DISCOVERY HERE, it has already been push by previous notify hash
-                    # Bu we need to append disco tags to probes name
-                    new_superv_key = superv_key
-                    # Switch to ordered dict
-                    od = OrderedDict(sorted(tag.items(), key=lambda z: z[0]))
-                    if len(od) > 1:
-                        pass
-                    sa = "["
-                    for k, v in od.items():
-                        # sa += "'" + v + "',"
-                        sa += "" + v + ","
-                    sa = sa[:-1]
-                    sa += "]"
-                    new_superv_key += sa
-                    # Override
-                    logger.debug("DISCO_V4 : Replacing superv_key=%s, new_superv_key=%s, od=%s", superv_key, new_superv_key, od)
-                    superv_key = new_superv_key
-                    # Add it
-                    local_dict["key"] = superv_key
-                    local_list_data.append(local_dict)
-                elif len(tag) > 0:
-                    # --------------------
-                    # C) OLD FORMAT : DATA ONLY
-                    # --------------------
-                    # We do NOT allow discovery here
-                    if superv_key.endswith(".discovery"):
-                        logger.warning(".discovery not allowed in tag value, got %s, %s, %s, %s", superv_key, tag, value, t)
-                        raise Exception(".discovery not allowed in tag value")
-
-                    # Tag value
-                    local_dict["key"] = "{0}[{1}]".format(superv_key, tag)
-                    local_list_data.append(local_dict)
-                else:
-                    raise Exception("Unknown tag={0}".format(tag))
-            elif superv_key.endswith(".discovery"):
-                # --------------------
-                # B) Simple : discovery
-                # --------------------
-                local_dict["key"] = superv_key
-                local_list_disco.append(local_dict)
-
-                # If we have "k.business", we must sent to host aggreg also
-                if superv_key.startswith("k.business"):
-                    aggreg_dict = dict()
-                    aggreg_dict["host"] = "K.Host.Aggreg"
-                    aggreg_dict["namespace"] = account_ns
-                    aggreg_dict["value"] = value
-                    aggreg_dict["clock"] = t
-                    aggreg_dict["key"] = superv_key
-                    local_list_disco.append(aggreg_dict)
-                    logger.info("K.Host.Aggreg : pushing aggreg_dict=%s", aggreg_dict)
-
-            else:
-                # --------------------
-                # A) Simple
-                # --------------------
-                local_dict["key"] = superv_key
-                local_list_data.append(local_dict)
-
-        # ---------------------------
-        # D) NEW CODE PATH
-        # ---------------------------
-        r_is_ok = True
-        r_ok = 0
-        r_ko = 0
-        try:
-            # ---------------------------
-            # DISPATCH IN TWO LIST
-            # ---------------------------
-
-            # Realloc pure data list
-            data_list = list()
-
-            # Priority to discovery
-            for it in local_list_disco:
-                disco_list.append(it)
-
-            # Then disco
-            for it in local_list_data:
-                data_list.append(it)
-
-            # ---------------------------
-            # A : Fire discovery one by one
-            # ---------------------------
-
-            logger.info("DISCO Processing (sequential) disco_list.len=%s", len(disco_list))
-
-            for cur_disco_dict in disco_list:
-                # Fire it
-                logger.info("DISCO Processing (single disco), cur_disco_dict.len=%s", len(cur_disco_dict))
-
-                # ---------------------------
-                # DISCO : Fire zab
-                # ---------------------------
-
-                # Alloc a local list
-                single_disco_list = list()
-                single_disco_list.append(cur_disco_dict)
-
-                # Fire it
-                logger.info("DISCO Firing (single disco), single_disco_list.len=%s", len(single_disco_list))
-
-                # Fire simulated
-                ok_count = len(single_disco_list)
-                ko_count = 0
-
-                # Total processed
-                r_ok += ok_count
-                r_ko += ko_count
-
-            # ---------------------------
-            # B : Fire all datas
-            # ---------------------------
-            logger.info("DATA Firing (bulk), data_list.len=%s", len(data_list))
-            is_ok = True
-            ok_count = len(data_list)
-            ko_count = 0
-            if not is_ok:
-                r_is_ok = False
-
-            r_ok += ok_count
-            r_ko += ko_count
-        except Exception as e:
-            logger.warning("Exception (new code path), ex=%s", SolBase.extostr(e))
-            raise
-        finally:
-            # required for unittest
-            Meters.aii("httpasync_" + "knock_stat_transport_spv_processed", r_ok)
-            Meters.aii("httpasync_" + "knock_stat_transport_spv_failed", r_ko)
-            Meters.aii("httpasync_" + "knock_stat_transport_spv_total", r_ok + r_ko)
-            return r_is_ok, r_ok, r_ko
-
-    # noinspection PyMethodMayBeStatic
-    def _go_to_supervision_internal_old(self, account_ns, host, notify_hash, notify_values):
-        """
-        Go to supervision
-        :param account_ns: str
-        :type account_ns: str
-        :param notify_hash: Hash str to (disco_key, disco_id, tag)
-        :type notify_hash; dict
-        :param notify_values: List of (superv_key, tag, value)
-        :type notify_values; list
-        :return tuple (success, processed, failed)
-        :rtype tuple
-        """
-
-        # ----------------------------
-        # DISCOVERY (aka notify_hash)
-        # ----------------------------
-
-        # Prefix with namespace (dirty, to clean)
-        # noinspection PyAugmentAssignment
-        host = account_ns + "." + host
-
-        # Merge disco key to list
-        hash_disco_key_to_list = dict()
-        for k, tu in notify_hash.items():
-            disco_key = tu[0]
-            disco_id = tu[1]
-            tag = tu[2]
-            logger.debug("Got %s : %s, %s, %s", k, disco_key, disco_id, tag)
-
-            # Hash
-            superv_disco_key = disco_key + ".discovery"
-            if superv_disco_key not in hash_disco_key_to_list:
-                hash_disco_key_to_list[superv_disco_key] = list()
-
-            # Local dict
-            local_dict = dict()
-            d_key = "{#" + disco_id + "}"
-            d_value = tag
-            local_dict[d_key] = d_value
-
-            # Add to list of dict
-            hash_disco_key_to_list[superv_disco_key].append(local_dict)
-        logger.debug("hash_disco_key_to_list=%s", hash_disco_key_to_list)
-
-        # Browse it
-        data_list = list()
-        for superv_disco_key, localList in hash_disco_key_to_list.items():
-            # Value is a JSON { "data" : [ list of dict ]
-            json_dict = dict()
-            json_dict["data"] = localList
-            json_local_buf = ujson.dumps(json_dict)
-            # Set
-            local_dict = dict()
-            local_dict["host"] = host  # unittest.LLABATUT
-            local_dict["key"] = superv_disco_key  # test.dummy.discovery
-            local_dict["value"] = json_local_buf
-            local_dict["clock"] = 1
-
-            # Add
-            data_list.append(local_dict)
-
-        # ----------------------------------
-        # VALUES (aka notify_values)
-        # 3 possibilities :
-        # - simple value
-        #   => key=k.apache.dummy[default], tag=None, value=value, t=ms)
-        # - discovery simple value
-        #   => (key=k.apache.discovery, tag=None, value={"data":[{"{#ID}":"www"}]}, t=ms)
-        # - tag value
-        #   => (key=k.apache.dummy, tag=ID, value=www, t=ms)
-        # ----------------------------------
-
-        # Data : probes values
-        local_list_disco = list()
-        local_list_data = list()
-        for tu in notify_values:
-            superv_key = tu[0]
-            tag = tu[1]
-            value = tu[2]
-            t = tu[3]
-
-            # Debug
-            logger.debug("Got %s, %s, %s, %s", superv_key, tag, value, t)
-
-            # Set
-            local_dict = dict()
-            local_dict["host"] = host
-            local_dict["value"] = value
-            local_dict["clock"] = t
-
-            if tag and len(tag) > 0:
-                # We do NOT allow discovery here
-                if superv_key.endswith(".discovery"):
-                    logger.warning(".discovery not allowed in tag value, got %s, %s, %s, %s", superv_key, tag, value, t)
-                    raise Exception(".discovery not allowed in tag value")
-
-                # Tag value
-                local_dict["key"] = "{0}[{1}]".format(superv_key, tag)
-                local_list_data.append(local_dict)
-            elif superv_key.endswith(".discovery"):
-                # Simple : discovery
-                local_dict["key"] = superv_key
-                local_list_disco.append(local_dict)
-            else:
-                # Simple
-                local_dict["key"] = superv_key
-                local_list_data.append(local_dict)
-
-        # ---------------------------
-        # GO
-        # ---------------------------
-        r_is_ok = True
-        r_ok = 0
-        r_ko = 0
-        try:
-            # ---------------------------
-            # DISPATCH IN TWO LIST
-            # ---------------------------
-
-            # Already set : disco only
-            disco_list = data_list
-
-            # Realloc pure data list
-            data_list = list()
-
-            # Priority to discovery
-            for it in local_list_disco:
-                disco_list.append(it)
-
-            # Then disco
-            for it in local_list_data:
-                data_list.append(it)
-
-            # ---------------------------
-            # A : Fire discovery one by one
-            # ---------------------------
-
-            logger.info("DISCO Processing (sequential) disco_list.len=%s", len(disco_list))
-
-            for cur_disco_dict in disco_list:
-                # Fire it
-                logger.info("DISCO Processing (single disco), cur_disco_dict.len=%s", len(cur_disco_dict))
-
-                # ---------------------------
-                # DISCO : Fire zab
-                # ---------------------------
-
-                # Alloc a local list
-                single_disco_list = list()
-                single_disco_list.append(cur_disco_dict)
-
-                # Fire it
-                logger.info("DISCO Firing (single disco), single_disco_list.len=%s", len(single_disco_list))
-
-                # Fire simulated
-                ok_count = len(single_disco_list)
-                ko_count = 0
-
-                # Total processed
-                r_ok += ok_count
-                r_ko += ko_count
-
-            # ---------------------------
-            # B : Fire all datas
-            # ---------------------------
-            logger.info("DATA Firing (bulk), data_list.len=%s", len(data_list))
-            is_ok = True
-            ok_count = len(data_list)
-            ko_count = 0
-            if not is_ok:
-                r_is_ok = False
-
-            r_ok += ok_count
-            r_ko += ko_count
-        except Exception as e:
-            logger.warning("Exception (new code path), ex=%s", SolBase.extostr(e))
-            raise
-        finally:
-            # required for unittest
-            Meters.aii("httpasync_" + "knock_stat_transport_spv_processed", r_ok)
-            Meters.aii("httpasync_" + "knock_stat_transport_spv_failed", r_ko)
-            Meters.aii("httpasync_" + "knock_stat_transport_spv_total", r_ok + r_ko)
-            return r_is_ok, r_ok, r_ko
+        # /query?q=CREATE+DATABASE+%22zzz2%22&db=zzz2
+        # /query?q=DROP+DATABASE+%22zzz2%22&db=zzz2
+        d_qs = self._get_param_from_qs(environ)
+
+        # Create database
+        if "q" in d_qs:
+            q = d_qs["q"]
+            db = d_qs["db"]
+            if "CREATE DATABASE" not in q and "DROP DATABASE" not in q:
+                raise Exception("Invalid q=%s" % q)
+            elif len(db) == 0:
+                raise Exception("Invalid db=%s" % db)
+        else:
+            raise Exception("Invalid qs (q not found), d_qs=%s" % d_qs)
+
+        # Reply
+        rd = dict()
+        rd["st"] = 200
+        status = "200 OK"
+        body = ujson.dumps(rd)
+        headers = [('Content-Type', 'application/json')]
+        start_response(status, headers)
+        return [body.encode("utf8")]

@@ -5,7 +5,7 @@ Welcome to Knock Daemon source code repository
 
 https://knock.center
 
-Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 
 Source code
 ===============

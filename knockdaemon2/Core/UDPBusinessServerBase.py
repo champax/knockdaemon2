@@ -2,7 +2,7 @@
 -*- coding: utf-8 -*-
 ===============================================================================
 
-Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 
 
 
@@ -268,6 +268,9 @@ class UDPBusinessServerBase(DatagramServer):
             # SIZE
             # Json buffer
 
+            # To str
+            data = data.decode("utf8")
+
             # Load json
             data_json = ujson.loads(data.strip())
 
@@ -329,26 +332,6 @@ class UDPBusinessServerBase(DatagramServer):
     # ------------------------------
 
     @classmethod
-    def _clean_value(cls, item, value):
-        """
-        Clean item and value, returning them
-        :param item: item
-        :type item: str
-        :param value: int,float
-        :type value:int,float
-        :return tuple (item as str, value as float)
-        :rtype tuple
-        """
-
-        # Float
-        value = float(value)
-
-        # Binary
-        # TODO Check : item (str) to binary (utf8 encoded) ?
-        item = SolBase.unicode_to_binary(item)
-        return item, value
-
-    @classmethod
     def _dtc_to_dict(cls, dtc):
         """
         To dict
@@ -359,7 +342,7 @@ class UDPBusinessServerBase(DatagramServer):
         """
         d = OrderedDict()
         # noinspection PyProtectedMember
-        ar = dtc._sorted_dict.keys()
+        ar = list(dtc._sorted_dict.keys())
         for i in range(0, len(ar) - 1):
             ms1 = ar[i]
             ms2 = ar[i + 1]
@@ -390,7 +373,7 @@ class UDPBusinessServerBase(DatagramServer):
         :param value: value
         :type value: int|float
         """
-        item, value = self._clean_value(item, value)
+        value = float(value)
 
         if item not in self._dict_increment:
             with self._increment_lock:
@@ -406,7 +389,7 @@ class UDPBusinessServerBase(DatagramServer):
         :param value: value
         :type value: int|float
         """
-        item, value = self._clean_value(item, value)
+        value = float(value)
         with self._gauge_lock:
             self._dict_gauge[item] = value
 
@@ -418,7 +401,7 @@ class UDPBusinessServerBase(DatagramServer):
         :param value: value
         :type value: int|float
         """
-        item, value = self._clean_value(item, value)
+        value = float(value)
         if item not in self._dict_dtc:
             with self._dtc_lock:
                 if item not in self._dict_dtc:
@@ -469,7 +452,7 @@ class UDPBusinessServerBase(DatagramServer):
         try:
             # Go in lock to avoid interactions with stop() mainly & reschedule races
             with self._notify_lock:
-                logger.info("Entering")
+                logger.debug("Entering")
                 Meters.aii("knock_stat_udp_notify_run")
 
                 # Dtc
@@ -510,5 +493,5 @@ class UDPBusinessServerBase(DatagramServer):
             Meters.aii("knock_stat_udp_notify_run_ex")
         finally:
             elapsed_ms = SolBase.msdiff(ms_start)
-            logger.info("Exiting, ms=%s", elapsed_ms)
+            logger.debug("Exiting, ms=%s", elapsed_ms)
             Meters.dtci("knock_stat_udp_notify_run_dtc", elapsed_ms)

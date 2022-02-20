@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -31,18 +31,79 @@ import psutil
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
-from knockdaemon2.Platform.PTools import PTools
-
-if PTools.get_distribution_type() == "windows":
-    pass
 
 logger = logging.getLogger(__name__)
+
+
+def get_process_list():
+    """
+    Get process list
+    :return: list of Process
+    :rtype list,Generator
+    """
+    return psutil.process_iter()
+
+
+def get_io_counters(pid):
+    """
+    Get io counters
+    :param pid: int
+    :type pid: int
+    :return: psutil._pslinux.pio
+    :rtype psutil._pslinux.pio
+    """
+    return psutil.Process(pid).io_counters()
+
+
+def get_process_stat(pid):
+    """
+    Get process stats
+    :param pid: int
+    :type pid: int
+    :return: dict
+    :rtype dict
+    """
+    return psutil.Process(pid).as_dict()
+
+
+def read_pid(pid_file):
+    """
+    Read pid file
+    :param pid_file: str
+    :type pid_file: str
+    :return int
+    :rtype int
+    """
+    with open(pid_file, "r") as f:
+        return int(f.readline())
+
+
+def call_psutil_process(pid):
+    """
+    Call
+    :param pid: int
+    :type pid: int
+    """
+    psutil.Process(pid)
 
 
 # noinspection PyUnresolvedReferences
 class CheckProcess(KnockProbe):
     """
-    Probe
+    Check process
+
+    Configuration expected is like
+    "nginx": {
+        "startup": "/etc/nginx/nginx.conf",
+        "pid": "/var/run/nginx.pid"
+    },
+    "nginx_array": {
+        "startup": [
+            "/etc/nginx/nginx.conf.invalid",
+            "/etc/nginx/nginx.conf"
+        ],
+        "pid": "/var/run/nginx.pid"
+    }
     """
 
     def __init__(self):
@@ -69,134 +130,125 @@ class CheckProcess(KnockProbe):
         # Base
         KnockProbe.init_from_config(self, k, d_yaml_config, d)
 
-        # Go
-        self.json_config_file = d["process_json_configfile"]
+        # Load our config
 
         # --------------------
         # Patches (fucking paths)
         # We extract file name and rebase to config root dir
         # --------------------
-        file_name = ntpath.basename(self.json_config_file)
+        s = d["process_json_configfile"]
+        s = ntpath.basename(s)
+
         # noinspection PyProtectedMember
         root_dir = dirname(abspath(self._knock_manager._config_file_name))
-        self.json_config_file = SolBase.get_pathseparator().join([root_dir, file_name])
-        logger.info("Rebased json_config_file=%s", self.json_config_file)
+
+        s = SolBase.get_pathseparator().join([root_dir, s])
+        logger.debug("Rebased json_config_file=%s", s)
+        self.load_json_config(s)
+
+    def load_json_config(self, json_config_file):
+        """
+        Load json config
+        :param json_config_file: str
+        :type json_config_file: str
+        """
+
+        self.json_config_file = json_config_file
 
         # Ok
         with open(self.json_config_file, 'r') as f:
             self.process_config = json.load(f)
-        logger.info("process_config=%s", self.process_config)
+        logger.debug("Loaded process_config=%s", self.process_config)
 
-        # Default to linux
+        # Log
         for k, d in self.process_config.items():
-            if "os" not in d:
-                logger.info("Switching k=%s to os=linux (default)", k)
-                d["os"] = "linux"
-            logger.info("Got process k=%s, d=%s", k, d)
-
-        # ----------------------------------
-        # If OS is windows, we MUST register the request to fetch for
-        # ----------------------------------
-
-        if PTools.get_distribution_type() == "windows":
-            self._windows_register_wmi()
+            logger.debug("Got process k=%s, d=%s", k, d)
 
     def _execute_linux(self):
         """
         Execute
         """
 
-        # Issue #63 : bypass
-        # if True:
-        #            return
-
-        for checker, param in self.process_config.items():
-            if param["os"] != "linux":
-                logger.info("Bypassing checker=%s due to os=%s", checker, param["os"])
-                continue
-
-            logger.info("Processing checker=%s, param=%s", checker, param)
-            pid_file = param['pid']
-            startup = param['startup']
-            checker = str(checker)
+        for process_key, d_process in self.process_config.items():
+            process_key = str(process_key)
+            logger.debug("Processing process_key=%s, d_process=%s", process_key, d_process)
+            pid_file = d_process['pid']
+            startup = d_process['startup']
 
             # 2 cases : str (legacy) or list (new code & config)
             if isinstance(startup, list):
-                logger.info("Using startup as list, startup=%s", startup)
+                logger.debug("Using startup as list, startup=%s", startup)
                 ar_startup = startup
             else:
-                logger.info("Using startup as str (legacy), startup=%s", startup)
+                logger.debug("Using startup as str (legacy), startup=%s", startup)
                 ar_startup = [startup]
 
             # Browse
-            logger.info("Checking ar_startup=%s", ar_startup)
+            logger.debug("Checking ar_startup=%s", ar_startup)
             found_startup = None
             for cur_startup in ar_startup:
                 try:
-                    logger.info("Check cur_startup=%s", cur_startup)
+                    logger.debug("Check cur_startup=%s", cur_startup)
                     with open(cur_startup):
                         found_startup = cur_startup
                 except IOError as e:
-                    logger.warning("IOError for cur_startup=%s, ex=%s", cur_startup, SolBase.extostr(e))
+                    logger.debug("IOError for cur_startup=%s, ex=%s", cur_startup, SolBase.extostr(e))
                     continue
                 except Exception as e:
-                    logger.warning("Exception for cur_startup=%s, ex=%s", cur_startup, SolBase.extostr(e))
+                    logger.debug("Exception for cur_startup=%s, ex=%s", cur_startup, SolBase.extostr(e))
                     continue
 
             # Check
             if not found_startup:
-                logger.info("No valid found_startup, giveup")
+                logger.debug("No valid found_startup, giveup")
                 continue
 
             # Ok
-            logger.info("Got found_startup=%s, processing checker=%s against pid=%s", found_startup, checker, pid_file)
+            logger.debug("Got found_startup=%s, processing process_key=%s against pid=%s", found_startup, process_key, pid_file)
 
             # read pid
             pid_file_present = "missing"
             pid = 0
             try:
-                logger.info("Reading pid_file=%s", pid_file)
-                pid = int(open(pid_file, "r").readline())
+                logger.debug("Reading pid_file=%s", pid_file)
+                pid = read_pid(pid_file)
                 pid_file_present = "ok"
             except IOError as e:
                 logger.warning("IOError for pid_file=%s, ex=%s", pid_file, SolBase.extostr(e))
-                pid_file_present = "missing"
                 pid = 0
             except ValueError as e:
                 logger.warning("ValueError for pid_file=%s, ex=%s", pid_file, SolBase.extostr(e))
             except Exception as e:
                 logger.warning("Exception for pid_file=%s, ex=%s", pid_file, SolBase.extostr(e))
             finally:
-                self.notify_value_n("k.proc.pidfile", {"PROCNAME": checker}, pid_file_present)
+                self.notify_value_n("k.proc.pidfile", {"PROCNAME": process_key}, pid_file_present)
 
             # psutil
             try:
-                logger.info("Process call now for pid=%s", pid)
-                psutil.Process(pid)
+                logger.debug("Process call now for pid=%s", pid)
+                call_psutil_process(pid)
             except psutil.NoSuchProcess as e:
-                logger.warning("NoSuchProcess (Process) for pid=%s, ex=%s", pid, SolBase.extostr(e))
-                self.notify_value_n("k.proc.running", {"PROCNAME": checker}, "crash")
+                logger.warning("NoSuchProcess for pid=%s, ex=%s", pid, SolBase.extostr(e))
+                self.notify_value_n("k.proc.running", {"PROCNAME": process_key}, "crash")
                 continue
             except Exception as e:
                 logger.warning("Exception (Process) for pid=%s, ex=%s", pid, SolBase.extostr(e))
-                self.notify_value_n("k.proc.running", {"PROCNAME": checker}, "crash")
+                self.notify_value_n("k.proc.running", {"PROCNAME": process_key}, "crash")
                 continue
 
-            self.notify_value_n("k.proc.running", {"PROCNAME": checker}, "ok")
+            self.notify_value_n("k.proc.running", {"PROCNAME": process_key}, "ok")
 
             num_fds = 0
             memory_used = 0
             cpu_used = 0
             nb_process = 0
-            for process in psutil.process_iter():
+            for process in get_process_list():
                 # Get stats for senior and junior
                 if process.ppid == pid or process.pid == pid:
                     nb_process += 1
-                    # noinspection PyProtectedMember
-                    p = psutil.Process(process._pid)
 
-                    d = p.as_dict()
-                    logger.debug("as_dict=%s", d)
+                    # noinspection PyProtectedMember
+                    d = get_process_stat(process._pid)
 
                     # as_dict :
                     #
@@ -227,43 +279,35 @@ class CheckProcess(KnockProbe):
                     #      'memory_percent': 0.030791102026644132,
                     #      'environ': None}
 
-                    # TODO : debug io counters as root
                     read_bytes = 0
                     write_bytes = 0
                     try:
-                        io_stat = p.io_counters()
+                        io_stat = get_io_counters(pid)
                         read_bytes += io_stat[2]
                         write_bytes += io_stat[3]
-                        self.notify_value_n("k.proc.io.read_bytes", {"PROCNAME": checker}, read_bytes)
-                        self.notify_value_n("k.proc.io.write_bytes", {"PROCNAME": checker}, write_bytes)
+                        self.notify_value_n("k.proc.io.read_bytes", {"PROCNAME": process_key}, read_bytes)
+                        self.notify_value_n("k.proc.io.write_bytes", {"PROCNAME": process_key}, write_bytes)
 
                     except psutil.AccessDenied as e:
-                        logger.warning(
-                            "io_counters failed, checker=%s, pid_file=%s, e=%s",
-                            checker, pid_file,
-                            SolBase.extostr(e))
+                        logger.warning("io_counters failed, process_key=%s, pid_file=%s, e=%s", process_key, pid_file, SolBase.extostr(e))
                     except NotImplementedError:
                         # patch rapsberry NotImplementedError: couldn't find /proc/xxxx/io (kernel too old?)
-                        logger.info("Couldn't find /proc/xxxx/io (possible kernel too old), discarding k.proc.io.read_bytes / k.proc.io.write_bytes")
+                        logger.debug("Couldn't find /proc/xxxx/io (possible kernel too old), discarding k.proc.io.read_bytes / k.proc.io.write_bytes")
 
+                    # Fetch
                     cpu_user = d["cpu_times"].user
                     cpu_system = d["cpu_times"].system
-
                     rss_memory = d["memory_info"].rss
-
                     memory_used += rss_memory
+                    cpu_used += cpu_system + cpu_user
 
-                    # FD : can be None
-                    # TODO : debug num_fds as root
+                    # This one can be None
                     v = d.get("num_fds")
                     if v:
                         num_fds += v
-                    else:
-                        logger.warning("num_fds None")
 
-                    cpu_used += cpu_system + cpu_user
-
-            self.notify_value_n("k.proc.io.num_fds", {"PROCNAME": checker}, num_fds)
-            self.notify_value_n("k.proc.memory_used", {"PROCNAME": checker}, memory_used)
-            self.notify_value_n("k.proc.cpu_used", {"PROCNAME": checker}, cpu_used)
-            self.notify_value_n("k.proc.nbprocess", {"PROCNAME": checker}, nb_process)
+            # Over
+            self.notify_value_n("k.proc.io.num_fds", {"PROCNAME": process_key}, num_fds)
+            self.notify_value_n("k.proc.memory_used", {"PROCNAME": process_key}, memory_used)
+            self.notify_value_n("k.proc.cpu_used", {"PROCNAME": process_key}, cpu_used)
+            self.notify_value_n("k.proc.nbprocess", {"PROCNAME": process_key}, nb_process)

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -21,6 +21,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
+from pysolbase.SolBase import SolBase
+
+SolBase.voodoo_init()
+
 import logging
 import os
 import sys
@@ -30,13 +34,10 @@ from os.path import dirname, abspath
 
 import redis
 from pysolbase.FileUtility import FileUtility
-from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Daemon.KnockDaemon import KnockDaemon
 from knockdaemon2.HttpMock.HttpMock import HttpMock
-
-SolBase.voodoo_init()
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,10 @@ if oldPath is not None:
 else:
     os.environ["PYTHONPATH"] = ":".join(sys.path)
 os.environ["PATH"] = ", ".join(sys.path) + ", " + os.environ["PATH"]
+
+real_stdout = sys.stdout
+real_stderr = sys.stderr
+real_stdin = sys.stdin
 
 
 class TestDaemonUsingHttpMock(unittest.TestCase):
@@ -62,6 +67,23 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
         os.environ.setdefault("KNOCK_UNITTEST", "yes")
 
         SolBase.voodoo_init()
+
+        # Reset (teamcity broke the whole stuff)
+        logger.info("GOT sys.stdin=%s", sys.stdin)
+        logger.info("GOT real_stdin=%s", real_stdin)
+        if "TEAMCITY_VERSION" in os.environ:
+            self.hack_console=True
+        else:
+            self.hack_console=False
+        logger.info("*** Using hack_console=%s", self.hack_console)
+
+        if self.hack_console:
+            self.tc_stdin = sys.stdin
+            self.tc_stdout = sys.stdout
+            self.tc_stderr = sys.stderr
+            sys.stdin = real_stdin
+            sys.stdout = real_stdout
+            sys.stderr = real_stderr
 
         # Wait 2 sec
         SolBase.sleep(1000)
@@ -110,12 +132,32 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             self.h.stop()
             self.h = None
 
+        for cur_f in [self.daemon_std_err, self.daemon_std_out]:
+            try:
+                logger.info("*** FLUSH, cur_f=%s", cur_f)
+                ar = self._file_to_list(cur_f)
+                for s in ar:
+                    print(s)
+            except Exception as e:
+                logger.warning("Ex=%s", SolBase.extostr(e))
+
         for cur_f in [self.daemon_pid_file, self.daemon_std_err, self.daemon_std_out]:
             try:
                 if FileUtility.is_file_exist(cur_f):
                     os.remove(cur_f)
             except Exception as e:
                 logger.warning("Ex=%s", SolBase.extostr(e))
+
+        # Reset (otherwise it blows up into teamcity again)
+        logger.info("*** TEARDOWN in")
+        if self.hack_console:
+            sys.stdin.close()
+            sys.stderr.close()
+            sys.stdin.close()
+            sys.stdin = self.tc_stdin
+            sys.stdout = self.tc_stdout
+            sys.stderr = self.tc_stderr
+        logger.info("*** TEARDOWN out")
 
     # ==============================
     # HTTP MOCK
@@ -313,7 +355,8 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             # STATUS
             # =========================
 
-            for _ in range(0, 10):
+            for ii in range(0, 10):
+                logger.info("*** STATUS, ii=%s", ii)
                 # Args
                 ar = list()
                 ar.append("testProgram")
@@ -332,7 +375,9 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             # RELOAD
             # =========================
 
-            for _ in range(0, 10):
+            for ii in range(0, 10):
+                logger.info("*** RELOAD, ii=%s", ii)
+
                 # Args
                 ar = list()
                 ar.append("testProgram")

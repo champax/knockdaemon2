@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -64,8 +64,7 @@ class ButcherTools(object):
             return cls._invoke_internal(cmd, timeout_ms, shell=shell)
         else:
             if cmd.find("|") >= 0:
-                logger.error("Pipe not support in invoke, cmd=%s", cmd)
-                raise Exception("Pipe not support in invoke")
+                raise Exception("Pipe not support in invoke, cmd=%s" % cmd)
 
             return cls._invoke_internal(cmd.split(' '), timeout_ms, shell=False)
 
@@ -102,6 +101,11 @@ class ButcherTools(object):
 
                 so, se = p.communicate()
                 SolBase.sleep(0)
+
+                if so is not None:
+                    so = so.decode("utf8")
+                if se is not None:
+                    se = se.decode("utf8")
 
                 ret_code = p.returncode
                 p = None

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -180,14 +180,14 @@ class VarnishStat(KnockProbe):
         for cur_f in VarnishStat.AR_CONFIG_FILE:
             if FileUtility.is_file_exist(cur_f):
                 located_f = cur_f
-                logger.info("Located located_f=%s", located_f)
+                logger.debug("Located located_f=%s", located_f)
                 break
 
         if not located_f:
-            logger.info("Give up (no file found in %s)", VarnishStat.AR_CONFIG_FILE)
+            logger.debug("Give up (no file found in %s)", VarnishStat.AR_CONFIG_FILE)
             return
 
-        logger.info("Varnish detected (%s found)", located_f)
+        logger.debug("Varnish detected (%s found)", located_f)
 
         pool_id = "default"
 
@@ -232,16 +232,16 @@ class VarnishStat(KnockProbe):
         :type pool_id: str
         """
 
-        logger.info("Json loaded, d_json=%s", d_json)
+        logger.debug("Json loaded, d_json=%s", d_json)
 
-        logger.info("Invoke reply ok, firing notify now")
+        logger.debug("Invoke reply ok, firing notify now")
         for k, knock_type, knock_key in VarnishStat.KEYS:
             # Try
             if k not in d_json:
                 if k.find("k.varnish.") != 0:
                     logger.warning("Unable to locate k=%s in d_json", k)
                 else:
-                    logger.info("Unable to locate k=%s in d_json (this is expected)", k)
+                    logger.debug("Unable to locate k=%s in d_json (this is expected)", k)
                 continue
 
             # Ok, fetch and cast
@@ -262,5 +262,5 @@ class VarnishStat(KnockProbe):
             self.notify_value_n(knock_key, {"ID": pool_id}, v)
 
         # Good, notify & exit
-        logger.info("varnishstat ok, notify started=1 and return, pool_id=%s", pool_id)
+        logger.debug("varnishstat ok, notify started=1 and return, pool_id=%s", pool_id)
         self.notify_value_n("k.varnish.started", {"ID": pool_id}, 1)

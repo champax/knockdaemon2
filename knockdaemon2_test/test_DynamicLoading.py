@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -62,7 +62,6 @@ class TestDynamicLoading(unittest.TestCase):
             os.remove(s)
             pass
 
-    @unittest.skip("To re-enable later")
     def test_base(self):
         """
         Test
@@ -71,6 +70,10 @@ class TestDynamicLoading(unittest.TestCase):
         # https://stackoverflow.com/questions/301134/dynamic-module-import-in-python
         # https://stackoverflow.com/questions/2259427/load-python-code-at-runtime
         # https://stackoverflow.com/questions/3178285/list-classes-in-directory-python
+
+        # Must enable the load
+        if "KNOCK_UNITTEST" in os.environ:
+            del os.environ["KNOCK_UNITTEST"]
 
         ps = SolBase.get_pathseparator()
         ar_probes, ar_files = KnockManager.try_dynamic_load_probe(self.current_dir + "conf" + ps + "dynamicload" + ps + "probed" + ps)

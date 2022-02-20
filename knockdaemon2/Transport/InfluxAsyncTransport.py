@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -27,14 +27,12 @@ from threading import Lock
 import gevent
 from gevent.queue import Empty
 from greenlet import GreenletExit
-from influxdb import InfluxDBClient
 from influxdb.line_protocol import make_lines
 from pysolbase.SolBase import SolBase
 from pysolhttpclient.Http.HttpClient import HttpClient
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.Tools import Tools
-from knockdaemon2.Transport.Dedup import Dedup
 from knockdaemon2.Transport.KnockTransport import KnockTransport
 
 logger = logging.getLogger(__name__)
@@ -55,7 +53,6 @@ class InfluxAsyncTransport(KnockTransport):
 
         self._http_client = HttpClient()
 
-        self._influx_mode = "knock"
         self._influx_timeout_ms = 20000
         self._influx_host = None
         self._influx_port = None
@@ -65,7 +62,6 @@ class InfluxAsyncTransport(KnockTransport):
         self._influx_ssl = False
         self._influx_ssl_verify = False
         self._influx_db_created = False
-        self._influx_dedup = True
 
         # Locker
         self._locker = Lock()
@@ -76,7 +72,6 @@ class InfluxAsyncTransport(KnockTransport):
         self._dt_last_send = SolBase.datecurrent()
 
         # Dedup
-        self.dedup_instance = Dedup()
         self.last_http_ok_ms = SolBase.mscurrent()
 
         # Wait ms if send is bypassed before re-trying
@@ -111,9 +106,6 @@ class InfluxAsyncTransport(KnockTransport):
         :type auto_start: bool
         """
 
-        # Call base, hacking autostart
-        KnockTransport.init_from_config(self, d_yaml_config, d, auto_start=False)
-
         # Load our stuff
         self._influx_host = d["influx_host"]
         self._influx_port = d["influx_port"]
@@ -143,16 +135,8 @@ class InfluxAsyncTransport(KnockTransport):
         except KeyError:
             logger.debug("Key http_ko_interval_ms not present, using default, d=%s", d)
 
-        # Mode : "knock" or "influx"
-        self._influx_mode = d.get("influx_mode", "knock")
-        if self._influx_mode not in ["knock", "influx"]:
-            raise Exception("Invalid _influx_mode={0}, need 'knock' or 'influx'".format(self._influx_mode))
-
         # Timeout
         self._influx_timeout_ms = int(d.get("influx_timeout_ms", 20000))
-
-        # Dedup
-        self._influx_dedup = bool(d.get("influx_dedup", True))
 
         # Override meter prefix
         self.meters_prefix = "influxasync_" + self._influx_host + "_" + str(self._influx_port) + "_"
@@ -161,7 +145,6 @@ class InfluxAsyncTransport(KnockTransport):
         logger.info("influx_host: %s", self._influx_host)
 
         # Logs
-        lifecyclelogger.info("_influx_mode=%s", self._influx_mode)
         lifecyclelogger.info("_influx_timeout_ms=%s", self._influx_timeout_ms)
         lifecyclelogger.info("_influx_host=%s", self._influx_host)
         lifecyclelogger.info("_influx_port=%s", self._influx_port)
@@ -280,6 +263,7 @@ class InfluxAsyncTransport(KnockTransport):
         ms_start = SolBase.mscurrent()
         for item in ar_pending:
             self._queue_to_send.queue.appendleft(item)
+            self._current_queue_bytes += len(item)
         ms_requeue = SolBase.msdiff(ms_start)
 
         logger.debug(
@@ -329,38 +313,24 @@ class InfluxAsyncTransport(KnockTransport):
         # ]
 
         # ---------------------------
-        # DEDUP
-        # ---------------------------
-
-        if self._influx_dedup:
-            logger.info("dedup on (this is experimental)")
-            # Compute limit ms (we keep margin, so we got on the past, based on last http ok and http interval)
-            limit_ms = self.last_http_ok_ms - (self._http_send_min_interval_ms * 2)
-
-            # Dedup incoming
-            remaining_notify_values = self.dedup_instance.dedup(notify_values=notify_values, limit_ms=limit_ms)
-        else:
-            logger.info("dedup off")
-            remaining_notify_values = notify_values
-
-        # ---------------------------
         # PROCESS NORMALLY
         # ---------------------------
 
         # We build influx format
-        ar_influx = Tools.to_influx_format(account_hash, node_hash, remaining_notify_values)
+        ar_influx = Tools.to_influx_format(account_hash, node_hash, notify_values)
 
         # Influxdb python client do not support firing pre-serialized json
         # So we use the line protocol
         # We serialize this block right now in a single line buffer
         d_points = {"points": ar_influx}
-        buf = make_lines(d_points, precision=None).encode('utf8')
+        buf = make_lines(d_points, precision=None)
 
         # Check max
         if self._queue_to_send.qsize() >= self._max_items_in_queue:
             # Too much, kick
             logger.warning("Max queue reached, discarding older item")
-            self._queue_to_send.get(block=True)
+            buf = self._queue_to_send.get(block=True)
+            self._current_queue_bytes -= len(buf)
             Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard")
         elif self._queue_to_send.qsize() == 0:
             # We were empty, we add a new one.
@@ -370,6 +340,7 @@ class InfluxAsyncTransport(KnockTransport):
         # Put
         logger.debug("Queue : put")
         self._queue_to_send.put(buf)
+        self._current_queue_bytes += len(buf)
 
         # Max queue size
         Meters.ai(self.meters_prefix + "knock_stat_transport_queue_max_size").set(max(self._queue_to_send.qsize(), Meters.aig(self.meters_prefix + "knock_stat_transport_queue_max_size")))
@@ -401,6 +372,7 @@ class InfluxAsyncTransport(KnockTransport):
                 # Get
                 try:
                     buf = self._queue_to_send.get_nowait()
+                    self._current_queue_bytes -= len(buf)
                 except Empty:
                     break
 
@@ -433,8 +405,7 @@ class InfluxAsyncTransport(KnockTransport):
                 # --------------------
                 # MAX SIZE REACHED : go to HTTP and re-send ASAP
                 # --------------------
-                logger.debug("HttpCheck : maxed (%s/%s), http-go",
-                             buf_pending_length, self._http_send_max_bytes)
+                logger.debug("HttpCheck : maxed (%s/%s), http-go", buf_pending_length, self._http_send_max_bytes)
                 go_to_http = True
                 retry_fast = True
             elif self._queue_to_send.qsize() == 0:
@@ -450,7 +421,8 @@ class InfluxAsyncTransport(KnockTransport):
                     logger.debug(
                         "HttpCheck : not maxed, min interval not reached (%s/%s), http-no-go",
                         ms_since_last_send,
-                        self._http_send_min_interval_ms)
+                        self._http_send_min_interval_ms,
+                    )
                 else:
                     # --------------------
                     # Minimum interval reached : go to HTTP
@@ -458,7 +430,8 @@ class InfluxAsyncTransport(KnockTransport):
                     logger.debug(
                         "HttpCheck : not maxed, min interval reached (%s/%s), http-go",
                         ms_since_last_send,
-                        self._http_send_min_interval_ms)
+                        self._http_send_min_interval_ms,
+                    )
                     go_to_http = True
             else:
                 # --------------------
@@ -518,79 +491,30 @@ class InfluxAsyncTransport(KnockTransport):
         try:
             Meters.aii(self.meters_prefix + "knock_stat_transport_call_count")
 
-            if self._influx_mode == "influx":
-                # --------------------
-                # INFLUX CLIENT
-                # --------------------
-
-                # A) Client
-                client = InfluxDBClient(
-                    host=self._influx_host,
-                    port=self._influx_port,
-                    username=self._influx_login,
-                    password=self._influx_password,
-                    database=self._influx_database,
-                    ssl=self._influx_ssl,
-                    verify_ssl=self._influx_ssl_verify,
-                    retries=0, )
-
-                # B) Create DB
-                if not self._influx_db_created:
-                    try:
-                        # Create DB
-                        client.create_database(self._influx_database)
-                    except Exception as e:
-                        logger.warning("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
-                    finally:
-                        # Assume success
-                        self._influx_db_created = True
-
-                # Write lines
+            # DB
+            if not self._influx_db_created:
                 try:
-                    ms = SolBase.mscurrent()
-                    logger.info("Push now (influx), ar_lines=%s", ar_lines)
-                    ri = client.write_points(ar_lines, protocol="line")
-
-                    # Call ok, store
-                    self.last_http_ok_ms = SolBase.mscurrent()
-                finally:
-                    logger.info("Push done (influx), ms=%s", SolBase.msdiff(ms))
-
-                # Check
-                if not ri:
-                    raise Exception("write_points returned false, ar_lines={0}".format(repr(ar_lines)))
-            elif self._influx_mode == "knock":
-                # --------------------
-                # KNOCK CLIENT
-                # --------------------
-
-                # DB
-                if not self._influx_db_created:
-                    try:
-                        http_rep = Tools.influx_create_database(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, timeout_ms=self._influx_timeout_ms, ssl=self._influx_ssl, verify_ssl=self._influx_ssl_verify)
-                        if not 200 <= http_rep.status_code < 300:
-                            raise Exception("Need http 2xx, got http_req={0}".format(http_rep))
-                    except Exception as e:
-                        logger.warning("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
-                    finally:
-                        # Assume success
-                        self._influx_db_created = True
-
-                # PUSH
-                try:
-                    ms = SolBase.mscurrent()
-                    logger.info("Push now (knock), ar_lines.len=%s", len(ar_lines))
-                    http_rep = Tools.influx_write_data(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, ar_data=ar_lines, timeout_ms=self._influx_timeout_ms, ssl=self._influx_ssl, verify_ssl=self._influx_ssl_verify)
+                    http_rep = Tools.influx_create_database(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, timeout_ms=self._influx_timeout_ms, ssl=self._influx_ssl, verify_ssl=self._influx_ssl_verify)
                     if not 200 <= http_rep.status_code < 300:
                         raise Exception("Need http 2xx, got http_req={0}".format(http_rep))
-
-                    # Call ok, store
-                    self.last_http_ok_ms = SolBase.mscurrent()
+                except Exception as e:
+                    logger.warning("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
                 finally:
-                    logger.info("Push done (knock), ms=%s", SolBase.msdiff(ms))
-            else:
-                # Invalid
-                raise Exception("Invalid _influx_mode={0}".format(self._influx_mode))
+                    # Assume success
+                    self._influx_db_created = True
+
+            # PUSH
+            try:
+                ms = SolBase.mscurrent()
+                logger.debug("Push now (knock), ar_lines.len=%s", len(ar_lines))
+                http_rep = Tools.influx_write_data(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, ar_data=ar_lines, timeout_ms=self._influx_timeout_ms, ssl=self._influx_ssl, verify_ssl=self._influx_ssl_verify)
+                if not 200 <= http_rep.status_code < 300:
+                    raise Exception("Need http 2xx, got http_req={0}".format(http_rep))
+
+                # Call ok, store
+                self.last_http_ok_ms = SolBase.mscurrent()
+            finally:
+                logger.info("Push done (knock), ms=%s, q.size/bytes=%s/%s", SolBase.msdiff(ms), self._queue_to_send.qsize(), self._current_queue_bytes)
 
             # Stats (non zip)
             Meters.ai(self.meters_prefix + "knock_stat_transport_buffer_last_length").set(total_len)
@@ -618,7 +542,7 @@ class InfluxAsyncTransport(KnockTransport):
             spv_processed = 0
             for cur_buf in ar_lines:
                 spv_processed += cur_buf.count("\n")
-            Meters.aii(self.meters_prefix + "knock_stat_transport_client_spv_processed", spv_processed)
+            Meters.aii(self.meters_prefix + "knock_stat_transport_spv_processed", spv_processed)
 
             return True
 

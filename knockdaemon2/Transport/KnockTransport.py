@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -22,7 +22,8 @@
 # ===============================================================================
 """
 import logging
-from queue import Queue
+
+from gevent.queue import Queue
 
 logger = logging.getLogger(__name__)
 lifecyclelogger = logging.getLogger("LifeCycle")
@@ -46,6 +47,9 @@ class KnockTransport(object):
 
         # Max
         self._http_send_max_bytes = 64000
+
+        # Current bytes in queue
+        self._current_queue_bytes = 0
 
     def init_from_config(self, d_yaml_config, d, auto_start=True):
         """

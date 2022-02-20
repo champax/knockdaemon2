@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -25,19 +25,16 @@ import logging
 from math import floor
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
-from knockdaemon2.Platform.PTools import PTools
 
 logger = logging.getLogger(__name__)
-if PTools.get_distribution_type() == "windows":
-    pass
-
-UPTIME_PATH = "/proc/uptime"
 
 
 class Uptime(KnockProbe):
     """
     Probe
     """
+
+    UPTIME_PATH = "/proc/uptime"
 
     def __init__(self):
         """
@@ -53,19 +50,29 @@ class Uptime(KnockProbe):
         """
         Exec
         """
+
+        # Load
+        buf = self.get_uptime_buffer()
+
+        # Process
+        self.process_uptime_buffer(buf)
+
+    def process_uptime_buffer(self, buf):
+        """
+        Process
+        :param buf: str
+        :type buf: str
+        """
         # Notify we are up
         self.notify_value_n("k.os.knock", None, 1)
-        self.notify_value_n("k.os.uptime", None, self._get_uptime())
+        self.notify_value_n("k.os.uptime", None, int(floor(float(buf.split()[0]))))
 
-    # noinspection PyMethodMayBeStatic
-    def _get_uptime(self):
+    @classmethod
+    def get_uptime_buffer(cls):
         """
-        Get uptime in seconds
-        :return:
+        Get uptime buffer
+        :return: str
+        :rtype str
         """
-
-        # The first number is the total number of seconds the system has been up
-        uptime_file = open(UPTIME_PATH)
-        uptime = int(floor(float(uptime_file.read().split()[0])))
-        uptime_file.close()
-        return uptime
+        with open(cls.UPTIME_PATH) as f:
+            return f.read()

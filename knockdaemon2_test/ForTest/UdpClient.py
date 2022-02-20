@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -38,7 +38,7 @@ class UdpClient(object):
     def __init__(self, max_udp_size=61440):
         """
         Constructor
-        For max udp size, refer to internet (ie http://stackoverflow.com/questions/14993000/the-most-reliable-and-efficient-udp-packet-size)
+        For max udp size, refer to internet (ie https://stackoverflow.com/questions/14993000/the-most-reliable-and-efficient-udp-packet-size)
         As we act mostly on localhost, and MTU localhost is 65536, we assume a default of 61440 (we take some margin)
         :param max_udp_size: int
         :type max_udp_size: int
@@ -102,7 +102,7 @@ class UdpClient(object):
         # We pre-encode all items len (approximate) to boost up a bit the for loop
         pre_encoded_list = list()
         for cur_list in json_list:
-            pre_encoded_list.append(len(ujson.dumps([cur_list], ensure_ascii=False)))
+            pre_encoded_list.append(len(ujson.dumps([cur_list], ensure_ascii=False).encode("utf8")))
 
         # Ok
         cur_total_len = 0
@@ -119,7 +119,7 @@ class UdpClient(object):
                 # Too big, cur_idx do not fit, extract from [start_idx, cur_idx[
 
                 # Re-encode
-                b_buf = ujson.dumps(json_list[start_idx:cur_idx], ensure_ascii=False)
+                b_buf = ujson.dumps(json_list[start_idx:cur_idx], ensure_ascii=False).encode("utf8")
 
                 # Check
                 if len(b_buf) > self._max_udp_size:
@@ -138,7 +138,7 @@ class UdpClient(object):
         # Last stuff
         if cur_total_len > 0:
             # Re-encode (do not forget last item, so +1)
-            b_buf = ujson.dumps(json_list[start_idx:cur_idx + 1], ensure_ascii=False)
+            b_buf = ujson.dumps(json_list[start_idx:cur_idx + 1], ensure_ascii=False).encode("utf8")
 
             # Check
             if len(b_buf) > self._max_udp_size:

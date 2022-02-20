@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -21,18 +21,20 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
+from pysolbase.SolBase import SolBase
+SolBase.voodoo_init()
+
 import logging
 import sys
 from logging.handlers import SysLogHandler
 
 from gevent import util
-from pysolbase.SolBase import SolBase
+
 from pysoldaemon.daemon.Daemon import Daemon
 
 from knockdaemon2.Core.KnockManager import KnockManager
 
 # Override logging to file (no syslog)
-SolBase.voodoo_init()
 SolBase.logging_init(log_level="INFO", force_reset=True, log_to_file=None, log_to_syslog=False)
 logger = logging.getLogger(__name__)
 
@@ -119,7 +121,7 @@ class KnockDaemon(Daemon):
         logger.debug("Called")
 
     # noinspection PyMethodMayBeStatic
-    def _on_status(self):
+    def _on_status(self, *argv, **kwargs):
         """
         Test
         """

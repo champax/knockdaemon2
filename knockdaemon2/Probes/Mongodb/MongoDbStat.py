@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -593,7 +593,7 @@ class MongoDbStat(KnockProbe):
                 port = config["net"]["port"]
             except KeyError as e:
                 port = 27017
-                logger.info("Port cast exception (fallback 27017), ex=%s", SolBase.extostr(e))
+                logger.debug("Port cast exception (fallback 27017), ex=%s", SolBase.extostr(e))
 
             # Fetch roles
             try:
@@ -603,7 +603,7 @@ class MongoDbStat(KnockProbe):
                 if cluster_role == "shardsvr":
                     shardsvr = True
             except KeyError as e:
-                logger.info("Role fetch exception (bypass), ex=%s", SolBase.extostr(e))
+                logger.debug("Role fetch exception (bypass), ex=%s", SolBase.extostr(e))
 
             # Fetch config
             try:
@@ -611,7 +611,7 @@ class MongoDbStat(KnockProbe):
                 if config_db:
                     mongos_mode = True
             except KeyError as e:
-                logger.info("Shard fetch exception (bypass), ex=%s", SolBase.extostr(e))
+                logger.debug("Shard fetch exception (bypass), ex=%s", SolBase.extostr(e))
 
             # Compute
             if not shardsvr and config_db:

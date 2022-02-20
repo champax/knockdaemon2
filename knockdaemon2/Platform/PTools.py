@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -23,7 +23,6 @@
 """
 import logging
 import platform
-import tempfile
 
 import distro
 from pysolbase.SolBase import SolBase
@@ -201,7 +200,4 @@ class PTools(object):
         """
         Get tmp dir
         """
-        if cls.get_distribution_type() == "windows":
-            return tempfile.gettempdir()
-        else:
-            return "/tmp"
+        return "/tmp"

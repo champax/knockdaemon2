@@ -2,7 +2,7 @@
 -*- coding: utf-8 -*-
 ===============================================================================
 
-Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 
 
 
@@ -76,9 +76,12 @@ class UDPBusinessServerIpPort(UDPBusinessServerBase):
         logger.info("Binding")
 
         # IP / PORT listen
-        logger.warning("Using UDP toward IP/PORT, %s:%s (not a domain socket)", self._ip_host, self._ip_port)
-        logger.warning("You may (will) experience performance issues over the UDP channel (possible lost of packets)")
-        logger.warning("If you are using client library upon linux, prefer using a linux domain socket.")
+        logger.info(
+            "Using UDP toward IP/PORT, %s:%s (not a domain socket). "
+            "You will experience performance issues over the UDP channel (loss of packets). "
+            "If you are using client library upon linux, prefer using a linux domain socket.",
+            self._ip_host, self._ip_port
+        )
         self._soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         # Switch to non blocking

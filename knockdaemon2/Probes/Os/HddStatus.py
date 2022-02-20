@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2021 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -29,10 +29,6 @@ import gevent
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockHelpers import KnockHelpers
 from knockdaemon2.Core.KnockProbe import KnockProbe
-from knockdaemon2.Platform.PTools import PTools
-
-if PTools.get_distribution_type() == "windows":
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -207,7 +203,7 @@ class HddStatus(KnockProbe):
 
         # We do not use "-l selftest"", this may exit with code 4 with "Device does not support Self Test logging"
         cmd = self.helpers.sudoize("smartctl -q errorsonly -H %s" % hd)
-        logger.info("going invoke, cmd=%s", cmd)
+        logger.debug("going invoke, cmd=%s", cmd)
         ec, so, se = ButcherTools.invoke(cmd)
         if ec != 0:
             logger.warning("invoke failed, give up,  ec=%s, so=%s, se=%s", ec, so, se)
@@ -219,9 +215,9 @@ class HddStatus(KnockProbe):
 
         # Check again - this may output exit code 4, so we dont check it
         cmd = self.helpers.sudoize("smartctl -a %s" % hd)
-        logger.info("going invoke, cmd=%s", cmd)
+        logger.debug("going invoke, cmd=%s", cmd)
         ec, so, se = ButcherTools.invoke(cmd)
-        logger.info("invoke ok, ec=%s, so=%s, se=%s", ec, so, se)
+        logger.debug("invoke ok, ec=%s, so=%s, se=%s", ec, so, se)
 
         # Process it
         self.process_smartctl_full_buffer(c_hd, so)
