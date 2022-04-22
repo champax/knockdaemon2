@@ -279,14 +279,6 @@ echo "=========================="
 echo "LISTING NOW"
 ls -l ${V_WORKSPACE_DIR}/knockdaemon2_*
 
-echo "SSH mkdir TO userContent now"
-# TODO
-echo $?
-
-echo "SCP TO userContent now"
-# TODO
-echo $?
-
 echo "=========================="
 echo "DEB UPLOAD GO"
 echo "=========================="
