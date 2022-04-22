@@ -43,11 +43,16 @@ logger = logging.getLogger(__name__)
 
 # Patch to dispatch env to subprocess
 oldPath = os.environ.get("PYTHONPATH")
+print("*** PYTHONPATH01=%s" % os.environ["PYTHONPATH"])
+print("*** sys.path=%s" % sys.path)
 if oldPath is not None:
     os.environ["PYTHONPATH"] = ":".join(sys.path) + ":" + oldPath
 else:
     os.environ["PYTHONPATH"] = ":".join(sys.path)
-os.environ["PATH"] = ", ".join(sys.path) + ", " + os.environ["PATH"]
+print("*** PYTHONPATH02=%s" % os.environ["PYTHONPATH"])
+print("*** PATH01=%s" % os.environ["PATH"])
+os.environ["PATH"] = ":".join(sys.path) + ":" + os.environ["PATH"]
+print("*** PATH02=%s" % os.environ["PATH"])
 
 real_stdout = sys.stdout
 real_stderr = sys.stderr
