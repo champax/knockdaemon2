@@ -762,7 +762,7 @@ class KnockManager(object):
                 self.superv_notify_value_list)
             if not b:
                 if len(self._ar_knock_transport) == 1:
-                    # Only only one transport and failed, do not clear the hashes
+                    # Only one transport and failed, do not clear the hashes
                     logger.debug("Got false from process_notify and only one transport, will not empty the hashes, t=%s", t)
                     clear_hash = False
                 else:
@@ -1018,23 +1018,26 @@ class KnockManager(object):
                         # noinspection PyProtectedMember
                         lifecyclelogger.info(
                             "Running (pf=%s), "
-                            "q.bytes=%s, "
-                            "q.cur/max/di=%s/%s/.%s, "
-                            "pbuf.pend/limit=%s/%s, "
-                            "pbuf.last/max=%s/%s, "
-                            "wbuf.last/max=%s/%s, "
-                            "wms.last/max=%s/%s, "
+                            "q.c/bytes=%s/%s, "
+                            "q.max=%s, "
+                            "discard.c/c_bytes=%s/%s, "
+                            "transp_buf.len.pend/last/max=%s/%s/%s, "
+                            "transp_wire.len.last/max=%s/%s, "
+                            "transp_wire.ms.last/max=%s/%s, "
                             "http.count:ok/ex/fail=%s:%s/%s/%s, "
-                            "s.ok/ko=%s/%s, "
-                            "t=%s",
+                            "spv.ok/ko=%s/%s, "
+                            "id=%s",
                             cur_transport.meters_prefix,
-                            cur_transport._current_queue_bytes,
+
                             cur_transport._queue_to_send.qsize(),
+                            cur_transport._current_queue_bytes,
+
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_queue_max_size"),
+
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_queue_discard"),
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_queue_discard_bytes"),
 
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_buffer_pending_length"),
-                            cur_transport._http_send_max_bytes,
 
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_buffer_last_length"),
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_buffer_max_length"),

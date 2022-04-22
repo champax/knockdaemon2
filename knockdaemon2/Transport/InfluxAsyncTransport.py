@@ -22,6 +22,7 @@
 # ===============================================================================
 """
 import logging
+import os
 from threading import Lock
 
 import gevent
@@ -88,6 +89,10 @@ class InfluxAsyncTransport(KnockTransport):
         # Max items in send queue (if reached, older items are kicked)
         self._max_items_in_queue = 36000
 
+        # Max bytes in send queue (if reached, older items are kicked)
+        # default : 16MB
+        self._max_bytes_in_queue = 1024 * 1024 * 16
+
         # Call base
         KnockTransport.__init__(self)
 
@@ -129,6 +134,11 @@ class InfluxAsyncTransport(KnockTransport):
             self._max_items_in_queue = d["max_items_in_queue"]
         except KeyError:
             logger.debug("Key max_items_in_queue not present, using default, d=%s", d)
+
+        try:
+            self._max_bytes_in_queue = d["max_bytes_in_queue"]
+        except KeyError:
+            logger.debug("Key max_bytes_in_queue not present, using default, d=%s", d)
 
         try:
             self._http_ko_interval_ms = d["http_ko_interval_ms"]
@@ -228,6 +238,8 @@ class InfluxAsyncTransport(KnockTransport):
                     go_fast = self._try_send_to_http()
                     if not go_fast:
                         SolBase.sleep(self._http_send_bypass_wait_ms)
+                    else:
+                        SolBase.sleep(0)
                 except GreenletExit:
                     logger.debug("GreenletExit in loop2")
                     return
@@ -254,23 +266,8 @@ class InfluxAsyncTransport(KnockTransport):
         :type ar_pending: list
         """
 
-        q_in = self._queue_to_send.qsize()
-
-        ms_start = SolBase.mscurrent()
         ar_pending.reverse()
-        ms_reverse = SolBase.msdiff(ms_start)
-
-        ms_start = SolBase.mscurrent()
-        for item in ar_pending:
-            self._queue_to_send.queue.appendleft(item)
-            self._current_queue_bytes += len(item)
-        ms_requeue = SolBase.msdiff(ms_start)
-
-        logger.debug(
-            "Re-queued, ms_reverse=%s, ms_requeue=%s, ar_pending.len=%s, q.len.in/out=%s/%s",
-            ms_reverse, ms_requeue,
-            len(ar_pending), q_in,
-            self._queue_to_send.qsize())
+        self._insert_into_queue(ar_pending, append_left=True)
 
     def process_notify(self, account_hash, node_hash, notify_values):
         """
@@ -284,7 +281,7 @@ class InfluxAsyncTransport(KnockTransport):
         """
 
         # If not running, exit
-        if not self._is_running:
+        if not self._is_running and "KNOCK_UNITTEST" not in os.environ:
             logger.warning("Not running, processing not possible")
             return False
 
@@ -294,9 +291,6 @@ class InfluxAsyncTransport(KnockTransport):
         #
         # dict string/string
         # node_hash => {'host': 'klchgui01'}
-        #
-        # dict string (formatted) => tuple (disco_name, disco_id, disco_value)
-        # notify_hash => {'test.dummy|TYPE|one': ('test.dummy', 'TYPE', 'one'), 'test.dummy|TYPE|all': ('test.dummy', 'TYPE', 'all'), 'test.dummy|TYPE|two': ('test.dummy', 'TYPE', 'two')}
         #
         # list : List of (counter_key, d_tags, counter_value, ts, d_values). Cleared upon success.
 
@@ -325,25 +319,63 @@ class InfluxAsyncTransport(KnockTransport):
         d_points = {"points": ar_influx}
         buf = make_lines(d_points, precision=None)
 
-        # Check max
-        if self._queue_to_send.qsize() >= self._max_items_in_queue:
-            # Too much, kick
-            logger.warning("Max queue reached, discarding older item")
-            buf = self._queue_to_send.get(block=True)
-            self._current_queue_bytes -= len(buf)
-            Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard")
-        elif self._queue_to_send.qsize() == 0:
-            # We were empty, we add a new one.
-            # To avoid firing http asap, override last send date now
-            self._dt_last_send = SolBase.datecurrent()
+        return self._insert_into_queue([buf])
 
-        # Put
-        logger.debug("Queue : put")
-        self._queue_to_send.put(buf)
-        self._current_queue_bytes += len(buf)
+    def _insert_into_queue(self, ar_buf, append_left=False):
+        """
+        Insert into queue
+        :param ar_buf: list of str
+        :type ar_buf: list
+        :param append_left: bool
+        :type append_left: bool
+        :return bool
+        :rtype bool
+        """
 
-        # Max queue size
-        Meters.ai(self.meters_prefix + "knock_stat_transport_queue_max_size").set(max(self._queue_to_send.qsize(), Meters.aig(self.meters_prefix + "knock_stat_transport_queue_max_size")))
+        for buf in ar_buf:
+
+            # Check max
+            if self._queue_to_send.qsize() >= self._max_items_in_queue and self._queue_to_send.qsize() > 0:
+                # Too much, kick
+                buf = self._queue_to_send.get(block=True)
+                self._current_queue_bytes -= len(buf)
+                logger.warning("Max queue reached (bytes), discarded one item, cur.items/bytes=%s/%s", self._queue_to_send.qsize(), self._current_queue_bytes)
+                Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard")
+
+            # Check max
+            if self._current_queue_bytes >= self._max_bytes_in_queue and self._queue_to_send.qsize() > 0:
+                # Too much, kick
+                logger.debug("Max queue reached (bytes), discarding older items (loop)")
+                discarded = 0
+                c = 0
+                while self._current_queue_bytes >= self._max_bytes_in_queue or self._queue_to_send.qsize() == 0:
+                    buf = self._queue_to_send.get(block=True)
+                    self._current_queue_bytes -= len(buf)
+                    discarded += len(buf)
+                    c += 1
+                Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard_bytes")
+                logger.warning("Max queue reached (bytes), discarded older items (loop), count=%s, discarded=%s, cur.items/bytes=%s/%s", c, discarded, self._queue_to_send.qsize(), self._current_queue_bytes)
+
+
+
+            # Put
+            logger.debug("Queue : put")
+            if append_left:
+                # This is a re-queue
+                self._queue_to_send.queue.appendleft(buf)
+            else:
+                # This is an add
+                if self._queue_to_send.qsize() == 0:
+                    # We were empty, we add a new one.
+                    # To avoid firing http asap, override last send date now
+                    self._dt_last_send = SolBase.datecurrent()
+                self._queue_to_send.put(buf)
+
+            # Bytes
+            self._current_queue_bytes += len(buf)
+
+            # Max queue size
+            Meters.ai(self.meters_prefix + "knock_stat_transport_queue_max_size").set(max(self._queue_to_send.qsize(), Meters.aig(self.meters_prefix + "knock_stat_transport_queue_max_size")))
 
         # Done
         return True
@@ -514,7 +546,7 @@ class InfluxAsyncTransport(KnockTransport):
                 # Call ok, store
                 self.last_http_ok_ms = SolBase.mscurrent()
             finally:
-                logger.info("Push done (knock), ms=%s, q.size/bytes=%s/%s", SolBase.msdiff(ms), self._queue_to_send.qsize(), self._current_queue_bytes)
+                logger.info("Push done (pf=%s), ms=%s, lines=%s, len=%s, q.size/bytes=%s/%s, id=%s", self.meters_prefix, SolBase.msdiff(ms), len(ar_lines), total_len, self._queue_to_send.qsize(), self._current_queue_bytes, id(self))
 
             # Stats (non zip)
             Meters.ai(self.meters_prefix + "knock_stat_transport_buffer_last_length").set(total_len)
@@ -538,7 +570,7 @@ class InfluxAsyncTransport(KnockTransport):
             Meters.aii(self.meters_prefix + "knock_stat_transport_ok_count")
 
             # Stats (we have no return from Influx client....)
-            # We hack (may be slow and may be non accurate due to last \n)
+            # We hack (may be slow and may be not accurate due to last \n)
             spv_processed = 0
             for cur_buf in ar_lines:
                 spv_processed += cur_buf.count("\n")
