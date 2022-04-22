@@ -177,13 +177,12 @@ class KnockProbe(object):
         :rtype string
         """
 
-        return "kprobe:ms={0}*s={1}*c={2}*on={3}*ux={4}*win={5}*pl={6}*sup={7}*k={8}".format(
+        return "kprobe:ms={0}*s={1}*c={2}*on={3}*ux={4}*pl={5}*sup={6}*k={7}".format(
             self.exec_interval_ms,
             self.probe_class,
             self.class_name,
             self.exec_enabled,
             self.linux_support,
-            self.windows_support,
             self.platform,
             self.platform_supported,
             self.key,
