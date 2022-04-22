@@ -607,6 +607,8 @@ class MongoDbStat(KnockProbe):
                     shardsvr = True
             except KeyError as e:
                 logger.debug("Role fetch exception (bypass), ex=%s", SolBase.extostr(e))
+            except TypeError as e:
+                logger.debug("Role fetch exception (bypass), ex=%s", SolBase.extostr(e))
 
             # Fetch config
             try:
@@ -614,6 +616,8 @@ class MongoDbStat(KnockProbe):
                 if config_db:
                     mongos_mode = True
             except KeyError as e:
+                logger.debug("Shard fetch exception (bypass), ex=%s", SolBase.extostr(e))
+            except TypeError as e:
                 logger.debug("Shard fetch exception (bypass), ex=%s", SolBase.extostr(e))
 
             # Compute
