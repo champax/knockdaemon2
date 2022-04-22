@@ -181,7 +181,7 @@ class TestUdpUsingHttpMock(unittest.TestCase):
         try:
             self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_send_min_interval_ms = 5000
         except Exception as e:
-            logger.info("Bypass, ex=%s", SolBase.extostr(e))
+            pass
 
         # Keep only one item (easier to test)
         self.k.probe_list.pop()
