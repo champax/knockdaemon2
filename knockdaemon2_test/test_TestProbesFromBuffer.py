@@ -1284,10 +1284,13 @@ class TestProbesFromBuffer(unittest.TestCase):
         expect_value(self, self.k, "k.net.conntrack.max", 200.0, "eq")
         expect_value(self, self.k, "k.net.conntrack.used", 50.0, "eq")
 
-    def test_from_buffer_network(self):
+    @patch('knockdaemon2.Probes.Os.Network.Network.get_interface_status_from_socket', return_value="up")
+    def test_from_buffer_network(self, m1):
         """
         Test
         """
+        self.assertIsNotNone(m1)
+
         # Init
         ns = Network()
         ns.set_manager(self.k)
