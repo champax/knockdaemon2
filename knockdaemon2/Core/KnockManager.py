@@ -865,11 +865,12 @@ class KnockManager(object):
                 # Interval reached, but GREATER than exec_interval_ms * 2
                 # This mean we are late, we skip this one (and we full reset, so we execute again asap)
                 logger.warning(
-                    "Interval reached but diff_ms > exec_interval_ms*2 (full skip / full reset), cur_ms=%s, next_start_ms=%s, interval*2=%s, diff=%s",
+                    "Interval reached but diff_ms > exec_interval_ms*2 (full skip / full reset), cur_ms=%s, next_start_ms=%s, interval*2=%s, diff=%s, p=%s",
                     cur_ms,
                     next_start_ms,
                     exec_interval_ms * 2,
                     cur_ms - next_start_ms,
+                    p
                 )
                 c.exec_count_so_far = 0.0
                 c.initial_ms_start = 0.0
