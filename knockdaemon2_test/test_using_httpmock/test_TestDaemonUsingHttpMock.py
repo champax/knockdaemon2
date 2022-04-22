@@ -133,6 +133,8 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
         """
         Test
         """
+        SolBase.logging_init(log_level="INFO", force_reset=True)
+
         if self.h:
             self.h.stop()
             self.h = None
@@ -315,6 +317,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             # =========================
 
             # Launch
+            SolBase.logging_init(log_level="DEBUG", force_reset=True)
             logger.info("Firing main_helper, ar=%s", ar)
             p = Process(target=KnockDaemon.main_helper, args=(ar, {}))
 
