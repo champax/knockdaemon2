@@ -593,7 +593,10 @@ class MongoDbStat(KnockProbe):
                 port = config["net"]["port"]
             except KeyError as e:
                 port = 27017
-                logger.debug("Port cast exception (fallback 27017), ex=%s", SolBase.extostr(e))
+                logger.debug("KeyError, port cast exception (fallback 27017), ex=%s", SolBase.extostr(e))
+            except TypeError as e:
+                port = 27017
+                logger.debug("TypeError, port cast exception (fallback 27017), ex=%s", SolBase.extostr(e))
 
             # Fetch roles
             try:
