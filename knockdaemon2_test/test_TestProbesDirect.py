@@ -271,7 +271,7 @@ class TestProbesDirect(unittest.TestCase):
         expect_value(self, self.k, "k.dns.resolv", "198.27.81.204", "eq", dd)
         expect_value(self, self.k, "k.dns.time", 0, "gte", dd)
 
-    @unittest.skipIf(TimeDiff().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % TimeDiff())
+    @unittest.skip("refer to test_from_buffer_timediff_with_mock")
     def test_TimeDiff(self):
         """
         Test

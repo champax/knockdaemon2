@@ -28,6 +28,6 @@ cd /tmp/ktemp/python3-knockdaemon2/label/debian10
 pwd
 
 echo "*** INVOKE"
-./Jenkins/build_client_debian.sh
+./jenkins/build_client_debian.sh
 
 
