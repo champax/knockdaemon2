@@ -215,7 +215,7 @@ find -name '*.pyc' -type f -delete
 echo "DEACTIVATE virtualenv"
 deactivate
 
-echo "BUILDING AMD64 DEB NOW (secret)"
+echo "BUILDING AMD64 DEB NOW (secret) (via exports)"
 dpkg-buildpackage --build=full --sign-key=${GPGKEY} -rfakeroot
 
 echo "=========================="
