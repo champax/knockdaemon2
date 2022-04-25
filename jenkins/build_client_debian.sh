@@ -216,7 +216,7 @@ echo "DEACTIVATE virtualenv"
 deactivate
 
 echo "BUILDING AMD64 DEB NOW (secret)"
-dpkg-buildpackage --build=full --sign-key=790D2DE0 -rfakeroot
+dpkg-buildpackage --build=full --sign-key=${GPGKEY} -rfakeroot
 
 echo "=========================="
 echo "VALIDATING .deb NOW"
