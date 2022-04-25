@@ -1,6 +1,0 @@
-{
-  "knockdaemon2": {
-    "startup": "/etc/init.d/knockdaemon2",
-    "pid": "/var/run/knockdaemon2.pid"
-  }
-}
