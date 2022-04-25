@@ -170,10 +170,7 @@ echo "=========================="
 echo "DEB BUILD EXPORT"
 echo "=========================="
 
-echo "EXPORT NOW (secret)"
-export GPGKEY=0x790D2DE0
-export DEBEMAIL="debian@knock.center"
-export DEBFULLNAME="Knock Center (GPG sign package key)"
+echo "EXPORT NOW (secret) (via exports)"
 
 echo "=========================="
 echo "DEB BUILD GPG CHECK"
