@@ -171,6 +171,9 @@ echo "DEB BUILD EXPORT"
 echo "=========================="
 
 echo "EXPORT NOW (secret) (via exports)"
+echo "GPGKEY=${GPGKEY}"
+echo "DEBEMAIL=${DEBEMAIL}"
+echo "DEBFULLNAME=${DEBFULLNAME}"
 
 echo "=========================="
 echo "DEB BUILD GPG CHECK"
