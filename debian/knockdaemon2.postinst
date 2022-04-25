@@ -1,17 +1,15 @@
 #!/bin/bash
 
-# Rc
-echo "postinst: pass 2 complete"
-update-rc.d -f knockdaemon2 defaults
-echo "postinst: pass 2 complete"
+echo "POSTINTALL : cleaning .pyc now"
+find /opt/knock/knockdaemon2/ -name '*.pyc' -type f -delete
 
+echo "POSTINSTALL : check"
+find /opt/knock/knockdaemon2/ -name '*.pyc' -type f
 
 echo "POSTINSTALL : Compile all py to pyc"
-find /opt/knock/knockdaemon2/ -name '*.pyc' -delete
-/opt/knock/knockdaemon2/bin/python -m compileall /opt/knock/knockdaemon2
+/opt/knock/knockdaemon2/bin/python -m compileall /opt/knock/knockdaemon2/
 
-
-# Restart
-echo "postinst: pass 3"
+echo "POSTINSTALL : restart"
 service knockdaemon2 restart
-echo "postinst: pass 3 complete"
+
+echo "POSTINSTALL : over"

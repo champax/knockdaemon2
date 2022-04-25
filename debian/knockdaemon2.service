@@ -1,0 +1,25 @@
+[Unit]
+Description=knockdaemon2
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+WorkingDirectory=/opt/knock/knockdaemon2/
+
+ExecStart=/opt/knock/knockdaemon2/bin/knockdaemon2 -pidfile=/var/run/knockdaemon2.pid -stderr=/dev/null -stdout=/dev/null -logfile=/dev/null -logconsole=false -logsyslog=true -logsyslog_facility=16 -appname=knockdaemon2 -loglevel=INFO -maxopenfiles=4096 -user=root -c=/etc/knock/knockdaemon2/knockdaemon2.yaml start
+ExecStop=/opt/knock/knockdaemon2/bin/knockdaemon2 -pidfile=/var/run/knockdaemon2.pid -stderr=/dev/null -stdout=/dev/null -logfile=/dev/null -logconsole=false -logsyslog=true -logsyslog_facility=16 -appname=knockdaemon2 -loglevel=INFO -maxopenfiles=4096 -user=root -c=/etc/knock/knockdaemon2/knockdaemon2.yaml stop
+
+KillSignal=SIGTERM
+User=root
+Type=simple
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=knockdaemon2
+SyslogFacility=local0
+
+# Restart on failure
+Restart=always
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
