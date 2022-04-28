@@ -21,6 +21,9 @@ find /opt/knock/knockdaemon2/ -name '*.pyc' -type f
 echo "POSTINSTALL : Compile all py to pyc"
 /opt/knock/knockdaemon2/bin/python -m compileall /opt/knock/knockdaemon2/
 
+echo "POSTINSTALL : systemd : reload"
+systemctl daemon-reload
+
 echo "POSTINSTALL : systemd : enabled"
 systemctl enable knockdaemon2
 
