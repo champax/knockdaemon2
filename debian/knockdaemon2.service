@@ -11,7 +11,7 @@ ExecStop=/opt/knock/knockdaemon2/bin/knockdaemon2 -pidfile=/var/run/knockdaemon2
 
 KillSignal=SIGTERM
 User=root
-Type=simple
+Type=forking
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=knockdaemon2
