@@ -17,9 +17,5 @@ StandardError=syslog
 SyslogIdentifier=knockdaemon2
 SyslogFacility=local0
 
-# Restart on failure
-Restart=always
-RestartSec=60
-
 [Install]
 WantedBy=multi-user.target
