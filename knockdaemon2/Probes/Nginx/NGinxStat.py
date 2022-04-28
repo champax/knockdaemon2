@@ -151,7 +151,7 @@ class NginxStat(KnockProbe):
                 return
 
         # Here we are NOT ok
-        logger.warning("All Uri down, notify started=0 and return, pool_id=%s", pool_id)
+        logger.info("All Uri down, notify started=0 and return, pool_id=%s", pool_id)
         self.notify_value_n("k.nginx.started", {"ID": pool_id}, 0)
 
     def process_nginx_buffer(self, nginx_buf, pool_id, ms_http):

@@ -183,7 +183,7 @@ class ApacheStat(KnockProbe):
                 return
 
         # Here we are NOT ok
-        logger.warning("All Uri down, notify started=0 and return, pool_id=%s", pool_id)
+        logger.info("All Uri down, notify started=0 and return, pool_id=%s", pool_id)
         self.notify_value_n("k.apache.started", {"ID": pool_id}, 0)
 
     def process_apache_buffer(self, apache_buf, pool_id, ms_http):
