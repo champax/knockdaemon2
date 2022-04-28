@@ -520,7 +520,7 @@ class MongoDbStat(KnockProbe):
 
         except Exception as e:
             logger.warning(SolBase.extostr(e))
-            self.notify_value_n("k.mongodb.ok", {"PORT": port}, "0")
+            self.notify_value_n("k.mongodb.ok", {"PORT": str(port)}, "0")
             return None
 
         # -----------------------------
@@ -567,7 +567,7 @@ class MongoDbStat(KnockProbe):
                 try:
                     config = yaml.load(stream, Loader=SafeLoader)
                 except yaml.YAMLError as e:
-                    logger.warning("Error loading (bypass), conf_file=%s, ex=%s", conf_file, SolBase.extostr(e))
+                    logger.warning("Error loading (bypass, possible not yaml), conf_file=%s, ex=%s", conf_file, SolBase.extostr(e))
                     continue
             # Register
             d_config_files[conf_file] = config
@@ -693,9 +693,9 @@ class MongoDbStat(KnockProbe):
             elif subkey + k in MongoDbStat.KEYS:
                 # Direct
                 if len(subkey) > 0:
-                    self.notify_value_n("k.mongodb.%s%s" % (subkey, k), {"PORT": port}, self.clean_value(v, subkey + k))
+                    self.notify_value_n("k.mongodb.%s%s" % (subkey, k), {"PORT": str(port)}, self.clean_value(v, subkey + k))
                 else:
-                    self.notify_value_n("k.mongodb.%s" % k, {"PORT": port}, self.clean_value(v, subkey + k))
+                    self.notify_value_n("k.mongodb.%s" % k, {"PORT": str(port)}, self.clean_value(v, subkey + k))
             else:
                 # Bypass, not handled here
                 pass
@@ -724,4 +724,4 @@ class MongoDbStat(KnockProbe):
         """
         for cur_type in self.d_superv:
             for k, v in self.d_superv[cur_type].items():
-                self.notify_value_n("k.mongodb.%s_%s" % (k, cur_type), {"PORT": port}, v)
+                self.notify_value_n("k.mongodb.%s_%s" % (k, cur_type), {"PORT": str(port)}, v)

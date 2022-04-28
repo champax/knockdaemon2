@@ -717,9 +717,9 @@ class KnockManager(object):
         # Validate
         for k, v in d_tags.items():
             if not isinstance(k, str):
-                raise Exception("k must be str, got class={0}, k={1}".format(SolBase.get_classname(k), k))
+                raise Exception("tags : k must be str, got class={0}, k={1}".format(SolBase.get_classname(k), k))
             elif not isinstance(v, str):
-                raise Exception("v must be str, got class={0}, v={1}".format(SolBase.get_classname(v), v))
+                raise Exception("tags : v must be str, got class={0}, v={1}".format(SolBase.get_classname(v), v))
 
         # Append
         if not ts:

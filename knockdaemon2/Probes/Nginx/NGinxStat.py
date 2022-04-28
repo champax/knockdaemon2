@@ -249,12 +249,12 @@ class NginxStat(KnockProbe):
 
             # Get response
             if hresp.status_code != 200:
-                logger.warning("No http 200, give up")
+                logger.info("No http 200, give up, uri=%s, status_code=%s", hreq.uri, hresp.status_code)
                 return None
 
             # Check
             if not hresp.buffer:
-                logger.warning("No buffer, give up")
+                logger.info("No buffer, give up, uri=%s, status_code=%s", hreq.uri, hresp.status_code)
                 return None
             return hresp.buffer
         except Exception as e:

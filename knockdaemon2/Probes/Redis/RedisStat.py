@@ -61,9 +61,9 @@ class RedisStat(KnockProbe):
         ("rdb_last_bgsave_time_sec", "int", "k.redis.rdb_last_bgsave_time_sec", "max"),
         ("aof_last_rewrite_time_sec", "int", "k.redis.aof_last_rewrite_time_sec", "max"),
 
-        ("rdb_last_bgsave_status", "bytes", "k.redis.rdb_last_bgsave_status", "custom"),
-        ("aof_last_bgrewrite_status", "bytes", "k.redis.aof_last_bgrewrite_status", "custom"),
-        ("aof_last_write_status", "bytes", "k.redis.aof_last_write_status", "custom"),
+        ("rdb_last_bgsave_status", "str", "k.redis.rdb_last_bgsave_status", "custom"),
+        ("aof_last_bgrewrite_status", "str", "k.redis.aof_last_bgrewrite_status", "custom"),
+        ("aof_last_write_status", "str", "k.redis.aof_last_write_status", "custom"),
 
         # Stats (per sec)
         ("total_connections_received", "float", "k.redis.total_connections_received", "sum"),
