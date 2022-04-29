@@ -59,43 +59,6 @@ class TestInfluxHttpTransport(unittest.TestCase):
 
         pass
 
-    def test_influx_transport_max_items(self):
-        """
-        Test
-        """
-
-        iat = InfluxAsyncTransport()
-        iat._max_items_in_queue = 5
-        iat._max_bytes_in_queue = 1024
-
-        # Push ONE (56 bytes)
-        iat.process_notify(
-            account_hash={"acc_namespace": "test"},
-            node_hash={"host": "tamer"},
-            notify_values=[
-                ("C1", {"T": "1"}, 1.0, time(), {}),
-            ],
-        )
-
-        self.assertEqual(iat._queue_to_send.qsize(), 1)
-        e = iat._queue_to_send.peek(block=True)
-        self.assertTrue(e.startswith("C1,T=1,host=tamer,ns=test value=1.0 "))
-        self.assertEqual(iat._current_queue_bytes, 56)
-
-        # Push 5 (must hit max items)
-        for i in range(1, 6):
-            iat.process_notify(
-                account_hash={"acc_namespace": "test"},
-                node_hash={"host": "tamer"},
-                notify_values=[
-                    ("C%s" % i, {"T": "1"}, 1.0, time(), {}),
-                ],
-            )
-        self.assertEqual(iat._queue_to_send.qsize(), 5)
-        self.assertEqual(iat._current_queue_bytes, 56 * 5)
-        self.assertEqual(Meters.aig(iat.meters_prefix + "knock_stat_transport_queue_discard"), 1)
-        self.assertEqual(Meters.aig(iat.meters_prefix + "knock_stat_transport_queue_discard_bytes"), 0)
-
     def test_influx_transport_max_bytes(self):
         """
         Test
@@ -131,6 +94,6 @@ class TestInfluxHttpTransport(unittest.TestCase):
             )
         self.assertEqual(iat._queue_to_send.qsize(), 2)
         self.assertEqual(iat._current_queue_bytes, 56 * 2)
-        self.assertEqual(Meters.aig(iat.meters_prefix + "knock_stat_transport_queue_discard"), 0)
-        self.assertEqual(Meters.aig(iat.meters_prefix + "knock_stat_transport_queue_discard_bytes"), 1)
+        self.assertEqual(Meters.aig(iat.meters_prefix + "knock_stat_transport_queue_discard"), 1)
+        self.assertEqual(Meters.aig(iat.meters_prefix + "knock_stat_transport_queue_discard_bytes"), 56)
 

@@ -86,13 +86,6 @@ class InfluxAsyncTransport(KnockTransport):
         # Recommended : _http_send_min_interval_ms*2
         self._http_ko_interval_ms = 10000
 
-        # Max items in send queue (if reached, older items are kicked)
-        self._max_items_in_queue = 36000
-
-        # Max bytes in send queue (if reached, older items are kicked)
-        # default : 16MB
-        self._max_bytes_in_queue = 1024 * 1024 * 16
-
         # Call base
         KnockTransport.__init__(self)
 
@@ -129,11 +122,6 @@ class InfluxAsyncTransport(KnockTransport):
             self._http_send_min_interval_ms = d["http_send_min_interval_ms"]
         except KeyError:
             logger.debug("Key http_send_min_interval_ms not present, using default, d=%s", d)
-
-        try:
-            self._max_items_in_queue = d["max_items_in_queue"]
-        except KeyError:
-            logger.debug("Key max_items_in_queue not present, using default, d=%s", d)
 
         try:
             self._max_bytes_in_queue = d["max_bytes_in_queue"]
@@ -333,28 +321,17 @@ class InfluxAsyncTransport(KnockTransport):
         """
 
         for buf in ar_buf:
-
-            # Check max
-            if self._queue_to_send.qsize() >= self._max_items_in_queue and self._queue_to_send.qsize() > 0:
-                # Too much, kick
+            # Check max bytes
+            discarded = 0
+            c = 0
+            while self._current_queue_bytes >= self._max_bytes_in_queue and self._queue_to_send.qsize() > 0:
                 buf = self._queue_to_send.get(block=True)
                 self._current_queue_bytes -= len(buf)
-                logger.warning("Max queue reached (bytes), discarded one item, cur.items/bytes=%s/%s", self._queue_to_send.qsize(), self._current_queue_bytes)
-                Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard")
-
-            # Check max
-            if self._current_queue_bytes >= self._max_bytes_in_queue and self._queue_to_send.qsize() > 0:
-                # Too much, kick
-                logger.debug("Max queue reached (bytes), discarding older items (loop)")
-                discarded = 0
-                c = 0
-                while self._current_queue_bytes >= self._max_bytes_in_queue or self._queue_to_send.qsize() == 0:
-                    buf = self._queue_to_send.get(block=True)
-                    self._current_queue_bytes -= len(buf)
-                    discarded += len(buf)
-                    c += 1
-                Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard_bytes")
-                logger.warning("Max queue reached (bytes), discarded older items (loop), count=%s, discarded=%s, cur.items/bytes=%s/%s", c, discarded, self._queue_to_send.qsize(), self._current_queue_bytes)
+                discarded += len(buf)
+                c += 1
+            Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard", increment_value=c)
+            Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard_bytes", increment_value=discarded)
+            logger.warning("Max queue reached (bytes), discarded items (loop), count=%s, discarded=%s, cur.items/bytes=%s/%s", c, discarded, self._queue_to_send.qsize(), self._current_queue_bytes)
 
 
 

@@ -51,6 +51,10 @@ class KnockTransport(object):
         # Current bytes in queue
         self._current_queue_bytes = 0
 
+        # Max bytes in send queue (if reached, older items are kicked)
+        # default : 16MB
+        self._max_bytes_in_queue = 1024 * 1024 * 16
+
     def init_from_config(self, d_yaml_config, d, auto_start=True):
         """
         Initialize from configuration

@@ -1019,7 +1019,7 @@ class KnockManager(object):
                         # noinspection PyProtectedMember
                         lifecyclelogger.info(
                             "Running (pf=%s), "
-                            "q.c/bytes=%s/%s, "
+                            "q.c/bytes/limit=%s/%s/%s, "
                             "q.max=%s, "
                             "discard.c/c_bytes=%s/%s, "
                             "transp_buf.len.pend/last/max=%s/%s/%s, "
@@ -1032,6 +1032,7 @@ class KnockManager(object):
 
                             cur_transport._queue_to_send.qsize(),
                             cur_transport._current_queue_bytes,
+                            cur_transport._max_bytes_in_queue,
 
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_queue_max_size"),
 
