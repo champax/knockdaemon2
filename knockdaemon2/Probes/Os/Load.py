@@ -109,7 +109,7 @@ class Load(KnockProbe):
         self.notify_value_n("k.os.cpu.load.percpu.avg1", None, load1 / n_cpu)
         self.notify_value_n("k.os.cpu.load.percpu.avg5", None, load5 / n_cpu)
         self.notify_value_n("k.os.cpu.load.percpu.avg15", None, load15 / n_cpu)
-        self.notify_value_n("k.os.cpu.core", None, n_cpu)
+        self.notify_value_n("k.os.cpu.core", None, int(n_cpu))
 
         # From cpu
         for key, value in d_cpu.items():
@@ -117,7 +117,7 @@ class Load(KnockProbe):
                 if key not in "total,guest":
                     if value < 0:
                         value = 0
-                    self.notify_value_n("k.os.cpu.util." + key, None, value / n_cpu)
+                    self.notify_value_n("k.os.cpu.util." + key, None, int(value / n_cpu))
 
         self.notify_value_n("k.os.cpu.switches", None, int(d_cpu["ctxt"]))
         self.notify_value_n("k.os.cpu.intr", None, int(d_cpu["softirqcount"]))
