@@ -329,11 +329,10 @@ class InfluxAsyncTransport(KnockTransport):
                 self._current_queue_bytes -= len(buf)
                 discarded += len(buf)
                 c += 1
-            Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard", increment_value=c)
-            Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard_bytes", increment_value=discarded)
-            logger.warning("Max queue reached (bytes), discarded items (loop), count=%s, discarded=%s, cur.items/bytes=%s/%s", c, discarded, self._queue_to_send.qsize(), self._current_queue_bytes)
-
-
+            if c > 0:
+                Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard", increment_value=c)
+                Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard_bytes", increment_value=discarded)
+                logger.warning("Max queue reached (bytes), discarded items (loop), count=%s, discarded=%s, cur.items/bytes=%s/%s", c, discarded, self._queue_to_send.qsize(), self._current_queue_bytes)
 
             # Put
             logger.debug("Queue : put")
