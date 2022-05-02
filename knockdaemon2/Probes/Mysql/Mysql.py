@@ -176,7 +176,7 @@ class Mysql(KnockProbe):
                     cmd = "sudo cat {0}".format(Mysql.MYSQL_CONFIG_FILE)
                     ec, so, se = ButcherTools.invoke(cmd)
                     if ec != 0:
-                        logger.warning("invoke failed (sudo fallback), give up, ec=%s, so=%s, se=%s", ec, so, se)
+                        logger.info("invoke failed (sudo fallback), give up, ec=%s, so=%s, se=%s", ec, so, se)
                         return None, None, None
                 # Ok
                 buf = so
@@ -223,7 +223,9 @@ class Mysql(KnockProbe):
 
             # Check
             if not cur_login or not cur_pwd or not cur_socket:
-                logger.warning("Unable to detect creds, buf=%s", buf)
+                if buf is not None:
+                    buf = buf.replace("\n", "")
+                logger.info("Unable to detect creds, buf=%s", buf)
                 return None, None, None
 
             # Ok
@@ -261,7 +263,7 @@ class Mysql(KnockProbe):
             if not login:
                 # FATAL
                 # Notify instance down (type : 0)
-                logger.warning("_parse_config returned None, signaling instance down, started=0")
+                logger.info("_parse_config returned None, signaling instance down, started=0")
                 self.notify_value_n("k.mysql.started", {"ID": id_mysql}, 0)
                 return
 

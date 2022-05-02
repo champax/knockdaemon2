@@ -7,7 +7,7 @@ pysolbase>=3.0.0
 pysolcache>=3.0.0
 pysoldaemon>=3.0.0
 pysolmysql>=3.0.0
-pysolhttpclient>=3.0.0
+pysolhttpclient>=3.0.4
 pysolmeters>=3.0.2
 pysoltcp>=3.0.0
 

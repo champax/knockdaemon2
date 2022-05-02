@@ -247,14 +247,15 @@ class NginxStat(KnockProbe):
             hresp = hclient.go_http(hreq)
             logger.debug("Got reply, hresp=%s", hresp)
 
-            # Get response
-            if hresp.status_code != 200:
-                logger.info("No http 200, give up, uri=%s, status_code=%s", hreq.uri, hresp.status_code)
-                return None
-
             # Check
-            if not hresp.buffer:
-                logger.info("No buffer, give up, uri=%s, status_code=%s", hreq.uri, hresp.status_code)
+            if hresp.exception is not None:
+                logger.info("Http exception, give up, uri=%s, status_code=%s, ex=%s", hreq.uri, hresp.status_code, SolBase.extostr(hresp.exception))
+                return None
+            elif hresp.status_code != 200:
+                logger.info("No http 200, give up, uri=%s, status_code=%s, hresp=%s", hreq.uri, hresp.status_code, hresp)
+                return None
+            elif not hresp.buffer:
+                logger.info("No buffer, give up, uri=%s, status_code=%s, hresp=%s", hreq.uri, hresp.status_code, hresp)
                 return None
             return hresp.buffer
         except Exception as e:

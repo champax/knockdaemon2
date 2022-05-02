@@ -567,7 +567,8 @@ class MongoDbStat(KnockProbe):
                 try:
                     config = yaml.load(stream, Loader=SafeLoader)
                 except yaml.YAMLError as e:
-                    logger.info("Cannot load (bypass, possible not yaml), conf_file=%s, ex=%s", conf_file, SolBase.extostr(e))
+                    # We may have \n
+                    logger.info("Cannot load (bypass, possible not yaml), conf_file=%s, ex=%s", conf_file, SolBase.extostr(e).replace("\n", " "))
                     continue
             # Register
             d_config_files[conf_file] = config
