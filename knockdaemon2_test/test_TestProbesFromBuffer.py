@@ -616,7 +616,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         # Check sda
         dd = {"HDD": "sda"}
         expect_value(self, self.k, "k.hard.hd.status", None, "exists", dd)
-        expect_value(self, self.k, "k.hard.hd.user_capacity", 500107862016.0, "eq", dd)
+        expect_value(self, self.k, "k.hard.hd.user_capacity_f", 500107862016.0, "eq", dd)
         expect_value(self, self.k, "k.hard.hd.reallocated_sector_ct", 0, "eq", dd)
         expect_value(self, self.k, "k.hard.hd.serial_number", "WD-WCC1U0437567", "eq", dd)
         expect_value(self, self.k, "k.hard.hd.health", "KNOCKOK", "eq", dd)
@@ -625,7 +625,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         # Check sdb
         dd = {"HDD": "sdb"}
         expect_value(self, self.k, "k.hard.hd.status", None, "exists", dd)
-        expect_value(self, self.k, "k.hard.hd.user_capacity", 512110190592.0, "eq", dd)
+        expect_value(self, self.k, "k.hard.hd.user_capacity_f", 512110190592.0, "eq", dd)
         expect_value(self, self.k, "k.hard.hd.reallocated_sector_ct", 99, "eq", dd)
         expect_value(self, self.k, "k.hard.hd.serial_number", "982S107CT5ZQ", "eq", dd)
         expect_value(self, self.k, "k.hard.hd.total_lbas_written", 384582, "eq", dd)

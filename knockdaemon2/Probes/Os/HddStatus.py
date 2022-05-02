@@ -189,7 +189,8 @@ class HddStatus(KnockProbe):
                     v = float(v)
                 except ValueError:
                     v = 0.0
-                self.notify_value_n("k.hard.hd.user_capacity", {"HDD": hdd}, v)
+                # History, user_capacity was pushed to str, we now push to float, using another name
+                self.notify_value_n("k.hard.hd.user_capacity_f", {"HDD": hdd}, v)
 
     def scan_one_hdd(self, hd):
         """

@@ -337,9 +337,9 @@ class TestProbesDirect(unittest.TestCase):
             logger.info("Assuming VM, lightweight checks")
             dd = {"HDD": "ALL"}
             expect_value(self, self.k, "k.hard.hd.status", "OK", "eq", dd)
-            expect_value(self, self.k, "k.hard.hd.user_capacity", "ALL", "eq", dd)
+            expect_value(self, self.k, "k.hard.hd.user_capacity_f", "ALL", "eq", dd)
             expect_value(self, self.k, "k.hard.hd.reallocated_sector_ct", 0, "eq", dd)
-            expect_value(self, self.k, "k.hard.hd.user_capacity", "ALL", "eq", dd)
+            expect_value(self, self.k, "k.hard.hd.user_capacity_f", "ALL", "eq", dd)
             expect_value(self, self.k, "k.hard.hd.serial_number", "ALL", "eq", dd)
             expect_value(self, self.k, "k.hard.hd.model_family", "ALL", "eq", dd)
             expect_value(self, self.k, "k.hard.hd.total_lbas_written", 0, "eq", dd)
