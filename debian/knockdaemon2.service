@@ -6,8 +6,11 @@ After=network-online.target
 [Service]
 WorkingDirectory=/opt/knock/knockdaemon2/
 
-ExecStart=/opt/knock/knockdaemon2/bin/knockdaemon2 -pidfile=/var/run/knockdaemon2.pid -stderr=/dev/null -stdout=/dev/null -logfile=/dev/null -logconsole=false -logsyslog=true -logsyslog_facility=16 -appname=knockdaemon2 -loglevel=INFO -maxopenfiles=4096 -user=root -c=/etc/knock/knockdaemon2/knockdaemon2.yaml start
-ExecStop=/opt/knock/knockdaemon2/bin/knockdaemon2 -pidfile=/var/run/knockdaemon2.pid -stderr=/dev/null -stdout=/dev/null -logfile=/dev/null -logconsole=false -logsyslog=true -logsyslog_facility=16 -appname=knockdaemon2 -loglevel=INFO -maxopenfiles=4096 -user=root -c=/etc/knock/knockdaemon2/knockdaemon2.yaml stop
+# Logging :
+# logconfig (yaml file) has priority
+# others parameters (logfile, logconsole, logsyslog, logsyslog_facility, appname, loglevel) are present for bootstrap and back compatibility
+ExecStart=/opt/knock/knockdaemon2/bin/knockdaemon2 -pidfile=/var/run/knockdaemon2.pid -stderr=/dev/null -stdout=/dev/null -logfile=/dev/null -logconsole=false -logsyslog=true -logsyslog_facility=16 -appname=knockdaemon2 -loglevel=INFO -maxopenfiles=4096 -user=root -c=/etc/knock/knockdaemon2/knockdaemon2.yaml -logconfig=/etc/knock/knockdaemon2/logging.yaml start
+ExecStop=/opt/knock/knockdaemon2/bin/knockdaemon2 -pidfile=/var/run/knockdaemon2.pid -stderr=/dev/null -stdout=/dev/null -logfile=/dev/null -logconsole=false -logsyslog=true -logsyslog_facility=16 -appname=knockdaemon2 -loglevel=INFO -maxopenfiles=4096 -user=root -c=/etc/knock/knockdaemon2/knockdaemon2.yaml -logconfig=/etc/knock/knockdaemon2/logging.yaml stop
 
 PIDFile=/var/run/knockdaemon2.pid
 KillSignal=SIGTERM

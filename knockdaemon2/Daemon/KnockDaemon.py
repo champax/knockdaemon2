@@ -111,6 +111,15 @@ class KnockDaemon(Daemon):
             help="knockdaemon2 ini file [default: /etc/knock/knockdaemon2.yaml]"
         )
 
+        arg_parser.add_argument(
+            "-logconfig",
+            metavar="logconfig",
+            type=str,
+            default="/etc/knock/knockdaemon2/logging.yaml",
+            action="store",
+            help="knockdaemon2 log config file [default: /etc/knock/knockdaemon2/logging.yaml]"
+        )
+
         return arg_parser
 
     # noinspection PyUnusedLocal,PyMethodMayBeStatic
@@ -145,6 +154,11 @@ class KnockDaemon(Daemon):
         Test
         """
         logger.info("knockdaemon2 starting")
+
+        # Logger config file
+        config_file = self.vars.get("logconfig", None)
+        if config_file is not None:
+            SolBase.logging_initfromfile(config_file_name=config_file, force_reset=True)
 
         # Fetch config
         config_file = self.vars["c"]
@@ -181,6 +195,7 @@ def run():
     Start bouzin
     """
     try:
+        SolBase.set_compo_name("knockdaemon2")
         KnockDaemon.main_helper(sys.argv, {})
     except Exception as e:
         logger.error("Exception, exiting -1, ex=%s", SolBase.extostr(e))

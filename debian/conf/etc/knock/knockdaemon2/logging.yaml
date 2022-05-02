@@ -1,0 +1,29 @@
+# ==================
+# LOG CONFIGURATION
+# ==================
+
+version: 1
+
+disable_existing_loggers: false
+
+root:
+  level: INFO
+  handlers: [ hSyslog ]
+  propagate: false
+
+loggers:
+  FileUtility:
+    level: ERROR
+    handlers: [ hSyslog ]
+    propagate: false
+
+handlers:
+  hSyslog:
+    class: pysolbase.SysLogger.SysLogger
+    level: DEBUG
+    formatter: FDEFAULT
+
+formatters:
+  FDEFAULT:
+    format: "%(asctime)s | %(levelname)s | %(module)s@%(funcName)s@%(lineno)d | %(message)s | %(kfilter)s | %(thread)d:%(threadName)s | %(process)d:%(processName)s"
+    datefmt: ""

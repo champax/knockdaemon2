@@ -57,8 +57,13 @@ def run():
             UDPServer.UDP_SOCKET_NAME = UDPServer.UDP_UNITTEST_SOCKET_NAME
 
         # Fetch config
-        config_file = "/etc/knock/knockdaemon2_lchgui/knockdaemon2.yaml"
-        logger.info("config_file=%s", config_file)
+        config_file = "/etc/knock/knockdaemon2/knockdaemon2.yaml"
+        logger.info("Using config_file=%s", config_file)
+
+        log_config_file = "/etc/knock/knockdaemon2/logging.yaml"
+        logger.info("Init logging from yaml log_config_file=%s", log_config_file)
+        SolBase.set_compo_name("knockdaemon2")
+        SolBase.logging_initfromfile(log_config_file, True)
 
         # Init manager
         k = KnockManager(config_file)

@@ -3,7 +3,7 @@ pip
 setuptools
 
 # pysol
-pysolbase>=3.0.0
+pysolbase>=3.0.1
 pysolcache>=3.0.0
 pysoldaemon>=3.0.0
 pysolmysql>=3.0.0
