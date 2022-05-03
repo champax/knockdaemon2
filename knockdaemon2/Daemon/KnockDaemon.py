@@ -156,9 +156,11 @@ class KnockDaemon(Daemon):
         logger.info("knockdaemon2 starting")
 
         # Logger config file
-        config_file = self.vars.get("logconfig", None)
-        if config_file is not None:
-            SolBase.logging_initfromfile(config_file_name=config_file, force_reset=True)
+        log_config_file = self.vars.get("logconfig", None)
+        logger.info("using log_config_file=%s", log_config_file)
+        if log_config_file is not None:
+            logger.info("loading log_config_file=%s (this may redirect logs)", log_config_file)
+            SolBase.logging_initfromfile(config_file_name=log_config_file, force_reset=True)
 
         # Fetch config
         config_file = self.vars["c"]
@@ -195,7 +197,6 @@ def run():
     Start bouzin
     """
     try:
-        SolBase.set_compo_name("knockdaemon2")
         KnockDaemon.main_helper(sys.argv, {})
     except Exception as e:
         logger.error("Exception, exiting -1, ex=%s", SolBase.extostr(e))

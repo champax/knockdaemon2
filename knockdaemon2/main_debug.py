@@ -60,6 +60,7 @@ def run():
         config_file = "/etc/knock/knockdaemon2/knockdaemon2.yaml"
         logger.info("Using config_file=%s", config_file)
 
+        # Logging
         log_config_file = "/etc/knock/knockdaemon2/logging.yaml"
         logger.info("Init logging from yaml log_config_file=%s", log_config_file)
         SolBase.set_compo_name("knockdaemon2")

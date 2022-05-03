@@ -178,9 +178,10 @@ class TestUdpUsingHttpMock(unittest.TestCase):
 
         # Init manager
         self.k = KnockManager(self.manager_config_file, auto_start=start_manager)
+        # noinspection PyBroadException
         try:
             self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_send_min_interval_ms = 5000
-        except Exception as e:
+        except Exception:
             pass
 
         # Keep only one item (easier to test)
