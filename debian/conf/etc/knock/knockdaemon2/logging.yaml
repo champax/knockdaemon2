@@ -52,5 +52,5 @@ handlers:
 
 formatters:
   FDEFAULT:
-    format: "%(asctime)s | %(name)s | %(levelname)s | %(module)s@%(funcName)s@%(lineno)d | %(message)s | %(kfilter)s | %(thread)d:%(threadName)s | %(process)d:%(processName)s"
+    format: "%(asctime)s | %(levelname)s | %(module)s@%(funcName)s@%(lineno)d | %(message)s | %(kfilter)s | %(thread)d:%(threadName)s | %(process)d:%(processName)s"
     datefmt: ""
