@@ -23,6 +23,7 @@
 """
 
 import glob
+import json
 import logging
 from collections import defaultdict
 from datetime import datetime
@@ -455,6 +456,25 @@ class MongoDbStat(KnockProbe):
         KnockProbe.__init__(self)
         self.category = "/nosql/mongodb"
         self.d_superv = None
+        self.stats_per_col_enabled = True
+        self.stats_per_idx_enabled = True
+
+    def init_from_config(self, k, d_yaml_config, d):
+        """
+        Initialize from configuration
+        :param k: str
+        :type k: str
+        :param d_yaml_config: full conf
+        :type d_yaml_config: d
+        :param d: local conf
+        :type d: dict
+        """
+
+        # Base
+        KnockProbe.init_from_config(self, k, d_yaml_config, d)
+
+        self.stats_per_col_enabled = d.get("stats_per_col_enabled", True)
+        self.stats_per_idx_enabled = d.get("stats_per_idx_enabled", True)
 
     def reset(self):
         """
@@ -483,10 +503,18 @@ class MongoDbStat(KnockProbe):
         # Get server list, browse, get status and push counters
         for port, t in self._mongo_config_get_server_list(d_config_files):
             self.notify_value_n("k.mongodb.type", {"PORT": str(port)}, t)
+
+            # Status
             try:
                 d_status = self._mongo_get_server_status("127.0.0.1", port)
                 if d_status is not None:
                     self.process_mongo_server_status(d_status, port)
+            except Exception as e:
+                logger.warning("Ex=%s", SolBase.extostr(e))
+
+            # Per db / col stats
+            try:
+                self.process_per_db_and_col("127.0.0.1", port)
             except Exception as e:
                 logger.warning("Ex=%s", SolBase.extostr(e))
 
@@ -726,3 +754,213 @@ class MongoDbStat(KnockProbe):
         for cur_type in self.d_superv:
             for k, v in self.d_superv[cur_type].items():
                 self.notify_value_n("k.mongodb.%s_%s" % (k, cur_type), {"PORT": str(port)}, v)
+
+    # ==================================
+    # PER DB / PER COLLECTION STAT
+    # ==================================
+
+    def process_from_buffer_db(self, port, db_name, db_stat_buf):
+        """
+        Process db from buffer
+        :param port: int
+        :type port: int
+        :param db_name: str
+        :type db_name: str
+        :param db_stat_buf: str
+        :type db_stat_buf: str
+        """
+
+        # str to dict if required
+        if isinstance(db_stat_buf, str):
+            d_stat = json.loads(db_stat_buf)
+        else:
+            d_stat = db_stat_buf
+
+        # Check dict
+        if not isinstance(d_stat, dict):
+            raise Exception("Cannot process, not a dict, got=%s" % SolBase.get_classname(db_stat_buf))
+
+        # Check ok
+        if int(d_stat.get("ok", -1)) != 1:
+            raise Exception("Cannot process ('ok' miss or invalid), got=%s" % db_stat_buf)
+
+        # {
+        #         "db" : "test_labo_mongo",
+        #         "collections" : 1,
+        #         "views" : 0,
+        #         "objects" : 400000,
+        #         "avgObjSize" : 58,
+        #         "dataSize" : 23200000,
+        #         "storageSize" : 15179776,
+        #         "numExtents" : 0,
+        #         "indexes" : 3,
+        #         "indexSize" : 17924096,
+        #         "fsUsedSize" : 26165620736,
+        #         "fsTotalSize" : 33756561408,
+        #         "ok" : 1
+        # }
+
+        d_tags = {"PORT": str(port), "DB": db_name}
+        for s in [
+            "collections",
+            "objects",
+            "avgObjSize",
+            "dataSize",
+            "storageSize",
+            "indexes",
+            "indexSize",
+            "fsUsedSize",
+            "fsTotalSize",
+        ]:
+            v = float(d_stat.get(s, -1))
+            c = "k.mongodb.db.%s" % s
+            self.notify_value_n(c, d_tags, v)
+            SolBase.sleep(0)
+
+    def process_from_buffer_col(self, port, db_name, col_name, col_stat_buf):
+        """
+        Process col from buffer
+        :param port: int
+        :type port: int
+        :param db_name: str
+        :type db_name: str
+        :param col_name: str
+        :type col_name: str
+        :param col_stat_buf: str,dict
+        :type col_stat_buf: str,dict
+        """
+
+        if not self.stats_per_col_enabled and not self.stats_per_idx_enabled:
+            return
+
+        # str to dict if required
+        if isinstance(col_stat_buf, str):
+            d_stat = json.loads(col_stat_buf)
+        else:
+            d_stat = col_stat_buf
+
+        # Check dict
+        if not isinstance(d_stat, dict):
+            raise Exception("Cannot process, not a dict, got=%s" % SolBase.get_classname(col_stat_buf))
+
+        # Check ok
+        if int(d_stat.get("ok", -1)) != 1:
+            raise Exception("Cannot process ('ok' miss or invalid), got=%s" % d_stat.get("ok", None))
+
+        # Go
+        if self.stats_per_col_enabled:
+            d_tags = {"PORT": str(port), "DB": db_name, "COL": col_name}
+            for s in [
+                "size",
+                "count",
+                "avgObjSize",
+                "storageSize",
+                "totalIndexSize",
+                "nindexes",
+            ]:
+                v = float(d_stat.get(s, -1))
+                c = "k.mongodb.col.%s" % s
+                self.notify_value_n(c, d_tags, v)
+
+        # Per index size / cache / cursor
+        if self.stats_per_idx_enabled:
+            if "indexSizes" in d_stat:
+                for k, v in d_stat["indexSizes"].items():
+                    d_tags_index = {"PORT": str(port), "DB": db_name, "COL": col_name, "IDX": k}
+                    c = "k.mongodb.col.idx.indexSizes"
+                    self.notify_value_n(c, d_tags_index, float(v))
+                    SolBase.sleep(0)
+
+                    # Index details
+                    if "indexDetails" in d_stat and k in d_stat["indexDetails"]:
+                        d_idx_details = d_stat["indexDetails"][k]
+
+                        if "cache" in d_idx_details:
+                            for s in [
+                                "bytes currently in the cache",
+                                "bytes read into cache",
+                                "bytes written from cache",
+                                "pages read into cache",
+                                "pages requested from the cache",
+                                "pages written from cache",
+                                "internal pages evicted",
+                                "modified pages evicted",
+                                "unmodified pages evicted",
+                            ]:
+                                v = float(d_idx_details["cache"].get(s, -1))
+                                c = "k.mongodb.col.idx.detail.%s" % s.replace(" ", "_")
+                                self.notify_value_n(c, d_tags_index, v)
+                                SolBase.sleep(0)
+
+                        if "cursor" in d_idx_details:
+                            for s in [
+                                "create calls",
+                                "insert calls",
+                                "insert key and value bytes",
+                                "next calls",
+                                "prev calls",
+                                "remove calls",
+                                "remove key bytes removed",
+                                "reserve calls",
+                                "reset calls",
+                                "search calls",
+                                "search near calls",
+                                "truncate calls",
+                                "update calls",
+                                "update key and value bytes",
+                            ]:
+                                v = float(d_idx_details["cursor"].get(s, -1))
+                                c = "k.mongodb.col.idx.cursor.%s" % s.replace(" ", "_")
+                                self.notify_value_n(c, d_tags_index, v)
+                                SolBase.sleep(0)
+
+    def process_per_db_and_col(self, host, port):
+        """
+        Get per DB / COLLECTION stats
+        :param host: str
+        :type host: str
+        :param port: int
+        :type port: int
+        """
+
+        try:
+            # Connect
+            mongo_client = pymongo.MongoClient(host, port)
+
+            # For each db
+            for cur_db in mongo_client.list_databases():
+                db = str(cur_db["name"])
+
+                # Get connection
+                cur_db = mongo_client[db]
+
+                # Get stats (database)
+                # https://www.mongodb.com/docs/manual/reference/command/dbStats/
+                db_stats = cur_db.command("dbstats")
+                SolBase.sleep(0)
+                self.process_from_buffer_db(port, db, db_stats)
+                SolBase.sleep(0)
+
+                # For each collection : get stats (collections / indexex)
+                # https://www.mongodb.com/docs/manual/reference/command/collStats/
+                # db.runCommand({collStats: "col_name"});
+                d_col_skip = {
+                    "__schema__": 1,
+                }
+                for cur_col in cur_db.list_collections():
+                    col = str(cur_col["name"])
+                    # Skip
+                    if col in d_col_skip:
+                        continue
+                    # Skip "system."
+                    if col.startswith("system."):
+                        continue
+
+                    # Go
+                    col_stats = cur_db.command("collStats", col)
+                    SolBase.sleep(0)
+                    self.process_from_buffer_col(port, db, col, col_stats)
+                    SolBase.sleep(0)
+
+        except Exception as e:
+            logger.warning("Ex=%s", e)

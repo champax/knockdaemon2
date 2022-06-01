@@ -1,0 +1,15 @@
+{
+        "db" : "my_db",
+        "collections" : 1,
+        "views" : 0,
+        "objects" : 400000,
+        "avgObjSize" : 58,
+        "dataSize" : 23200000,
+        "storageSize" : 15179776,
+        "numExtents" : 0,
+        "indexes" : 3,
+        "indexSize" : 17924096,
+        "fsUsedSize" : 26165620736,
+        "fsTotalSize" : 33756561408,
+        "ok" : 1
+}

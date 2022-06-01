@@ -1865,4 +1865,88 @@ class TestProbesFromBuffer(unittest.TestCase):
             for k, v in d_expected.items():
                 expect_value(self, self.k, k, v, "eq", dd)
 
-    # TODO : CheckDns
+        # Per db / col
+        self.k._reset_superv_notify()
+        for db in ["my_db"]:
+            # db
+            fn = self.sample_dir + "mongodb/mongo_dbstats.out"
+            self.assertTrue(FileUtility.is_file_exist(fn))
+            buf = FileUtility.file_to_textbuffer(fn, "utf8")
+            md.process_from_buffer_db(cur_port, db, buf)
+
+            for col in ["my_col"]:
+                # col
+                fn = self.sample_dir + "mongodb/mongo_collstats.out"
+                self.assertTrue(FileUtility.is_file_exist(fn))
+                buf = FileUtility.file_to_textbuffer(fn, "utf8")
+                md.process_from_buffer_col(cur_port, db, col, buf)
+
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
+
+        # CHECK DB
+        dd = {'PORT': str(cur_port), "DB": "my_db"}
+        for k_expected, v_expected in {
+            "k.mongodb.db.collections": 1.0,
+            "k.mongodb.db.objects": 400000.0,
+            "k.mongodb.db.avgObjSize": 58.0,
+            "k.mongodb.db.dataSize": 23200000.0,
+            "k.mongodb.db.storageSize": 15179776.0,
+            "k.mongodb.db.indexes": 3.0,
+            "k.mongodb.db.indexSize": 17924096.0,
+            "k.mongodb.db.fsUsedSize": 26165620736.0,
+            "k.mongodb.db.fsTotalSize": 33756561408.0,
+        }.items():
+            expect_value(self, self.k, k_expected, v_expected, "eq", dd)
+
+        # CHECK COL
+        dd = {'PORT': str(cur_port), "DB": "my_db", "COL": "my_col"}
+        for k_expected, v_expected in {
+            "k.mongodb.col.size": 23200000.0,
+            "k.mongodb.col.count": 400000.0,
+            "k.mongodb.col.avgObjSize": 58.0,
+            "k.mongodb.col.storageSize": 15179776.0,
+            "k.mongodb.col.totalIndexSize": 17924096.0,
+            "k.mongodb.col.nindexes": 3.0,
+        }.items():
+            expect_value(self, self.k, k_expected, v_expected, "eq", dd)
+
+        # CHECK COL, IDX
+        for k_expected, v_expected in {
+            "k.mongodb.col.idx.indexSizes": 3764224.0,
+
+            "k.mongodb.col.idx.detail.bytes_currently_in_the_cache": 101.0,
+            "k.mongodb.col.idx.detail.bytes_read_into_cache": 102.0,
+            "k.mongodb.col.idx.detail.bytes_written_from_cache": 103.0,
+            "k.mongodb.col.idx.detail.pages_read_into_cache": 104.0,
+            "k.mongodb.col.idx.detail.pages_requested_from_the_cache": 105.0,
+            "k.mongodb.col.idx.detail.pages_written_from_cache": 106.0,
+            "k.mongodb.col.idx.detail.internal_pages_evicted": 107.0,
+            "k.mongodb.col.idx.detail.modified_pages_evicted": 108.0,
+            "k.mongodb.col.idx.detail.unmodified_pages_evicted": 109.0,
+
+            "k.mongodb.col.idx.cursor.create_calls": 201.0,
+            "k.mongodb.col.idx.cursor.insert_calls": 202.0,
+            "k.mongodb.col.idx.cursor.insert_key_and_value_bytes": 203.0,
+            "k.mongodb.col.idx.cursor.next_calls": 204.0,
+            "k.mongodb.col.idx.cursor.prev_calls": 205.0,
+            "k.mongodb.col.idx.cursor.remove_calls": 206.0,
+            "k.mongodb.col.idx.cursor.remove_key_bytes_removed": 207.0,
+            "k.mongodb.col.idx.cursor.reserve_calls": 208.0,
+            "k.mongodb.col.idx.cursor.reset_calls": 209.0,
+            "k.mongodb.col.idx.cursor.search_calls": 210.0,
+            "k.mongodb.col.idx.cursor.search_near_calls": 211.0,
+            "k.mongodb.col.idx.cursor.truncate_calls": 212.0,
+            "k.mongodb.col.idx.cursor.update_calls": 213.0,
+            "k.mongodb.col.idx.cursor.update_key_and_value_bytes": 214.0,
+
+        }.items():
+            # _id_
+            dd = {'PORT': str(cur_port), "DB": "my_db", "COL": "my_col", "IDX": "_id_"}
+            expect_value(self, self.k, k_expected, v_expected, "eq", dd)
+
+            # other ones (don't check values)
+            for idx in ["IDX_a_1_b_1_", "IDX_a_1_b_1_d_1_"]:
+                dd = {'PORT': str(cur_port), "DB": "my_db", "COL": "my_col", "IDX": idx}
+                expect_value(self, self.k, k_expected, v_expected, "exists", dd)
