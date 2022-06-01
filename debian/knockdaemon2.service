@@ -4,64 +4,25 @@ Requires=network-online.target
 After=network-online.target
 
 [Service]
-# The main config file
-Environment="K_CONFIG_FILE=/etc/knock/knockdaemon2/knockdaemon2.yaml"
+# Logging notes
+# - logconfig (yaml file) has priority
+# - others parameters (logfile, logconsole, logsyslog, logsyslog_facility, appname, loglevel) are present for bootstrap and back compatibility ONLY
+WorkingDirectory=/opt/knock/knockdaemon2/
+ExecStart=/opt/knock/knockdaemon2/bin/knockdaemon2 -pidfile=/var/run/knockdaemon2.pid -stderr=/dev/null -stdout=/dev/null -logfile=/dev/null -logconsole=false -logsyslog=true -logsyslog_facility=16 -appname=knockdaemon2 -loglevel=INFO -maxopenfiles=4096 -user=root -c=/etc/knock/knockdaemon2/knockdaemon2.yaml -logconfig=/etc/knock/knockdaemon2/logging.yaml start
+ExecStop=/opt/knock/knockdaemon2/bin/knockdaemon2 -pidfile=/var/run/knockdaemon2.pid -stderr=/dev/null -stdout=/dev/null -logfile=/dev/null -logconsole=false -logsyslog=true -logsyslog_facility=16 -appname=knockdaemon2 -loglevel=INFO -maxopenfiles=4096 -user=root -c=/etc/knock/knockdaemon2/knockdaemon2.yaml -logconfig=/etc/knock/knockdaemon2/logging.yaml stop
 
-# Python logging yaml configuratio
-# This has precedence over all others logging settings
-Environment="K_LOG_CONFIG_FILE=/etc/knock/knockdaemon2/logging.yaml"
-
-# Running user
-Environment="K_USER=root"
-
-# Pid file
-Environment="K_PID_FILE=/var/run/knockdaemon2.pid"
-
-# Working dir
-Environment="K_WORKING_DIR=/opt/knock/knockdaemon2/"
-
-# Old logging configurations. Used upon start, replaced by K_CONFIG_FILE
-Environment="K_STD_ERR=/dev/null"
-Environment="K_STD_OUT=/dev/null"
-Environment="K_LOG_FILE=/dev/null"
-Environment="K_LOG_TO_CONSOLE=false"
-Environment="K_LOG_TO_SYSLOG=true"
-Environment="K_SYSLOG_FACILITY=16"
-Environment="K_LOG_LEVEL=INFO"
-
-# Max open files
-Environment="K_MAX_OPEN_FILES=4096"
-
-# Syslog application name
-Environment="K_APP_NAME=knockdaemon2"
-
-# Auto restart delay in seconds
-Environment="K_RESTART_SEC=60"
-
-# Working dir
-WorkingDirectory=${K_WORKING_DIR}
-
-# Start/stop
-ExecStart=/opt/knock/knockdaemon2/bin/knockdaemon2 -pidfile=${K_PID_FILE} -stderr=${K_STD_ERR} -stdout=${K_STD_OUT} -logfile=${K_LOG_FILE} -logconsole=${K_LOG_TO_CONSOLE} -logsyslog=${K_LOG_TO_SYSLOG} -logsyslog_facility=${K_SYSLOG_FACILITY} -appname=${K_APP_NAME} -loglevel=${K_LOG_LEVEL} -maxopenfiles=${K_MAX_OPEN_FILES} -user=${K_USER} -c=${K_CONFIG_FILE} -logconfig=${K_LOG_CONFIG_FILE} start
-ExecStop=/opt/knock/knockdaemon2/bin/knockdaemon2 -pidfile=${K_PID_FILE} -stderr=${K_STD_ERR} -stdout=${K_STD_OUT} -logfile=${K_LOG_FILE} -logconsole=${K_LOG_TO_CONSOLE} -logsyslog=${K_LOG_TO_SYSLOG} -logsyslog_facility=${K_SYSLOG_FACILITY} -appname=${K_APP_NAME} -loglevel=${K_LOG_LEVEL} -maxopenfiles=${K_MAX_OPEN_FILES} -user=${K_USER} -c=${K_CONFIG_FILE} -logconfig=${K_LOG_CONFIG_FILE} stop
-
-# Pid
-PIDFile=${K_PID_FILE}
-
-# User
-User=${K_USER}
-
-# Misc
+PIDFile=/var/run/knockdaemon2.pid
 KillSignal=SIGTERM
+User=root
 Type=forking
 StandardOutput=syslog
 StandardError=syslog
-SyslogIdentifier=${K_APP_NAME}
-SyslogFacility=${K_SYSLOG_FACILITY}
+SyslogIdentifier=knockdaemon2
+SyslogFacility=local0
 
 # Restart on failure
 Restart=always
-RestartSec=${K_RESTART_SEC}
+RestartSec=60
 
 [Install]
 WantedBy=multi-user.target
