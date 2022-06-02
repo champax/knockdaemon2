@@ -569,7 +569,7 @@ class MongoDbStat(KnockProbe):
         try:
             d_status = mongo_db_handle.command("serverStatus")
         except OperationFailure as e:
-            logger.warning("OperationFailure on %s %s", cnx_string, SolBase.extostr(e))
+            logger.warning("OperationFailure on %s", SolBase.extostr(e))
             return None
 
         if not d_status["ok"] and not d_status["ok"] == 1.0:
