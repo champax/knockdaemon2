@@ -324,6 +324,8 @@ class Haproxy(KnockProbe):
             logger.debug("Recv (start) socket, soc_name=%s", soc_name)
             buf = soc.recv(1024)
             while buf:
+                if isinstance(buf, bytes):
+                    buf = buf.decode("utf8")
                 ha_buf += buf
                 logger.debug("Recv (loop) socket, soc_name=%s", soc_name)
                 buf = soc.recv(1024)
@@ -331,7 +333,7 @@ class Haproxy(KnockProbe):
             logger.debug("Recv (over) socket, soc_name=%s", soc_name)
             return ha_buf
         except Exception as e:
-            logger.debug("Give up (exception), soc_name=%s, ex=%s", soc_name, SolBase.extostr(e))
+            logger.warning("Give up (exception), soc_name=%s, ex=%s", soc_name, SolBase.extostr(e))
             return None
         finally:
             logger.debug("Closing socket, soc_name=%s", soc_name)
