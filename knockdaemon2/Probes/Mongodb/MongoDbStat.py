@@ -518,6 +518,33 @@ class MongoDbStat(KnockProbe):
             except Exception as e:
                 logger.warning("Ex=%s", SolBase.extostr(e))
 
+    def _mongo_get_client(self, host, port):
+        """
+        Mongo get client
+        :param host: str
+        :type host: str
+        :param port: int
+        :type port: int
+        :return: pymongo.mongo_client.MongoClient
+        :rtype pymongo.mongo_client.MongoClient
+        """
+
+        port = str(port)
+        username = None
+        password = None
+        if "username" in self.d_local_conf and "password" in self.d_local_conf:
+            username = self.d_local_conf["username"]
+            password = self.d_local_conf["password"]
+
+        db_auth = self.d_local_conf.get("db_auth", "admin")
+
+        if username is not None:
+            cnx_string = "mongodb://%s:%s@%s:%s/%s" % (username, password, host, port, db_auth)
+        else:
+            cnx_string = "mongodb://%s:%s/%s" % (host, port, db_auth)
+
+        return pymongo.MongoClient(cnx_string)
+
     def _mongo_get_server_status(self, host, port):
         """
         Get server status from mongo
@@ -528,24 +555,8 @@ class MongoDbStat(KnockProbe):
         :return: dict,None
         :rtype dict,None
         """
-        port = str(port)
-
         try:
-            username = None
-            password = None
-            if "username" in self.d_local_conf and "password" in self.d_local_conf:
-                username = self.d_local_conf["username"]
-                password = self.d_local_conf["password"]
-
-            db_auth = self.d_local_conf.get("db_auth", "admin")
-
-            if username is not None:
-                cnx_string = "mongodb://%s:%s@%s:%s/%s" % (username, password, host, port, db_auth)
-            else:
-                cnx_string = "mongodb://%s:%s/%s" % (host, port, db_auth)
-
-            mongo_connection = pymongo.MongoClient(cnx_string)
-
+            mongo_connection = self._mongo_get_client(host, port)
         except Exception as e:
             logger.warning(SolBase.extostr(e))
             self.notify_value_n("k.mongodb.ok", {"PORT": str(port)}, "0")
@@ -925,7 +936,7 @@ class MongoDbStat(KnockProbe):
 
         try:
             # Connect
-            mongo_client = pymongo.MongoClient(host, port)
+            mongo_client = self._mongo_get_client(host, port)
 
             # For each db
             for cur_db in mongo_client.list_databases():
