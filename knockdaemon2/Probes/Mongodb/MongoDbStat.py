@@ -545,6 +545,35 @@ class MongoDbStat(KnockProbe):
 
         return pymongo.MongoClient(cnx_string)
 
+    def _mongo_get_client_to_db(self, host, port, db_name):
+        """
+        Mongo get client
+        :param host: str
+        :type host: str
+        :param port: int
+        :type port: int
+        :param db_name: str
+        :type db_name: str
+        :return: pymongo.mongo_client.MongoClient
+        :rtype pymongo.mongo_client.MongoClient
+        """
+
+        port = str(port)
+        username = None
+        password = None
+        if "username" in self.d_local_conf and "password" in self.d_local_conf:
+            username = self.d_local_conf["username"]
+            password = self.d_local_conf["password"]
+
+        db_auth = self.d_local_conf.get("db_auth", "admin")
+
+        if username is not None:
+            cnx_string = "mongodb://%s:%s@%s:%s/%s?authSource=%s" % (username, password, host, port, db_name, db_auth)
+        else:
+            cnx_string = "mongodb://%s:%s/%s" % (host, port, db_name)
+
+        return pymongo.MongoClient(cnx_string)
+
     def _mongo_get_server_status(self, host, port):
         """
         Get server status from mongo
@@ -934,8 +963,22 @@ class MongoDbStat(KnockProbe):
         :type port: int
         """
 
+        db = None
+        col = None
+
+        # Get exclusions
+        ar_db_excluded = self.d_local_conf.get("stat_per_col_ar_db_excluded", ["admin", "config"])
+        ar_port_excluded = self.d_local_conf.get("stat_per_col_ar_port_excluded", [])
+        ar_col_excluded = self.d_local_conf.get("stat_per_col_ar_col_excluded", ["__schema__"])
+        logger.debug("Using ar_db_excluded=%s", ar_db_excluded)
+        logger.debug("Using ar_port_excluded=%s", ar_port_excluded)
+        logger.debug("Using ar_col_excluded=%s", ar_col_excluded)
         try:
-            # Connect
+            # Check
+            if port in ar_port_excluded:
+                return
+
+            # Connect (to admin)
             mongo_client = self._mongo_get_client(host, port)
 
             # For each db
@@ -943,11 +986,12 @@ class MongoDbStat(KnockProbe):
                 db = str(db)
 
                 # Skip admin and config (mongo stuff)
-                if db in ["admin", "config"]:
+                if db in ar_db_excluded:
                     continue
 
-                # Get connection
-                cur_db = mongo_client[db]
+                # Connect (to current db)
+                mongo_client_to_db = self._mongo_get_client_to_db(host, port, db)
+                cur_db = mongo_client_to_db[db]
 
                 # Get stats (database)
                 # https://www.mongodb.com/docs/manual/reference/command/dbStats/
@@ -959,14 +1003,11 @@ class MongoDbStat(KnockProbe):
                 # For each collection : get stats (collections / indexex)
                 # https://www.mongodb.com/docs/manual/reference/command/collStats/
                 # db.runCommand({collStats: "col_name"});
-                d_col_skip = {
-                    "__schema__": 1,
-                }
                 try:
                     for col in cur_db.list_collection_names():
                         col = str(col)
                         # Skip
-                        if col in d_col_skip:
+                        if col in ar_col_excluded:
                             continue
                         # Skip "system."
                         if col.startswith("system."):
@@ -979,11 +1020,11 @@ class MongoDbStat(KnockProbe):
                             try:
                                 self.process_from_buffer_col(port, db, col, col_stats)
                             except Exception as e:
-                                logger.warning("Ex (skipped, bug, process_from_buffer_col)=%s", SolBase.extostr(e))
+                                logger.warning("Ex (skipped, bug, process_from_buffer_col), host=%s, port=%s, db=%s, col=%s, =%s", host, port, db, col, SolBase.extostr(e))
                             SolBase.sleep(0)
                         except Exception as e:
-                            logger.warning("Ex (skipped, possible rights, collStats)=%s", SolBase.extostr(e))
+                            logger.warning("Ex (skipped, possible rights, collStats), host=%s, port=%s, db=%s, col=%s, =%s", host, port, db, col, SolBase.extostr(e))
                 except Exception as e:
-                    logger.warning("Ex(skipped, possible rights, list_collection_names)=%s", SolBase.extostr(e))
+                    logger.warning("Ex(skipped, possible rights, list_collection_names), host=%s, port=%s, db=%s, col=%s, =%s", host, port, db, col, SolBase.extostr(e))
         except Exception as e:
-            logger.warning("Ex(fatal, possible rights, list_database_names)=%s", SolBase.extostr(e))
+            logger.warning("Ex(fatal, possible rights, list_database_names), host=%s, port=%s, db=%s, col=%s, =%s", host, port, db, col, SolBase.extostr(e))
