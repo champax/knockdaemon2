@@ -640,7 +640,7 @@ class KnockManager(object):
             exec_timeout_ms = self._exectimeout_ms
             if p.exec_timeout_override_ms:
                 exec_timeout_ms = p.exec_timeout_override_ms
-                logger.info("Exec timeout override set at probe end, using exec_timeout_ms=%s", exec_timeout_ms)
+                logger.debug("Exec timeout override set at probe end, using exec_timeout_ms=%s", exec_timeout_ms)
 
             # FIRE
             with Timeout(exec_timeout_ms * 0.001):
