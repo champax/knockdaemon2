@@ -942,6 +942,10 @@ class MongoDbStat(KnockProbe):
             for cur_db in mongo_client.list_databases():
                 db = str(cur_db["name"])
 
+                # Skip admin and config (mongo stuff)
+                if db in ["admin", "config"]:
+                    continue
+
                 # Get connection
                 cur_db = mongo_client[db]
 
