@@ -962,20 +962,28 @@ class MongoDbStat(KnockProbe):
                 d_col_skip = {
                     "__schema__": 1,
                 }
-                for cur_col in cur_db.list_collections():
-                    col = str(cur_col["name"])
-                    # Skip
-                    if col in d_col_skip:
-                        continue
-                    # Skip "system."
-                    if col.startswith("system."):
-                        continue
+                try:
+                    for cur_col in cur_db.list_collections():
+                        col = str(cur_col["name"])
+                        # Skip
+                        if col in d_col_skip:
+                            continue
+                        # Skip "system."
+                        if col.startswith("system."):
+                            continue
 
-                    # Go
-                    col_stats = cur_db.command("collStats", col)
-                    SolBase.sleep(0)
-                    self.process_from_buffer_col(port, db, col, col_stats)
-                    SolBase.sleep(0)
-
+                        # Go
+                        try:
+                            col_stats = cur_db.command("collStats", col)
+                            SolBase.sleep(0)
+                            try:
+                                self.process_from_buffer_col(port, db, col, col_stats)
+                            except Exception as e:
+                                logger.warning("Ex (skipped, bug, process_from_buffer_col)=%s", SolBase.extostr(e))
+                            SolBase.sleep(0)
+                        except Exception as e:
+                            logger.warning("Ex (skipped, possible rights, collStats)=%s", SolBase.extostr(e))
+                except Exception as e:
+                    logger.warning("Ex(skipped, possible rights, list_collections)=%s", SolBase.extostr(e))
         except Exception as e:
-            logger.warning("Ex=%s", e)
+            logger.warning("Ex(fatal, possible rights, list_databases)=%s", SolBase.extostr(e))
