@@ -984,6 +984,6 @@ class MongoDbStat(KnockProbe):
                         except Exception as e:
                             logger.warning("Ex (skipped, possible rights, collStats)=%s", SolBase.extostr(e))
                 except Exception as e:
-                    logger.warning("Ex(skipped, possible rights, list_collections)=%s", SolBase.extostr(e))
+                    logger.warning("Ex(skipped, possible rights, list_collection_names)=%s", SolBase.extostr(e))
         except Exception as e:
-            logger.warning("Ex(fatal, possible rights, list_databases)=%s", SolBase.extostr(e))
+            logger.warning("Ex(fatal, possible rights, list_database_names)=%s", SolBase.extostr(e))
