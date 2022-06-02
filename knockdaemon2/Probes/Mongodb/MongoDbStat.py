@@ -984,6 +984,7 @@ class MongoDbStat(KnockProbe):
             # For each db
             for db in mongo_client.list_database_names():
                 db = str(db)
+                col = None
 
                 # Skip admin and config (mongo stuff)
                 if db in ar_db_excluded:
