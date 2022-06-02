@@ -939,8 +939,8 @@ class MongoDbStat(KnockProbe):
             mongo_client = self._mongo_get_client(host, port)
 
             # For each db
-            for cur_db in mongo_client.list_databases():
-                db = str(cur_db["name"])
+            for db in mongo_client.list_database_names():
+                db = str(db)
 
                 # Skip admin and config (mongo stuff)
                 if db in ["admin", "config"]:
@@ -963,8 +963,8 @@ class MongoDbStat(KnockProbe):
                     "__schema__": 1,
                 }
                 try:
-                    for cur_col in cur_db.list_collections():
-                        col = str(cur_col["name"])
+                    for col in cur_db.list_collection_names():
+                        col = str(col)
                         # Skip
                         if col in d_col_skip:
                             continue
