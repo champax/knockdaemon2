@@ -1,0 +1,1546 @@
+
+[    0.503840] ACPI: Power Resource [USBC] (on)
+[    0.506874] ACPI: Power Resource [V0PR] (on)
+[    0.507284] ACPI: Power Resource [V1PR] (on)
+[    0.507683] ACPI: Power Resource [V2PR] (on)
+[    0.518496] ACPI: Power Resource [WRST] (on)
+[    0.524968] ACPI: Power Resource [PIN] (off)
+[    0.525291] ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-7e])
+[    0.525296] acpi PNP0A08:00: _OSC: OS supports [ExtendedConfig ASPM ClockPM Segments MSI]
+[    0.526425] acpi PNP0A08:00: _OSC: platform does not support [AER]
+[    0.528566] acpi PNP0A08:00: _OSC: OS now controls [PCIeHotplug SHPCHotplug PME PCIeCapability LTR]
+[    0.529277] PCI host bridge to bus 0000:00
+[    0.529279] pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
+[    0.529281] pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window]
+[    0.529282] pci_bus 0000:00: root bus resource [mem 0x000a0000-0x000bffff window]
+[    0.529283] pci_bus 0000:00: root bus resource [mem 0x7f800000-0xefffffff window]
+[    0.529285] pci_bus 0000:00: root bus resource [mem 0xfc800000-0xfe7fffff window]
+[    0.529286] pci_bus 0000:00: root bus resource [bus 00-7e]
+[    0.529293] pci 0000:00:00.0: [8086:3ec4] type 00 class 0x060000
+[    0.529371] pci 0000:00:01.0: [8086:1901] type 01 class 0x060400
+[    0.529401] pci 0000:00:01.0: PME# supported from D0 D3hot D3cold
+[    0.529530] pci 0000:00:02.0: [8086:3e9b] type 00 class 0x030000
+[    0.529537] pci 0000:00:02.0: reg 0x10: [mem 0xeb000000-0xebffffff 64bit]
+[    0.529540] pci 0000:00:02.0: reg 0x18: [mem 0x80000000-0x8fffffff 64bit pref]
+[    0.529543] pci 0000:00:02.0: reg 0x20: [io  0x4000-0x403f]
+[    0.529553] pci 0000:00:02.0: BAR 2: assigned to efifb
+[    0.529630] pci 0000:00:04.0: [8086:1903] type 00 class 0x118000
+[    0.529637] pci 0000:00:04.0: reg 0x10: [mem 0xed330000-0xed337fff 64bit]
+[    0.529747] pci 0000:00:08.0: [8086:1911] type 00 class 0x088000
+[    0.529754] pci 0000:00:08.0: reg 0x10: [mem 0xed34d000-0xed34dfff 64bit]
+[    0.529873] pci 0000:00:12.0: [8086:a379] type 00 class 0x118000
+[    0.529892] pci 0000:00:12.0: reg 0x10: [mem 0xed34c000-0xed34cfff 64bit]
+[    0.530049] pci 0000:00:14.0: [8086:a36d] type 00 class 0x0c0330
+[    0.530064] pci 0000:00:14.0: reg 0x10: [mem 0xed320000-0xed32ffff 64bit]
+[    0.530113] pci 0000:00:14.0: PME# supported from D3hot D3cold
+[    0.530383] pci 0000:00:14.2: [8086:a36f] type 00 class 0x050000
+[    0.530400] pci 0000:00:14.2: reg 0x10: [mem 0xed342000-0xed343fff 64bit]
+[    0.530408] pci 0000:00:14.2: reg 0x18: [mem 0xed34b000-0xed34bfff 64bit]
+[    0.530515] pci 0000:00:14.3: [8086:a370] type 00 class 0x028000
+[    0.530549] pci 0000:00:14.3: reg 0x10: [mem 0xed33c000-0xed33ffff 64bit]
+[    0.530631] pci 0000:00:14.3: PME# supported from D0 D3hot D3cold
+[    0.530760] pci 0000:00:15.0: [8086:a368] type 00 class 0x0c8000
+[    0.530782] pci 0000:00:15.0: reg 0x10: [mem 0x00000000-0x00000fff 64bit]
+[    0.530989] pci 0000:00:15.1: [8086:a369] type 00 class 0x0c8000
+[    0.531046] pci 0000:00:15.1: reg 0x10: [mem 0x00000000-0x00000fff 64bit]
+[    0.531246] pci 0000:00:16.0: [8086:a360] type 00 class 0x078000
+[    0.531269] pci 0000:00:16.0: reg 0x10: [mem 0xed348000-0xed348fff 64bit]
+[    0.531334] pci 0000:00:16.0: PME# supported from D3hot
+[    0.531434] pci 0000:00:16.3: [8086:a363] type 00 class 0x070002
+[    0.531446] pci 0000:00:16.3: reg 0x10: [io  0x40a0-0x40a7]
+[    0.531450] pci 0000:00:16.3: reg 0x14: [mem 0xed347000-0xed347fff]
+[    0.531565] pci 0000:00:17.0: [8086:a353] type 00 class 0x010601
+[    0.531578] pci 0000:00:17.0: reg 0x10: [mem 0xed340000-0xed341fff]
+[    0.531584] pci 0000:00:17.0: reg 0x14: [mem 0xed346000-0xed3460ff]
+[    0.531589] pci 0000:00:17.0: reg 0x18: [io  0x4090-0x4097]
+[    0.531594] pci 0000:00:17.0: reg 0x1c: [io  0x4080-0x4083]
+[    0.531600] pci 0000:00:17.0: reg 0x20: [io  0x4060-0x407f]
+[    0.531605] pci 0000:00:17.0: reg 0x24: [mem 0xed345000-0xed3457ff]
+[    0.531636] pci 0000:00:17.0: PME# supported from D3hot
+[    0.531774] pci 0000:00:1c.0: [8086:a338] type 01 class 0x060400
+[    0.531853] pci 0000:00:1c.0: PME# supported from D0 D3hot D3cold
+[    0.531869] pci 0000:00:1c.0: PTM enabled (root), 4ns granularity
+[    0.531991] pci 0000:00:1c.5: [8086:a33d] type 01 class 0x060400
+[    0.532059] pci 0000:00:1c.5: PME# supported from D0 D3hot D3cold
+[    0.532073] pci 0000:00:1c.5: PTM enabled (root), 4ns granularity
+[    0.532192] pci 0000:00:1f.0: [8086:a30e] type 00 class 0x060100
+[    0.532348] pci 0000:00:1f.3: [8086:a348] type 00 class 0x040300
+[    0.532391] pci 0000:00:1f.3: reg 0x10: [mem 0xed338000-0xed33bfff 64bit]
+[    0.532438] pci 0000:00:1f.3: reg 0x20: [mem 0xed100000-0xed1fffff 64bit]
+[    0.532516] pci 0000:00:1f.3: PME# supported from D3hot D3cold
+[    0.532993] pci 0000:00:1f.4: [8086:a323] type 00 class 0x0c0500
+[    0.533017] pci 0000:00:1f.4: reg 0x10: [mem 0xed344000-0xed3440ff 64bit]
+[    0.533036] pci 0000:00:1f.4: reg 0x20: [io  0xefa0-0xefbf]
+[    0.533136] pci 0000:00:1f.5: [8086:a324] type 00 class 0x0c8000
+[    0.533149] pci 0000:00:1f.5: reg 0x10: [mem 0xfe010000-0xfe010fff]
+[    0.533259] pci 0000:00:1f.6: [8086:15bb] type 00 class 0x020000
+[    0.533294] pci 0000:00:1f.6: reg 0x10: [mem 0xed300000-0xed31ffff]
+[    0.533436] pci 0000:00:1f.6: PME# supported from D0 D3hot D3cold
+[    0.533545] pci 0000:01:00.0: [10de:174d] type 00 class 0x030200
+[    0.533569] pci 0000:01:00.0: reg 0x10: [mem 0xec000000-0xecffffff]
+[    0.533584] pci 0000:01:00.0: reg 0x14: [mem 0xc0000000-0xcfffffff 64bit pref]
+[    0.533599] pci 0000:01:00.0: reg 0x1c: [mem 0xd0000000-0xd1ffffff 64bit pref]
+[    0.533609] pci 0000:01:00.0: reg 0x24: [io  0x3000-0x307f]
+[    0.533619] pci 0000:01:00.0: reg 0x30: [mem 0xed000000-0xed07ffff pref]
+[    0.533637] pci 0000:01:00.0: Enabling HDA controller
+[    0.533768] pci 0000:00:01.0: PCI bridge to [bus 01]
+[    0.533770] pci 0000:00:01.0:   bridge window [io  0x3000-0x3fff]
+[    0.533771] pci 0000:00:01.0:   bridge window [mem 0xec000000-0xed0fffff]
+[    0.533773] pci 0000:00:01.0:   bridge window [mem 0xc0000000-0xd1ffffff 64bit pref]
+[    0.533855] pci 0000:00:1c.0: PCI bridge to [bus 02-3a]
+[    0.533860] pci 0000:00:1c.0:   bridge window [mem 0xd4000000-0xea0fffff]
+[    0.533863] pci 0000:00:1c.0:   bridge window [mem 0x90000000-0xb1ffffff 64bit pref]
+[    0.533953] pci 0000:3b:00.0: [10ec:525a] type 00 class 0xff0000
+[    0.533981] pci 0000:3b:00.0: reg 0x14: [mem 0xed200000-0xed200fff]
+[    0.534078] pci 0000:3b:00.0: supports D1 D2
+[    0.534079] pci 0000:3b:00.0: PME# supported from D1 D2 D3hot D3cold
+[    0.534196] pci 0000:00:1c.5: PCI bridge to [bus 3b]
+[    0.534200] pci 0000:00:1c.5:   bridge window [mem 0xed200000-0xed2fffff]
+[    0.538500] ACPI: PCI Interrupt Link [LNKA] (IRQs) *0
+[    0.538523] ACPI: PCI Interrupt Link [LNKB] (IRQs) *1
+[    0.538544] ACPI: PCI Interrupt Link [LNKC] (IRQs) *0
+[    0.538564] ACPI: PCI Interrupt Link [LNKD] (IRQs) *0
+[    0.538585] ACPI: PCI Interrupt Link [LNKE] (IRQs) *0
+[    0.538605] ACPI: PCI Interrupt Link [LNKF] (IRQs) *0
+[    0.538626] ACPI: PCI Interrupt Link [LNKG] (IRQs) *0
+[    0.538646] ACPI: PCI Interrupt Link [LNKH] (IRQs) *0
+[    0.542876] ACPI: EC: interrupt unblocked
+[    0.542893] ACPI: EC: event unblocked
+[    0.542912] ACPI: \_SB_.PCI0.LPCB.ECDV: GPE=0x6e, EC_CMD/EC_SC=0x934, EC_DATA=0x930
+[    0.542914] ACPI: \_SB_.PCI0.LPCB.ECDV: Used as boot DSDT EC to handle transactions and events
+[    0.542962] pci 0000:00:02.0: vgaarb: setting as boot VGA device
+[    0.542962] pci 0000:00:02.0: vgaarb: VGA device added: decodes=io+mem,owns=io+mem,locks=none
+[    0.542962] pci 0000:00:02.0: vgaarb: bridge control possible
+[    0.542962] vgaarb: loaded
+[    0.542962] pps_core: LinuxPPS API ver. 1 registered
+[    0.542962] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.542962] PTP clock support registered
+[    0.542962] EDAC MC: Ver: 3.0.0
+[    0.542962] Registered efivars operations
+[    0.542962] PCI: Using ACPI for IRQ routing
+[    0.558822] PCI: pci_cache_line_size set to 64 bytes
+[    0.558970] e820: reserve RAM buffer [mem 0x0005e000-0x0005ffff]
+[    0.558971] e820: reserve RAM buffer [mem 0x68620000-0x6bffffff]
+[    0.558971] e820: reserve RAM buffer [mem 0x7303e000-0x73ffffff]
+[    0.558972] e820: reserve RAM buffer [mem 0x780b2000-0x7bffffff]
+[    0.558972] e820: reserve RAM buffer [mem 0x7ad00000-0x7bffffff]
+[    0.558973] e820: reserve RAM buffer [mem 0x87c800000-0x87fffffff]
+[    0.559035] hpet0: at MMIO 0xfed00000, IRQs 2, 8, 0, 0, 0, 0, 0, 0
+[    0.559035] hpet0: 8 comparators, 64-bit 24.000000 MHz counter
+[    0.560774] clocksource: Switched to clocksource tsc-early
+[    0.566116] VFS: Disk quotas dquot_6.6.0
+[    0.566126] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[    0.566183] AppArmor: AppArmor Filesystem Enabled
+[    0.566191] pnp: PnP ACPI init
+[    0.566331] system 00:00: [io  0x0680-0x069f] has been reserved
+[    0.566333] system 00:00: [io  0x164e-0x164f] has been reserved
+[    0.566336] system 00:00: Plug and Play ACPI device, IDs PNP0c02 (active)
+[    0.566347] pnp 00:01: Plug and Play ACPI device, IDs PNP0b00 (active)
+[    0.566408] system 00:02: [io  0x1854-0x1857] has been reserved
+[    0.566411] system 00:02: Plug and Play ACPI device, IDs INT3f0d PNP0c02 (active)
+[    0.566466] pnp 00:03: Plug and Play ACPI device, IDs PNP0303 (active)
+[    0.566568] system 00:04: [mem 0xfed10000-0xfed17fff] has been reserved
+[    0.566570] system 00:04: [mem 0xfed18000-0xfed18fff] has been reserved
+[    0.566571] system 00:04: [mem 0xfed19000-0xfed19fff] has been reserved
+[    0.566573] system 00:04: [mem 0xf0000000-0xf7ffffff] has been reserved
+[    0.566574] system 00:04: [mem 0xfed20000-0xfed3ffff] has been reserved
+[    0.566576] system 00:04: [mem 0xfed90000-0xfed93fff] could not be reserved
+[    0.566577] system 00:04: [mem 0xfed45000-0xfed8ffff] has been reserved
+[    0.566578] system 00:04: [mem 0xfee00000-0xfeefffff] could not be reserved
+[    0.566581] system 00:04: Plug and Play ACPI device, IDs PNP0c02 (active)
+[    0.566731] system 00:05: [io  0x1800-0x18fe] could not be reserved
+[    0.566733] system 00:05: [mem 0xfd000000-0xfd69ffff] has been reserved
+[    0.566734] system 00:05: [mem 0xfd6c0000-0xfd6cffff] has been reserved
+[    0.566735] system 00:05: [mem 0xfd6f0000-0xfdffffff] has been reserved
+[    0.566737] system 00:05: [mem 0xfe000000-0xfe01ffff] could not be reserved
+[    0.566738] system 00:05: [mem 0xfe200000-0xfe7fffff] has been reserved
+[    0.566740] system 00:05: [mem 0xff000000-0xffffffff] has been reserved
+[    0.566742] system 00:05: Plug and Play ACPI device, IDs PNP0c02 (active)
+[    0.566946] system 00:06: [io  0x2000-0x20fe] has been reserved
+[    0.566948] system 00:06: Plug and Play ACPI device, IDs PNP0c02 (active)
+[    0.567607] system 00:07: Plug and Play ACPI device, IDs PNP0c02 (active)
+[    0.573880] pnp: PnP ACPI: found 8 devices
+[    0.578990] clocksource: acpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns
+[    0.578996] pci 0000:00:1c.0: bridge window [io  0x1000-0x0fff] to [bus 02-3a] add_size 1000
+[    0.579001] pci 0000:00:15.0: BAR 0: assigned [mem 0x7f800000-0x7f800fff 64bit]
+[    0.579046] pci 0000:00:15.1: BAR 0: assigned [mem 0x7f801000-0x7f801fff 64bit]
+[    0.579090] pci 0000:00:1c.0: BAR 13: assigned [io  0x5000-0x5fff]
+[    0.579092] pci 0000:00:01.0: PCI bridge to [bus 01]
+[    0.579094] pci 0000:00:01.0:   bridge window [io  0x3000-0x3fff]
+[    0.579096] pci 0000:00:01.0:   bridge window [mem 0xec000000-0xed0fffff]
+[    0.579098] pci 0000:00:01.0:   bridge window [mem 0xc0000000-0xd1ffffff 64bit pref]
+[    0.579101] pci 0000:00:1c.0: PCI bridge to [bus 02-3a]
+[    0.579105] pci 0000:00:1c.0:   bridge window [io  0x5000-0x5fff]
+[    0.579108] pci 0000:00:1c.0:   bridge window [mem 0xd4000000-0xea0fffff]
+[    0.579111] pci 0000:00:1c.0:   bridge window [mem 0x90000000-0xb1ffffff 64bit pref]
+[    0.579115] pci 0000:00:1c.5: PCI bridge to [bus 3b]
+[    0.579118] pci 0000:00:1c.5:   bridge window [mem 0xed200000-0xed2fffff]
+[    0.579124] pci_bus 0000:00: resource 4 [io  0x0000-0x0cf7 window]
+[    0.579124] pci_bus 0000:00: resource 5 [io  0x0d00-0xffff window]
+[    0.579125] pci_bus 0000:00: resource 6 [mem 0x000a0000-0x000bffff window]
+[    0.579125] pci_bus 0000:00: resource 7 [mem 0x7f800000-0xefffffff window]
+[    0.579126] pci_bus 0000:00: resource 8 [mem 0xfc800000-0xfe7fffff window]
+[    0.579126] pci_bus 0000:01: resource 0 [io  0x3000-0x3fff]
+[    0.579127] pci_bus 0000:01: resource 1 [mem 0xec000000-0xed0fffff]
+[    0.579127] pci_bus 0000:01: resource 2 [mem 0xc0000000-0xd1ffffff 64bit pref]
+[    0.579128] pci_bus 0000:02: resource 0 [io  0x5000-0x5fff]
+[    0.579129] pci_bus 0000:02: resource 1 [mem 0xd4000000-0xea0fffff]
+[    0.579129] pci_bus 0000:02: resource 2 [mem 0x90000000-0xb1ffffff 64bit pref]
+[    0.579130] pci_bus 0000:3b: resource 1 [mem 0xed200000-0xed2fffff]
+[    0.579223] NET: Registered protocol family 2
+[    0.579349] IP idents hash table entries: 262144 (order: 9, 2097152 bytes)
+[    0.580443] tcp_listen_portaddr_hash hash table entries: 16384 (order: 6, 262144 bytes)
+[    0.580495] TCP established hash table entries: 262144 (order: 9, 2097152 bytes)
+[    0.580662] TCP bind hash table entries: 65536 (order: 8, 1048576 bytes)
+[    0.580729] TCP: Hash tables configured (established 262144 bind 65536)
+[    0.580758] UDP hash table entries: 16384 (order: 7, 524288 bytes)
+[    0.580802] UDP-Lite hash table entries: 16384 (order: 7, 524288 bytes)
+[    0.580864] NET: Registered protocol family 1
+[    0.580867] NET: Registered protocol family 44
+[    0.580874] pci 0000:00:02.0: Video device with shadowed ROM at [mem 0x000c0000-0x000dffff]
+[    0.581145] PCI: CLS 64 bytes, default 64
+[    0.581167] Unpacking initramfs...
+[    0.940515] Freeing initrd memory: 37556K
+[    0.964814] PCI-DMA: Using software bounce buffering for IO (SWIOTLB)
+[    0.964816] software IO TLB: mapped [mem 0x6f03e000-0x7303e000] (64MB)
+[    0.964833] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x255cb6cc5db, max_idle_ns: 440795203504 ns
+[    0.964846] clocksource: Switched to clocksource tsc
+[    0.965310] Initialise system trusted keyrings
+[    0.965317] Key type blacklist registered
+[    0.965344] workingset: timestamp_bits=40 max_order=23 bucket_order=0
+[    0.965939] zbud: loaded
+[    1.049082] Key type asymmetric registered
+[    1.049085] Asymmetric key parser 'x509' registered
+[    1.049089] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 247)
+[    1.049107] io scheduler noop registered
+[    1.049108] io scheduler deadline registered
+[    1.049122] io scheduler cfq registered (default)
+[    1.049123] io scheduler mq-deadline registered
+[    1.049541] pcieport 0000:00:01.0: Signaling PME with IRQ 122
+[    1.049667] pcieport 0000:00:1c.0: Signaling PME with IRQ 123
+[    1.049681] pciehp 0000:00:1c.0:pcie004: Slot #4 AttnBtn- PwrCtrl- MRL- AttnInd- PwrInd- HotPlug+ Surprise+ Interlock- NoCompl+ LLActRep+
+[    1.049848] pcieport 0000:00:1c.5: Signaling PME with IRQ 124
+[    1.049889] shpchp: Standard Hot Plug PCI Controller Driver version: 0.4
+[    1.049899] efifb: probing for efifb
+[    1.049905] efifb: framebuffer at 0x80000000, using 8128k, total 8128k
+[    1.049906] efifb: mode is 1920x1080x32, linelength=7680, pages=1
+[    1.049907] efifb: scrolling: redraw
+[    1.049908] efifb: Truecolor: size=8:8:8:8, shift=24:16:8:0
+[    1.052191] Console: switching to colour frame buffer device 240x67
+[    1.054442] fb0: EFI VGA frame buffer device
+[    1.054455] intel_idle: MWAIT substates: 0x11142120
+[    1.054455] intel_idle: v0.4.1 model 0x9E
+[    1.054761] intel_idle: lapic_timer_reliable_states 0xffffffff
+[    1.055706] ERST: Error Record Serialization Table (ERST) support is initialized.
+[    1.055722] pstore: Registered erst as persistent store backend
+[    1.055769] GHES: APEI firmware first mode is enabled by APEI bit.
+[    1.055814] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    1.056068] serial 0000:00:16.3: enabling device (0000 -> 0003)
+[    1.076704] 0000:00:16.3: ttyS0 at I/O 0x40a0 (irq = 19, base_baud = 115200) is a 16550A
+[    1.076974] Linux agpgart interface v0.103
+[    1.077013] AMD IOMMUv2 driver by Joerg Roedel <jroedel@suse.de>
+[    1.077024] AMD IOMMUv2 functionality not available on this system
+[    1.077885] i8042: PNP: PS/2 Controller [PNP0303:PS2K] at 0x60,0x64 irq 1
+[    1.077906] i8042: PNP: PS/2 appears to have AUX port disabled, if this is incorrect please boot with i8042.nopnp
+[    1.078277] i8042: Warning: Keylock active
+[    1.078629] serio: i8042 KBD port at 0x60,0x64 irq 1
+[    1.078705] mousedev: PS/2 mouse device common for all mice
+[    1.078776] rtc_cmos 00:01: RTC can wake from S4
+[    1.079711] rtc_cmos 00:01: registered as rtc0
+[    1.079726] rtc_cmos 00:01: alarms up to one month, y3k, 242 bytes nvram, hpet irqs
+[    1.079744] intel_pstate: Intel P-state driver initializing
+[    1.079822] intel_pstate: Disabling energy efficiency optimization
+[    1.080093] input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input0
+[    1.080516] intel_pstate: HWP enabled
+[    1.080567] ledtrig-cpu: registered to indicate activity on CPUs
+[    1.080895] NET: Registered protocol family 10
+[    1.084662] Segment Routing with IPv6
+[    1.084680] mip6: Mobile IPv6
+[    1.084687] NET: Registered protocol family 17
+[    1.084707] mpls_gso: MPLS GSO support
+[    1.085240] mce: Using 12 MCE banks
+[    1.085300] microcode: sig=0x906ea, pf=0x20, revision=0x96
+[    1.085667] microcode: Microcode Update Driver: v2.2.
+[    1.085672] sched_clock: Marking stable (1085082363, 582686)->(1099696739, -14031690)
+[    1.086290] registered taskstats version 1
+[    1.086299] Loading compiled-in X.509 certificates
+[    1.105051] Loaded X.509 cert 'Debian Secure Boot CA: 6ccece7e4c6c0d1f6149f3dd27dfcc5cbb419ea1'
+[    1.105075] Loaded X.509 cert 'Debian Secure Boot Signer 2021 - linux: 4b6ef5abca669825178e052c84667ccbc0531f8c'
+[    1.106348] Loaded UEFI:db cert 'Dell Inc. UEFI DB: 5ddb772dc880660055ba0bc131886bb630a639e7' linked to secondary sys keyring
+[    1.106381] Loaded UEFI:db cert 'Microsoft Corporation UEFI CA 2011: 13adbf4309bd82709c8cd54f316ed522988a1bd4' linked to secondary sys keyring
+[    1.106417] Loaded UEFI:db cert 'Microsoft Windows Production PCA 2011: a92902398e16c49778cd90f99e4f9ae17c55af53' linked to secondary sys keyring
+[    1.107363] zswap: loaded using pool lzo/zbud
+[    1.107736] pstore: Using compression: deflate
+[    1.107752] AppArmor: AppArmor sha1 policy hashing enabled
+[    1.109619] rtc_cmos 00:01: setting system clock to 2022-02-09 08:31:48 UTC (1644395508)
+[    1.238524] Freeing unused kernel image memory: 1596K
+[    1.272948] Write protecting the kernel read-only data: 16384k
+[    1.274371] Freeing unused kernel image memory: 2028K
+[    1.275150] Freeing unused kernel image memory: 764K
+[    1.279910] x86/mm: Checked W+X mappings: passed, no W+X pages found.
+[    1.280471] x86/mm: Checking user space page tables
+[    1.284963] x86/mm: Checked W+X mappings: passed, no W+X pages found.
+[    1.285519] Run /init as init process
+[    1.330138] input: Lid Switch as /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0D:00/input/input1
+[    1.334340] ACPI: Lid Switch [LID0]
+[    1.338513] input: Power Button as /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0C:00/input/input2
+[    1.343872] ACPI: Power Button [PBTN]
+[    1.348251] input: Sleep Button as /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0E:00/input/input3
+[    1.349662] acpi PNP0C14:04: duplicate WMI GUID 05901221-D566-11D1-B2F0-00A0C9062910 (first instance was on PNP0C14:03)
+[    1.352361] ACPI: Sleep Button [SBTN]
+[    1.357531] wmi_bus wmi_bus-PNP0C14:05: WQBC data block query control method not found
+[    1.360524] input: Power Button as /devices/LNXSYSTM:00/LNXPWRBN:00/input/input4
+[    1.364905] acpi PNP0C14:05: duplicate WMI GUID 05901221-D566-11D1-B2F0-00A0C9062910 (first instance was on PNP0C14:03)
+[    1.368814] ACPI: Power Button [PWRF]
+[    1.369726] acpi PNP0C14:06: duplicate WMI GUID 05901221-D566-11D1-B2F0-00A0C9062910 (first instance was on PNP0C14:03)
+[    1.377842] hidraw: raw HID events driver (C) Jiri Kosina
+[    1.390892] rtsx_pci 0000:3b:00.0: enabling device (0000 -> 0002)
+[    1.409271] i801_smbus 0000:00:1f.4: SPD Write Disable is set
+[    1.412916] i801_smbus 0000:00:1f.4: SMBus using PCI interrupt
+[    1.413180] SCSI subsystem initialized
+[    1.427279] cryptd: max_cpu_qlen set to 1000
+[    1.433782] ACPI: bus type USB registered
+[    1.439590] usbcore: registered new interface driver usbfs
+[    1.443251] usbcore: registered new interface driver hub
+[    1.444396] usbcore: registered new device driver usb
+[    1.445331] e1000e: Intel(R) PRO/1000 Network Driver - 3.2.6-k
+[    1.449878] e1000e: Copyright(c) 1999 - 2015 Intel Corporation.
+[    1.472434] AVX2 version of gcm_enc/dec engaged.
+[    1.475968] AES CTR mode by8 optimization enabled
+[    1.477053] e1000e 0000:00:1f.6: Interrupt Throttling Rate (ints/sec) set to dynamic conservative mode
+[    1.478923] libata version 3.00 loaded.
+[    1.496017] ahci 0000:00:17.0: version 3.0
+[    1.522109] xhci_hcd 0000:00:14.0: xHCI Host Controller
+[    1.523382] xhci_hcd 0000:00:14.0: new USB bus registered, assigned bus number 1
+[    1.525513] xhci_hcd 0000:00:14.0: hcc params 0x200077c1 hci version 0x110 quirks 0x0000000000009810
+[    1.526599] xhci_hcd 0000:00:14.0: cache line size of 64 is not supported
+[    1.526768] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 4.19
+[    1.527850] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    1.528956] usb usb1: Product: xHCI Host Controller
+[    1.530026] usb usb1: Manufacturer: Linux 4.19.0-18-amd64 xhci-hcd
+[    1.531101] usb usb1: SerialNumber: 0000:00:14.0
+[    1.532159] ahci 0000:00:17.0: AHCI 0001.0301 32 slots 2 ports 6 Gbps 0x6 impl SATA mode
+[    1.533490] ahci 0000:00:17.0: flags: 64bit ncq sntf pm clo only pio slum part ems deso sadm sds apst
+[    1.543424] hub 1-0:1.0: USB hub found
+[    1.544250] hub 1-0:1.0: 16 ports detected
+[    1.545755] intel-lpss 0000:00:15.0: enabling device (0000 -> 0002)
+[    1.565062] checking generic (80000000 7f0000) vs hw (80000000 10000000)
+[    1.565062] fb: switching to inteldrmfb from EFI VGA
+[    1.565457] intel-lpss 0000:00:15.1: enabling device (0000 -> 0002)
+[    1.566635] Console: switching to colour dummy device 80x25
+[    1.566794] [drm] Replacing VGA console driver
+[    1.579352] [drm] Supports vblank timestamp caching Rev 2 (21.10.2013).
+[    1.579354] [drm] Driver supports precise vblank timestamp query.
+[    1.580375] i915 0000:00:02.0: vgaarb: changed VGA decodes: olddecodes=io+mem,decodes=io+mem:owns=io+mem
+[    1.580398] i915 0000:00:02.0: firmware: failed to load i915/kbl_dmc_ver1_04.bin (-2)
+[    1.580400] firmware_class: See https://wiki.debian.org/Firmware for information about missing firmware
+[    1.580401] i915 0000:00:02.0: Direct firmware load for i915/kbl_dmc_ver1_04.bin failed with error -2
+[    1.580403] i915 0000:00:02.0: Failed to load DMC firmware i915/kbl_dmc_ver1_04.bin. Disabling runtime power management.
+[    1.580405] i915 0000:00:02.0: DMC firmware homepage: https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/tree/i915
+[    1.582249] acpi PNP0C14:07: duplicate WMI GUID 05901221-D566-11D1-B2F0-00A0C9062910 (first instance was on PNP0C14:03)
+[    1.582809] xhci_hcd 0000:00:14.0: xHCI Host Controller
+[    1.582814] xhci_hcd 0000:00:14.0: new USB bus registered, assigned bus number 2
+[    1.582818] xhci_hcd 0000:00:14.0: Host supports USB 3.1 Enhanced SuperSpeed
+[    1.582856] usb usb2: New USB device found, idVendor=1d6b, idProduct=0003, bcdDevice= 4.19
+[    1.582859] usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    1.582861] usb usb2: Product: xHCI Host Controller
+[    1.582887] usb usb2: Manufacturer: Linux 4.19.0-18-amd64 xhci-hcd
+[    1.582894] usb usb2: SerialNumber: 0000:00:14.0
+[    1.583436] scsi host0: ahci
+[    1.584257] hub 2-0:1.0: USB hub found
+[    1.584277] scsi host1: ahci
+[    1.584311] hub 2-0:1.0: 10 ports detected
+[    1.584608] scsi host2: ahci
+[    1.584882] ata1: DUMMY
+[    1.584900] ata2: SATA max UDMA/133 abar m2048@0xed345000 port 0xed345180 irq 127
+[    1.584921] ata3: SATA max UDMA/133 abar m2048@0xed345000 port 0xed345200 irq 127
+[    1.593751] thermal LNXTHERM:00: registered as thermal_zone0
+[    1.593763] ACPI: Thermal Zone [THM] (25 C)
+[    1.595129] usb: port power management may be unreliable
+[    1.603606] e1000e 0000:00:1f.6 0000:00:1f.6 (uninitialized): registered PHC clock
+[    1.647280] i2c_hid i2c-DELL0819:00: i2c-DELL0819:00 supply vdd not found, using dummy regulator
+[    1.647301] i2c_hid i2c-DELL0819:00: Linked as a consumer to regulator.0
+[    1.647306] i2c_hid i2c-DELL0819:00: i2c-DELL0819:00 supply vddl not found, using dummy regulator
+[    1.684456] e1000e 0000:00:1f.6 eth0: (PCI Express:2.5GT/s:Width x1) e4:b9:7a:55:c0:c7
+[    1.684460] e1000e 0000:00:1f.6 eth0: Intel(R) PRO/1000 Network Connection
+[    1.684517] e1000e 0000:00:1f.6 eth0: MAC: 13, PHY: 12, PBA No: FFFFFF-0FF
+[    1.685089] e1000e 0000:00:1f.6 eno2: renamed from eth0
+[    1.812930] input: DELL0819:00 044E:121F Mouse as /devices/pci0000:00/0000:00:15.1/i2c_designware.1/i2c-6/i2c-DELL0819:00/0018:044E:121F.0001/input/input5
+[    1.812978] input: DELL0819:00 044E:121F Touchpad as /devices/pci0000:00/0000:00:15.1/i2c_designware.1/i2c-6/i2c-DELL0819:00/0018:044E:121F.0001/input/input6
+[    1.813022] input: DELL0819:00 044E:121F as /devices/pci0000:00/0000:00:15.1/i2c_designware.1/i2c-6/i2c-DELL0819:00/0018:044E:121F.0001/input/input7
+[    1.813044] hid-generic 0018:044E:121F.0001: input,hidraw0: I2C HID v1.00 Mouse [DELL0819:00 044E:121F] on i2c-DELL0819:00
+[    1.844757] usb 1-2: new low-speed USB device number 2 using xhci_hcd
+[    1.899754] ata2: SATA link up 6.0 Gbps (SStatus 133 SControl 300)
+[    1.900292] ata3: SATA link down (SStatus 4 SControl 300)
+[    1.900342] ata2.00: ACPI cmd ef/10:06:00:00:00:00 (SET FEATURES) succeeded
+[    1.900343] ata2.00: ACPI cmd f5/00:00:00:00:00:00 (SECURITY FREEZE LOCK) filtered out
+[    1.900346] ata2.00: ACPI cmd b1/c1:00:00:00:00:00 (DEVICE CONFIGURATION OVERLAY) filtered out
+[    1.900383] ata2.00: ACPI cmd 00/00:00:00:00:00:a0 (NOP) rejected by device (Stat=0x51 Err=0x04)
+[    1.900533] ata2.00: ATA-11: TOSHIBA KSG60ZMV512G M.2 2280 512GB, ABDA4102, max UDMA/100
+[    1.900535] ata2.00: 1000215216 sectors, multi 16: LBA48 NCQ (depth 32), AA
+[    1.901362] ata2.00: ACPI cmd ef/10:06:00:00:00:00 (SET FEATURES) succeeded
+[    1.901363] ata2.00: ACPI cmd f5/00:00:00:00:00:00 (SECURITY FREEZE LOCK) filtered out
+[    1.901365] ata2.00: ACPI cmd b1/c1:00:00:00:00:00 (DEVICE CONFIGURATION OVERLAY) filtered out
+[    1.901420] ata2.00: ACPI cmd 00/00:00:00:00:00:a0 (NOP) rejected by device (Stat=0x51 Err=0x04)
+[    1.901799] ata2.00: configured for UDMA/100
+[    1.902936] scsi 1:0:0:0: Direct-Access     ATA      TOSHIBA KSG60ZMV 4102 PQ: 0 ANSI: 5
+[    1.905837] sd 1:0:0:0: [sda] 1000215216 512-byte logical blocks: (512 GB/477 GiB)
+[    1.905840] sd 1:0:0:0: [sda] 4096-byte physical blocks
+[    1.905844] sd 1:0:0:0: [sda] Write Protect is off
+[    1.905846] sd 1:0:0:0: [sda] Mode Sense: 00 3a 00 00
+[    1.905849] sd 1:0:0:0: [sda] Write cache: enabled, read cache: enabled, doesn't support DPO or FUA
+[    1.906801]  sda: sda1 sda2 sda3
+[    1.906974] sd 1:0:0:0: [sda] Attached SCSI disk
+[    2.004367] usb 1-2: New USB device found, idVendor=413c, idProduct=301a, bcdDevice= 1.00
+[    2.004371] usb 1-2: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[    2.004373] usb 1-2: Product: Dell MS116 USB Optical Mouse
+[    2.004375] usb 1-2: Manufacturer: PixArt
+[    2.136756] usb 1-10: new full-speed USB device number 3 using xhci_hcd
+[    2.286269] usb 1-10: New USB device found, idVendor=0a5c, idProduct=5832, bcdDevice= 1.01
+[    2.286271] usb 1-10: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[    2.286273] usb 1-10: Product: 5880
+[    2.286274] usb 1-10: Manufacturer: Broadcom Corp
+[    2.286275] usb 1-10: SerialNumber: 0123456789ABCD
+[    2.416755] usb 1-14: new full-speed USB device number 4 using xhci_hcd
+[    2.426874] [drm] Initialized i915 1.6.0 20180719 for 0000:00:02.0 on minor 0
+[    2.430213] ACPI: Video Device [GFX0] (multi-head: yes  rom: no  post: no)
+[    2.430860] input: Video Bus as /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/input/input8
+[    2.430897] ACPI: Video Device [PEGP] (multi-head: no  rom: yes  post: no)
+[    2.430914] input: Video Bus as /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:0b/LNXVIDEO:01/input/input9
+[    2.478978] fbcon: inteldrmfb (fb0) is primary device
+[    2.566187] usb 1-14: New USB device found, idVendor=8087, idProduct=0aaa, bcdDevice= 0.02
+[    2.566191] usb 1-14: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+[    2.580491] input: PixArt Dell MS116 USB Optical Mouse as /devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.0/0003:413C:301A.0002/input/input10
+[    2.580694] hid-generic 0003:413C:301A.0002: input,hidraw1: USB HID v1.11 Mouse [PixArt Dell MS116 USB Optical Mouse] on usb-0000:00:14.0-2/input0
+[    2.580780] usbcore: registered new interface driver usbhid
+[    2.580781] usbhid: USB HID core driver
+[    3.598140] Console: switching to colour frame buffer device 240x67
+[    3.617994] i915 0000:00:02.0: fb0: inteldrmfb frame buffer device
+[    3.688330] device-mapper: uevent: version 1.0.3
+[    3.688432] device-mapper: ioctl: 4.39.0-ioctl (2018-04-03) initialised: dm-devel@redhat.com
+[    3.961970] EXT4-fs (dm-0): mounted filesystem with ordered data mode. Opts: (null)
+[    5.108577] EXT4-fs (dm-1): mounted filesystem with ordered data mode. Opts: (null)
+[    5.356287] systemd[1]: Inserted module 'autofs4'
+[    5.521745] systemd[1]: systemd 241 running in system mode. (+PAM +AUDIT +SELINUX +IMA +APPARMOR +SMACK +SYSVINIT +UTMP +LIBCRYPTSETUP +GCRYPT +GNUTLS +ACL +XZ +LZ4 +SECCOMP +BLKID +ELFUTILS +KMOD -IDN2 +IDN -PCRE2 default-hierarchy=hybrid)
+[    5.540977] systemd[1]: Detected architecture x86-64.
+[    5.557494] systemd[1]: Set hostname to <lchdebhome2>.
+[    5.859460] systemd[1]: /lib/systemd/system/fail2ban.service:12: PIDFile= references path below legacy directory /var/run/, updating /var/run/fail2ban/fail2ban.pid → /run/fail2ban/fail2ban.pid; please update the unit file accordingly.
+[    5.923339] systemd[1]: Unnecessary job for /dev/mapper/vg0-usr was removed.
+[    5.923835] systemd[1]: Listening on Syslog Socket.
+[    5.924115] systemd[1]: Listening on Journal Socket.
+[    5.932604] systemd[1]: Starting Create list of required static device nodes for the current kernel...
+[    5.933880] systemd[1]: Starting Availability of block devices...
+[    5.936270] systemd[1]: Mounting Kernel Debug File System...
+[    5.956236] EXT4-fs (dm-0): re-mounted. Opts: errors=remount-ro
+[    5.956372] EXT4-fs (dm-1): re-mounted. Opts: (null)
+[    6.010555] RPC: Registered named UNIX socket transport module.
+[    6.010556] RPC: Registered udp transport module.
+[    6.010556] RPC: Registered tcp transport module.
+[    6.010556] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[    6.018271] lp: driver loaded but no devices found
+[    6.022080] ppdev: user-space parallel port driver
+[    6.041756] version 39.2
+[    6.043490] ipmi device interface
+[    6.124891] nvidia: loading out-of-tree module taints kernel.
+[    6.127746] nvidia: module license 'NVIDIA' taints kernel.
+[    6.130592] Disabling lock debugging due to kernel taint
+[    6.143897] nvidia: module verification failed: signature and/or required key missing - tainting kernel
+[    6.160399] nvidia-nvlink: Nvlink Core is being initialized, major device number 243
+[    6.161768] nvidia 0000:01:00.0: enabling device (0006 -> 0007)
+[    6.211583] input: Intel HID events as /devices/platform/INT33D5:00/input/input11
+[    6.212940] intel-hid INT33D5:00: platform supports 5 button array
+[    6.212981] ACPI: AC Adapter [AC] (on-line)
+[    6.214127] input: Intel HID 5 button array as /devices/platform/INT33D5:00/input/input12
+[    6.255279] tpm_tis MSFT0101:00: 2.0 TPM (device-id 0xFC, rev-id 1)
+[    6.262569] NVRM: loading NVIDIA UNIX x86_64 Kernel Module  418.211.00  Thu Jun 10 09:26:30 UTC 2021
+[    6.264491] tpm tpm0: A TPM error (2314) occurred attempting the self test
+[    6.270284] proc_thermal 0000:00:04.0: enabling device (0000 -> 0002)
+[    6.290356] iTCO_vendor_support: vendor-support=0
+[    6.293788] nvidia-modeset: Loading NVIDIA Kernel Mode Setting Driver for UNIX platforms  418.211.00  Thu Jun 10 09:28:06 UTC 2021
+[    6.297311] iTCO_wdt: Intel TCO WatchDog Timer Driver v1.11
+[    6.297501] iTCO_wdt iTCO_wdt: can't request region for resource [mem 0x00c5fffc-0x00c5ffff]
+[    6.303060] iTCO_wdt: probe of iTCO_wdt failed with error -16
+[    6.324409] idma64 idma64.0: Found Intel integrated DMA 64-bit
+[    6.328878] idma64 idma64.1: Found Intel integrated DMA 64-bit
+[    6.355378] proc_thermal 0000:00:04.0: Creating sysfs group for PROC_THERMAL_PCI
+[    6.358101] EFI Variables Facility v0.08 2004-May-17
+[    6.359793] input: PC Speaker as /devices/platform/pcspkr/input/input13
+[    6.384719] mei_me 0000:00:16.0: enabling device (0000 -> 0002)
+[    6.406831] RAPL PMU: API unit is 2^-32 Joules, 5 fixed counters, 655360 ms ovfl timer
+[    6.407747] RAPL PMU: hw unit of domain pp0-core 2^-14 Joules
+[    6.407748] RAPL PMU: hw unit of domain package 2^-14 Joules
+[    6.407748] RAPL PMU: hw unit of domain dram 2^-14 Joules
+[    6.407748] RAPL PMU: hw unit of domain pp1-gpu 2^-14 Joules
+[    6.407750] RAPL PMU: hw unit of domain psys 2^-14 Joules
+[    6.421791] dcdbas dcdbas: Dell Systems Management Base Driver (version 5.6.0-3.2)
+[    6.427167] alg: No test for fips(ansi_cprng) (fips_ansi_cprng)
+[    6.427322] sd 1:0:0:0: Attached scsi generic sg0 type 0
+[    6.431141] [drm] [nvidia-drm] [GPU ID 0x00000100] Loading driver
+[    6.462325] [drm] Initialized nvidia-drm 0.0.0 20160202 for 0000:01:00.0 on minor 1
+[    6.470718] battery: ACPI: Battery Slot [BAT0] (battery present)
+[    6.488024] input: Dell WMI hotkeys as /devices/platform/PNP0C14:05/wmi_bus/wmi_bus-PNP0C14:05/9DBB5994-A997-11DA-B012-B622A1EF5492/input/input14
+[    6.488504] pstore: ignoring unexpected backend 'efi'
+[    6.513420] Intel(R) Wireless WiFi driver for Linux
+[    6.513421] Copyright(c) 2003- 2015 Intel Corporation
+[    6.513526] iwlwifi 0000:00:14.3: enabling device (0000 -> 0002)
+[    6.544834] iwlwifi 0000:00:14.3: firmware: direct-loading firmware iwlwifi-9000-pu-b0-jf-b0-38.ucode
+[    6.545216] iwlwifi 0000:00:14.3: loaded firmware version 38.755cfdd8.0 op_mode iwlmvm
+[    6.564286] Bluetooth: Core ver 2.22
+[    6.566184] NET: Registered protocol family 31
+[    6.566186] Bluetooth: HCI device and connection manager initialized
+[    6.570679] Bluetooth: HCI socket layer initialized
+[    6.574920] Bluetooth: L2CAP socket layer initialized
+[    6.574926] Bluetooth: SCO socket layer initialized
+[    6.583300] usbcore: registered new interface driver btusb
+[    6.583750] snd_hda_intel 0000:00:1f.3: bound 0000:00:02.0 (ops i915_audio_component_bind_ops [i915])
+[    6.614074] Bluetooth: hci0: Bootloader revision 0.1 build 42 week 52 2015
+[    6.617248] Bluetooth: hci0: Device revision is 2
+[    6.617249] Bluetooth: hci0: Secure boot is enabled
+[    6.617250] Bluetooth: hci0: OTP lock is enabled
+[    6.617251] Bluetooth: hci0: API lock is enabled
+[    6.617252] Bluetooth: hci0: Debug lock is disabled
+[    6.617253] Bluetooth: hci0: Minimum firmware build 1 week 10 2014
+[    6.628414] bluetooth hci0: firmware: direct-loading firmware intel/ibt-17-16-1.sfi
+[    6.628418] Bluetooth: hci0: Found device firmware: intel/ibt-17-16-1.sfi
+[    6.658668] iwlwifi 0000:00:14.3: Detected Intel(R) Dual Band Wireless AC 9560, REV=0x318
+[    6.676355] EXT4-fs (sda2): mounting ext2 file system using the ext4 subsystem
+[    6.685901] EXT4-fs (sda2): mounted filesystem without journal. Opts: (null)
+[    6.711300] iwlwifi 0000:00:14.3: base HW address: 18:56:80:80:2f:a5
+[    6.713208] snd_hda_codec_realtek hdaudioC0D0: autoconfig for ALC3246: line_outs=1 (0x14/0x0/0x0/0x0/0x0) type:speaker
+[    6.714779] snd_hda_codec_realtek hdaudioC0D0:    speaker_outs=0 (0x0/0x0/0x0/0x0/0x0)
+[    6.716202] snd_hda_codec_realtek hdaudioC0D0:    hp_outs=1 (0x21/0x0/0x0/0x0/0x0)
+[    6.718158] snd_hda_codec_realtek hdaudioC0D0:    mono: mono_out=0x0
+[    6.719952] snd_hda_codec_realtek hdaudioC0D0:    inputs:
+[    6.721356] snd_hda_codec_realtek hdaudioC0D0:      Headset Mic=0x19
+[    6.723039] snd_hda_codec_realtek hdaudioC0D0:      Headphone Mic=0x1a
+[    6.724113] snd_hda_codec_realtek hdaudioC0D0:      Internal Mic=0x12
+[    6.729031] input: DELL0819:00 044E:121F Mouse as /devices/pci0000:00/0000:00:15.1/i2c_designware.1/i2c-6/i2c-DELL0819:00/0018:044E:121F.0001/input/input16
+[    6.730223] input: DELL0819:00 044E:121F Touchpad as /devices/pci0000:00/0000:00:15.1/i2c_designware.1/i2c-6/i2c-DELL0819:00/0018:044E:121F.0001/input/input17
+[    6.731424] input: DELL0819:00 044E:121F UNKNOWN as /devices/pci0000:00/0000:00:15.1/i2c_designware.1/i2c-6/i2c-DELL0819:00/0018:044E:121F.0001/input/input18
+[    6.732628] hid-multitouch 0018:044E:121F.0001: input,hidraw0: I2C HID v1.00 Mouse [DELL0819:00 044E:121F] on i2c-DELL0819:00
+[    6.776374] dell_laptop: Using i8042 filter function for receiving events
+[    6.833941] intel_rapl: Found RAPL domain package
+[    6.834967] intel_rapl: Found RAPL domain core
+[    6.835988] intel_rapl: Found RAPL domain uncore
+[    6.837037] intel_rapl: Found RAPL domain dram
+[    6.942398] ieee80211 phy0: Selected rate control algorithm 'iwl-mvm-rs'
+[    6.942535] thermal thermal_zone9: failed to read out thermal zone (-61)
+[    6.945771] iwlwifi 0000:00:14.3 wlo1: renamed from wlan0
+[    6.949837] EXT4-fs (dm-2): mounted filesystem with ordered data mode. Opts: (null)
+[    6.966830] EXT4-fs (dm-4): mounted filesystem with ordered data mode. Opts: (null)
+[    6.977094] usb 1-3: new high-speed USB device number 5 using xhci_hcd
+[    7.007279] EXT4-fs (dm-3): mounted filesystem with ordered data mode. Opts: (null)
+[    7.050020] loop: module loaded
+[    7.064886] input: HDA Digital PCBeep as /devices/pci0000:00/0000:00:1f.3/sound/card0/input15
+[    7.066386] EXT4-fs (dm-6): mounted filesystem with ordered data mode. Opts: (null)
+[    7.067487] input: HDA Intel PCH Headphone Mic as /devices/pci0000:00/0000:00:1f.3/sound/card0/input19
+[    7.067528] input: HDA Intel PCH HDMI/DP,pcm=3 as /devices/pci0000:00/0000:00:1f.3/sound/card0/input20
+[    7.067561] input: HDA Intel PCH HDMI/DP,pcm=7 as /devices/pci0000:00/0000:00:1f.3/sound/card0/input21
+[    7.067597] input: HDA Intel PCH HDMI/DP,pcm=8 as /devices/pci0000:00/0000:00:1f.3/sound/card0/input22
+[    7.067631] input: HDA Intel PCH HDMI/DP,pcm=9 as /devices/pci0000:00/0000:00:1f.3/sound/card0/input23
+[    7.069444] EXT4-fs (dm-5): mounted filesystem with ordered data mode. Opts: (null)
+[    7.069893] input: HDA Intel PCH HDMI/DP,pcm=10 as /devices/pci0000:00/0000:00:1f.3/sound/card0/input24
+[    7.104103] systemd-journald[413]: Received request to flush runtime journal from PID 1
+[    7.111709] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    7.129011] usb 1-3: New USB device found, idVendor=05c6, idProduct=f000, bcdDevice= 4.19
+[    7.129154] usb 1-3: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[    7.129155] usb 1-3: Product: AC2003
+[    7.129155] usb 1-3: Manufacturer: OnePlus
+[    7.129155] usb 1-3: SerialNumber: c5cd0a95
+[    7.280250] usb 1-3: USB disconnect, device number 5
+[    7.293632] usbcore: registered new interface driver usb-storage
+[    7.302413] usbcore: registered new interface driver uas
+[    7.308655] audit: type=1400 audit(1644395514.692:2): apparmor="STATUS" operation="profile_load" profile="unconfined" name="libreoffice-senddoc" pid=890 comm="apparmor_parser"
+[    7.308717] audit: type=1400 audit(1644395514.692:3): apparmor="STATUS" operation="profile_load" profile="unconfined" name="libreoffice-xpdfimport" pid=891 comm="apparmor_parser"
+[    7.309185] audit: type=1400 audit(1644395514.696:4): apparmor="STATUS" operation="profile_load" profile="unconfined" name="nvidia_modprobe" pid=895 comm="apparmor_parser"
+[    7.309186] audit: type=1400 audit(1644395514.696:5): apparmor="STATUS" operation="profile_load" profile="unconfined" name="nvidia_modprobe//kmod" pid=895 comm="apparmor_parser"
+[    7.309392] audit: type=1400 audit(1644395514.696:6): apparmor="STATUS" operation="profile_load" profile="unconfined" name="libreoffice-oopslash" pid=894 comm="apparmor_parser"
+[    7.309684] audit: type=1400 audit(1644395514.696:7): apparmor="STATUS" operation="profile_load" profile="unconfined" name="/usr/sbin/libvirtd" pid=892 comm="apparmor_parser"
+[    7.309685] audit: type=1400 audit(1644395514.696:8): apparmor="STATUS" operation="profile_load" profile="unconfined" name="/usr/sbin/libvirtd//qemu_bridge_helper" pid=892 comm="apparmor_parser"
+[    7.309712] audit: type=1400 audit(1644395514.696:9): apparmor="STATUS" operation="profile_load" profile="unconfined" name="/usr/bin/man" pid=886 comm="apparmor_parser"
+[    7.309713] audit: type=1400 audit(1644395514.696:10): apparmor="STATUS" operation="profile_load" profile="unconfined" name="man_filter" pid=886 comm="apparmor_parser"
+[    7.309715] audit: type=1400 audit(1644395514.696:11): apparmor="STATUS" operation="profile_load" profile="unconfined" name="man_groff" pid=886 comm="apparmor_parser"
+[    7.724385] ACPI Warning: \_SB.PCI0.PEG0.PEGP._DSM: Argument #4 type mismatch - Found [Buffer], ACPI requires [Package] (20180810/nsarguments-66)
+[    7.899493] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[    7.899494] Bluetooth: BNEP filters: protocol multicast
+[    7.899497] Bluetooth: BNEP socket layer initialized
+[    8.081998] Bluetooth: hci0: Waiting for firmware download to complete
+[    8.082513] Bluetooth: hci0: Firmware loaded in 1455996 usecs
+[    8.083092] Bluetooth: hci0: Waiting for device to boot
+[    8.098247] Bluetooth: hci0: Device booted in 14843 usecs
+[    8.100603] bluetooth hci0: firmware: direct-loading firmware intel/ibt-17-16-1.ddc
+[    8.101240] Bluetooth: hci0: Found Intel DDC parameters: intel/ibt-17-16-1.ddc
+[    8.105265] Bluetooth: hci0: Applying Intel DDC parameters completed
+[    8.437452] vboxdrv: Found 12 processor cores
+[    8.456921] vboxdrv: TSC mode is Invariant, tentative frequency 2592000913 Hz
+[    8.457766] vboxdrv: Successfully loaded version 6.1.30 r148432 (interface 0x00320000)
+[    8.479467] IPv6: ADDRCONF(NETDEV_UP): eno2: link is not ready
+[    8.677997] VBoxNetFlt: Successfully started.
+[    8.696502] VBoxNetAdp: Successfully started.
+[    8.725216] IPv6: ADDRCONF(NETDEV_UP): eno2: link is not ready
+[    8.740992] IPv6: ADDRCONF(NETDEV_UP): wlo1: link is not ready
+[    8.943854] iwlwifi 0000:00:14.3: BIOS contains WGDS but no WRDS
+[    8.944451] IPv6: ADDRCONF(NETDEV_UP): wlo1: link is not ready
+[    9.149340] iwlwifi 0000:00:14.3: BIOS contains WGDS but no WRDS
+[    9.150399] IPv6: ADDRCONF(NETDEV_UP): wlo1: link is not ready
+[    9.283788] IPv6: ADDRCONF(NETDEV_UP): wlo1: link is not ready
+[    9.285950] broken atomic modeset userspace detected, disabling atomic
+[   15.430846] kauditd_printk_skb: 34 callbacks suppressed
+[   15.430847] audit: type=1400 audit(1644395522.816:46): apparmor="STATUS" operation="profile_load" profile="unconfined" name="docker-default" pid=2664 comm="apparmor_parser"
+[   15.523959] bridge: filtering via arp/ip/ip6tables is no longer available by default. Update your scripts to load br_netfilter if you need this.
+[   15.525278] Bridge firewalling registered
+[   15.666407] Initializing XFRM netlink socket
+[   44.092277] IPv6: ADDRCONF(NETDEV_UP): wlo1: link is not ready
+[   46.093326] wlo1: authenticate with 7e:8a:20:d5:88:57
+[   46.099079] wlo1: send auth to 7e:8a:20:d5:88:57 (try 1/3)
+[   46.145792] wlo1: authenticated
+[   46.156511] wlo1: associate with 7e:8a:20:d5:88:57 (try 1/3)
+[   46.157796] iwlwifi 0000:00:14.3: Unhandled alg: 0x707
+[   46.158576] iwlwifi 0000:00:14.3: Unhandled alg: 0x707
+[   46.163233] wlo1: RX AssocResp from 7e:8a:20:d5:88:57 (capab=0x1511 status=0 aid=36)
+[   46.164971] wlo1: associated
+[   46.276476] IPv6: ADDRCONF(NETDEV_CHANGE): wlo1: link becomes ready
+[   72.153875] ACPI BIOS Error (bug): Could not resolve [\_SB.PCI0.PEG0.PEGP.BRT6.LCD], AE_NOT_FOUND (20180810/psargs-330)
+[   72.153896] ACPI Error: Method parse/execution failed \_SB.PCI0.PEG0.PEGP.BRT6, AE_NOT_FOUND (20180810/psparse-516)
+[   72.154239] ACPI Error: Method parse/execution failed \EV5, AE_NOT_FOUND (20180810/psparse-516)
+[   72.154501] ACPI Error: Method parse/execution failed \SMEE, AE_NOT_FOUND (20180810/psparse-516)
+[   72.154719] ACPI Error: Method parse/execution failed \SMIE, AE_NOT_FOUND (20180810/psparse-516)
+[   72.154855] ACPI Error: Method parse/execution failed \NEVT, AE_NOT_FOUND (20180810/psparse-516)
+[   72.155000] ACPI Error: Method parse/execution failed \_SB.PCI0.LPCB.ECDV._Q66, AE_NOT_FOUND (20180810/psparse-516)
+[   72.217409] dell_wmi: Unknown WMI event type 0x12
+[   72.292349] ACPI BIOS Error (bug): Could not resolve [\_SB.PCI0.PEG0.PEGP.BRT6.LCD], AE_NOT_FOUND (20180810/psargs-330)
+[   72.292370] ACPI Error: Method parse/execution failed \_SB.PCI0.PEG0.PEGP.BRT6, AE_NOT_FOUND (20180810/psparse-516)
+[   72.292649] ACPI Error: Method parse/execution failed \EV5, AE_NOT_FOUND (20180810/psparse-516)
+[   72.292877] ACPI Error: Method parse/execution failed \SMEE, AE_NOT_FOUND (20180810/psparse-516)
+[   72.293082] ACPI Error: Method parse/execution failed \SMIE, AE_NOT_FOUND (20180810/psparse-516)
+[   72.293219] ACPI Error: Method parse/execution failed \NEVT, AE_NOT_FOUND (20180810/psparse-516)
+[   72.293364] ACPI Error: Method parse/execution failed \_SB.PCI0.LPCB.ECDV._Q66, AE_NOT_FOUND (20180810/psparse-516)
+[   72.449172] ACPI BIOS Error (bug): Could not resolve [\_SB.PCI0.PEG0.PEGP.BRT6.LCD], AE_NOT_FOUND (20180810/psargs-330)
+[   72.449193] ACPI Error: Method parse/execution failed \_SB.PCI0.PEG0.PEGP.BRT6, AE_NOT_FOUND (20180810/psparse-516)
+[   72.449542] ACPI Error: Method parse/execution failed \EV5, AE_NOT_FOUND (20180810/psparse-516)
+[   72.449702] ACPI Error: Method parse/execution failed \SMEE, AE_NOT_FOUND (20180810/psparse-516)
+[   72.449847] ACPI Error: Method parse/execution failed \SMIE, AE_NOT_FOUND (20180810/psparse-516)
+[   72.449987] ACPI Error: Method parse/execution failed \NEVT, AE_NOT_FOUND (20180810/psparse-516)
+[   72.450133] ACPI Error: Method parse/execution failed \_SB.PCI0.LPCB.ECDV._Q66, AE_NOT_FOUND (20180810/psparse-516)
+[   72.587379] ACPI BIOS Error (bug): Could not resolve [\_SB.PCI0.PEG0.PEGP.BRT6.LCD], AE_NOT_FOUND (20180810/psargs-330)
+[   72.587400] ACPI Error: Method parse/execution failed \_SB.PCI0.PEG0.PEGP.BRT6, AE_NOT_FOUND (20180810/psparse-516)
+[   72.587646] ACPI Error: Method parse/execution failed \EV5, AE_NOT_FOUND (20180810/psparse-516)
+[   72.587801] ACPI Error: Method parse/execution failed \SMEE, AE_NOT_FOUND (20180810/psparse-516)
+[   72.588072] ACPI Error: Method parse/execution failed \SMIE, AE_NOT_FOUND (20180810/psparse-516)
+[   72.588219] ACPI Error: Method parse/execution failed \NEVT, AE_NOT_FOUND (20180810/psparse-516)
+[   72.588366] ACPI Error: Method parse/execution failed \_SB.PCI0.LPCB.ECDV._Q66, AE_NOT_FOUND (20180810/psparse-516)
+[   72.749828] ACPI BIOS Error (bug): Could not resolve [\_SB.PCI0.PEG0.PEGP.BRT6.LCD], AE_NOT_FOUND (20180810/psargs-330)
+[   72.749849] ACPI Error: Method parse/execution failed \_SB.PCI0.PEG0.PEGP.BRT6, AE_NOT_FOUND (20180810/psparse-516)
+[   72.750245] ACPI Error: Method parse/execution failed \EV5, AE_NOT_FOUND (20180810/psparse-516)
+[   72.750635] ACPI Error: Method parse/execution failed \SMEE, AE_NOT_FOUND (20180810/psparse-516)
+[   72.750860] ACPI Error: Method parse/execution failed \SMIE, AE_NOT_FOUND (20180810/psparse-516)
+[   72.750990] ACPI Error: Method parse/execution failed \NEVT, AE_NOT_FOUND (20180810/psparse-516)
+[   72.751115] ACPI Error: Method parse/execution failed \_SB.PCI0.LPCB.ECDV._Q66, AE_NOT_FOUND (20180810/psparse-516)
+[   77.503221] tun: Universal TUN/TAP device driver, 1.6
+[   95.940659] fuse init (API version 7.27)
+[  443.664092] CPU6: Core temperature above threshold, cpu clock throttled (total events = 1)
+[  443.664093] CPU0: Core temperature above threshold, cpu clock throttled (total events = 1)
+[  443.664094] CPU8: Package temperature above threshold, cpu clock throttled (total events = 1)
+[  443.664094] CPU2: Package temperature above threshold, cpu clock throttled (total events = 1)
+[  443.664095] CPU3: Package temperature above threshold, cpu clock throttled (total events = 1)
+[  443.664096] CPU10: Package temperature above threshold, cpu clock throttled (total events = 1)
+[  443.664097] CPU4: Package temperature above threshold, cpu clock throttled (total events = 1)
+[  443.664098] CPU9: Package temperature above threshold, cpu clock throttled (total events = 1)
+[  443.664100] CPU0: Package temperature above threshold, cpu clock throttled (total events = 1)
+[  443.664101] CPU6: Package temperature above threshold, cpu clock throttled (total events = 1)
+[  443.664131] CPU1: Package temperature above threshold, cpu clock throttled (total events = 1)
+[  443.664132] CPU7: Package temperature above threshold, cpu clock throttled (total events = 1)
+[  443.664133] CPU5: Package temperature above threshold, cpu clock throttled (total events = 1)
+[  443.664133] CPU11: Package temperature above threshold, cpu clock throttled (total events = 1)
+[  443.669077] CPU6: Core temperature/speed normal
+[  443.669078] CPU0: Core temperature/speed normal
+[  443.669079] CPU3: Package temperature/speed normal
+[  443.669099] CPU10: Package temperature/speed normal
+[  443.669100] CPU4: Package temperature/speed normal
+[  443.669100] CPU8: Package temperature/speed normal
+[  443.669101] CPU2: Package temperature/speed normal
+[  443.669102] CPU11: Package temperature/speed normal
+[  443.669102] CPU9: Package temperature/speed normal
+[  443.669103] CPU5: Package temperature/speed normal
+[  443.669105] CPU0: Package temperature/speed normal
+[  443.669105] CPU1: Package temperature/speed normal
+[  443.669106] CPU7: Package temperature/speed normal
+[  443.669107] CPU6: Package temperature/speed normal
+[  744.344061] CPU0: Core temperature above threshold, cpu clock throttled (total events = 168)
+[  744.344062] CPU6: Core temperature above threshold, cpu clock throttled (total events = 168)
+[  744.344086] CPU8: Package temperature above threshold, cpu clock throttled (total events = 253)
+[  744.344088] CPU1: Package temperature above threshold, cpu clock throttled (total events = 253)
+[  744.344089] CPU11: Package temperature above threshold, cpu clock throttled (total events = 253)
+[  744.344090] CPU5: Package temperature above threshold, cpu clock throttled (total events = 253)
+[  744.344091] CPU7: Package temperature above threshold, cpu clock throttled (total events = 253)
+[  744.344091] CPU2: Package temperature above threshold, cpu clock throttled (total events = 253)
+[  744.344092] CPU6: Package temperature above threshold, cpu clock throttled (total events = 253)
+[  744.344093] CPU9: Package temperature above threshold, cpu clock throttled (total events = 253)
+[  744.344094] CPU3: Package temperature above threshold, cpu clock throttled (total events = 253)
+[  744.344095] CPU4: Package temperature above threshold, cpu clock throttled (total events = 253)
+[  744.344096] CPU10: Package temperature above threshold, cpu clock throttled (total events = 253)
+[  744.344102] CPU0: Package temperature above threshold, cpu clock throttled (total events = 253)
+[  744.345045] CPU0: Core temperature/speed normal
+[  744.345050] CPU6: Core temperature/speed normal
+[  744.345053] CPU1: Package temperature/speed normal
+[  744.345058] CPU10: Package temperature/speed normal
+[  744.345063] CPU11: Package temperature/speed normal
+[  744.345066] CPU8: Package temperature/speed normal
+[  744.345070] CPU7: Package temperature/speed normal
+[  744.345073] CPU2: Package temperature/speed normal
+[  744.345076] CPU4: Package temperature/speed normal
+[  744.345080] CPU5: Package temperature/speed normal
+[  744.345082] CPU6: Package temperature/speed normal
+[  744.345097] CPU9: Package temperature/speed normal
+[  744.345102] CPU3: Package temperature/speed normal
+[  744.345109] CPU0: Package temperature/speed normal
+[ 2625.987402] broken atomic modeset userspace detected, disabling atomic
+[ 2626.363728] broken atomic modeset userspace detected, disabling atomic
+[ 4213.654041] CPU6: Core temperature above threshold, cpu clock throttled (total events = 197)
+[ 4213.654042] CPU2: Package temperature above threshold, cpu clock throttled (total events = 286)
+[ 4213.654043] CPU1: Package temperature above threshold, cpu clock throttled (total events = 286)
+[ 4213.654066] CPU5: Package temperature above threshold, cpu clock throttled (total events = 286)
+[ 4213.654067] CPU0: Core temperature above threshold, cpu clock throttled (total events = 197)
+[ 4213.654067] CPU7: Package temperature above threshold, cpu clock throttled (total events = 286)
+[ 4213.654068] CPU11: Package temperature above threshold, cpu clock throttled (total events = 286)
+[ 4213.654069] CPU8: Package temperature above threshold, cpu clock throttled (total events = 286)
+[ 4213.654070] CPU0: Package temperature above threshold, cpu clock throttled (total events = 286)
+[ 4213.654071] CPU3: Package temperature above threshold, cpu clock throttled (total events = 286)
+[ 4213.654072] CPU9: Package temperature above threshold, cpu clock throttled (total events = 286)
+[ 4213.654073] CPU4: Package temperature above threshold, cpu clock throttled (total events = 286)
+[ 4213.654074] CPU10: Package temperature above threshold, cpu clock throttled (total events = 286)
+[ 4213.654075] CPU6: Package temperature above threshold, cpu clock throttled (total events = 286)
+[ 4213.655082] CPU1: Package temperature/speed normal
+[ 4213.655083] CPU2: Package temperature/speed normal
+[ 4213.655083] CPU6: Core temperature/speed normal
+[ 4213.655084] CPU7: Package temperature/speed normal
+[ 4213.655085] CPU0: Core temperature/speed normal
+[ 4213.655085] CPU8: Package temperature/speed normal
+[ 4213.655086] CPU6: Package temperature/speed normal
+[ 4213.655087] CPU0: Package temperature/speed normal
+[ 4213.655111] CPU5: Package temperature/speed normal
+[ 4213.655111] CPU11: Package temperature/speed normal
+[ 4213.655140] CPU10: Package temperature/speed normal
+[ 4213.655141] CPU4: Package temperature/speed normal
+[ 4213.655142] CPU3: Package temperature/speed normal
+[ 4213.655142] CPU9: Package temperature/speed normal
+[ 4576.188070] CPU0: Core temperature above threshold, cpu clock throttled (total events = 237)
+[ 4576.188090] CPU7: Package temperature above threshold, cpu clock throttled (total events = 330)
+[ 4576.188092] CPU9: Package temperature above threshold, cpu clock throttled (total events = 330)
+[ 4576.188092] CPU1: Package temperature above threshold, cpu clock throttled (total events = 330)
+[ 4576.188093] CPU6: Core temperature above threshold, cpu clock throttled (total events = 237)
+[ 4576.188094] CPU2: Package temperature above threshold, cpu clock throttled (total events = 330)
+[ 4576.188095] CPU3: Package temperature above threshold, cpu clock throttled (total events = 330)
+[ 4576.188096] CPU5: Package temperature above threshold, cpu clock throttled (total events = 330)
+[ 4576.188097] CPU11: Package temperature above threshold, cpu clock throttled (total events = 330)
+[ 4576.188097] CPU8: Package temperature above threshold, cpu clock throttled (total events = 330)
+[ 4576.188099] CPU6: Package temperature above threshold, cpu clock throttled (total events = 330)
+[ 4576.188100] CPU4: Package temperature above threshold, cpu clock throttled (total events = 330)
+[ 4576.188101] CPU10: Package temperature above threshold, cpu clock throttled (total events = 330)
+[ 4576.188102] CPU0: Package temperature above threshold, cpu clock throttled (total events = 330)
+[ 4576.197055] CPU6: Core temperature/speed normal
+[ 4576.197055] CPU0: Core temperature/speed normal
+[ 4576.197080] CPU11: Package temperature/speed normal
+[ 4576.197081] CPU9: Package temperature/speed normal
+[ 4576.197082] CPU2: Package temperature/speed normal
+[ 4576.197083] CPU8: Package temperature/speed normal
+[ 4576.197083] CPU3: Package temperature/speed normal
+[ 4576.197084] CPU5: Package temperature/speed normal
+[ 4576.197085] CPU0: Package temperature/speed normal
+[ 4576.197086] CPU1: Package temperature/speed normal
+[ 4576.197086] CPU7: Package temperature/speed normal
+[ 4576.197087] CPU4: Package temperature/speed normal
+[ 4576.197088] CPU10: Package temperature/speed normal
+[ 4576.197093] CPU6: Package temperature/speed normal
+[ 4902.036889] usb 1-3: new full-speed USB device number 6 using xhci_hcd
+[ 4902.169010] usb 1-3: device descriptor read/64, error -71
+[ 4902.408930] usb 1-3: device descriptor read/64, error -71
+[ 4902.648946] usb 1-3: new full-speed USB device number 7 using xhci_hcd
+[ 4902.776990] usb 1-3: device descriptor read/64, error -71
+[ 4903.012977] usb 1-3: device descriptor read/64, error -71
+[ 4903.121019] usb usb1-port3: attempt power cycle
+[ 4903.536955] usb 1-3: new full-speed USB device number 8 using xhci_hcd
+[ 4903.537133] usb 1-3: Device not responding to setup address.
+[ 4903.745095] usb 1-3: Device not responding to setup address.
+[ 4903.952930] usb 1-3: device not accepting address 8, error -71
+[ 4904.080902] usb 1-3: new full-speed USB device number 9 using xhci_hcd
+[ 4904.081052] usb 1-3: Device not responding to setup address.
+[ 4904.289103] usb 1-3: Device not responding to setup address.
+[ 4904.496938] usb 1-3: device not accepting address 9, error -71
+[ 4904.497045] usb usb1-port3: unable to enumerate USB device
+[ 5069.967097] CPU0: Core temperature above threshold, cpu clock throttled (total events = 279)
+[ 5069.967098] CPU6: Core temperature above threshold, cpu clock throttled (total events = 279)
+[ 5069.967099] CPU2: Package temperature above threshold, cpu clock throttled (total events = 372)
+[ 5069.967100] CPU10: Package temperature above threshold, cpu clock throttled (total events = 372)
+[ 5069.967100] CPU4: Package temperature above threshold, cpu clock throttled (total events = 372)
+[ 5069.967101] CPU8: Package temperature above threshold, cpu clock throttled (total events = 372)
+[ 5069.967103] CPU6: Package temperature above threshold, cpu clock throttled (total events = 372)
+[ 5069.967106] CPU0: Package temperature above threshold, cpu clock throttled (total events = 372)
+[ 5069.967137] CPU5: Package temperature above threshold, cpu clock throttled (total events = 372)
+[ 5069.967138] CPU9: Package temperature above threshold, cpu clock throttled (total events = 372)
+[ 5069.967139] CPU1: Package temperature above threshold, cpu clock throttled (total events = 372)
+[ 5069.967140] CPU11: Package temperature above threshold, cpu clock throttled (total events = 372)
+[ 5069.967140] CPU7: Package temperature above threshold, cpu clock throttled (total events = 372)
+[ 5069.967141] CPU3: Package temperature above threshold, cpu clock throttled (total events = 372)
+[ 5069.968044] CPU1: Package temperature/speed normal
+[ 5069.968045] CPU0: Core temperature/speed normal
+[ 5069.968046] CPU6: Core temperature/speed normal
+[ 5069.968046] CPU2: Package temperature/speed normal
+[ 5069.968047] CPU7: Package temperature/speed normal
+[ 5069.968048] CPU8: Package temperature/speed normal
+[ 5069.968048] CPU0: Package temperature/speed normal
+[ 5069.968049] CPU6: Package temperature/speed normal
+[ 5069.968092] CPU11: Package temperature/speed normal
+[ 5069.968093] CPU5: Package temperature/speed normal
+[ 5069.968094] CPU3: Package temperature/speed normal
+[ 5069.968094] CPU9: Package temperature/speed normal
+[ 5069.968096] CPU4: Package temperature/speed normal
+[ 5069.968096] CPU10: Package temperature/speed normal
+[ 5599.940090] CPU0: Core temperature above threshold, cpu clock throttled (total events = 280)
+[ 5599.940091] CPU1: Package temperature above threshold, cpu clock throttled (total events = 373)
+[ 5599.940092] CPU2: Package temperature above threshold, cpu clock throttled (total events = 373)
+[ 5599.940092] CPU6: Core temperature above threshold, cpu clock throttled (total events = 280)
+[ 5599.940093] CPU8: Package temperature above threshold, cpu clock throttled (total events = 373)
+[ 5599.940094] CPU7: Package temperature above threshold, cpu clock throttled (total events = 373)
+[ 5599.940095] CPU6: Package temperature above threshold, cpu clock throttled (total events = 373)
+[ 5599.940098] CPU0: Package temperature above threshold, cpu clock throttled (total events = 373)
+[ 5599.940132] CPU9: Package temperature above threshold, cpu clock throttled (total events = 373)
+[ 5599.940133] CPU3: Package temperature above threshold, cpu clock throttled (total events = 373)
+[ 5599.940134] CPU10: Package temperature above threshold, cpu clock throttled (total events = 373)
+[ 5599.940134] CPU4: Package temperature above threshold, cpu clock throttled (total events = 373)
+[ 5599.940135] CPU5: Package temperature above threshold, cpu clock throttled (total events = 373)
+[ 5599.940136] CPU11: Package temperature above threshold, cpu clock throttled (total events = 373)
+[ 5599.941041] CPU0: Core temperature/speed normal
+[ 5599.941042] CPU1: Package temperature/speed normal
+[ 5599.941042] CPU2: Package temperature/speed normal
+[ 5599.941043] CPU6: Core temperature/speed normal
+[ 5599.941044] CPU8: Package temperature/speed normal
+[ 5599.941044] CPU7: Package temperature/speed normal
+[ 5599.941045] CPU6: Package temperature/speed normal
+[ 5599.941047] CPU0: Package temperature/speed normal
+[ 5599.941093] CPU9: Package temperature/speed normal
+[ 5599.941093] CPU3: Package temperature/speed normal
+[ 5599.941094] CPU10: Package temperature/speed normal
+[ 5599.941095] CPU5: Package temperature/speed normal
+[ 5599.941095] CPU11: Package temperature/speed normal
+[ 5599.941096] CPU4: Package temperature/speed normal
+[ 6349.801068] CPU6: Core temperature above threshold, cpu clock throttled (total events = 286)
+[ 6349.801069] CPU0: Core temperature above threshold, cpu clock throttled (total events = 286)
+[ 6349.801090] CPU1: Package temperature above threshold, cpu clock throttled (total events = 384)
+[ 6349.801090] CPU7: Package temperature above threshold, cpu clock throttled (total events = 384)
+[ 6349.801091] CPU10: Package temperature above threshold, cpu clock throttled (total events = 384)
+[ 6349.801092] CPU2: Package temperature above threshold, cpu clock throttled (total events = 384)
+[ 6349.801093] CPU3: Package temperature above threshold, cpu clock throttled (total events = 384)
+[ 6349.801094] CPU4: Package temperature above threshold, cpu clock throttled (total events = 384)
+[ 6349.801095] CPU9: Package temperature above threshold, cpu clock throttled (total events = 384)
+[ 6349.801096] CPU8: Package temperature above threshold, cpu clock throttled (total events = 384)
+[ 6349.801097] CPU0: Package temperature above threshold, cpu clock throttled (total events = 384)
+[ 6349.801098] CPU11: Package temperature above threshold, cpu clock throttled (total events = 384)
+[ 6349.801099] CPU5: Package temperature above threshold, cpu clock throttled (total events = 384)
+[ 6349.801100] CPU6: Package temperature above threshold, cpu clock throttled (total events = 384)
+[ 6349.804093] CPU6: Core temperature/speed normal
+[ 6349.804094] CPU0: Core temperature/speed normal
+[ 6349.804095] CPU7: Package temperature/speed normal
+[ 6349.804095] CPU1: Package temperature/speed normal
+[ 6349.804116] CPU10: Package temperature/speed normal
+[ 6349.804117] CPU3: Package temperature/speed normal
+[ 6349.804118] CPU2: Package temperature/speed normal
+[ 6349.804118] CPU8: Package temperature/speed normal
+[ 6349.804120] CPU9: Package temperature/speed normal
+[ 6349.804120] CPU4: Package temperature/speed normal
+[ 6349.804121] CPU0: Package temperature/speed normal
+[ 6349.804121] CPU11: Package temperature/speed normal
+[ 6349.804122] CPU5: Package temperature/speed normal
+[ 6349.804127] CPU6: Package temperature/speed normal
+[ 6659.071057] CPU0: Core temperature above threshold, cpu clock throttled (total events = 306)
+[ 6659.071058] CPU10: Package temperature above threshold, cpu clock throttled (total events = 413)
+[ 6659.071059] CPU7: Package temperature above threshold, cpu clock throttled (total events = 413)
+[ 6659.071083] CPU5: Package temperature above threshold, cpu clock throttled (total events = 413)
+[ 6659.071083] CPU6: Core temperature above threshold, cpu clock throttled (total events = 306)
+[ 6659.071084] CPU11: Package temperature above threshold, cpu clock throttled (total events = 413)
+[ 6659.071085] CPU4: Package temperature above threshold, cpu clock throttled (total events = 413)
+[ 6659.071086] CPU1: Package temperature above threshold, cpu clock throttled (total events = 413)
+[ 6659.071087] CPU6: Package temperature above threshold, cpu clock throttled (total events = 413)
+[ 6659.071088] CPU9: Package temperature above threshold, cpu clock throttled (total events = 413)
+[ 6659.071089] CPU8: Package temperature above threshold, cpu clock throttled (total events = 413)
+[ 6659.071090] CPU2: Package temperature above threshold, cpu clock throttled (total events = 413)
+[ 6659.071091] CPU3: Package temperature above threshold, cpu clock throttled (total events = 413)
+[ 6659.071096] CPU0: Package temperature above threshold, cpu clock throttled (total events = 413)
+[ 6659.074081] CPU0: Core temperature/speed normal
+[ 6659.074081] CPU1: Package temperature/speed normal
+[ 6659.074082] CPU7: Package temperature/speed normal
+[ 6659.074082] CPU6: Core temperature/speed normal
+[ 6659.074083] CPU10: Package temperature/speed normal
+[ 6659.074084] CPU5: Package temperature/speed normal
+[ 6659.074085] CPU11: Package temperature/speed normal
+[ 6659.074085] CPU2: Package temperature/speed normal
+[ 6659.074086] CPU4: Package temperature/speed normal
+[ 6659.074087] CPU3: Package temperature/speed normal
+[ 6659.074087] CPU9: Package temperature/speed normal
+[ 6659.074088] CPU8: Package temperature/speed normal
+[ 6659.074089] CPU6: Package temperature/speed normal
+[ 6659.074090] CPU0: Package temperature/speed normal
+[ 6677.792070] CPU7: Core temperature above threshold, cpu clock throttled (total events = 55)
+[ 6677.792071] CPU1: Core temperature above threshold, cpu clock throttled (total events = 55)
+[ 6677.793044] CPU7: Core temperature/speed normal
+[ 6677.793045] CPU1: Core temperature/speed normal
+[ 6962.855068] CPU6: Core temperature above threshold, cpu clock throttled (total events = 1869)
+[ 6962.855069] CPU0: Core temperature above threshold, cpu clock throttled (total events = 1869)
+[ 6962.855070] CPU1: Package temperature above threshold, cpu clock throttled (total events = 4739)
+[ 6962.855071] CPU3: Package temperature above threshold, cpu clock throttled (total events = 4739)
+[ 6962.855071] CPU7: Package temperature above threshold, cpu clock throttled (total events = 4739)
+[ 6962.855072] CPU9: Package temperature above threshold, cpu clock throttled (total events = 4739)
+[ 6962.855074] CPU0: Package temperature above threshold, cpu clock throttled (total events = 4739)
+[ 6962.855077] CPU6: Package temperature above threshold, cpu clock throttled (total events = 4739)
+[ 6962.855111] CPU2: Package temperature above threshold, cpu clock throttled (total events = 4739)
+[ 6962.855112] CPU8: Package temperature above threshold, cpu clock throttled (total events = 4739)
+[ 6962.855113] CPU5: Package temperature above threshold, cpu clock throttled (total events = 4739)
+[ 6962.855114] CPU4: Package temperature above threshold, cpu clock throttled (total events = 4739)
+[ 6962.855115] CPU10: Package temperature above threshold, cpu clock throttled (total events = 4739)
+[ 6962.855116] CPU11: Package temperature above threshold, cpu clock throttled (total events = 4739)
+[ 6962.856059] CPU6: Core temperature/speed normal
+[ 6962.856060] CPU1: Package temperature/speed normal
+[ 6962.856061] CPU4: Package temperature/speed normal
+[ 6962.856061] CPU3: Package temperature/speed normal
+[ 6962.856062] CPU0: Core temperature/speed normal
+[ 6962.856084] CPU10: Package temperature/speed normal
+[ 6962.856084] CPU9: Package temperature/speed normal
+[ 6962.856085] CPU7: Package temperature/speed normal
+[ 6962.856085] CPU11: Package temperature/speed normal
+[ 6962.856086] CPU5: Package temperature/speed normal
+[ 6962.856086] CPU0: Package temperature/speed normal
+[ 6962.856088] CPU8: Package temperature/speed normal
+[ 6962.856088] CPU2: Package temperature/speed normal
+[ 6962.856092] CPU6: Package temperature/speed normal
+[ 7262.928125] CPU2: Package temperature above threshold, cpu clock throttled (total events = 7484)
+[ 7262.928126] CPU4: Package temperature above threshold, cpu clock throttled (total events = 7484)
+[ 7262.928128] CPU7: Package temperature above threshold, cpu clock throttled (total events = 7484)
+[ 7262.928130] CPU11: Package temperature above threshold, cpu clock throttled (total events = 7484)
+[ 7262.928131] CPU3: Package temperature above threshold, cpu clock throttled (total events = 7484)
+[ 7262.928132] CPU5: Package temperature above threshold, cpu clock throttled (total events = 7484)
+[ 7262.928133] CPU1: Package temperature above threshold, cpu clock throttled (total events = 7484)
+[ 7262.928134] CPU9: Package temperature above threshold, cpu clock throttled (total events = 7484)
+[ 7262.928134] CPU10: Package temperature above threshold, cpu clock throttled (total events = 7484)
+[ 7262.928135] CPU8: Package temperature above threshold, cpu clock throttled (total events = 7484)
+[ 7262.928137] CPU6: Package temperature above threshold, cpu clock throttled (total events = 7484)
+[ 7262.928137] CPU0: Package temperature above threshold, cpu clock throttled (total events = 7484)
+[ 7262.929077] CPU3: Package temperature/speed normal
+[ 7262.929078] CPU2: Package temperature/speed normal
+[ 7262.929079] CPU6: Package temperature/speed normal
+[ 7262.929080] CPU7: Package temperature/speed normal
+[ 7262.929081] CPU1: Package temperature/speed normal
+[ 7262.929082] CPU4: Package temperature/speed normal
+[ 7262.929083] CPU8: Package temperature/speed normal
+[ 7262.929083] CPU11: Package temperature/speed normal
+[ 7262.929084] CPU0: Package temperature/speed normal
+[ 7262.929085] CPU10: Package temperature/speed normal
+[ 7262.929086] CPU5: Package temperature/speed normal
+[ 7262.929086] CPU9: Package temperature/speed normal
+[ 7413.771920] perf: interrupt took too long (2511 > 2500), lowering kernel.perf_event_max_sample_rate to 79500
+[ 7562.932045] CPU6: Package temperature/speed normal
+[ 7562.932045] CPU8: Package temperature/speed normal
+[ 7562.932046] CPU0: Package temperature/speed normal
+[ 7562.932048] CPU2: Package temperature/speed normal
+[ 7562.932103] CPU7: Package temperature/speed normal
+[ 7562.932103] CPU1: Package temperature/speed normal
+[ 7562.932105] CPU3: Package temperature/speed normal
+[ 7562.932105] CPU9: Package temperature/speed normal
+[ 7562.932106] CPU4: Package temperature/speed normal
+[ 7562.932107] CPU11: Package temperature/speed normal
+[ 7562.932108] CPU5: Package temperature/speed normal
+[ 7562.932109] CPU10: Package temperature/speed normal
+[ 8200.986950] broken atomic modeset userspace detected, disabling atomic
+[ 8201.416602] broken atomic modeset userspace detected, disabling atomic
+[11068.986087] CPU6: Core temperature above threshold, cpu clock throttled (total events = 5481)
+[11068.986087] CPU0: Core temperature above threshold, cpu clock throttled (total events = 5481)
+[11068.986107] CPU3: Package temperature above threshold, cpu clock throttled (total events = 12115)
+[11068.986109] CPU5: Package temperature above threshold, cpu clock throttled (total events = 12115)
+[11068.986110] CPU4: Package temperature above threshold, cpu clock throttled (total events = 12115)
+[11068.986111] CPU11: Package temperature above threshold, cpu clock throttled (total events = 12115)
+[11068.986112] CPU9: Package temperature above threshold, cpu clock throttled (total events = 12115)
+[11068.986113] CPU10: Package temperature above threshold, cpu clock throttled (total events = 12115)
+[11068.986114] CPU0: Package temperature above threshold, cpu clock throttled (total events = 12115)
+[11068.986115] CPU7: Package temperature above threshold, cpu clock throttled (total events = 12115)
+[11068.986116] CPU1: Package temperature above threshold, cpu clock throttled (total events = 12115)
+[11068.986117] CPU2: Package temperature above threshold, cpu clock throttled (total events = 12115)
+[11068.986118] CPU8: Package temperature above threshold, cpu clock throttled (total events = 12115)
+[11068.986119] CPU6: Package temperature above threshold, cpu clock throttled (total events = 12115)
+[11068.991064] CPU0: Core temperature/speed normal
+[11068.991064] CPU6: Core temperature/speed normal
+[11068.991066] CPU3: Package temperature/speed normal
+[11068.991088] CPU9: Package temperature/speed normal
+[11068.991090] CPU4: Package temperature/speed normal
+[11068.991091] CPU5: Package temperature/speed normal
+[11068.991091] CPU10: Package temperature/speed normal
+[11068.991092] CPU11: Package temperature/speed normal
+[11068.991093] CPU6: Package temperature/speed normal
+[11068.991093] CPU0: Package temperature/speed normal
+[11068.991094] CPU8: Package temperature/speed normal
+[11068.991095] CPU2: Package temperature/speed normal
+[11068.991096] CPU7: Package temperature/speed normal
+[11068.991097] CPU1: Package temperature/speed normal
+[11555.212047] CPU6: Core temperature above threshold, cpu clock throttled (total events = 5483)
+[11555.212048] CPU0: Core temperature above threshold, cpu clock throttled (total events = 5483)
+[11555.212049] CPU10: Package temperature above threshold, cpu clock throttled (total events = 12117)
+[11555.212050] CPU7: Package temperature above threshold, cpu clock throttled (total events = 12117)
+[11555.212050] CPU1: Package temperature above threshold, cpu clock throttled (total events = 12117)
+[11555.212051] CPU4: Package temperature above threshold, cpu clock throttled (total events = 12117)
+[11555.212053] CPU0: Package temperature above threshold, cpu clock throttled (total events = 12117)
+[11555.212057] CPU6: Package temperature above threshold, cpu clock throttled (total events = 12117)
+[11555.212091] CPU3: Package temperature above threshold, cpu clock throttled (total events = 12117)
+[11555.212092] CPU9: Package temperature above threshold, cpu clock throttled (total events = 12117)
+[11555.212093] CPU2: Package temperature above threshold, cpu clock throttled (total events = 12117)
+[11555.212094] CPU8: Package temperature above threshold, cpu clock throttled (total events = 12117)
+[11555.212095] CPU11: Package temperature above threshold, cpu clock throttled (total events = 12117)
+[11555.212095] CPU5: Package temperature above threshold, cpu clock throttled (total events = 12117)
+[11555.213118] CPU6: Core temperature/speed normal
+[11555.213118] CPU3: Package temperature/speed normal
+[11555.213119] CPU7: Package temperature/speed normal
+[11555.213120] CPU0: Core temperature/speed normal
+[11555.213121] CPU9: Package temperature/speed normal
+[11555.213121] CPU1: Package temperature/speed normal
+[11555.213122] CPU10: Package temperature/speed normal
+[11555.213122] CPU4: Package temperature/speed normal
+[11555.213123] CPU11: Package temperature/speed normal
+[11555.213123] CPU5: Package temperature/speed normal
+[11555.213124] CPU2: Package temperature/speed normal
+[11555.213125] CPU8: Package temperature/speed normal
+[11555.213125] CPU0: Package temperature/speed normal
+[11555.213129] CPU6: Package temperature/speed normal
+[11869.873090] CPU6: Core temperature above threshold, cpu clock throttled (total events = 5484)
+[11869.873091] CPU11: Package temperature above threshold, cpu clock throttled (total events = 12118)
+[11869.873092] CPU7: Package temperature above threshold, cpu clock throttled (total events = 12118)
+[11869.873093] CPU0: Core temperature above threshold, cpu clock throttled (total events = 5484)
+[11869.873094] CPU10: Package temperature above threshold, cpu clock throttled (total events = 12118)
+[11869.873095] CPU9: Package temperature above threshold, cpu clock throttled (total events = 12118)
+[11869.873095] CPU8: Package temperature above threshold, cpu clock throttled (total events = 12118)
+[11869.873096] CPU3: Package temperature above threshold, cpu clock throttled (total events = 12118)
+[11869.873097] CPU4: Package temperature above threshold, cpu clock throttled (total events = 12118)
+[11869.873098] CPU5: Package temperature above threshold, cpu clock throttled (total events = 12118)
+[11869.873099] CPU1: Package temperature above threshold, cpu clock throttled (total events = 12118)
+[11869.873099] CPU2: Package temperature above threshold, cpu clock throttled (total events = 12118)
+[11869.873101] CPU0: Package temperature above threshold, cpu clock throttled (total events = 12118)
+[11869.873107] CPU6: Package temperature above threshold, cpu clock throttled (total events = 12118)
+[11869.877065] CPU6: Core temperature/speed normal
+[11869.877066] CPU7: Package temperature/speed normal
+[11869.877066] CPU1: Package temperature/speed normal
+[11869.877067] CPU3: Package temperature/speed normal
+[11869.877068] CPU4: Package temperature/speed normal
+[11869.877068] CPU0: Core temperature/speed normal
+[11869.877069] CPU9: Package temperature/speed normal
+[11869.877069] CPU10: Package temperature/speed normal
+[11869.877070] CPU0: Package temperature/speed normal
+[11869.877071] CPU6: Package temperature/speed normal
+[11869.877103] CPU2: Package temperature/speed normal
+[11869.877104] CPU8: Package temperature/speed normal
+[11869.877105] CPU11: Package temperature/speed normal
+[11869.877105] CPU5: Package temperature/speed normal
+[12178.640108] CPU6: Core temperature above threshold, cpu clock throttled (total events = 5615)
+[12178.640109] CPU0: Core temperature above threshold, cpu clock throttled (total events = 5615)
+[12178.640110] CPU3: Package temperature above threshold, cpu clock throttled (total events = 12474)
+[12178.640111] CPU8: Package temperature above threshold, cpu clock throttled (total events = 12474)
+[12178.640112] CPU2: Package temperature above threshold, cpu clock throttled (total events = 12474)
+[12178.640113] CPU9: Package temperature above threshold, cpu clock throttled (total events = 12474)
+[12178.640114] CPU0: Package temperature above threshold, cpu clock throttled (total events = 12474)
+[12178.640118] CPU6: Package temperature above threshold, cpu clock throttled (total events = 12474)
+[12178.640156] CPU10: Package temperature above threshold, cpu clock throttled (total events = 12474)
+[12178.640157] CPU4: Package temperature above threshold, cpu clock throttled (total events = 12474)
+[12178.640159] CPU7: Package temperature above threshold, cpu clock throttled (total events = 12474)
+[12178.640159] CPU1: Package temperature above threshold, cpu clock throttled (total events = 12474)
+[12178.640160] CPU11: Package temperature above threshold, cpu clock throttled (total events = 12474)
+[12178.640161] CPU5: Package temperature above threshold, cpu clock throttled (total events = 12474)
+[12178.649057] CPU0: Core temperature/speed normal
+[12178.649058] CPU6: Core temperature/speed normal
+[12178.649058] CPU3: Package temperature/speed normal
+[12178.649059] CPU8: Package temperature/speed normal
+[12178.649060] CPU7: Package temperature/speed normal
+[12178.649061] CPU10: Package temperature/speed normal
+[12178.649061] CPU11: Package temperature/speed normal
+[12178.649062] CPU5: Package temperature/speed normal
+[12178.649062] CPU1: Package temperature/speed normal
+[12178.649063] CPU2: Package temperature/speed normal
+[12178.649063] CPU4: Package temperature/speed normal
+[12178.649064] CPU9: Package temperature/speed normal
+[12178.649065] CPU6: Package temperature/speed normal
+[12178.649066] CPU0: Package temperature/speed normal
+[12499.534100] CPU6: Core temperature above threshold, cpu clock throttled (total events = 5633)
+[12499.534100] CPU0: Core temperature above threshold, cpu clock throttled (total events = 5633)
+[12499.534102] CPU0: Package temperature above threshold, cpu clock throttled (total events = 12492)
+[12499.534104] CPU6: Package temperature above threshold, cpu clock throttled (total events = 12492)
+[12499.534160] CPU2: Package temperature above threshold, cpu clock throttled (total events = 12492)
+[12499.534161] CPU8: Package temperature above threshold, cpu clock throttled (total events = 12492)
+[12499.534162] CPU7: Package temperature above threshold, cpu clock throttled (total events = 12492)
+[12499.534162] CPU1: Package temperature above threshold, cpu clock throttled (total events = 12492)
+[12499.534163] CPU10: Package temperature above threshold, cpu clock throttled (total events = 12492)
+[12499.534164] CPU3: Package temperature above threshold, cpu clock throttled (total events = 12492)
+[12499.534165] CPU5: Package temperature above threshold, cpu clock throttled (total events = 12492)
+[12499.534166] CPU4: Package temperature above threshold, cpu clock throttled (total events = 12492)
+[12499.534166] CPU9: Package temperature above threshold, cpu clock throttled (total events = 12492)
+[12499.534167] CPU11: Package temperature above threshold, cpu clock throttled (total events = 12492)
+[12499.537055] CPU6: Core temperature/speed normal
+[12499.537056] CPU0: Core temperature/speed normal
+[12499.537057] CPU0: Package temperature/speed normal
+[12499.537058] CPU6: Package temperature/speed normal
+[12499.537117] CPU8: Package temperature/speed normal
+[12499.537118] CPU1: Package temperature/speed normal
+[12499.537119] CPU7: Package temperature/speed normal
+[12499.537119] CPU2: Package temperature/speed normal
+[12499.537120] CPU3: Package temperature/speed normal
+[12499.537120] CPU9: Package temperature/speed normal
+[12499.537121] CPU4: Package temperature/speed normal
+[12499.537122] CPU10: Package temperature/speed normal
+[12499.537123] CPU5: Package temperature/speed normal
+[12499.537124] CPU11: Package temperature/speed normal
+[12888.008069] CPU6: Core temperature above threshold, cpu clock throttled (total events = 5687)
+[12888.008070] CPU0: Core temperature above threshold, cpu clock throttled (total events = 5687)
+[12888.008071] CPU3: Package temperature above threshold, cpu clock throttled (total events = 12563)
+[12888.008072] CPU9: Package temperature above threshold, cpu clock throttled (total events = 12563)
+[12888.008073] CPU4: Package temperature above threshold, cpu clock throttled (total events = 12563)
+[12888.008073] CPU10: Package temperature above threshold, cpu clock throttled (total events = 12563)
+[12888.008075] CPU0: Package temperature above threshold, cpu clock throttled (total events = 12563)
+[12888.008076] CPU6: Package temperature above threshold, cpu clock throttled (total events = 12563)
+[12888.008111] CPU7: Package temperature above threshold, cpu clock throttled (total events = 12563)
+[12888.008112] CPU1: Package temperature above threshold, cpu clock throttled (total events = 12563)
+[12888.008113] CPU2: Package temperature above threshold, cpu clock throttled (total events = 12563)
+[12888.008113] CPU8: Package temperature above threshold, cpu clock throttled (total events = 12563)
+[12888.008114] CPU11: Package temperature above threshold, cpu clock throttled (total events = 12563)
+[12888.008115] CPU5: Package temperature above threshold, cpu clock throttled (total events = 12563)
+[12888.009080] CPU6: Core temperature/speed normal
+[12888.009081] CPU3: Package temperature/speed normal
+[12888.009081] CPU4: Package temperature/speed normal
+[12888.009082] CPU2: Package temperature/speed normal
+[12888.009083] CPU8: Package temperature/speed normal
+[12888.009105] CPU10: Package temperature/speed normal
+[12888.009105] CPU0: Core temperature/speed normal
+[12888.009106] CPU9: Package temperature/speed normal
+[12888.009107] CPU0: Package temperature/speed normal
+[12888.009109] CPU7: Package temperature/speed normal
+[12888.009110] CPU5: Package temperature/speed normal
+[12888.009111] CPU11: Package temperature/speed normal
+[12888.009112] CPU1: Package temperature/speed normal
+[12888.009113] CPU6: Package temperature/speed normal
+[13193.499793] WARNING! power/level is deprecated; use power/control instead
+[13219.573059] CPU7: Core temperature above threshold, cpu clock throttled (total events = 2584)
+[13219.573059] CPU1: Core temperature above threshold, cpu clock throttled (total events = 2584)
+[13219.573060] CPU5: Package temperature above threshold, cpu clock throttled (total events = 13031)
+[13219.573061] CPU11: Package temperature above threshold, cpu clock throttled (total events = 13031)
+[13219.573062] CPU1: Package temperature above threshold, cpu clock throttled (total events = 13031)
+[13219.573065] CPU7: Package temperature above threshold, cpu clock throttled (total events = 13031)
+[13219.573110] CPU6: Package temperature above threshold, cpu clock throttled (total events = 13031)
+[13219.573111] CPU2: Package temperature above threshold, cpu clock throttled (total events = 13031)
+[13219.573112] CPU0: Package temperature above threshold, cpu clock throttled (total events = 13031)
+[13219.573113] CPU9: Package temperature above threshold, cpu clock throttled (total events = 13031)
+[13219.573114] CPU8: Package temperature above threshold, cpu clock throttled (total events = 13031)
+[13219.573115] CPU3: Package temperature above threshold, cpu clock throttled (total events = 13031)
+[13219.573115] CPU10: Package temperature above threshold, cpu clock throttled (total events = 13031)
+[13219.573117] CPU4: Package temperature above threshold, cpu clock throttled (total events = 13031)
+[13219.574090] CPU7: Core temperature/speed normal
+[13219.574091] CPU11: Package temperature/speed normal
+[13219.574092] CPU5: Package temperature/speed normal
+[13219.574092] CPU6: Package temperature/speed normal
+[13219.574093] CPU0: Package temperature/speed normal
+[13219.574112] CPU2: Package temperature/speed normal
+[13219.574113] CPU8: Package temperature/speed normal
+[13219.574113] CPU1: Core temperature/speed normal
+[13219.574115] CPU1: Package temperature/speed normal
+[13219.574116] CPU9: Package temperature/speed normal
+[13219.574116] CPU3: Package temperature/speed normal
+[13219.574118] CPU10: Package temperature/speed normal
+[13219.574118] CPU4: Package temperature/speed normal
+[13219.574123] CPU7: Package temperature/speed normal
+[13333.668996] perf: interrupt took too long (3140 > 3138), lowering kernel.perf_event_max_sample_rate to 63500
+[13853.360074] CPU6: Core temperature above threshold, cpu clock throttled (total events = 6009)
+[13853.360075] CPU0: Core temperature above threshold, cpu clock throttled (total events = 6009)
+[13853.360076] CPU7: Package temperature above threshold, cpu clock throttled (total events = 13090)
+[13853.360077] CPU1: Package temperature above threshold, cpu clock throttled (total events = 13090)
+[13853.360078] CPU0: Package temperature above threshold, cpu clock throttled (total events = 13090)
+[13853.360081] CPU6: Package temperature above threshold, cpu clock throttled (total events = 13090)
+[13853.360130] CPU8: Package temperature above threshold, cpu clock throttled (total events = 13090)
+[13853.360131] CPU2: Package temperature above threshold, cpu clock throttled (total events = 13090)
+[13853.360132] CPU11: Package temperature above threshold, cpu clock throttled (total events = 13090)
+[13853.360132] CPU5: Package temperature above threshold, cpu clock throttled (total events = 13090)
+[13853.360133] CPU9: Package temperature above threshold, cpu clock throttled (total events = 13090)
+[13853.360134] CPU3: Package temperature above threshold, cpu clock throttled (total events = 13090)
+[13853.360135] CPU10: Package temperature above threshold, cpu clock throttled (total events = 13090)
+[13853.360136] CPU4: Package temperature above threshold, cpu clock throttled (total events = 13090)
+[13853.363096] CPU0: Core temperature/speed normal
+[13853.363097] CPU10: Package temperature/speed normal
+[13853.363098] CPU2: Package temperature/speed normal
+[13853.363120] CPU1: Package temperature/speed normal
+[13853.363122] CPU4: Package temperature/speed normal
+[13853.363122] CPU8: Package temperature/speed normal
+[13853.363123] CPU6: Core temperature/speed normal
+[13853.363123] CPU7: Package temperature/speed normal
+[13853.363125] CPU6: Package temperature/speed normal
+[13853.363125] CPU3: Package temperature/speed normal
+[13853.363126] CPU9: Package temperature/speed normal
+[13853.363127] CPU11: Package temperature/speed normal
+[13853.363127] CPU5: Package temperature/speed normal
+[13853.363128] CPU0: Package temperature/speed normal
+[14389.882087] CPU1: Core temperature above threshold, cpu clock throttled (total events = 2606)
+[14389.882088] CPU7: Core temperature above threshold, cpu clock throttled (total events = 2606)
+[14389.882089] CPU4: Package temperature above threshold, cpu clock throttled (total events = 13171)
+[14389.882111] CPU3: Package temperature above threshold, cpu clock throttled (total events = 13171)
+[14389.882112] CPU0: Package temperature above threshold, cpu clock throttled (total events = 13171)
+[14389.882113] CPU9: Package temperature above threshold, cpu clock throttled (total events = 13171)
+[14389.882113] CPU6: Package temperature above threshold, cpu clock throttled (total events = 13171)
+[14389.882114] CPU10: Package temperature above threshold, cpu clock throttled (total events = 13171)
+[14389.882115] CPU8: Package temperature above threshold, cpu clock throttled (total events = 13171)
+[14389.882116] CPU2: Package temperature above threshold, cpu clock throttled (total events = 13171)
+[14389.882117] CPU7: Package temperature above threshold, cpu clock throttled (total events = 13171)
+[14389.882118] CPU11: Package temperature above threshold, cpu clock throttled (total events = 13171)
+[14389.882119] CPU5: Package temperature above threshold, cpu clock throttled (total events = 13171)
+[14389.882120] CPU1: Package temperature above threshold, cpu clock throttled (total events = 13171)
+[14389.883099] CPU7: Core temperature/speed normal
+[14389.883099] CPU1: Core temperature/speed normal
+[14389.883100] CPU0: Package temperature/speed normal
+[14389.883100] CPU4: Package temperature/speed normal
+[14389.883101] CPU3: Package temperature/speed normal
+[14389.883101] CPU10: Package temperature/speed normal
+[14389.883102] CPU6: Package temperature/speed normal
+[14389.883103] CPU1: Package temperature/speed normal
+[14389.883103] CPU9: Package temperature/speed normal
+[14389.883107] CPU7: Package temperature/speed normal
+[14389.883113] CPU8: Package temperature/speed normal
+[14389.883113] CPU2: Package temperature/speed normal
+[14389.883141] CPU11: Package temperature/speed normal
+[14389.883142] CPU5: Package temperature/speed normal
+[14722.803105] CPU6: Core temperature above threshold, cpu clock throttled (total events = 6122)
+[14722.803105] CPU0: Core temperature above threshold, cpu clock throttled (total events = 6122)
+[14722.803106] CPU10: Package temperature above threshold, cpu clock throttled (total events = 13215)
+[14722.803107] CPU4: Package temperature above threshold, cpu clock throttled (total events = 13215)
+[14722.803109] CPU0: Package temperature above threshold, cpu clock throttled (total events = 13215)
+[14722.803109] CPU6: Package temperature above threshold, cpu clock throttled (total events = 13215)
+[14722.803127] CPU5: Package temperature above threshold, cpu clock throttled (total events = 13215)
+[14722.803127] CPU11: Package temperature above threshold, cpu clock throttled (total events = 13215)
+[14722.803159] CPU7: Package temperature above threshold, cpu clock throttled (total events = 13215)
+[14722.803160] CPU9: Package temperature above threshold, cpu clock throttled (total events = 13215)
+[14722.803161] CPU1: Package temperature above threshold, cpu clock throttled (total events = 13215)
+[14722.803161] CPU3: Package temperature above threshold, cpu clock throttled (total events = 13215)
+[14722.803163] CPU8: Package temperature above threshold, cpu clock throttled (total events = 13215)
+[14722.803164] CPU2: Package temperature above threshold, cpu clock throttled (total events = 13215)
+[14722.804054] CPU6: Core temperature/speed normal
+[14722.804054] CPU4: Package temperature/speed normal
+[14722.804055] CPU10: Package temperature/speed normal
+[14722.804055] CPU0: Core temperature/speed normal
+[14722.804056] CPU0: Package temperature/speed normal
+[14722.804058] CPU6: Package temperature/speed normal
+[14722.804106] CPU2: Package temperature/speed normal
+[14722.804106] CPU1: Package temperature/speed normal
+[14722.804107] CPU8: Package temperature/speed normal
+[14722.804107] CPU7: Package temperature/speed normal
+[14722.804108] CPU3: Package temperature/speed normal
+[14722.804109] CPU9: Package temperature/speed normal
+[14722.804110] CPU5: Package temperature/speed normal
+[14722.804111] CPU11: Package temperature/speed normal
+[15058.474048] CPU6: Core temperature above threshold, cpu clock throttled (total events = 6195)
+[15058.474049] CPU0: Core temperature above threshold, cpu clock throttled (total events = 6195)
+[15058.474050] CPU2: Package temperature above threshold, cpu clock throttled (total events = 13293)
+[15058.474050] CPU8: Package temperature above threshold, cpu clock throttled (total events = 13293)
+[15058.474052] CPU4: Package temperature above threshold, cpu clock throttled (total events = 13293)
+[15058.474052] CPU10: Package temperature above threshold, cpu clock throttled (total events = 13293)
+[15058.474054] CPU0: Package temperature above threshold, cpu clock throttled (total events = 13293)
+[15058.474055] CPU6: Package temperature above threshold, cpu clock throttled (total events = 13293)
+[15058.474093] CPU1: Package temperature above threshold, cpu clock throttled (total events = 13293)
+[15058.474093] CPU7: Package temperature above threshold, cpu clock throttled (total events = 13293)
+[15058.474095] CPU9: Package temperature above threshold, cpu clock throttled (total events = 13293)
+[15058.474096] CPU3: Package temperature above threshold, cpu clock throttled (total events = 13293)
+[15058.474097] CPU5: Package temperature above threshold, cpu clock throttled (total events = 13293)
+[15058.474097] CPU11: Package temperature above threshold, cpu clock throttled (total events = 13293)
+[15058.478063] CPU0: Core temperature/speed normal
+[15058.478063] CPU6: Core temperature/speed normal
+[15058.478085] CPU11: Package temperature/speed normal
+[15058.478086] CPU7: Package temperature/speed normal
+[15058.478087] CPU1: Package temperature/speed normal
+[15058.478087] CPU4: Package temperature/speed normal
+[15058.478088] CPU5: Package temperature/speed normal
+[15058.478089] CPU8: Package temperature/speed normal
+[15058.478089] CPU2: Package temperature/speed normal
+[15058.478090] CPU10: Package temperature/speed normal
+[15058.478091] CPU6: Package temperature/speed normal
+[15058.478092] CPU9: Package temperature/speed normal
+[15058.478092] CPU3: Package temperature/speed normal
+[15058.478096] CPU0: Package temperature/speed normal
+[15519.075044] CPU1: Core temperature above threshold, cpu clock throttled (total events = 2611)
+[15519.075044] CPU7: Core temperature above threshold, cpu clock throttled (total events = 2611)
+[15519.075045] CPU8: Package temperature above threshold, cpu clock throttled (total events = 13360)
+[15519.075046] CPU2: Package temperature above threshold, cpu clock throttled (total events = 13360)
+[15519.075047] CPU5: Package temperature above threshold, cpu clock throttled (total events = 13360)
+[15519.075048] CPU11: Package temperature above threshold, cpu clock throttled (total events = 13360)
+[15519.075050] CPU7: Package temperature above threshold, cpu clock throttled (total events = 13360)
+[15519.075051] CPU1: Package temperature above threshold, cpu clock throttled (total events = 13360)
+[15519.075091] CPU3: Package temperature above threshold, cpu clock throttled (total events = 13360)
+[15519.075092] CPU9: Package temperature above threshold, cpu clock throttled (total events = 13360)
+[15519.075093] CPU0: Package temperature above threshold, cpu clock throttled (total events = 13360)
+[15519.075093] CPU6: Package temperature above threshold, cpu clock throttled (total events = 13360)
+[15519.075095] CPU10: Package temperature above threshold, cpu clock throttled (total events = 13360)
+[15519.075096] CPU4: Package temperature above threshold, cpu clock throttled (total events = 13360)
+[15519.076109] CPU1: Core temperature/speed normal
+[15519.076109] CPU7: Core temperature/speed normal
+[15519.076110] CPU0: Package temperature/speed normal
+[15519.076111] CPU5: Package temperature/speed normal
+[15519.076111] CPU2: Package temperature/speed normal
+[15519.076112] CPU10: Package temperature/speed normal
+[15519.076113] CPU4: Package temperature/speed normal
+[15519.076113] CPU8: Package temperature/speed normal
+[15519.076114] CPU11: Package temperature/speed normal
+[15519.076115] CPU6: Package temperature/speed normal
+[15519.076116] CPU3: Package temperature/speed normal
+[15519.076116] CPU9: Package temperature/speed normal
+[15519.076117] CPU7: Package temperature/speed normal
+[15519.076123] CPU1: Package temperature/speed normal
+[15830.831048] CPU6: Core temperature above threshold, cpu clock throttled (total events = 6441)
+[15830.831048] CPU0: Core temperature above threshold, cpu clock throttled (total events = 6441)
+[15830.831050] CPU7: Package temperature above threshold, cpu clock throttled (total events = 13655)
+[15830.831050] CPU1: Package temperature above threshold, cpu clock throttled (total events = 13655)
+[15830.831051] CPU3: Package temperature above threshold, cpu clock throttled (total events = 13655)
+[15830.831052] CPU9: Package temperature above threshold, cpu clock throttled (total events = 13655)
+[15830.831053] CPU0: Package temperature above threshold, cpu clock throttled (total events = 13655)
+[15830.831056] CPU6: Package temperature above threshold, cpu clock throttled (total events = 13655)
+[15830.831095] CPU4: Package temperature above threshold, cpu clock throttled (total events = 13655)
+[15830.831096] CPU10: Package temperature above threshold, cpu clock throttled (total events = 13655)
+[15830.831097] CPU2: Package temperature above threshold, cpu clock throttled (total events = 13655)
+[15830.831098] CPU8: Package temperature above threshold, cpu clock throttled (total events = 13655)
+[15830.831115] CPU11: Package temperature above threshold, cpu clock throttled (total events = 13655)
+[15830.831116] CPU5: Package temperature above threshold, cpu clock throttled (total events = 13655)
+[15830.834068] CPU6: Core temperature/speed normal
+[15830.834069] CPU0: Core temperature/speed normal
+[15830.834070] CPU7: Package temperature/speed normal
+[15830.834071] CPU1: Package temperature/speed normal
+[15830.834071] CPU0: Package temperature/speed normal
+[15830.834073] CPU6: Package temperature/speed normal
+[15830.834128] CPU3: Package temperature/speed normal
+[15830.834129] CPU9: Package temperature/speed normal
+[15830.834129] CPU2: Package temperature/speed normal
+[15830.834130] CPU8: Package temperature/speed normal
+[15830.834131] CPU4: Package temperature/speed normal
+[15830.834132] CPU10: Package temperature/speed normal
+[15830.834133] CPU5: Package temperature/speed normal
+[15830.834133] CPU11: Package temperature/speed normal
+[16133.366097] CPU6: Core temperature above threshold, cpu clock throttled (total events = 6517)
+[16133.366098] CPU0: Core temperature above threshold, cpu clock throttled (total events = 6517)
+[16133.366099] CPU3: Package temperature above threshold, cpu clock throttled (total events = 13731)
+[16133.366100] CPU9: Package temperature above threshold, cpu clock throttled (total events = 13731)
+[16133.366101] CPU0: Package temperature above threshold, cpu clock throttled (total events = 13731)
+[16133.366104] CPU6: Package temperature above threshold, cpu clock throttled (total events = 13731)
+[16133.366163] CPU1: Package temperature above threshold, cpu clock throttled (total events = 13731)
+[16133.366164] CPU7: Package temperature above threshold, cpu clock throttled (total events = 13731)
+[16133.366165] CPU8: Package temperature above threshold, cpu clock throttled (total events = 13731)
+[16133.366165] CPU2: Package temperature above threshold, cpu clock throttled (total events = 13731)
+[16133.366182] CPU5: Package temperature above threshold, cpu clock throttled (total events = 13731)
+[16133.366184] CPU11: Package temperature above threshold, cpu clock throttled (total events = 13731)
+[16133.366184] CPU4: Package temperature above threshold, cpu clock throttled (total events = 13731)
+[16133.366185] CPU10: Package temperature above threshold, cpu clock throttled (total events = 13731)
+[16133.372097] CPU1: Package temperature/speed normal
+[16133.372097] CPU7: Package temperature/speed normal
+[16133.372098] CPU10: Package temperature/speed normal
+[16133.372099] CPU4: Package temperature/speed normal
+[16133.372145] CPU6: Core temperature/speed normal
+[16133.372145] CPU0: Core temperature/speed normal
+[16133.372146] CPU0: Package temperature/speed normal
+[16133.372147] CPU9: Package temperature/speed normal
+[16133.372148] CPU8: Package temperature/speed normal
+[16133.372148] CPU2: Package temperature/speed normal
+[16133.372149] CPU3: Package temperature/speed normal
+[16133.372150] CPU11: Package temperature/speed normal
+[16133.372151] CPU5: Package temperature/speed normal
+[16133.372153] CPU6: Package temperature/speed normal
+[16474.855097] CPU7: Core temperature above threshold, cpu clock throttled (total events = 2691)
+[16474.855098] CPU1: Core temperature above threshold, cpu clock throttled (total events = 2691)
+[16474.855099] CPU1: Package temperature above threshold, cpu clock throttled (total events = 13887)
+[16474.855101] CPU7: Package temperature above threshold, cpu clock throttled (total events = 13887)
+[16474.855158] CPU6: Package temperature above threshold, cpu clock throttled (total events = 13887)
+[16474.855158] CPU0: Package temperature above threshold, cpu clock throttled (total events = 13887)
+[16474.855159] CPU2: Package temperature above threshold, cpu clock throttled (total events = 13887)
+[16474.855160] CPU8: Package temperature above threshold, cpu clock throttled (total events = 13887)
+[16474.855161] CPU9: Package temperature above threshold, cpu clock throttled (total events = 13887)
+[16474.855162] CPU5: Package temperature above threshold, cpu clock throttled (total events = 13887)
+[16474.855163] CPU3: Package temperature above threshold, cpu clock throttled (total events = 13887)
+[16474.855164] CPU10: Package temperature above threshold, cpu clock throttled (total events = 13887)
+[16474.855165] CPU11: Package temperature above threshold, cpu clock throttled (total events = 13887)
+[16474.855166] CPU4: Package temperature above threshold, cpu clock throttled (total events = 13887)
+[16474.858074] CPU1: Core temperature/speed normal
+[16474.858074] CPU7: Core temperature/speed normal
+[16474.858075] CPU7: Package temperature/speed normal
+[16474.858076] CPU1: Package temperature/speed normal
+[16474.858131] CPU3: Package temperature/speed normal
+[16474.858132] CPU9: Package temperature/speed normal
+[16474.858133] CPU6: Package temperature/speed normal
+[16474.858134] CPU0: Package temperature/speed normal
+[16474.858135] CPU8: Package temperature/speed normal
+[16474.858135] CPU2: Package temperature/speed normal
+[16474.858136] CPU10: Package temperature/speed normal
+[16474.858136] CPU4: Package temperature/speed normal
+[16474.858137] CPU11: Package temperature/speed normal
+[16474.858138] CPU5: Package temperature/speed normal
+[16787.397090] CPU6: Core temperature above threshold, cpu clock throttled (total events = 6802)
+[16787.397090] CPU0: Core temperature above threshold, cpu clock throttled (total events = 6802)
+[16787.397091] CPU9: Package temperature above threshold, cpu clock throttled (total events = 14075)
+[16787.397092] CPU1: Package temperature above threshold, cpu clock throttled (total events = 14075)
+[16787.397093] CPU7: Package temperature above threshold, cpu clock throttled (total events = 14075)
+[16787.397094] CPU3: Package temperature above threshold, cpu clock throttled (total events = 14075)
+[16787.397095] CPU0: Package temperature above threshold, cpu clock throttled (total events = 14075)
+[16787.397096] CPU6: Package temperature above threshold, cpu clock throttled (total events = 14075)
+[16787.397138] CPU8: Package temperature above threshold, cpu clock throttled (total events = 14075)
+[16787.397139] CPU2: Package temperature above threshold, cpu clock throttled (total events = 14075)
+[16787.397140] CPU10: Package temperature above threshold, cpu clock throttled (total events = 14075)
+[16787.397141] CPU4: Package temperature above threshold, cpu clock throttled (total events = 14075)
+[16787.397142] CPU5: Package temperature above threshold, cpu clock throttled (total events = 14075)
+[16787.397144] CPU11: Package temperature above threshold, cpu clock throttled (total events = 14075)
+[16787.399088] CPU0: Core temperature/speed normal
+[16787.399088] CPU6: Core temperature/speed normal
+[16787.399089] CPU1: Package temperature/speed normal
+[16787.399089] CPU3: Package temperature/speed normal
+[16787.399089] CPU9: Package temperature/speed normal
+[16787.399090] CPU4: Package temperature/speed normal
+[16787.399091] CPU10: Package temperature/speed normal
+[16787.399092] CPU2: Package temperature/speed normal
+[16787.399093] CPU8: Package temperature/speed normal
+[16787.399093] CPU7: Package temperature/speed normal
+[16787.399094] CPU6: Package temperature/speed normal
+[16787.399095] CPU5: Package temperature/speed normal
+[16787.399096] CPU11: Package temperature/speed normal
+[16787.399103] CPU0: Package temperature/speed normal
+[17187.097055] broken atomic modeset userspace detected, disabling atomic
+[17187.483033] broken atomic modeset userspace detected, disabling atomic
+[18100.766080] CPU0: Core temperature above threshold, cpu clock throttled (total events = 6804)
+[18100.766080] CPU6: Core temperature above threshold, cpu clock throttled (total events = 6804)
+[18100.766081] CPU10: Package temperature above threshold, cpu clock throttled (total events = 14077)
+[18100.766082] CPU4: Package temperature above threshold, cpu clock throttled (total events = 14077)
+[18100.766083] CPU9: Package temperature above threshold, cpu clock throttled (total events = 14077)
+[18100.766084] CPU3: Package temperature above threshold, cpu clock throttled (total events = 14077)
+[18100.766085] CPU6: Package temperature above threshold, cpu clock throttled (total events = 14077)
+[18100.766089] CPU0: Package temperature above threshold, cpu clock throttled (total events = 14077)
+[18100.766127] CPU1: Package temperature above threshold, cpu clock throttled (total events = 14077)
+[18100.766128] CPU7: Package temperature above threshold, cpu clock throttled (total events = 14077)
+[18100.766129] CPU2: Package temperature above threshold, cpu clock throttled (total events = 14077)
+[18100.766129] CPU8: Package temperature above threshold, cpu clock throttled (total events = 14077)
+[18100.766146] CPU11: Package temperature above threshold, cpu clock throttled (total events = 14077)
+[18100.766147] CPU5: Package temperature above threshold, cpu clock throttled (total events = 14077)
+[18100.767073] CPU0: Core temperature/speed normal
+[18100.767073] CPU9: Package temperature/speed normal
+[18100.767074] CPU6: Core temperature/speed normal
+[18100.767075] CPU3: Package temperature/speed normal
+[18100.767075] CPU6: Package temperature/speed normal
+[18100.767077] CPU0: Package temperature/speed normal
+[18100.767126] CPU1: Package temperature/speed normal
+[18100.767126] CPU7: Package temperature/speed normal
+[18100.767127] CPU4: Package temperature/speed normal
+[18100.767128] CPU8: Package temperature/speed normal
+[18100.767128] CPU2: Package temperature/speed normal
+[18100.767129] CPU10: Package temperature/speed normal
+[18100.767131] CPU11: Package temperature/speed normal
+[18100.767131] CPU5: Package temperature/speed normal
+[18561.399047] CPU6: Core temperature above threshold, cpu clock throttled (total events = 7084)
+[18561.399048] CPU8: Package temperature above threshold, cpu clock throttled (total events = 14444)
+[18561.399049] CPU1: Package temperature above threshold, cpu clock throttled (total events = 14444)
+[18561.399050] CPU2: Package temperature above threshold, cpu clock throttled (total events = 14444)
+[18561.399050] CPU0: Core temperature above threshold, cpu clock throttled (total events = 7084)
+[18561.399051] CPU7: Package temperature above threshold, cpu clock throttled (total events = 14444)
+[18561.399053] CPU0: Package temperature above threshold, cpu clock throttled (total events = 14444)
+[18561.399054] CPU6: Package temperature above threshold, cpu clock throttled (total events = 14444)
+[18561.399096] CPU9: Package temperature above threshold, cpu clock throttled (total events = 14444)
+[18561.399097] CPU3: Package temperature above threshold, cpu clock throttled (total events = 14444)
+[18561.399098] CPU4: Package temperature above threshold, cpu clock throttled (total events = 14444)
+[18561.399099] CPU10: Package temperature above threshold, cpu clock throttled (total events = 14444)
+[18561.399100] CPU11: Package temperature above threshold, cpu clock throttled (total events = 14444)
+[18561.399101] CPU5: Package temperature above threshold, cpu clock throttled (total events = 14444)
+[18561.402072] CPU6: Core temperature/speed normal
+[18561.402073] CPU8: Package temperature/speed normal
+[18561.402073] CPU0: Core temperature/speed normal
+[18561.402074] CPU2: Package temperature/speed normal
+[18561.402075] CPU0: Package temperature/speed normal
+[18561.402077] CPU6: Package temperature/speed normal
+[18561.402088] CPU1: Package temperature/speed normal
+[18561.402088] CPU7: Package temperature/speed normal
+[18561.402120] CPU9: Package temperature/speed normal
+[18561.402121] CPU3: Package temperature/speed normal
+[18561.402123] CPU4: Package temperature/speed normal
+[18561.402123] CPU10: Package temperature/speed normal
+[18561.402124] CPU11: Package temperature/speed normal
+[18561.402125] CPU5: Package temperature/speed normal
+[18771.764367] perf: interrupt took too long (3933 > 3925), lowering kernel.perf_event_max_sample_rate to 50750
+[18891.273054] CPU7: Core temperature above threshold, cpu clock throttled (total events = 2801)
+[18891.273055] CPU8: Package temperature above threshold, cpu clock throttled (total events = 14523)
+[18891.273077] CPU6: Package temperature above threshold, cpu clock throttled (total events = 14523)
+[18891.273079] CPU9: Package temperature above threshold, cpu clock throttled (total events = 14523)
+[18891.273080] CPU2: Package temperature above threshold, cpu clock throttled (total events = 14523)
+[18891.273080] CPU1: Core temperature above threshold, cpu clock throttled (total events = 2801)
+[18891.273081] CPU0: Package temperature above threshold, cpu clock throttled (total events = 14523)
+[18891.273082] CPU3: Package temperature above threshold, cpu clock throttled (total events = 14523)
+[18891.273084] CPU1: Package temperature above threshold, cpu clock throttled (total events = 14523)
+[18891.273085] CPU10: Package temperature above threshold, cpu clock throttled (total events = 14523)
+[18891.273086] CPU4: Package temperature above threshold, cpu clock throttled (total events = 14523)
+[18891.273087] CPU5: Package temperature above threshold, cpu clock throttled (total events = 14523)
+[18891.273087] CPU11: Package temperature above threshold, cpu clock throttled (total events = 14523)
+[18891.273091] CPU7: Package temperature above threshold, cpu clock throttled (total events = 14523)
+[18891.274058] CPU7: Core temperature/speed normal
+[18891.274059] CPU9: Package temperature/speed normal
+[18891.274060] CPU6: Package temperature/speed normal
+[18891.274060] CPU1: Core temperature/speed normal
+[18891.274061] CPU8: Package temperature/speed normal
+[18891.274062] CPU2: Package temperature/speed normal
+[18891.274084] CPU0: Package temperature/speed normal
+[18891.274085] CPU3: Package temperature/speed normal
+[18891.274086] CPU1: Package temperature/speed normal
+[18891.274089] CPU4: Package temperature/speed normal
+[18891.274089] CPU10: Package temperature/speed normal
+[18891.274091] CPU5: Package temperature/speed normal
+[18891.274091] CPU11: Package temperature/speed normal
+[18891.274093] CPU7: Package temperature/speed normal
+[19217.585057] CPU6: Core temperature above threshold, cpu clock throttled (total events = 7297)
+[19217.585058] CPU0: Core temperature above threshold, cpu clock throttled (total events = 7297)
+[19217.585082] CPU5: Package temperature above threshold, cpu clock throttled (total events = 14723)
+[19217.585083] CPU10: Package temperature above threshold, cpu clock throttled (total events = 14723)
+[19217.585084] CPU2: Package temperature above threshold, cpu clock throttled (total events = 14723)
+[19217.585085] CPU8: Package temperature above threshold, cpu clock throttled (total events = 14723)
+[19217.585086] CPU11: Package temperature above threshold, cpu clock throttled (total events = 14723)
+[19217.585087] CPU4: Package temperature above threshold, cpu clock throttled (total events = 14723)
+[19217.585088] CPU0: Package temperature above threshold, cpu clock throttled (total events = 14723)
+[19217.585089] CPU1: Package temperature above threshold, cpu clock throttled (total events = 14723)
+[19217.585090] CPU3: Package temperature above threshold, cpu clock throttled (total events = 14723)
+[19217.585091] CPU7: Package temperature above threshold, cpu clock throttled (total events = 14723)
+[19217.585092] CPU9: Package temperature above threshold, cpu clock throttled (total events = 14723)
+[19217.585093] CPU6: Package temperature above threshold, cpu clock throttled (total events = 14723)
+[19217.587089] CPU0: Core temperature/speed normal
+[19217.587089] CPU6: Core temperature/speed normal
+[19217.587090] CPU2: Package temperature/speed normal
+[19217.587091] CPU8: Package temperature/speed normal
+[19217.587092] CPU4: Package temperature/speed normal
+[19217.587092] CPU10: Package temperature/speed normal
+[19217.587094] CPU6: Package temperature/speed normal
+[19217.587097] CPU0: Package temperature/speed normal
+[19217.587129] CPU1: Package temperature/speed normal
+[19217.587130] CPU7: Package temperature/speed normal
+[19217.587131] CPU9: Package temperature/speed normal
+[19217.587132] CPU3: Package temperature/speed normal
+[19217.587133] CPU5: Package temperature/speed normal
+[19217.587134] CPU11: Package temperature/speed normal
+[20199.524070] CPU6: Core temperature above threshold, cpu clock throttled (total events = 7455)
+[20199.524071] CPU0: Core temperature above threshold, cpu clock throttled (total events = 7455)
+[20199.524072] CPU11: Package temperature above threshold, cpu clock throttled (total events = 15046)
+[20199.524095] CPU2: Package temperature above threshold, cpu clock throttled (total events = 15046)
+[20199.524096] CPU1: Package temperature above threshold, cpu clock throttled (total events = 15046)
+[20199.524097] CPU5: Package temperature above threshold, cpu clock throttled (total events = 15046)
+[20199.524098] CPU8: Package temperature above threshold, cpu clock throttled (total events = 15046)
+[20199.524099] CPU7: Package temperature above threshold, cpu clock throttled (total events = 15046)
+[20199.524100] CPU0: Package temperature above threshold, cpu clock throttled (total events = 15046)
+[20199.524101] CPU3: Package temperature above threshold, cpu clock throttled (total events = 15046)
+[20199.524102] CPU9: Package temperature above threshold, cpu clock throttled (total events = 15046)
+[20199.524103] CPU4: Package temperature above threshold, cpu clock throttled (total events = 15046)
+[20199.524104] CPU10: Package temperature above threshold, cpu clock throttled (total events = 15046)
+[20199.524105] CPU6: Package temperature above threshold, cpu clock throttled (total events = 15046)
+[20199.533046] CPU6: Core temperature/speed normal
+[20199.533047] CPU2: Package temperature/speed normal
+[20199.533048] CPU1: Package temperature/speed normal
+[20199.533048] CPU0: Core temperature/speed normal
+[20199.533049] CPU8: Package temperature/speed normal
+[20199.533049] CPU7: Package temperature/speed normal
+[20199.533051] CPU0: Package temperature/speed normal
+[20199.533052] CPU6: Package temperature/speed normal
+[20199.533089] CPU3: Package temperature/speed normal
+[20199.533090] CPU9: Package temperature/speed normal
+[20199.533091] CPU4: Package temperature/speed normal
+[20199.533091] CPU5: Package temperature/speed normal
+[20199.533092] CPU11: Package temperature/speed normal
+[20199.533093] CPU10: Package temperature/speed normal

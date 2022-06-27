@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -22,9 +22,9 @@
 # ===============================================================================
 """
 
+import re
 from distutils.core import setup
 
-import re
 from setuptools import find_packages
 
 
@@ -61,10 +61,10 @@ def requirement_read(req_file):
 
 p_name = "knockdaemon2"
 p_author = "Laurent Champagnac / Laurent Labatut"
-p_email = "undisclosed@undisclosed.com"
+p_email = "debian@knock.center"
 p_url = "https://knock.center"
 
-p_version = "0.0.1.dev0"
+p_version = "3.7.0"
 
 
 def entry_point_resolv():
@@ -76,7 +76,6 @@ def entry_point_resolv():
     ep = {
         'console_scripts': [
             'knockdaemon2 = knockdaemon2.Daemon.KnockDaemon:run',
-            'knockautoupdate2 = knockdaemon2.Cron.AutoUpdate:cron'
         ]
     }
 
@@ -85,7 +84,9 @@ def entry_point_resolv():
 
 def data_file_resolv():
     """
-    :return:
+    Data files
+    :return: list
+    :rtype: list
     """
     datafile = [("",
                  [
@@ -102,7 +103,7 @@ setup(
     author=p_author,
     author_email=p_email,
     url=p_url,
-    description=p_name + " APIs",
+    description=p_name,
 
     # Version, format : Major.Minor.Revision
     version=p_version,
@@ -125,7 +126,7 @@ setup(
         "Intended Audience :: Developers",
         "License :: GPLv2",
         "Operating System :: POSIX :: Linux",
-        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.7",
         "Topic :: Software Development :: Libraries",
     ],
 

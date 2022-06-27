@@ -14,16 +14,5 @@
       "/etc/nginx/nginx.conf"
     ],
     "pid": "/var/run/nginx.pid"
-  },
-  "win_idle_process": {
-    "os": "windows",
-    "name": "System Idle Process"
-  },
-  "win_idle_process_array": {
-    "os": "windows",
-    "name": [
-      "invalid",
-      "System Idle Process"
-    ]
   }
 }

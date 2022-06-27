@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -23,19 +23,18 @@
 """
 
 import logging
+import os
 import random
 import unittest
-
-import os
-import redis
 from os.path import dirname, abspath
+
+import redis
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockManager import KnockManager
 from knockdaemon2.Platform.PTools import PTools
-from knockdaemon2.Tests.TestHelpers import expect_disco
 from knockdaemon2.Tests.TestHelpers import expect_value
 from knockdaemon2_test.ForTest.TestTransport import TestTransport
 
@@ -56,9 +55,7 @@ class TestBasic(unittest.TestCase):
         os.environ.setdefault("KNOCK_UNITTEST", "yes")
 
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
-        self.config_file = \
-            self.current_dir + "conf" + SolBase.get_pathseparator() \
-            + "basic" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
+        self.config_file = self.current_dir + "conf" + SolBase.get_pathseparator() + "basic" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
         self.k = None
 
         # Reset meter
@@ -83,7 +80,7 @@ class TestBasic(unittest.TestCase):
         Setup (called after each test)
         """
         if self.k:
-            logger.warn("k set, stopping, not normal")
+            logger.warning("k set, stopping, not normal")
             self.k.stop()
             self.k = None
 
@@ -101,8 +98,8 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(self.k._exectimeout_ms, 1000)
         self.assertIsNotNone(self.k._ar_knock_transport)
         self.assertEqual(len(self.k._ar_knock_transport), 1)
-        self.assertEqual(len(self.k._probe_list), 2)
-        for p in self.k._probe_list:
+        self.assertEqual(len(self.k.probe_list), 2)
+        for p in self.k.probe_list:
             if p.key == "TestProbe1":
                 self.assertEqual(p.custom_key_b, "customValueB_1")
                 self.assertEqual(p.exec_count, 0)
@@ -175,7 +172,7 @@ class TestBasic(unittest.TestCase):
         self.k = KnockManager(self.config_file)
 
         # Override for test
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             p.exec_interval_ms = exec_interval_ms
 
         # Start
@@ -188,7 +185,7 @@ class TestBasic(unittest.TestCase):
         self.k.stop()
 
         # Check
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             logger.info("p=%s", p)
             c = self.k._get_probe_context(p)
             # Windows scheduling is more variable, decrease check
@@ -201,7 +198,7 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(Meters.aig("knock_stat_exec_probe_exception"), 0)
         self.assertEqual(Meters.aig("knock_stat_exec_probe_timeout"), 0)
         # Windows scheduling is more variable, decrease check
-        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_count"), run_count * len(self.k._probe_list) / 2)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_count"), run_count * len(self.k.probe_list) / 2)
         self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_bypass"), 0)
 
         self.assertEqual(Meters.aig("knock_stat_exec_all_inner_exception"), 0)
@@ -270,7 +267,7 @@ class TestBasic(unittest.TestCase):
         self.k._exectimeout_ms = 500
 
         # Override for test
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             p.exec_interval_ms = 1000
             p.sleep_ms_in_exec = 1000
 
@@ -284,7 +281,7 @@ class TestBasic(unittest.TestCase):
         self.k.stop()
 
         # Check
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             logger.info("p=%s", p)
             c = self.k._get_probe_context(p)
             self.assertGreaterEqual(p.exec_count, 0)
@@ -293,8 +290,8 @@ class TestBasic(unittest.TestCase):
         # Validate
 
         self.assertEqual(Meters.aig("knock_stat_exec_probe_exception"), 0)
-        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_timeout"), len(self.k._probe_list))
-        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_count"), len(self.k._probe_list))
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_timeout"), len(self.k.probe_list))
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_count"), len(self.k.probe_list))
         self.assertEqual(Meters.aig("knock_stat_exec_probe_bypass"), 0)
 
         self.assertEqual(Meters.aig("knock_stat_exec_all_inner_exception"), 0)
@@ -316,11 +313,11 @@ class TestBasic(unittest.TestCase):
         self.k._exectimeout_ms = 30000
 
         # Keep only one probe
-        self.k._probe_list = [self.k._probe_list[0]]
+        self.k.probe_list = [self.k.probe_list[0]]
 
         # Override for test
-        self.assertEqual(len(self.k._probe_list), 1)
-        for p in self.k._probe_list:
+        self.assertEqual(len(self.k.probe_list), 1)
+        for p in self.k.probe_list:
             p.exec_interval_ms = 2000
             p.sleep_ms_in_exec = 1000
             p.ar_exec_start = list()
@@ -335,10 +332,10 @@ class TestBasic(unittest.TestCase):
         target_count = 30
         while True:
             ok_count = 0
-            for p in self.k._probe_list:
+            for p in self.k.probe_list:
                 if len(p.ar_exec_start) >= target_count:
                     ok_count += 1
-            if ok_count == len(self.k._probe_list):
+            if ok_count == len(self.k.probe_list):
                 logger.info("Got ok_count signal")
                 break
             elif SolBase.msdiff(ms_start) > target_count * (1000 + 2000 + 1000):
@@ -347,8 +344,8 @@ class TestBasic(unittest.TestCase):
             else:
                 # Randomize exec sleep between 0 and 1000
                 r = random.randint(500, 1500)
-                assert 500 <= r <= 1500
-                for p in self.k._probe_list:
+                self.assertTrue(500 <= r <= 1500)
+                for p in self.k.probe_list:
                     p.sleep_ms_in_exec = r
                 # Wait
                 SolBase.sleep(100)
@@ -357,7 +354,7 @@ class TestBasic(unittest.TestCase):
         self.k.stop()
 
         # Check
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             logger.info("p=%s", p)
             c = self.k._get_probe_context(p)
             self.assertGreaterEqual(p.exec_count, 0)
@@ -391,7 +388,7 @@ class TestBasic(unittest.TestCase):
 
         self.assertEqual(Meters.aig("knock_stat_exec_probe_exception"), 0)
         self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_timeout"), 0)
-        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_count"), len(self.k._probe_list) * target_count)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_count"), len(self.k.probe_list) * target_count)
         self.assertEqual(Meters.aig("knock_stat_exec_probe_bypass"), 0)
 
         self.assertEqual(Meters.aig("knock_stat_exec_all_inner_exception"), 0)
@@ -413,7 +410,7 @@ class TestBasic(unittest.TestCase):
         self.k._exectimeout_ms = 500
 
         # Override for test
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             p.exec_interval_ms = 1000
             p.sleep_ms_in_exec = 1000
             # We force timeout to 2000 : we should have no timeout
@@ -429,7 +426,7 @@ class TestBasic(unittest.TestCase):
         self.k.stop()
 
         # Check
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             logger.info("p=%s", p)
             c = self.k._get_probe_context(p)
             self.assertGreaterEqual(p.exec_count, 0)
@@ -439,7 +436,7 @@ class TestBasic(unittest.TestCase):
 
         self.assertEqual(Meters.aig("knock_stat_exec_probe_exception"), 0)
         self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_timeout"), 0)
-        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_count"), len(self.k._probe_list))
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_count"), len(self.k.probe_list))
         self.assertEqual(Meters.aig("knock_stat_exec_probe_bypass"), 0)
 
         self.assertEqual(Meters.aig("knock_stat_exec_all_inner_exception"), 0)
@@ -461,7 +458,7 @@ class TestBasic(unittest.TestCase):
         self.k._exectimeout_ms = 500
 
         # Override for test
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             p.exec_interval_ms = 1000
             p.sleep_ms_in_exec = 1000
 
@@ -480,7 +477,7 @@ class TestBasic(unittest.TestCase):
         self.k.stop()
 
         # Check
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             logger.info("p=%s", p)
             c = self.k._get_probe_context(p)
             self.assertGreaterEqual(p.exec_count, 0)
@@ -489,8 +486,8 @@ class TestBasic(unittest.TestCase):
         # Validate
 
         self.assertEqual(Meters.aig("knock_stat_exec_probe_exception"), 0)
-        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_timeout"), len(self.k._probe_list) * 2)
-        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_count"), len(self.k._probe_list) * 2)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_timeout"), len(self.k.probe_list) * 2)
+        self.assertGreaterEqual(Meters.aig("knock_stat_exec_probe_count"), len(self.k.probe_list) * 2)
         self.assertEqual(Meters.aig("knock_stat_exec_probe_bypass"), 0)
 
         self.assertEqual(Meters.aig("knock_stat_exec_all_inner_exception"), 0)
@@ -514,10 +511,10 @@ class TestBasic(unittest.TestCase):
         self.k = KnockManager(self.config_file)
 
         # Keep only one item (easier to test)
-        self.k._probe_list.pop()
+        self.k.probe_list.pop()
 
         # Override
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             p.exec_interval_ms = 500
 
         # Start
@@ -530,7 +527,7 @@ class TestBasic(unittest.TestCase):
         self.k.stop()
 
         # Check
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             logger.info("p=%s", p)
             c = self.k._get_probe_context(p)
             self.assertEqual(p.exec_count, 3)
@@ -548,14 +545,8 @@ class TestBasic(unittest.TestCase):
         self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), 3)
         self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
-        # Validate discovery
-        self.assertEqual(len(self.k._superv_notify_disco_hash), 3)
-        expect_disco(self, self.k, "test.dummy.discovery", {"TYPE": "all"})
-        expect_disco(self, self.k, "test.dummy.discovery", {"TYPE": "one"})
-        expect_disco(self, self.k, "test.dummy.discovery", {"TYPE": "two"})
-
         # Validate values (6 per exec)
-        self.assertEqual(len(self.k._superv_notify_value_list), 3 * 6)
+        self.assertEqual(len(self.k.superv_notify_value_list), 3 * 6)
 
         # Check them
         expect_value(self, self.k, "test.dummy.count", 100, "eq", {"TYPE": "all"}, target_count=3)
@@ -571,13 +562,11 @@ class TestBasic(unittest.TestCase):
 
         # Validate transport notify
         self.assertEqual(self.k.get_first_transport_by_type(TestTransport).notify_call_count, 3)
-        self.assertEqual(self.k._superv_notify_disco_hash, self.k.get_first_transport_by_type(TestTransport).notify_hash)
-        self.assertEqual(self.k._superv_notify_value_list, self.k.get_first_transport_by_type(TestTransport).notify_values)
+        self.assertEqual(self.k.superv_notify_value_list, self.k.get_first_transport_by_type(TestTransport).notify_values)
 
         # Over
         self.k = None
 
-    @unittest.skipIf(PTools.get_distribution_type() == "windows", "Commands do not work on windows")
     def test_invoke(self):
         """
         inv
@@ -657,41 +646,3 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(len(se), 0)
 
         self.assertRaises(Exception, ButcherTools.invoke, "ls -l | wc -l")
-
-    @unittest.skipIf(PTools.get_distribution_type() != "windows", "Commands do not work on linux")
-    def test_invoke_windows(self):
-        """
-        inv
-        :return: (ec, so, si)
-        """
-
-        # Doc
-        # https://ss64.com/nt/cmd.html
-
-        logger.info("CMD ok")
-        ec, so, se = ButcherTools.invoke("cmd.exe /C DIR", shell=False, timeout_ms=self.invoke_timeout)
-        logger.info("ec=%s", ec)
-        logger.info("so=%s", so)
-        logger.info("se=%s", se)
-        self.assertEqual(ec, 0)
-        self.assertGreater(len(so), 0)
-        self.assertEqual(len(se), 0)
-
-        logger.info("CMD failed")
-        ec, so, se = ButcherTools.invoke("cmd.exe /C DIR /tmpxxx", shell=False, timeout_ms=self.invoke_timeout)
-        logger.info("ec=%s", ec)
-        logger.info("so=%s", so)
-        logger.info("se=%s", se)
-        self.assertNotEqual(ec, 0)
-        self.assertEqual(len(so), 0)
-        self.assertGreater(len(se), 0)
-
-        # TO SLEEP 9 sec : ping 127.0.0.1 -n 9
-        logger.info("CMD timeout")
-        ec, so, se = ButcherTools.invoke("cmd.exe /C ping 127.0.0.1 -n 9", timeout_ms=100)
-        logger.info("ec=%s", ec)
-        logger.info("so=%s", so)
-        logger.info("se=%s", se)
-        self.assertEqual(ec, -999)
-        self.assertEqual(len(so), 0)
-        self.assertEqual(len(se), 0)

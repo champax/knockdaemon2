@@ -1,25 +1,33 @@
 #!/bin/bash
 
-# Avoid a failing "python2.7 -m compileall /opt/knock/ "
-echo "postinst: pass 1"
-if [ -f /opt/knock/knockdaemon2/lib/python2.7/site-packages/gevent/_socket3.py ]
-then
-    rm -f /opt/knock/knockdaemon2/lib/python2.7/site-packages/gevent/_socket3.py
-fi
-echo "postinst: pass 1 complete"
+echo "POSTINSTALL : cleanup old cron"
+rm /etc/cron.d/knockdaemon2 | true
 
-# Rc
-echo "postinst: pass 2 complete"
-update-rc.d -f knockdaemon2 defaults
-echo "postinst: pass 2 complete"
+echo "POSTINSTALL : cleanup old systemv"
+rm /etc/init.d/knockdaemon2 | true
 
+echo "POSTINSTALL : cleanup old systemv : remove"
+update-rc.d -f knockdaemon2 remove
+
+echo "POSTINSTALL : cleanup 2.7"
+rm -rf /opt/knock/knockdaemon2/lib/python2.7 | true
+
+echo "POSTINTALL : cleaning .pyc now"
+find /opt/knock/knockdaemon2/ -name '*.pyc' -type f -delete
+
+echo "POSTINSTALL : check"
+find /opt/knock/knockdaemon2/ -name '*.pyc' -type f
 
 echo "POSTINSTALL : Compile all py to pyc"
-find /opt/knock/knockdaemon2/ -name '*.pyc' -delete
-/opt/knock/knockdaemon2/bin/python -m compileall /opt/knock/knockdaemon2
+/opt/knock/knockdaemon2/bin/python -m compileall /opt/knock/knockdaemon2/
 
+echo "POSTINSTALL : systemd : reload"
+systemctl daemon-reload
 
-# Restart
-echo "postinst: pass 3"
+echo "POSTINSTALL : systemd : enabled"
+systemctl enable knockdaemon2
+
+echo "POSTINSTALL : systemd : restart"
 service knockdaemon2 restart
-echo "postinst: pass 3 complete"
+
+echo "POSTINSTALL : over"

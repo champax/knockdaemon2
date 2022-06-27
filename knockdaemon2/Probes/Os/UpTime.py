@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -24,16 +24,9 @@
 import logging
 from math import floor
 
-from pysolbase.SolBase import SolBase
-
 from knockdaemon2.Core.KnockProbe import KnockProbe
-from knockdaemon2.Platform.PTools import PTools
 
 logger = logging.getLogger(__name__)
-if PTools.get_distribution_type() == "windows":
-    from knockdaemon2.Windows.Wmi.Wmi import Wmi
-
-UPTIME_PATH = "/proc/uptime"
 
 
 class Uptime(KnockProbe):
@@ -41,13 +34,15 @@ class Uptime(KnockProbe):
     Probe
     """
 
+    UPTIME_PATH = "/proc/uptime"
+
     def __init__(self):
         """
         Constructor
         """
 
         # Base
-        KnockProbe.__init__(self, linux_support=True, windows_support=True)
+        KnockProbe.__init__(self, linux_support=True, windows_support=False)
 
         self.category = "/os/misc"
 
@@ -55,46 +50,29 @@ class Uptime(KnockProbe):
         """
         Exec
         """
+
+        # Load
+        buf = self.get_uptime_buffer()
+
+        # Process
+        self.process_uptime_buffer(buf)
+
+    def process_uptime_buffer(self, buf):
+        """
+        Process
+        :param buf: str
+        :type buf: str
+        """
         # Notify we are up
         self.notify_value_n("k.os.knock", None, 1)
-        self.notify_value_n("k.os.uptime", None, self._get_uptime())
+        self.notify_value_n("k.os.uptime", None, int(floor(float(buf.split()[0]))))
 
-    def _execute_windows(self):
+    @classmethod
+    def get_uptime_buffer(cls):
         """
-        Exec
+        Get uptime buffer
+        :return: str
+        :rtype str
         """
-
-        d = None
-        try:
-            # Win32_OperatingSystem :: LastBootUpTime => 20170312044209.003363-420
-            # => Date and time the operating system was last restarted.
-            # => unicode
-
-            # Win32_PerfFormattedData_PerfOS_System :: SystemUpTime
-            # => Elapsed time, in seconds, that the computer has been running after it was last started.
-            # => This property displays the difference between the start time and the current time.
-
-            d, age_ms = Wmi.wmi_get_dict()
-            logger.info("Using wmi with age_ms=%s", age_ms)
-
-            elapsed_sec = int(d["Win32_PerfFormattedData_PerfOS_System"]["SystemUpTime"])
-            logger.info("Got elapsed_sec=%s", elapsed_sec)
-
-            # Notify we are up
-            self.notify_value_n("k.os.knock", None, 1)
-            self.notify_value_n("k.os.uptime", None, elapsed_sec)
-        except Exception as e:
-            logger.warn("Exception while processing, ex=%s, d=%s", SolBase.extostr(e), d)
-
-    # noinspection PyMethodMayBeStatic
-    def _get_uptime(self):
-        """
-        Get uptime in seconds
-        :return:
-        """
-
-        # The first number is the total number of seconds the system has been up
-        uptime_file = open(UPTIME_PATH)
-        uptime = int(floor(float(uptime_file.read().split()[0])))
-        uptime_file.close()
-        return uptime
+        with open(cls.UPTIME_PATH) as f:
+            return f.read()

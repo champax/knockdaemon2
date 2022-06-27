@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -22,27 +22,30 @@
 # ===============================================================================
 """
 import logging
+import os
+from threading import Lock
 
+import gevent
 from gevent.queue import Empty
-from influxdb import InfluxDBClient
+from greenlet import GreenletExit
 from influxdb.line_protocol import make_lines
 from pysolbase.SolBase import SolBase
 from pysolhttpclient.Http.HttpClient import HttpClient
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.Tools import Tools
-from knockdaemon2.Transport.Dedup import Dedup
-from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
+from knockdaemon2.Transport.KnockTransport import KnockTransport
 
 logger = logging.getLogger(__name__)
 lifecyclelogger = logging.getLogger("LifeCycle")
 
 
-class InfluxAsyncTransport(HttpAsyncTransport):
+class InfluxAsyncTransport(KnockTransport):
     """
     Influx Http transport
-    We override only required method and re-use HttpAsyncTransport implementation.
     """
+
+    QUEUE_WAIT_SEC_PER_LOOP = None
 
     def __init__(self):
         """
@@ -51,7 +54,6 @@ class InfluxAsyncTransport(HttpAsyncTransport):
 
         self._http_client = HttpClient()
 
-        self._influx_mode = "knock"
         self._influx_timeout_ms = 20000
         self._influx_host = None
         self._influx_port = None
@@ -61,14 +63,31 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         self._influx_ssl = False
         self._influx_ssl_verify = False
         self._influx_db_created = False
-        self._influx_dedup = True
+
+        # Locker
+        self._locker = Lock()
+
+        # Run
+        self._is_running = False
+        self._greenlet = None
+        self._dt_last_send = SolBase.datecurrent()
 
         # Dedup
-        self.dedup_instance = Dedup()
         self.last_http_ok_ms = SolBase.mscurrent()
 
+        # Wait ms if send is bypassed before re-trying
+        self._http_send_bypass_wait_ms = 1000
+
+        # Minimum http send interval. If reached, a send will occurs
+        # (even if _http_send_max_bytes is not reached).
+        self._http_send_min_interval_ms = 60000
+
+        # Upon http failure, time to wait before next http request
+        # Recommended : _http_send_min_interval_ms*2
+        self._http_ko_interval_ms = 10000
+
         # Call base
-        HttpAsyncTransport.__init__(self)
+        KnockTransport.__init__(self)
 
         # Override
         self.meters_prefix = "influxasync_"
@@ -85,9 +104,6 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         :type auto_start: bool
         """
 
-        # Call base, hacking autostart
-        HttpAsyncTransport.init_from_config(self, d_yaml_config, d, auto_start=False)
-
         # Load our stuff
         self._influx_host = d["influx_host"]
         self._influx_port = d["influx_port"]
@@ -97,15 +113,28 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         self._influx_ssl = d["influx_ssl"]
         self._influx_ssl_verify = d["influx_ssl_verify"]
 
-        # Mode : "knock" or "influx"
-        self._influx_mode = d.get("influx_mode", "knock")
-        assert self._influx_mode in ["knock", "influx"], "Invalid _influx_mode={0}, need 'knock' or 'influx'".format(self._influx_mode)
+        try:
+            self._http_send_bypass_wait_ms = d["http_send_bypass_wait_ms"]
+        except KeyError:
+            logger.debug("Key http_send_bypass_wait_ms not present, using default, d=%s", d)
+
+        try:
+            self._http_send_min_interval_ms = d["http_send_min_interval_ms"]
+        except KeyError:
+            logger.debug("Key http_send_min_interval_ms not present, using default, d=%s", d)
+
+        try:
+            self._max_bytes_in_queue = d["max_bytes_in_queue"]
+        except KeyError:
+            logger.debug("Key max_bytes_in_queue not present, using default, d=%s", d)
+
+        try:
+            self._http_ko_interval_ms = d["http_ko_interval_ms"]
+        except KeyError:
+            logger.debug("Key http_ko_interval_ms not present, using default, d=%s", d)
 
         # Timeout
         self._influx_timeout_ms = int(d.get("influx_timeout_ms", 20000))
-
-        # Dedup
-        self._influx_dedup = bool(d.get("influx_dedup", True))
 
         # Override meter prefix
         self.meters_prefix = "influxasync_" + self._influx_host + "_" + str(self._influx_port) + "_"
@@ -114,7 +143,6 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         logger.info("influx_host: %s", self._influx_host)
 
         # Logs
-        lifecyclelogger.info("_influx_mode=%s", self._influx_mode)
         lifecyclelogger.info("_influx_timeout_ms=%s", self._influx_timeout_ms)
         lifecyclelogger.info("_influx_host=%s", self._influx_host)
         lifecyclelogger.info("_influx_port=%s", self._influx_port)
@@ -128,22 +156,121 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         if auto_start:
             self.greenlet_start()
 
-    def process_notify(self, account_hash, node_hash, notify_hash, notify_values):
+    def greenlet_start(self):
+        """
+        Start
+        """
+
+        with self._locker:
+            # Signal
+            logger.info("Send Greenlet : starting")
+            self._is_running = True
+
+            # Check
+            if self._greenlet:
+                logger.warning("_greenlet already set, doing nothing")
+                return
+
+            # Fire
+            self._greenlet = gevent.spawn(self.greenlet_run)
+            logger.info("Send greenlet : started")
+
+    def greenlet_stop(self):
+        """
+        Stop
+        """
+
+        with self._locker:
+            # Signal
+            logger.info("Send greenlet : stopping")
+            self._is_running = False
+
+            # Check
+            if not self._greenlet:
+                logger.warning("_greenlet not set, doing nothing")
+                return
+
+            # Kill
+            logger.info("_greenlet.kill")
+            self._greenlet.kill()
+            logger.info("_greenlet.kill done")
+            # gevent.kill(self._greenlet)
+            self._greenlet = None
+            logger.info("Send greenlet : stopped")
+
+    def greenlet_run(self):
+        """
+        Run
+        """
+        try:
+            logger.info("Entering loop")
+            while self._is_running:
+                try:
+                    # ------------------------------
+                    # Wait for the queue
+                    # ------------------------------
+                    logger.debug("Queue : Waiting")
+                    try:
+                        # Call (blocking)
+                        self._queue_to_send.peek(True, self.QUEUE_WAIT_SEC_PER_LOOP)
+                    except Empty:
+                        # Next try
+                        SolBase.sleep(0)
+                        continue
+
+                    # ------------------------------
+                    # GOT SOMETHING IN THE QUEUE, TRY TO SEND
+                    # ------------------------------
+
+                    logger.debug("Queue : Signaled")
+                    go_fast = self._try_send_to_http()
+                    if not go_fast:
+                        SolBase.sleep(self._http_send_bypass_wait_ms)
+                    else:
+                        SolBase.sleep(0)
+                except GreenletExit:
+                    logger.debug("GreenletExit in loop2")
+                    return
+                except Exception as e:
+                    logger.warning("Exception in loop2=%s", SolBase.extostr(e))
+                    continue
+        except GreenletExit:
+            logger.debug("GreenletExit in loop1")
+        finally:
+            logger.info("Exiting loop")
+
+    def stop(self):
+        """
+        Stop
+        """
+
+        # Stop
+        self.greenlet_stop()
+
+    def _requeue_pending_array(self, ar_pending):
+        """
+        Requeue pending array at head for re-emission on next http try
+        :param ar_pending: list
+        :type ar_pending: list
+        """
+
+        ar_pending.reverse()
+        self._insert_into_queue(ar_pending, append_left=True)
+
+    def process_notify(self, account_hash, node_hash, notify_values):
         """
         Process notify
-        :param account_hash: Hash str to value
+        :param account_hash: Hash bytes to value
         :type account_hash; dict
-        :param node_hash: Hash str to value
+        :param node_hash: Hash bytes to value
         :type node_hash; dict
-        :param notify_hash: Hash str to (disco_key, disco_id, tag). Cleared upon success. UNUSED HERE.
-        :type notify_hash; dict
-        :param notify_values: List of (superv_key, tag, value, additional_fields). Cleared upon success.
+        :param notify_values: List of (counter_key, d_tags, counter_value, ts, d_values). Cleared upon success.
         :type notify_values; list
         """
 
         # If not running, exit
-        if not self._is_running:
-            logger.warn("Not running, processing not possible")
+        if not self._is_running and "KNOCK_UNITTEST" not in os.environ:
+            logger.warning("Not running, processing not possible")
             return False
 
         # We receive :
@@ -153,11 +280,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         # dict string/string
         # node_hash => {'host': 'klchgui01'}
         #
-        # dict string (formatted) => tuple (disco_name, disco_id, disco_value)
-        # notify_hash => {'test.dummy|TYPE|one': ('test.dummy', 'TYPE', 'one'), 'test.dummy|TYPE|all': ('test.dummy', 'TYPE', 'all'), 'test.dummy|TYPE|two': ('test.dummy', 'TYPE', 'two')}
-        #
-        # list : tuple (probe_name, disco_value, value, timestamp)
-        # notify_values => <type 'list'>: [('test.dummy.count', 'all', 100, 1503045097.626604), ('test.dummy.count', 'one', 90, 1503045097.626629), ('test.dummy.count[two]', None, 10, 1503045097.626639), ('test.dummy.error', 'all', 5, 1503045097.62668), ('test.dummy.error', 'one', 3, 1503045097.626704), ('test.dummy.error', 'two', 2, 1503045097.626728)]
+        # list : List of (counter_key, d_tags, counter_value, ts, d_values). Cleared upon success.
 
         # We must send blocks like :
         # [
@@ -172,50 +295,63 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         # ]
 
         # ---------------------------
-        # DEDUP
-        # ---------------------------
-
-        if self._influx_dedup:
-            logger.info("dedup on (this is experimental)")
-            # Compute limit ms (we keep margin, so we got on the past, based on last http ok and http interval)
-            limit_ms = self.last_http_ok_ms - (self._http_send_min_interval_ms * 2)
-
-            # Dedup incoming
-            remaining_notify_values = self.dedup_instance.dedup(notify_values=notify_values, limit_ms=limit_ms)
-        else:
-            logger.info("dedup off")
-            remaining_notify_values = notify_values
-
-        # ---------------------------
         # PROCESS NORMALLY
         # ---------------------------
 
         # We build influx format
-        ar_influx = Tools.to_influx_format(account_hash, node_hash, remaining_notify_values)
+        ar_influx = Tools.to_influx_format(account_hash, node_hash, notify_values)
 
         # Influxdb python client do not support firing pre-serialized json
         # So we use the line protocol
         # We serialize this block right now in a single line buffer
         d_points = {"points": ar_influx}
-        buf = make_lines(d_points, precision=None).encode('utf-8')
+        buf = make_lines(d_points, precision=None)
 
-        # Check max
-        if self._queue_to_send.qsize() >= self._max_items_in_queue:
-            # Too much, kick
-            logger.warn("Max queue reached, discarding older item")
-            self._queue_to_send.get(block=True)
-            Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard")
-        elif self._queue_to_send.qsize() == 0:
-            # We were empty, we add a new one.
-            # To avoid firing http asap, override last send date now
-            self._dt_last_send = SolBase.datecurrent()
+        return self._insert_into_queue([buf])
 
-        # Put
-        logger.debug("Queue : put")
-        self._queue_to_send.put(buf)
+    def _insert_into_queue(self, ar_buf, append_left=False):
+        """
+        Insert into queue
+        :param ar_buf: list of str
+        :type ar_buf: list
+        :param append_left: bool
+        :type append_left: bool
+        :return bool
+        :rtype bool
+        """
 
-        # Max queue size
-        Meters.ai(self.meters_prefix + "knock_stat_transport_queue_max_size").set(max(self._queue_to_send.qsize(), Meters.aig(self.meters_prefix + "knock_stat_transport_queue_max_size")))
+        for buf in ar_buf:
+            # Check max bytes
+            discarded = 0
+            c = 0
+            while self._current_queue_bytes >= self._max_bytes_in_queue and self._queue_to_send.qsize() > 0:
+                buf = self._queue_to_send.get(block=True)
+                self._current_queue_bytes -= len(buf)
+                discarded += len(buf)
+                c += 1
+            if c > 0:
+                Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard", increment_value=c)
+                Meters.aii(self.meters_prefix + "knock_stat_transport_queue_discard_bytes", increment_value=discarded)
+                logger.warning("Max queue reached (bytes), discarded items (loop), count=%s, discarded=%s, cur.items/bytes=%s/%s", c, discarded, self._queue_to_send.qsize(), self._current_queue_bytes)
+
+            # Put
+            logger.debug("Queue : put")
+            if append_left:
+                # This is a re-queue
+                self._queue_to_send.queue.appendleft(buf)
+            else:
+                # This is an add
+                if self._queue_to_send.qsize() == 0:
+                    # We were empty, we add a new one.
+                    # To avoid firing http asap, override last send date now
+                    self._dt_last_send = SolBase.datecurrent()
+                self._queue_to_send.put(buf)
+
+            # Bytes
+            self._current_queue_bytes += len(buf)
+
+            # Max queue size
+            Meters.ai(self.meters_prefix + "knock_stat_transport_queue_max_size").set(max(self._queue_to_send.qsize(), Meters.aig(self.meters_prefix + "knock_stat_transport_queue_max_size")))
 
         # Done
         return True
@@ -229,11 +365,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
 
         # NOTE :
         # _queue_to_send : it's a queue of  pre-serialized line buffer (binary buffer) to send
-        # So, _queue_to_send => queue of list(str)
-        #
-        # We use the line protocol to handle stuff similar to HttpAsyncTransport (which works with pre-serialized json buffers)
-        #
-        # Most of the code is copy/pasted from HttpAsyncTransport here (with is under heavy unittests)
+        # So, _queue_to_send => queue of list(bytes)
 
         try:
             ms_extract = SolBase.mscurrent()
@@ -248,6 +380,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                 # Get
                 try:
                     buf = self._queue_to_send.get_nowait()
+                    self._current_queue_bytes -= len(buf)
                 except Empty:
                     break
 
@@ -280,8 +413,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                 # --------------------
                 # MAX SIZE REACHED : go to HTTP and re-send ASAP
                 # --------------------
-                logger.debug("HttpCheck : maxed (%s/%s), http-go",
-                             buf_pending_length, self._http_send_max_bytes)
+                logger.debug("HttpCheck : maxed (%s/%s), http-go", buf_pending_length, self._http_send_max_bytes)
                 go_to_http = True
                 retry_fast = True
             elif self._queue_to_send.qsize() == 0:
@@ -297,7 +429,8 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                     logger.debug(
                         "HttpCheck : not maxed, min interval not reached (%s/%s), http-no-go",
                         ms_since_last_send,
-                        self._http_send_min_interval_ms)
+                        self._http_send_min_interval_ms,
+                    )
                 else:
                     # --------------------
                     # Minimum interval reached : go to HTTP
@@ -305,13 +438,14 @@ class InfluxAsyncTransport(HttpAsyncTransport):
                     logger.debug(
                         "HttpCheck : not maxed, min interval reached (%s/%s), http-go",
                         ms_since_last_send,
-                        self._http_send_min_interval_ms)
+                        self._http_send_min_interval_ms,
+                    )
                     go_to_http = True
             else:
                 # --------------------
                 # NOT POSSIBLE
                 # --------------------
-                logger.warn("HttpCheck : Impossible case (not maxed, not empty)")
+                logger.warning("HttpCheck : Impossible case (not maxed, not empty)")
 
             # --------------------
             # HTTP NO GO
@@ -335,7 +469,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
             logger.debug("go_to_http true")
             b = self._send_to_http_influx(buf_pending_array, buf_pending_length)
             if not b:
-                logger.warn("go_to_http failed, re-queue now, then sleep=%s", self._http_ko_interval_ms)
+                logger.warning("go_to_http failed, re-queue now, then sleep=%s", self._http_ko_interval_ms)
                 self._requeue_pending_array(buf_pending_array)
 
                 # Wait a bit
@@ -353,7 +487,7 @@ class InfluxAsyncTransport(HttpAsyncTransport):
     def _send_to_http_influx(self, ar_lines, total_len):
         """
         Send to http
-        :param ar_lines: list of str (list of influx line buffers)
+        :param ar_lines: list of bytes (list of influx line buffers)
         :type ar_lines: list
         :param total_len: total len of all list items
         :type total_len: int
@@ -365,76 +499,30 @@ class InfluxAsyncTransport(HttpAsyncTransport):
         try:
             Meters.aii(self.meters_prefix + "knock_stat_transport_call_count")
 
-            if self._influx_mode == "influx":
-                # --------------------
-                # INFLUX CLIENT
-                # --------------------
-
-                # A) Client
-                client = InfluxDBClient(
-                    host=self._influx_host,
-                    port=self._influx_port,
-                    username=self._influx_login,
-                    password=self._influx_password,
-                    database=self._influx_database,
-                    ssl=self._influx_ssl,
-                    verify_ssl=self._influx_ssl_verify,
-                    retries=0, )
-
-                # B) Create DB
-                if not self._influx_db_created:
-                    try:
-                        # Create DB
-                        client.create_database(self._influx_database)
-                    except Exception as e:
-                        logger.warn("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
-                    finally:
-                        # Assume success
-                        self._influx_db_created = True
-
-                # Write lines
+            # DB
+            if not self._influx_db_created:
                 try:
-                    ms = SolBase.mscurrent()
-                    logger.info("Push now (influx), ar_lines=%s", ar_lines)
-                    ri = client.write_points(ar_lines, protocol="line")
-
-                    # Call ok, store
-                    self.last_http_ok_ms = SolBase.mscurrent()
+                    http_rep = Tools.influx_create_database(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, timeout_ms=self._influx_timeout_ms, ssl=self._influx_ssl, verify_ssl=self._influx_ssl_verify)
+                    if not 200 <= http_rep.status_code < 300:
+                        raise Exception("Need http 2xx, got http_req={0}".format(http_rep))
+                except Exception as e:
+                    logger.warning("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
                 finally:
-                    logger.info("Push done (influx), ms=%s", SolBase.msdiff(ms))
+                    # Assume success
+                    self._influx_db_created = True
 
-                # Check
-                assert ri, "write_points returned false, ar_lines={0}".format(repr(ar_lines))
-            elif self._influx_mode == "knock":
-                # --------------------
-                # KNOCK CLIENT
-                # --------------------
+            # PUSH
+            try:
+                ms = SolBase.mscurrent()
+                logger.debug("Push now (knock), ar_lines.len=%s", len(ar_lines))
+                http_rep = Tools.influx_write_data(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, ar_data=ar_lines, timeout_ms=self._influx_timeout_ms, ssl=self._influx_ssl, verify_ssl=self._influx_ssl_verify)
+                if not 200 <= http_rep.status_code < 300:
+                    raise Exception("Need http 2xx, got http_req={0}".format(http_rep))
 
-                # DB
-                if not self._influx_db_created:
-                    try:
-                        http_rep = Tools.influx_create_database(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, timeout_ms=self._influx_timeout_ms, ssl=self._influx_ssl, verify_ssl=self._influx_ssl_verify)
-                        assert 200 <= http_rep.status_code < 300, "Need http 2xx, got http_req={0}".format(http_rep)
-                    except Exception as e:
-                        logger.warn("Influx create database failed, assuming ok, ex=%s", SolBase.extostr(e))
-                    finally:
-                        # Assume success
-                        self._influx_db_created = True
-
-                # PUSH
-                try:
-                    ms = SolBase.mscurrent()
-                    logger.info("Push now (knock), ar_lines.len=%s", len(ar_lines))
-                    http_rep = Tools.influx_write_data(self._http_client, host=self._influx_host, port=self._influx_port, username=self._influx_login, password=self._influx_password, database=self._influx_database, ar_data=ar_lines, timeout_ms=self._influx_timeout_ms, ssl=self._influx_ssl, verify_ssl=self._influx_ssl_verify)
-                    assert 200 <= http_rep.status_code < 300, "Need http 2xx, got http_req={0}".format(http_rep)
-
-                    # Call ok, store
-                    self.last_http_ok_ms = SolBase.mscurrent()
-                finally:
-                    logger.info("Push done (knock), ms=%s", SolBase.msdiff(ms))
-            else:
-                # Invalid
-                raise Exception("Invalid _influx_mode={0}".format(self._influx_mode))
+                # Call ok, store
+                self.last_http_ok_ms = SolBase.mscurrent()
+            finally:
+                logger.info("Push done (pf=%s), ms=%s, lines=%s, len=%s, q.size/bytes=%s/%s, id=%s", self.meters_prefix, SolBase.msdiff(ms), len(ar_lines), total_len, self._queue_to_send.qsize(), self._current_queue_bytes, id(self))
 
             # Stats (non zip)
             Meters.ai(self.meters_prefix + "knock_stat_transport_buffer_last_length").set(total_len)
@@ -458,16 +546,16 @@ class InfluxAsyncTransport(HttpAsyncTransport):
             Meters.aii(self.meters_prefix + "knock_stat_transport_ok_count")
 
             # Stats (we have no return from Influx client....)
-            # We hack (may be slow and may be non accurate due to last \n)
+            # We hack (may be slow and may be not accurate due to last \n)
             spv_processed = 0
             for cur_buf in ar_lines:
                 spv_processed += cur_buf.count("\n")
-            Meters.aii(self.meters_prefix + "knock_stat_transport_client_spv_processed", spv_processed)
+            Meters.aii(self.meters_prefix + "knock_stat_transport_spv_processed", spv_processed)
 
             return True
 
         except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
             Meters.aii(self.meters_prefix + "knock_stat_transport_exception_count")
 
             # Here, HTTP not ok

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -21,26 +21,25 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
+from pysolbase.SolBase import SolBase
+
+SolBase.voodoo_init()
 
 import logging
-import ujson
-import unittest
-import urllib
-
 import os
+import unittest
+from urllib.parse import urlencode
+
+import ujson
 from geventhttpclient import HTTPClient, URL
-# noinspection PyUnresolvedReferences,PyPackageRequirements
-from nose.plugins.attrib import attr
-from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 
-SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
 
 
-@attr('prov')
+# noinspection PyBroadException
 class TestHttp(unittest.TestCase):
     """
     Test description
@@ -66,7 +65,7 @@ class TestHttp(unittest.TestCase):
         Setup (called after each test)
         """
         if self.h:
-            logger.warn("h set, stopping, not normal")
+            logger.warning("h set, stopping, not normal")
             self.h.stop()
             self.h = None
 
@@ -110,7 +109,7 @@ class TestHttp(unittest.TestCase):
         self.assertIsNotNone(self.h._server_greenlet)
 
         # Param
-        v = urllib.urlencode({"p1": "v1 2.3/4"})
+        v = urlencode({"p1": "v1 2.3/4"})
 
         # Http get
         url = URL("http://localhost:7900/unittest?" + v)
@@ -118,8 +117,7 @@ class TestHttp(unittest.TestCase):
         response = http.get(url.request_uri)
         logger.info("Got=%s", response)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.read(),
-                         "OK\nfrom_qs={'p1': 'v1 2.3/4'} -EOL\nfrom_post={} -EOL\n")
+        self.assertEqual(response.read().decode("utf8"), "OK\nfrom_qs={'p1': 'v1 2.3/4'} -EOL\nfrom_post={} -EOL\n")
 
         # Http post
         url = URL('http://localhost:7900/unittest')
@@ -127,8 +125,7 @@ class TestHttp(unittest.TestCase):
         response = http.post(url.request_uri, v)
         logger.info("Got=%s", response)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.read(),
-                         "OK\nfrom_qs={} -EOL\nfrom_post={'p1': 'v1 2.3/4'} -EOL\n")
+        self.assertEqual(response.read().decode("utf8"), "OK\nfrom_qs={} -EOL\nfrom_post={'p1': 'v1 2.3/4'} -EOL\n")
 
         # Http get toward invalid
         url = URL("http://localhost:7900/invalid")
@@ -168,98 +165,6 @@ class TestHttp(unittest.TestCase):
         response = http.post(url.request_uri, ujson.dumps(d))
         logger.info("Got=%s", response)
         self.assertEqual(response.status_code, 200)
-
-        # Over
-        self.h.stop()
-        self.assertFalse(self.h._is_running)
-        self.assertIsNone(self.h._wsgi_server)
-        self.assertIsNone(self.h._server_greenlet)
-
-        self.h = None
-
-    def test_json_log(self):
-        """
-        Test
-        """
-
-        self.h = HttpMock()
-
-        self.h.start()
-        self.assertTrue(self.h._is_running)
-        self.assertIsNotNone(self.h._wsgi_server)
-        self.assertIsNotNone(self.h._server_greenlet)
-
-        # ----------------------
-        # Data
-        # ----------------------
-
-        # PUSH
-        d = dict()
-        d["main_type"] = "MT1"
-        d["logs"] = list()
-        d["logs"].append({"type": "type1", "data": "data1"})
-        d["logs"].append({"type": "type2", "data": "data2"})
-        d["logs"].append({"type": "type3", "data": {"k1": "v1", "k2": "v2"}})
-
-        # Http post
-        url = URL('http://localhost:7900/logv1')
-        http = HTTPClient.from_url(url, concurrency=10)
-        response = http.post(url.request_uri, ujson.dumps(d))
-        logger.info("Got=%s", response)
-        buf = response.read()
-        buf = buf.decode("zlib")
-        d = ujson.loads(buf)
-        logger.info("Got=%s", d)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(d["st"], 200)
-
-        # ----------------------
-        # Data (with stuff)
-        # ----------------------
-
-        d = dict()
-        d["main_type"] = "MT1"
-        d["namespace"] = "duchmoll"
-        d["host"] = "duchmollH"
-        d["logs"] = list()
-        d["logs"].append({"type": "type1", "data": "data1"})
-        d["logs"].append({"type": "type2", "data": "data2"})
-        d["logs"].append({"type": "type3", "data": {"k1": "v1", "k2": "v2"}})
-
-        # Http post
-        url = URL('http://localhost:7900/logv1')
-        http = HTTPClient.from_url(url, concurrency=10)
-        response = http.post(url.request_uri, ujson.dumps(d))
-        logger.info("Got=%s", response)
-        buf = response.read()
-        buf = buf.decode("zlib")
-        d = ujson.loads(buf)
-        logger.info("Got=%s", d)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(d["st"], 200)
-
-        # ----------------------
-        # Data (without MT) => FAILURE
-        # ----------------------
-        d = dict()
-        d["namespace"] = "duchmoll"
-        d["host"] = "duchmollH"
-        d["logs"] = list()
-        d["logs"].append({"type": "type1", "data": "data1"})
-        d["logs"].append({"type": "type2", "data": "data2"})
-        d["logs"].append({"type": "type3", "data": {"k1": "v1", "k2": "v2"}})
-
-        # Http post
-        url = URL('http://localhost:7900/logv1')
-        http = HTTPClient.from_url(url, concurrency=10)
-        response = http.post(url.request_uri, ujson.dumps(d))
-        logger.info("Got=%s", response)
-        buf = response.read()
-        buf = buf.decode("zlib")
-        d = ujson.loads(buf)
-        logger.info("Got=%s", d)
-        self.assertEqual(response.status_code, 500)
-        self.assertEqual(d["st"], 500)
 
         # Over
         self.h.stop()

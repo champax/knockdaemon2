@@ -2,7 +2,7 @@
 -*- coding: utf-8 -*-
 ===============================================================================
 
-Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 
 
 
@@ -25,11 +25,11 @@ import _socket
 import logging
 import os
 import sys
-import ujson
 from collections import OrderedDict
 from errno import EWOULDBLOCK
 
 import gevent
+import ujson
 from gevent.lock import RLock
 from gevent.server import DatagramServer
 from gevent.threading import Lock
@@ -147,7 +147,7 @@ class UDPBusinessServerBase(DatagramServer):
         """
 
         if self._is_started:
-            logger.warn("Already started, bypass")
+            logger.warning("Already started, bypass")
             return
 
         # Base start
@@ -170,7 +170,7 @@ class UDPBusinessServerBase(DatagramServer):
         """
 
         if not self._is_started:
-            logger.warn("Not started, bypass")
+            logger.warning("Not started, bypass")
             return
 
         # Base stop
@@ -196,7 +196,7 @@ class UDPBusinessServerBase(DatagramServer):
             if os.path.exists(self._socket_name):
                 os.remove(self._socket_name)
         except Exception as e:
-            logger.warn("Socket file remove ex=%s", SolBase.extostr(e))
+            logger.warning("Socket file remove ex=%s", SolBase.extostr(e))
 
         # Signal stopped
         self._is_started = False
@@ -268,6 +268,9 @@ class UDPBusinessServerBase(DatagramServer):
             # SIZE
             # Json buffer
 
+            # To str
+            data = data.decode("utf8")
+
             # Load json
             data_json = ujson.loads(data.strip())
 
@@ -306,7 +309,7 @@ class UDPBusinessServerBase(DatagramServer):
 
             # Send back udp
             if self._send_back_udp:
-                self.socket.sendto(('Received %s bytes' % len(data)).encode('utf-8'), address)
+                self.socket.sendto(('Received %s bytes' % len(data)).encode('utf8'), address)
 
             # Stats
             Meters.aii("knock_stat_udp_recv")
@@ -316,7 +319,7 @@ class UDPBusinessServerBase(DatagramServer):
 
             # Send back udp
             if self._send_back_udp:
-                self.socket.sendto(('KO-NR: Received %s bytes - cant decode' % len(data)).encode('utf-8'), address)
+                self.socket.sendto(('KO-NR: Received %s bytes - cant decode' % len(data)).encode('utf8'), address)
 
             # Stat
             Meters.aii("knock_stat_udp_recv_ex")
@@ -329,26 +332,6 @@ class UDPBusinessServerBase(DatagramServer):
     # ------------------------------
 
     @classmethod
-    def _clean_value(cls, item, value):
-        """
-        Clean item and value, returning them
-        :param item: item
-        :type item: unicode
-        :param value: int,float
-        :type value:int,float
-        :return tuple (item as str, value as float)
-        :rtype tuple
-        """
-
-        # Float
-        value = float(value)
-
-        # Binary
-        # TODO Check : item (unicode) to binary (utf8 encoded) ?
-        item = SolBase.unicode_to_binary(item)
-        return item, value
-
-    @classmethod
     def _dtc_to_dict(cls, dtc):
         """
         To dict
@@ -359,7 +342,7 @@ class UDPBusinessServerBase(DatagramServer):
         """
         d = OrderedDict()
         # noinspection PyProtectedMember
-        ar = dtc._sorted_dict.keys()
+        ar = list(dtc._sorted_dict.keys())
         for i in range(0, len(ar) - 1):
             ms1 = ar[i]
             ms2 = ar[i + 1]
@@ -368,7 +351,7 @@ class UDPBusinessServerBase(DatagramServer):
 
             # Pad
             ms1 = str(ms1).zfill(5)
-            if ms2 == sys.maxint:
+            if ms2 == sys.maxsize:
                 ms2 = "MAX"
             else:
                 ms2 = str(ms2).zfill(5)
@@ -386,11 +369,11 @@ class UDPBusinessServerBase(DatagramServer):
         """
         Increment process
         :param item: item
-        :type item: unicode
+        :type item: str
         :param value: value
         :type value: int|float
         """
-        item, value = self._clean_value(item, value)
+        value = float(value)
 
         if item not in self._dict_increment:
             with self._increment_lock:
@@ -402,11 +385,11 @@ class UDPBusinessServerBase(DatagramServer):
         """
         Process gauge
         :param item: item
-        :type item: unicode
+        :type item: str
         :param value: value
         :type value: int|float
         """
-        item, value = self._clean_value(item, value)
+        value = float(value)
         with self._gauge_lock:
             self._dict_gauge[item] = value
 
@@ -414,11 +397,11 @@ class UDPBusinessServerBase(DatagramServer):
         """
         Process dtc
         :param item: item
-        :type item: unicode
+        :type item: str
         :param value: value
         :type value: int|float
         """
-        item, value = self._clean_value(item, value)
+        value = float(value)
         if item not in self._dict_dtc:
             with self._dtc_lock:
                 if item not in self._dict_dtc:
@@ -469,20 +452,18 @@ class UDPBusinessServerBase(DatagramServer):
         try:
             # Go in lock to avoid interactions with stop() mainly & reschedule races
             with self._notify_lock:
-                logger.info("Entering")
+                logger.debug("Entering")
                 Meters.aii("knock_stat_udp_notify_run")
 
                 # Dtc
                 with self._dtc_lock:
                     if len(self._dict_dtc) > 0:
 
-                        for item, value in self._dict_dtc.iteritems():
-                            # Disco
-                            self._probe_dtc.notify_discovery_n("k.business.dtc.discovery", {"ITEM": item})
+                        for item, value in self._dict_dtc.items():
 
                             # Data
                             d = self._dtc_to_dict(value)
-                            for k, v in d.iteritems():
+                            for k, v in d.items():
                                 # k : 0xxxx-0xxxx
                                 logger.debug('item=%s k=%s v=%s', item, k, v)
                                 k_dtc = UDPBusinessServerBase.KNOCK_PREFIX_KEY + "dtc." + k
@@ -492,27 +473,25 @@ class UDPBusinessServerBase(DatagramServer):
                 # Increment
                 with self._increment_lock:
                     if len(self._dict_increment) > 0:
-                        for item, value in self._dict_increment.iteritems():
+                        for item, value in self._dict_increment.items():
                             logger.debug('item=%s value=%s', item, value.get())
 
-                            self._probe_inc.notify_discovery_n("k.business.inc.discovery", {"ITEM": item})
                             self._probe_inc.notify_value_n(UDPBusinessServerBase.KNOCK_PREFIX_KEY + "inc", {"ITEM": item}, value.get())
 
                 # gauge
                 with self._gauge_lock:
                     if len(self._dict_gauge) > 0:
-                        for item, value in self._dict_gauge.iteritems():
+                        for item, value in self._dict_gauge.items():
                             logger.debug('item=%s value=%s', item, value)
 
-                            self._probe_inc.notify_discovery_n("k.business.gauge.discovery", {"ITEM": item})
                             self._probe_inc.notify_value_n(UDPBusinessServerBase.KNOCK_PREFIX_KEY + "gauge", {"ITEM": item}, value)
 
                 # Next schedule (in lock, re-entrant)
                 self._notify_schedule_next()
         except Exception as e:
-            logger.warn("Internal ex=%s", SolBase.extostr(e))
+            logger.warning("Internal ex=%s", SolBase.extostr(e))
             Meters.aii("knock_stat_udp_notify_run_ex")
         finally:
             elapsed_ms = SolBase.msdiff(ms_start)
-            logger.info("Exiting, ms=%s", elapsed_ms)
+            logger.debug("Exiting, ms=%s", elapsed_ms)
             Meters.dtci("knock_stat_udp_notify_run_dtc", elapsed_ms)

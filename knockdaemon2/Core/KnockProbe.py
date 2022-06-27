@@ -3,7 +3,7 @@
 
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -23,10 +23,9 @@
 # ===============================================================================
 """
 import logging
-
 import os
+
 from pysolbase.SolBase import SolBase
-from pysolmeters.Meters import Meters
 
 from knockdaemon2.Platform.PTools import PTools
 
@@ -57,23 +56,20 @@ class KnockProbe(object):
 
         self.linux_support = linux_support
         self.windows_support = windows_support
+        if self.windows_support:
+            raise Exception("windows not more supported")
         self.platform = PTools.get_distribution_type()
         self.platform_supported = self.is_supported_on_platform()
 
         self.class_name = SolBase.get_classname(self)
 
-        # Category. Not used for HttpAsyncTransport, push toward Influx tag "category".
+        # Category. Pushed toward Influx tag "category".
         # To be overriden at higher level.
         # Format is : "/categ<0>/.../categ<n>"
         self.category = "/undef"
 
         # Timeout override (can be usefull for some slow probes that are executed not often)
         self.exec_timeout_override_ms = None
-
-        # Probes timestamp override
-        # If set (by KnockManager), notify timestamp will be this one
-        # NEVER override this in probe implementation, KnockManager handle this (configuration based)
-        self.notify_ts_override = None
 
     def set_manager(self, knock_manager):
         """
@@ -108,7 +104,7 @@ class KnockProbe(object):
         """
 
         # If unittest, do nothing
-        if "KNOCK_UNITTEST" in os.environ.data:
+        if "KNOCK_UNITTEST" in os.environ:
             return
 
         # Lower limits for important stuff
@@ -121,10 +117,7 @@ class KnockProbe(object):
         :return bool
         :rtype bool
         """
-        if PTools.get_distribution_type() == "windows":
-            return self.windows_support
-        else:
-            return self.linux_support
+        return self.linux_support
 
     def execute(self):
         """
@@ -141,19 +134,12 @@ class KnockProbe(object):
         - "running" key (for each discovered instance) will be backed by a nodata trigger
         - SO : as discoveries are send ASAP, even if instance is down, even is execute() exec is cut => the nodata trigger on running keys will be fired
         """
-        dt = PTools.get_distribution_type()
-        if dt == "windows":
-            # WINDOWS
-            if not self.windows_support:
-                logger.info("Not supported on [%s], probe=%s", dt, self)
-            else:
-                self._execute_windows()
+
+        # LINUX
+        if not self.linux_support:
+            logger.info("Not supported (linux), probes=%s", self)
         else:
-            # LINUX
-            if not self.linux_support:
-                logger.info("Not supported on [%s], probes=%s", dt, self)
-            else:
-                self._execute_linux()
+            self._execute_linux()
 
     def _execute_linux(self):
         """
@@ -161,27 +147,7 @@ class KnockProbe(object):
         """
         raise NotImplementedError()
 
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        raise NotImplementedError()
-
-    def notify_discovery_n(self, disco_key, d_disco_id_tag):
-        """
-        Notify discovery (1..n)
-
-        Sample:
-        - notify_discovery_n("k.dns", {"HOST": "my_host", "SERVER": "my_server"})
-        :param disco_key: discovery key
-        :type disco_key: str
-        :param d_disco_id_tag: dict {"disco_tag_1": "value", "disco_tag_n": "value"}
-        :type d_disco_id_tag: dict
-        """
-
-        self._knock_manager.notify_discovery_n(disco_key, d_disco_id_tag)
-
-    def notify_value_n(self, counter_key, d_disco_id_tag, counter_value, ts=None, additional_fields=None):
+    def notify_value_n(self, counter_key, d_tags, counter_value, ts=None, d_values=None):
         """
         Notify value
 
@@ -190,27 +156,19 @@ class KnockProbe(object):
 
         :param counter_key: Counter key (str)
         :type counter_key: str
-        :param d_disco_id_tag: None (if no discovery) or dict of {disco_id: disco_tag}
-        :type d_disco_id_tag: None, dict
+        :param d_tags: None,dict
+        :type d_tags: None,dict
         :param counter_value: Counter value
         :type counter_value: object
         :param ts: timestamp (epoch), or None to use current
         :type ts: None, float
-        :param additional_fields: dict
-        :type additional_fields: dict
+        :param d_values: dict
+        :type d_values: dict
 
         """
 
-        # Timestamp to use
-        if ts is None:
-            # Use override if set, else use provided value (None or set)
-            if self.notify_ts_override is not None:
-                logger.debug("Using notify_ts_override, ts=%s, notify_ts_override=%s", ts, self.notify_ts_override)
-                Meters.aii("knock_stat_ts_override")
-                ts = self.notify_ts_override
-
-        # Notify manager
-        self._knock_manager.notify_value_n(counter_key, d_disco_id_tag, counter_value, ts, {"category": self.category}, additional_fields)
+        # Call manager
+        self._knock_manager.notify_value_n(counter_key, d_tags, counter_value, ts, d_values)
 
     def __str__(self):
         """
@@ -219,15 +177,13 @@ class KnockProbe(object):
         :rtype string
         """
 
-        return "kprobe:ms={0}*s={1}*c={2}*on={3}*ux={4}*win={5}*pl={6}*sup={7}*k={8}*ntso={9}".format(
+        return "kprobe:ms={0}*s={1}*c={2}*on={3}*ux={4}*pl={5}*sup={6}*k={7}".format(
             self.exec_interval_ms,
             self.probe_class,
             self.class_name,
             self.exec_enabled,
             self.linux_support,
-            self.windows_support,
             self.platform,
             self.platform_supported,
             self.key,
-            self.notify_ts_override,
         )

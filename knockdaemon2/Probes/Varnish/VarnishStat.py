@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -22,9 +22,8 @@
 # ===============================================================================
 """
 import logging
-import ujson
 
-import re
+import ujson
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 
@@ -150,159 +149,81 @@ class VarnishStat(KnockProbe):
 
         self.category = "/web/varnish"
 
-    # noinspection PyMethodMayBeStatic
-    def try_load_json(self):
+    @classmethod
+    def try_invoke_stat(cls):
         """
         Try to load varnishstat -j
-        :return: dict,None
-        :rtype dict,None
+        :return: str,None
+        :rtype str,None
         """
 
-        logger.info("Invoke varnishstat -j now")
-        ms_start = SolBase.mscurrent()
+        logger.debug("Invoke varnishstat -j now")
         ec, so, se = ButcherTools.invoke("varnishstat -j")
-        ms = SolBase.msdiff(ms_start)
         if ec != 0:
-            logger.warn("varnishstat -j invoke failed (requires varnish >= 3.0.7), ec=%s, so=%s, se=%s", ec, so, se)
+            logger.warning("varnishstat -j invoke failed (requires varnish >= 3.0.7), ec=%s, so=%s, se=%s", ec, so, se)
             return None
-
-        # Process
-        try:
-            logger.info("Json loads now")
-            d_json = ujson.loads(so)
-            logger.info("Json loaded, d_json=%s", d_json)
-
-            # Append millis
-            d_json["k.varnish.stat.ms"] = {u"flag": u"dummy", u"type": u"dummy", u"description": u"dummy", u"value": ms}
-
-            # Ok
-            return d_json
-        except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
-            return None
-
-    # noinspection PyMethodMayBeStatic
-    def try_load_text(self):
-        """
-        Try to load varnishstat -1
-        :return: dict,None
-        :rtype dict,None
-        """
-
-        logger.info("Invoke varnishstat -1 now")
-        ms_start = SolBase.mscurrent()
-        ec, so, se = ButcherTools.invoke("varnishstat -1")
-        ms = SolBase.msdiff(ms_start)
-        if ec != 0:
-            logger.warn("varnishstat -1 invoke failed, ec=%s, so=%s, se=%s", ec, so, se)
-            return None
-
-        # Process
-        d_json = dict()
-        try:
-            logger.info("Text parsing loads now")
-            # Remove multiple spaces
-            buf = re.sub(" +", " ", so)
-
-            # Split
-            ar_buf = buf.split("\n")
-
-            # Browse
-            for b in ar_buf:
-                # Got :
-                # Symbolic entry name
-                # Value
-                # Per-second average over process lifetime, or a period if the value can not be averaged
-                # Descriptive text
-
-                # Skip empty
-                b = b.strip()
-                if len(b) == 0:
-                    continue
-
-                # Split
-                ar_temp = b.split(" ")
-
-                # Get
-                name = ar_temp[0]
-                v = ar_temp[1]
-
-                # Simulate a json output (we use value only)
-                d_json[name] = dict()
-                d_json[name]["value"] = v
-
-            # Ok
-            logger.info("Json loaded, d_json=%s", d_json)
-
-            # Append millis
-            d_json["k.varnish.stat.ms"] = {u"flag": u"dummy", u"type": u"dummy", u"description": u"dummy", u"value": ms}
-
-            # Over
-            return d_json
-        except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
-            return None
-
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
+        else:
+            return se
 
     def _execute_linux(self):
         """
         Exec
+        """
+        self._execute_native()
+
+    def _execute_native(self):
+        """
+        Exec, native
         """
 
         located_f = None
         for cur_f in VarnishStat.AR_CONFIG_FILE:
             if FileUtility.is_file_exist(cur_f):
                 located_f = cur_f
-                logger.info("Located located_f=%s", located_f)
+                logger.debug("Located located_f=%s", located_f)
                 break
 
         if not located_f:
-            logger.info("Give up (no file found in %s)", VarnishStat.AR_CONFIG_FILE)
+            logger.debug("Give up (no file found in %s)", VarnishStat.AR_CONFIG_FILE)
             return
 
-        logger.info("Varnish detected (%s found)", located_f)
+        logger.debug("Varnish detected (%s found)", located_f)
 
-        # -------------------------------
-        # P0 : Fire discoveries
-        # -------------------------------
-        logger.info("Firing discoveries (default)")
         pool_id = "default"
-        self.notify_discovery_n("k.varnish.discovery", {"ID": pool_id})
 
-        # -------------------------------
-        # We support varnish 3.0.7 json
-        # With fallback to text only for previous versions
-        # -------------------------------
-
-        # Process
+        # Go
         try:
-            d_json = self.try_load_json()
+            # Invoke
+            ms = SolBase.mscurrent()
+            buf = self.try_invoke_stat()
 
-            # Try text if failed
-            if not d_json:
-                d_json = self.try_load_text()
-
-            # Check if we have stuff
-            if not d_json:
-                logger.warn("varnishstat invoke failed (no d_json), notify instance down and give up")
-                self.notify_value_n("k.varnish.started", {"ID": pool_id}, 0)
-                return
-
-            # Ok
-            self.process_json(d_json, pool_id)
-
+            # Process
+            self.process_varnish_buffer(buf, pool_id, SolBase.msdiff(ms))
         except Exception as e:
             # FAILED
-            logger.warn("varnishstat processing failed, notify instance down and give up, ex=%s", SolBase.extostr(e))
+            logger.warning("varnishstat processing failed, notify instance down and give up, ex=%s", SolBase.extostr(e))
             self.notify_value_n("k.varnish.started", {"ID": pool_id}, 0)
 
-    def process_json(self, d_json, pool_id):
+    def process_varnish_buffer(self, buf_varnish, pool_id, ms_invoke):
+        """
+        Process varnish buffer
+        :param buf_varnish: str
+        :type buf_varnish: str
+        :param pool_id: str
+        :type pool_id: str
+        :param ms_invoke: float
+        :type ms_invoke: float
+        """
+
+        d_json = ujson.loads(buf_varnish)
+
+        # Append millis
+        d_json["k.varnish.stat.ms"] = {"flag": "dummy", "type": "dummy", "description": "dummy", "value": ms_invoke}
+
+        # Ok
+        self.process_varnish_json(d_json, pool_id)
+
+    def process_varnish_json(self, d_json, pool_id):
         """
         Process json dict
         :param d_json: dict
@@ -311,16 +232,16 @@ class VarnishStat(KnockProbe):
         :type pool_id: str
         """
 
-        logger.info("Json loaded, d_json=%s", d_json)
+        logger.debug("Json loaded, d_json=%s", d_json)
 
-        logger.info("Invoke reply ok, firing notify now")
+        logger.debug("Invoke reply ok, firing notify now")
         for k, knock_type, knock_key in VarnishStat.KEYS:
             # Try
             if k not in d_json:
                 if k.find("k.varnish.") != 0:
-                    logger.warn("Unable to locate k=%s in d_json", k)
+                    logger.warning("Unable to locate k=%s in d_json", k)
                 else:
-                    logger.info("Unable to locate k=%s in d_json (this is expected)", k)
+                    logger.debug("Unable to locate k=%s in d_json (this is expected)", k)
                 continue
 
             # Ok, fetch and cast
@@ -335,11 +256,11 @@ class VarnishStat(KnockProbe):
                 logger.debug("Skipping type=%s", knock_type)
                 continue
             else:
-                logger.warn("Not managed type=%s", knock_type)
+                logger.warning("Not managed type=%s", knock_type)
 
             # Notify
             self.notify_value_n(knock_key, {"ID": pool_id}, v)
 
         # Good, notify & exit
-        logger.info("varnishstat ok, notify started=1 and return, pool_id=%s", pool_id)
+        logger.debug("varnishstat ok, notify started=1 and return, pool_id=%s", pool_id)
         self.notify_value_n("k.varnish.started", {"ID": pool_id}, 1)

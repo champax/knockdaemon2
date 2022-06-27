@@ -1,7 +1,24 @@
 # -*- coding: utf-8 -*-
 """
 # ===============================================================================
-# Copyright (C) 2017 Vulog SAS
+#
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
+#
+#
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
 
@@ -145,7 +162,7 @@ class SystemdManager(object):
         pid = self._get_unit_property(unit_name, self.SERVICE_UNIT_INTERFACE, 'MainPID')
         try:
             if isinstance(pid, bytes):
-                pid = int(pid.decode('utf-8'), 10)
+                pid = int(pid.decode('utf8'), 10)
             elif isinstance(pid, str):
                 pid = int(pid, 10)
             return pid
@@ -160,7 +177,7 @@ class SystemdManager(object):
             return False
 
         try:
-            state = properties["ActiveState"].encode("utf-8")
+            state = properties["ActiveState"].encode("utf8")
             return state
         except KeyError:
             return False
@@ -181,6 +198,7 @@ class SystemdManager(object):
 
         return self._get_exec_status(service_properties)
 
+    # noinspection PyMethodMayBeStatic
     def _get_exec_status(self, properties):
         try:
             exec_status = int(properties["ExecMainStatus"])
@@ -188,9 +206,10 @@ class SystemdManager(object):
         except KeyError:
             return None
 
+    # noinspection PyMethodMayBeStatic
     def _get_result(self, properties):
         try:
-            result = properties["Result"].encode("utf-8")
+            result = properties["Result"].encode("utf8")
             return result
         except KeyError:
             return False

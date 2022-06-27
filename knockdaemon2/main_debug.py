@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -21,9 +21,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
-import logging
 
 from pysolbase.SolBase import SolBase
+SolBase.voodoo_init()
+
+import logging
 
 from knockdaemon2.Core.KnockManager import KnockManager
 # CMD : /opt/knock/knockdaemon2/bin/python /opt/knock/knockdaemon2/bin/knockdaemon2
@@ -36,7 +38,6 @@ from knockdaemon2.Core.UDPServer import UDPServer
 
 logger = logging.getLogger(__name__)
 
-SolBase.voodoo_init()
 SolBase.logging_init(log_level="INFO", force_reset=True)
 
 
@@ -56,8 +57,14 @@ def run():
             UDPServer.UDP_SOCKET_NAME = UDPServer.UDP_UNITTEST_SOCKET_NAME
 
         # Fetch config
-        config_file = "/etc/knock/knockdaemon2_lchgui/knockdaemon2.yaml"
-        logger.info("config_file=%s", config_file)
+        config_file = "/etc/knock/knockdaemon2/knockdaemon2.yaml"
+        logger.info("Using config_file=%s", config_file)
+
+        # Logging
+        log_config_file = "/etc/knock/knockdaemon2/logging.yaml"
+        logger.info("Init logging from yaml log_config_file=%s", log_config_file)
+        SolBase.set_compo_name("knockdaemon2")
+        SolBase.logging_initfromfile(log_config_file, True)
 
         # Init manager
         k = KnockManager(config_file)

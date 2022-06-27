@@ -1,0 +1,1 @@
+BOOT_IMAGE=/vmlinuz-4.19.0-18-amd64 root=/dev/mapper/vg0-root ro acpi_osi=Linux

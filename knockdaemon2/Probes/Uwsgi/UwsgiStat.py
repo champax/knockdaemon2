@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -25,8 +25,8 @@
 import glob
 import json
 import logging
-
 import re
+
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 
@@ -132,12 +132,12 @@ class UwsgiStat(KnockProbe):
         self._total_avg_rt = 0
         self._total_workers_count = 0
 
-    # noinspection PyMethodMayBeStatic
-    def _get_stuff_from_file(self, file_name, stuff):
+    @classmethod
+    def _get_stuff_from_file(cls, file_name, stuff_to_look_for):
         """
         Get stats socket from file
-        :param stuff: str
-        :type stuff: str
+        :param stuff_to_look_for: str
+        :type stuff_to_look_for: str
         :param file_name: str
         :type file_name: str
         :return: str,None
@@ -147,46 +147,43 @@ class UwsgiStat(KnockProbe):
         try:
 
             # Check
-            logger.info("Checking file_name=%s", file_name)
             if not FileUtility.is_file_exist(file_name):
                 logger.debug("No stuff found (conf missing), file_name=%s", file_name)
                 return None
 
             # Load
-            logger.info("Loading file_name=%s", file_name)
             buf = FileUtility.file_to_textbuffer(file_name, "ascii")
             if not buf:
-                logger.info("No stuff found (no buf, no read), file_name=%s", file_name)
+                logger.debug("No stuff found (no buf, no read), file_name=%s", file_name)
                 return None
-
-            # Split
-            ar = buf.split("\n")
 
             # Browse
             stuff_found = None
             count = 0
-            for line in ar:
+            for line in buf.split("\n"):
                 line = line.strip()
                 if len(line) == 0:
                     continue
+                elif not line.startswith(stuff_to_look_for):
+                    continue
 
-                if line.startswith(stuff):
-                    ar_temp = line.split("=", 1)
-                    if len(ar_temp) != 2:
-                        logger.warn("Found, split failed, stuff_found=%s, ar_temp=%s", stuff_found, ar_temp)
-                    else:
-                        stuff_found = ar_temp[1].strip()
-                        logger.info("Found, stuff_found=%s", stuff_found)
-                        count += 1
+                ar_temp = line.split("=", 1)
+                if len(ar_temp) != 2:
+                    logger.debug("Found, split failed (non fatal), stuff_found=%s, ar_temp=%s", stuff_found, ar_temp)
+                    continue
+
+                stuff_found = ar_temp[1].strip()
+                logger.debug("Found, stuff_found=%s", stuff_found)
+                count += 1
 
             if count > 1:
-                logger.warn("Found multiple stuff in buffer, count=%s", count)
+                logger.warning("Found multiple stuff in buffer, count=%s", count)
 
-            logger.info("Return stuff=%s, stuff_found=%s", stuff, stuff_found)
+            logger.debug("Return stuff=%s, stuff_found=%s", stuff_to_look_for, stuff_found)
             return stuff_found
 
         except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
             return None
 
     def _uwsgi_buffer_merge(self, d_uwsgi):
@@ -270,7 +267,7 @@ class UwsgiStat(KnockProbe):
         # --------------------------------
         d_acc_lock["total_lock_count"] = 0
         for d_lock in d_uwsgi["locks"]:
-            for k, v in d_lock.iteritems():
+            for k, v in d_lock.items():
                 logger.debug("Processing, lock, k=%s, v=%s", k, v)
                 d_acc_lock["total_lock_count"] += v
 
@@ -340,14 +337,14 @@ class UwsgiStat(KnockProbe):
             # Status processing
             key = "status_" + d_workers["status"]
             if key not in d_acc_worker:
-                logger.warn("Un-managed worker status key=%s, d_workers=%s", key, d_workers)
+                logger.warning("Un-managed worker status key=%s, d_workers=%s", key, d_workers)
             else:
                 d_acc_worker[key] += 1
                 total_status += 1
 
         # Check status vs workers count (log only)
         if total_status != d_acc_worker["w_count"]:
-            logger.warn("Mismatch, w_count=%s, total_status=%s", d_acc_worker["w_count"], total_status)
+            logger.warning("Mismatch, w_count=%s, total_status=%s", d_acc_worker["w_count"], total_status)
 
         # Post process avg_rt for ALL instance
         self._total_avg_rt += d_acc_worker["avg_rt"]
@@ -396,38 +393,37 @@ class UwsgiStat(KnockProbe):
         # (yeah dirty, but my brain is in better condition with previous code than direct addressing - for complains, contact the moon)
         # --------------------------------
         d_out = dict()
-        for k, v in d_acc_global.iteritems():
+        for k, v in d_acc_global.items():
             d_out["uwsgi.global." + k] = v
 
-        for k, v in d_acc_lock.iteritems():
+        for k, v in d_acc_lock.items():
             d_out["uwsgi.locks." + k] = v
 
-        for k, v in d_acc_socket.iteritems():
+        for k, v in d_acc_socket.items():
             d_out["uwsgi.sockets." + k] = v
 
-        for k, v in d_acc_worker.iteritems():
+        for k, v in d_acc_worker.items():
             d_out["uwsgi.workers." + k] = v
 
-        for k, v in d_acc_core.iteritems():
+        for k, v in d_acc_core.items():
             d_out["uwsgi.cores." + k] = v
 
         # Over, debugs plz
-        for k, v in d_out.iteritems():
+        for k, v in d_out.items():
             logger.debug("OUTPUT : %s => %s", k, v)
 
         # Fatality
         return d_out
 
-    def _execute_windows(self):
-        """
-        Execute a probe (windows)
-        """
-        # Just call base, not supported
-        KnockProbe._execute_windows(self)
-
     def _execute_linux(self):
         """
         Execute
+        """
+        self._execute_native()
+
+    def _execute_native(self):
+        """
+        Exec, native
         """
 
         # Reset (we persist accross run, this is critical)
@@ -443,71 +439,59 @@ class UwsgiStat(KnockProbe):
                 located_f = cur_f
 
         if not located_f:
-            logger.info("No uwsgi (no file in %s)", UwsgiStat.AR_UWSGI_CONF)
+            logger.debug("No uwsgi (no file in %s)", UwsgiStat.AR_UWSGI_CONF)
             return
 
-        logger.info("Located uwsgi, located_f=%s", located_f)
+        logger.debug("Located uwsgi, located_f=%s", located_f)
 
-        # Default stats soc
+        # ---------------------------
+        # A) Default stats socket
         default_stats_soc = self._get_stuff_from_file(located_f, "stats")
+        logger.debug("Got default_stats_soc=%s", default_stats_soc)
 
         # ---------------------------
-        # B) DETECT INSTANCES AND PROCESS THEM
-        # ---------------------------
+        # B) Instances stats sockets
+        d_instances_socket = dict()
 
         conf_files = glob.glob("/etc/uwsgi/apps-enabled/*.ini") + glob.glob("/etc/uwsgi.d/*.ini")
         for cur_app_file in conf_files:
-            # -----------------------
-            # B1) Fetch app id
-            # -----------------------
-            logger.info("Processing cur_app_file=%s", cur_app_file)
-
-            # Fetch
+            # App id
             cur_uwsgi_id = self._get_stuff_from_file(cur_app_file, "id")
             if not cur_uwsgi_id:
-                logger.warn("Cannot locate id, cur_app_file=%s", cur_app_file)
+                logger.debug("Cannot locate id (bypass), cur_app_file=%s", cur_app_file)
                 continue
 
-            # -----------------------
-            # B1_BIS) Fire Discovery ASAP
-            # -----------------------
-            uwsgi_instance_list = list()
-            d_instance_cur = dict()
-            d_instance_cur["{#ID}"] = cur_uwsgi_id
-            uwsgi_instance_list.append(d_instance_cur)
-            self.notify_discovery_n("k.uwsgi.discovery", {"ID": cur_uwsgi_id})
-
-            # -----------------------
-            # B1_TER) Locate "stats" in config
-            # -----------------------
-            # Fetch
+            # Socket
             cur_stats_soc = self._get_stuff_from_file(cur_app_file, "stats")
 
-            # Select soc
-            if default_stats_soc:
-                # ???
-                effective_stats_soc = re.sub("%\(deb-confname\)", cur_uwsgi_id, default_stats_soc)
-            elif cur_stats_soc:
-                effective_stats_soc = cur_stats_soc
-            else:
-                # No stats
-                logger.info("No stats, signal down and reloop")
+            # If none, fallback default
+            if cur_stats_soc is None:
+                if default_stats_soc is not None:
+                    cur_stats_soc = re.sub(r"%\(deb-confname\)", cur_uwsgi_id, default_stats_soc)
+
+            # If none, signal down for this instance
+            if cur_stats_soc is None:
+                logger.debug("No stats, signal down and reloop, cur_uwsgi_id=%s", cur_uwsgi_id)
                 self._push_result("k.uwsgi.started", cur_uwsgi_id, 0)
                 continue
 
-            # -----------------------
-            # B2) STAT FETCH FROM SOCKET
-            # -----------------------
+            # Register
+            d_instances_socket[cur_uwsgi_id] = cur_stats_soc
 
+        # ---------------------------
+        # C) Read stats sockets
+        d_id_to_buffer = dict()
+        d_id_to_ms = dict()
+        for cur_uwsgi_id, cur_stats_soc in d_instances_socket.items():
             # Go bash
-            ms_stat_start = SolBase.mscurrent()
-            ec, so, se = ButcherTools.invoke("uwsgi --connect-and-read " + effective_stats_soc)
-            ms_stat = SolBase.msdiff(ms_stat_start)
+            ms = SolBase.mscurrent()
+            ec, so, se = ButcherTools.invoke("uwsgi --connect-and-read %s" % cur_stats_soc)
             if ec != 0:
-                logger.info("Invoke fail, go sudo, ex=%s, so=%s, se=%s", ec, so, se)
-                ec, so, se = ButcherTools.invoke("sudo uwsgi --connect-and-read " + effective_stats_soc)
+                logger.debug("Invoke fail, trying sudo, ex=%s, so=%s, se=%s", ec, so, se)
+                ec, so, se = ButcherTools.invoke("sudo uwsgi --connect-and-read %s" % cur_stats_soc)
                 if ec != 0:
-                    logger.warn("Invoke fail, give up, ex=%s, so=%s, se=%s", ec, so, se)
+                    logger.warning("Invoke fail, signal down, cur_uwsgi_id=%s, ex=%s, so=%s, se=%s", cur_uwsgi_id, ec, so, se)
+                    self._push_result("k.uwsgi.started", cur_uwsgi_id, 0)
                     continue
 
             # Log
@@ -515,34 +499,51 @@ class UwsgiStat(KnockProbe):
 
             # Check
             if len(se) == 0:
-                logger.warn("No se, give up")
+                logger.warning("Got se empty, signal down, cur_uwsgi_id=%s", cur_uwsgi_id)
+                self._push_result("k.uwsgi.started", cur_uwsgi_id, 0)
                 continue
 
-            # -----------------------
-            # B3) JSON AND MERGE
-            # -----------------------
-            d_json = json.loads(se)
+            # Register
+            d_id_to_buffer[cur_uwsgi_id] = se
+            d_id_to_ms[cur_uwsgi_id] = SolBase.msdiff(ms)
 
-            d_uwsgi = self._uwsgi_buffer_merge(d_json)
+        # ---------------------------
+        # D) Process buffers
+        self.process_uwsgi_buffers(d_id_to_buffer, d_id_to_ms)
+
+    def process_uwsgi_buffers(self, d_id_to_buffer, d_id_to_ms):
+        """
+        Process uwsgi buffers
+        :param d_id_to_buffer: dict
+        :type d_id_to_buffer: dict
+        :param d_id_to_ms: dict
+        :type d_id_to_ms: dict
+        :return bool
+        :rtype bool
+        """
+
+        for cur_uwsgi_id, cur_buf in d_id_to_buffer.items():
+
+            # Load
+            d_uwsgi = json.loads(cur_buf)
+
+            # Merge
+            d_uwsgi = self._uwsgi_buffer_merge(d_uwsgi)
 
             # Append response time
-            d_uwsgi["k.uwsgi.stat.ms"] = ms_stat
-
-            # -----------------------
-            # B4) BROWSE RESULT AND PUSH DATAS
-            # -----------------------
+            d_uwsgi["k.uwsgi.stat.ms"] = d_id_to_ms[cur_uwsgi_id]
 
             # Socket ok, parsing ok, merge ok : instance up
             self._push_result("k.uwsgi.started", cur_uwsgi_id, 1)
 
             # Browse our stuff and try to locate
             for k, knock_type, knock_key in UwsgiStat.KEYS:
-                # Important : we have a 2 layers keys
+                # Important : we have a 2 layers keys...
 
                 # Try
                 if k not in d_uwsgi:
                     if k.find("k.uwsgi.") != 0:
-                        logger.warn("Unable to locate k=%s in d_out", k)
+                        logger.warning("Unable to locate k=%s in d_out", k)
                     continue
 
                 # Ok, fetch and cast
@@ -554,7 +555,7 @@ class UwsgiStat(KnockProbe):
                 elif knock_type == "skip":
                     continue
                 else:
-                    logger.warn("Not managed type=%s", knock_type)
+                    logger.warning("Not managed type=%s", knock_type)
 
                 # Use our wrapper (will populate d_uwsgi_aggregate)
                 self._push_result(knock_key, cur_uwsgi_id, v)
@@ -565,16 +566,13 @@ class UwsgiStat(KnockProbe):
 
         if len(self.d_uwsgi_aggregate) == 0:
             # Go nothing, possible no uwsgi instance, over
-            logger.info("No d_uwsgi_aggregate, give up")
+            logger.debug("No d_uwsgi_aggregate, give up")
             return
 
-        # Notify disco
-        self.notify_discovery_n("k.uwsgi.discovery", {"ID": "ALL"})
-
         # Aggreg firing
-        for k, v in self.d_uwsgi_aggregate.iteritems():
+        for k, v in self.d_uwsgi_aggregate.items():
             if k == "k.uwsgi.started":
-                # For uwsgi aggregate, push 1 always # TODO : Check this
+                # For uwsgi aggregate, push 1 always
                 v = 1
             elif k == "k.uwsgi.workers.cur.avg_rt":
                 # For avg_rt, compute directly and bypass stuff (ALL instance only)
@@ -582,7 +580,7 @@ class UwsgiStat(KnockProbe):
                     v = self._total_avg_rt / self._total_workers_count
                 else:
                     v = 0
-                logger.info("ALL : Computed avg_rt=%s, total_rt=%s, total_workers=%s", v, self._total_avg_rt, self._total_workers_count)
+                logger.debug("ALL : Computed avg_rt=%s, total_rt=%s, total_workers=%s", v, self._total_avg_rt, self._total_workers_count)
 
             # And notify
             self.notify_value_n(k, {"ID": "ALL"}, v)

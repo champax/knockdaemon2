@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -24,13 +24,7 @@
 
 import logging
 
-from pysolbase.SolBase import SolBase
-
 from knockdaemon2.Core.KnockProbe import KnockProbe
-from knockdaemon2.Platform.PTools import PTools
-
-if PTools.get_distribution_type() == "windows":
-    from knockdaemon2.Windows.Helper.Netstat import get_netstat, STATES
 
 logger = logging.getLogger(__name__)
 
@@ -45,28 +39,26 @@ class Netstat(KnockProbe):
 
     PROC_TCP = "/proc/net/tcp"
     STATE = {
-        '01': 'ESTABLISHED',
-        '02': 'SYN_SENT',
-        '03': 'SYN_RECV',
-        '04': 'FIN_WAIT1',
-        '05': 'FIN_WAIT2',
-        '06': 'TIME_WAIT',
-        '07': 'CLOSE',
-        '08': 'CLOSE_WAIT',
-        '09': 'LAST_ACK',
-        '0A': 'LISTEN',
-        '0B': 'CLOSING'
+        "01": "ESTABLISHED",
+        "02": "SYN_SENT",
+        "03": "SYN_RECV",
+        "04": "FIN_WAIT1",
+        "05": "FIN_WAIT2",
+        "06": "TIME_WAIT",
+        "07": "CLOSE",
+        "08": "CLOSE_WAIT",
+        "09": "LAST_ACK",
+        "0A": "LISTEN",
+        "0B": "CLOSING"
     }
 
     def __init__(self):
         """
         Init
         """
-        KnockProbe.__init__(self, linux_support=True, windows_support=True)
+        KnockProbe.__init__(self, linux_support=True, windows_support=False)
 
         self.counter = dict()
-        self.pinghost = None
-        self.ping_host = None
 
         self.category = "/os/network"
 
@@ -84,17 +76,34 @@ class Netstat(KnockProbe):
         # Base
         KnockProbe.init_from_config(self, k, d_yaml_config, d)
 
-        # Go
-        self.ping_host = d["ping_target_server"]
-
     def _execute_linux(self):
         """
         Exec
         """
-        content = self._load()
+
+        # Tco
+        ar_tcp = self.load_proc_net_tcp()
+        self.process_net_tcp_from_list(ar_tcp)
+
+        # Conntrack
+        with open("/proc/sys/net/netfilter/nf_conntrack_count") as f:
+            nf_conntrack_count = float(f.readline())
+        with open("/proc/sys/net/netfilter/nf_conntrack_max") as f:
+            nf_conntrack_max = float(f.readline())
+        self.process_conntrack(nf_conntrack_count, nf_conntrack_max)
+
+    def process_net_tcp_from_list(self, ar_tcp):
+        """
+        Process tcp from buffer
+        :param ar_tcp: list of str
+        :type ar_tcp: list
+        """
         self.counter = dict()
-        for line in content:
-            line_array = self._remove_empty(line.split(' '))  # Split lines and remove empty space.
+        for line in ar_tcp:
+            line = line.strip()
+            if len(line) == 0:
+                continue
+            line_array = self._remove_empty(line.split(" "))  # Split lines and remove empty space.
             if self.STATE[line_array[3]] in self.counter:
                 self.counter[self.STATE[line_array[3]]] += 1
             else:
@@ -112,17 +121,19 @@ class Netstat(KnockProbe):
         self.notify_value_n("k.net.netstat.ESTABLISHED", None, self._get_counter_value("ESTABLISHED"))
         self.notify_value_n("k.net.netstat.CLOSING", None, self._get_counter_value("CLOSING"))
 
-        # parse connection Tracker
-        try:
-            nf_conntrack_count = float(open('/proc/sys/net/netfilter/nf_conntrack_count').readline())
-            nf_conntrack_max = float(open('/proc/sys/net/netfilter/nf_conntrack_max').readline())
-            self.notify_value_n("k.net.conntrack.count", None, nf_conntrack_count)
-            self.notify_value_n("k.net.conntrack.max", None, nf_conntrack_max)
-            # Ration
-            self.notify_value_n("k.net.conntrack.used", None, 100.0 * nf_conntrack_count / nf_conntrack_max)
+    def process_conntrack(self, nf_conntrack_count, nf_conntrack_max):
+        """
+        Process conntrack
+        :param nf_conntrack_count: float
+        :type nf_conntrack_count: float
+        :param nf_conntrack_max: float
+        :type nf_conntrack_max: float
+        """
 
-        except Exception as e:
-            logger.warning(SolBase.extostr(e))
+        self.notify_value_n("k.net.conntrack.count", None, nf_conntrack_count)
+        self.notify_value_n("k.net.conntrack.max", None, nf_conntrack_max)
+        # Ratio
+        self.notify_value_n("k.net.conntrack.used", None, 100.0 * nf_conntrack_count / nf_conntrack_max)
 
     def _get_counter_value(self, state):
         """
@@ -135,79 +146,24 @@ class Netstat(KnockProbe):
         else:
             return 0
 
-    def _load(self):
+    def load_proc_net_tcp(self):
         """
         Read the table of tcp connections & remove header
+        :return list of str
+        :rtype list
         """
-        with open(self.PROC_TCP, 'r') as f:
+        with open(self.PROC_TCP, "r") as f:
             content = f.readlines()
             content.pop(0)
         return content
 
-    # noinspection PyMethodMayBeStatic
-    def _remove_empty(self, array):
+    @classmethod
+    def _remove_empty(cls, array):
         """
         Doc
-        :param array:
-        :return:
+        :param array: list
+        :type array: list
+        :return list
+        :rtype list
         """
-        return [x for x in array if x != '']
-
-    # =====================
-    # WINDOWS
-    # =====================
-
-    # noinspection PyMethodMayBeStatic
-    def _get_windows_count(self, ar, soc_state):
-        """
-        Get socket count for specified state
-        :param ar: list of dict
-        :type ar: list
-        :param soc_state: str
-        :type soc_state: str
-        :return int
-        :rtype int
-        """
-
-        # Validate state in STATES
-        found = 0
-        for k, v in STATES.iteritems():
-            if v == soc_state:
-                found += 1
-                break
-        assert found > 0, "found must be >0, got soc_state={0}".format(soc_state)
-
-        c = 0
-        for d in ar:
-            if d["state"] == soc_state:
-                c += 1
-        return c
-
-    def _execute_windows(self):
-        """
-        Windows
-        """
-
-        try:
-            ms = SolBase.mscurrent()
-            try:
-
-                ar = get_netstat()
-            finally:
-                logger.info("get_netstat ms=%s", SolBase.msdiff(ms))
-
-            self.notify_value_n("k.net.netstat.SYN_SENT", None, self._get_windows_count(ar, "SYN_SENT"))
-            self.notify_value_n("k.net.netstat.LISTEN", None, self._get_windows_count(ar, "LISTENING"))
-            self.notify_value_n("k.net.netstat.TIME_WAIT", None, self._get_windows_count(ar, "TIME_WAIT"))
-            self.notify_value_n("k.net.netstat.SYN_RECV", None, self._get_windows_count(ar, "SYN_RCVD"))
-            self.notify_value_n("k.net.netstat.LAST_ACK", None, self._get_windows_count(ar, "LAST_ACK"))
-            self.notify_value_n("k.net.netstat.CLOSE_WAIT", None, self._get_windows_count(ar, "CLOSE_WAIT"))
-            self.notify_value_n("k.net.netstat.CLOSED", None, self._get_windows_count(ar, "CLOSED"))
-            self.notify_value_n("k.net.netstat.FIN_WAIT2", None, self._get_windows_count(ar, "FIN_WAIT_2"))
-            self.notify_value_n("k.net.netstat.FIN_WAIT1", None, self._get_windows_count(ar, "FIN_WAIT"))
-            self.notify_value_n("k.net.netstat.ESTABLISHED", None, self._get_windows_count(ar, "ESTABLISHED"))
-            self.notify_value_n("k.net.netstat.CLOSING", None, self._get_windows_count(ar, "CLOSING"))
-        except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
-        finally:
-            pass
+        return [x for x in array if x != ""]

@@ -2,9 +2,6 @@ knockd:
   exectimeout_ms: 1000
 
 transports:
-  HttpAsyncTransport:
-    class_name: knockdaemon2.Transport.HttpAsyncTransport.HttpAsyncTransport
-    http_uri: "http://127.0.0.1:7900/pv2"
 
 probes:
   # ============================
@@ -87,14 +84,6 @@ probes:
     exec_enabled: true
 
   # ============================
-  # MEMCACHE
-  # ============================
-  MemCachedStat:
-    class_name: knockdaemon2.Probes.MemCached.MemCachedStat.MemCachedStat
-    exec_interval_sec: 1
-    exec_enabled: true
-
-  # ============================
   # IPVSADM
   # ============================
   IpvsAdm:
@@ -152,21 +141,6 @@ probes:
     class_name: knockdaemon2.Probes.Rabbitmq.RabbitmqStat.RabbitmqStat
     exec_interval_sec: 60
     exec_enabled: true
-
-  # ============================
-  # PHP-FPM
-  # url format : fpm_pool_id|uri0|...|uriN
-  # each url target a pool, multiple pools possible
-  #
-  # uri0: pool_id_0|http://127.0.0.1:80/status|http://127.0.0.1:8080/status
-  # ....
-  # uriN: pool_id_N|http://127.0.0.1:80/statusN|http://127.0.0.1:8080/statusN
-  # ============================
-  PhpFpm:
-    class_name: knockdaemon2.Probes.PhpFpm.PhpFpmStat.PhpFpmStat
-    exec_interval_sec: 60
-    exec_enabled: true
-    url0: www|http://127.0.0.1:80/status|http://127.0.0.1:8080/status|http://127.0.0.1:8090/status
 
   # ============================
   # MYSQL

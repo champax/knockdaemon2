@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -42,7 +42,6 @@ class TestTransport(KnockTransport):
         # Go
         self.notify_call_count = 0
         self.node_hash = None
-        self.notify_hash = None
         self.notify_values = None
         self.custom_key_b = None
         self.stop_count = 0
@@ -61,21 +60,18 @@ class TestTransport(KnockTransport):
         # Go
         self.custom_key_b = d["custom_key_b"]
 
-    def process_notify(self, account_hash, node_hash, notify_hash, notify_values):
+    def process_notify(self, account_hash, node_hash, notify_values):
         """
         Process notify
-        :param account_hash: Hash str to value
+        :param account_hash: Hash bytes to value
         :type account_hash; dict
-        :param node_hash: Hash str to value
+        :param node_hash: Hash bytes to value
         :type node_hash; dict
-        :param notify_hash: Hash str to (disco_key, disco_id, tag)
-        :type notify_hash; dict
-        :param notify_values: List of (superv_key, tag, value)
+        :param notify_values: List of (counter_key, d_tags, value, d_values)
         :type notify_values; list
         """
         self.notify_call_count += 1
         self.node_hash = node_hash
-        self.notify_hash = notify_hash
         self.notify_values = notify_values
 
         # We return False (do NOT empty hash/list inside manager)

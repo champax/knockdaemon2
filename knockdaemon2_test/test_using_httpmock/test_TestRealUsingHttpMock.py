@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -22,27 +22,26 @@
 # ===============================================================================
 """
 
-import logging
-import unittest
-
-import os
-import redis
-# noinspection PyUnresolvedReferences,PyPackageRequirements
-from nose.plugins.attrib import attr
-from os.path import dirname, abspath
 from pysolbase.SolBase import SolBase
+
+SolBase.voodoo_init()
+
+import logging
+import os
+import unittest
+from os.path import dirname, abspath
+
+import redis
+
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.KnockManager import KnockManager
 from knockdaemon2.HttpMock.HttpMock import HttpMock
-from knockdaemon2.Platform.PTools import PTools
-from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
+from knockdaemon2.Transport.InfluxAsyncTransport import InfluxAsyncTransport
 
 logger = logging.getLogger(__name__)
-SolBase.voodoo_init()
 
 
-@attr('prov')
 class TestRealUsingHttpMock(unittest.TestCase):
     """
     Test description
@@ -56,9 +55,7 @@ class TestRealUsingHttpMock(unittest.TestCase):
         os.environ.setdefault("KNOCK_UNITTEST", "yes")
 
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
-        self.manager_config_file = \
-            self.current_dir + "conf" + SolBase.get_pathseparator() + "real" \
-            + SolBase.get_pathseparator() + "knockdaemon2.yaml"
+        self.manager_config_file = self.current_dir + "conf" + SolBase.get_pathseparator() + "real" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
         self.k = None
 
         # Reset meter
@@ -72,23 +69,17 @@ class TestRealUsingHttpMock(unittest.TestCase):
         r.flushall()
         del r
 
-        # If windows, perform a WMI initial refresh to get datas
-        if PTools.get_distribution_type() == "windows":
-            from knockdaemon2.Windows.Wmi.Wmi import Wmi
-            Wmi._wmi_fetch_all()
-            Wmi._flush_props(Wmi._WMI_DICT, Wmi._WMI_DICT_PROPS)
-
     def tearDown(self):
         """
         Setup (called after each test)
         """
         if self.k:
-            logger.warn("k set, stopping, not normal")
+            logger.warning("k set, stopping, not normal")
             self.k.stop()
             self.k = None
 
         if self.h:
-            logger.warn("h set, stopping, not normal")
+            logger.warning("h set, stopping, not normal")
             self.h.stop()
             self.h = None
 
@@ -135,10 +126,10 @@ class TestRealUsingHttpMock(unittest.TestCase):
 
         # Init manager
         self.k = KnockManager(self.manager_config_file)
-        self.k.get_first_transport_by_type(HttpAsyncTransport)._http_send_min_interval_ms = 5000
+        self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_send_min_interval_ms = 5000
 
         # Meters prefix, first transport
-        self.ft_meters_prefix = self.k.get_first_meters_prefix_by_type(HttpAsyncTransport)
+        self.ft_meters_prefix = self.k.get_first_meters_prefix_by_type(InfluxAsyncTransport)
 
         # Start
         self.k.start()
@@ -157,7 +148,7 @@ class TestRealUsingHttpMock(unittest.TestCase):
         while SolBase.msdiff(ms_start) < timeout_ms:
             # Transport
             if Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count") >= 2 \
-                    and not self.k.get_first_transport_by_type(HttpAsyncTransport)._http_pending:
+                    and not self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_pending:
                 break
 
             SolBase.sleep(50)
@@ -166,7 +157,7 @@ class TestRealUsingHttpMock(unittest.TestCase):
         self.k.stop()
 
         # Check
-        for p in self.k._probe_list:
+        for p in self.k.probe_list:
             logger.info("p=%s", p)
             c = self.k._get_probe_context(p)
             self.assertGreater(c.initial_ms_start, 0)
@@ -182,14 +173,11 @@ class TestRealUsingHttpMock(unittest.TestCase):
         self.assertGreaterEqual(Meters.aig("knock_stat_exec_all_count"), 2)
         self.assertEqual(Meters.aig("knock_stat_exec_all_too_slow"), 0)
 
-        # Validate discovery (must be empty since notified)
-        self.assertEqual(len(self.k._superv_notify_disco_hash), 0)
         # Validate values (must be empty since notified)
-        self.assertEqual(len(self.k._superv_notify_value_list), 0)
+        self.assertEqual(len(self.k.superv_notify_value_list), 0)
 
         # Validate to superv (critical)
         self.assertGreater(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed"), 0)
-        self.assertGreater(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_total"), 0)
 
         self.k = None
 

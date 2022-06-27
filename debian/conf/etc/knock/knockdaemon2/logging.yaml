@@ -1,0 +1,56 @@
+# ==================
+# LOG CONFIGURATION
+# ==================
+
+version: 1
+
+disable_existing_loggers: false
+
+root:
+  level: INFO
+  handlers: [ hSyslog ]
+
+loggers:
+  LifeCycle:
+    level: INFO
+    propagate: true
+  lifecycle:
+    level: INFO
+    propagate: true
+  pysolmeters:
+    level: WARNING
+    propagate: true
+  pysolmysql:
+    level: WARNING
+    propagate: true
+  pysolhttpclient:
+    level: WARNING
+    propagate: true
+  pysoldaemon:
+    level: INFO
+    propagate: true
+  pysolcache:
+    level: INFO
+    propagate: true
+  pysolbase:
+    level: INFO
+    propagate: true
+  pysolbase.FileUtility:
+    level: ERROR
+    propagate: true
+  knockdaemon2:
+    level: INFO
+    propagate: true
+
+handlers:
+  hSyslog:
+    class: pysolbase.SysLogger.SysLogger
+    level: INFO
+    formatter: FDEFAULT
+    address: "/dev/log"
+    facility: 16
+
+formatters:
+  FDEFAULT:
+    format: "%(asctime)s | %(levelname)s | %(module)s@%(funcName)s@%(lineno)d | %(message)s | %(kfilter)s | %(thread)d:%(threadName)s | %(process)d:%(processName)s"
+    datefmt: ""

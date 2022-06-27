@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -23,8 +23,8 @@
 """
 import logging
 import socket
-import ujson
 
+import ujson
 from pysolbase.SolBase import SolBase
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ class UdpClient(object):
     def __init__(self, max_udp_size=61440):
         """
         Constructor
-        For max udp size, refer to internet (ie http://stackoverflow.com/questions/14993000/the-most-reliable-and-efficient-udp-packet-size)
+        For max udp size, refer to internet (ie https://stackoverflow.com/questions/14993000/the-most-reliable-and-efficient-udp-packet-size)
         As we act mostly on localhost, and MTU localhost is 65536, we assume a default of 61440 (we take some margin)
         :param max_udp_size: int
         :type max_udp_size: int
@@ -49,7 +49,7 @@ class UdpClient(object):
 
     def connect(self, socket_name):
         """
-        Connect (not available on windows)
+        Connect
         :param socket_name: str
         :type socket_name: str
         """
@@ -58,23 +58,7 @@ class UdpClient(object):
             self._soc = socket.socket(socket.AF_UNIX, type=socket.SOCK_DGRAM)
             self._soc.connect(socket_name)
         except Exception as e:
-            logger.warn("connect failed, ex=%s", SolBase.extostr(e))
-            raise
-
-    def connect_windows(self, host, port):
-        """
-        Connect (not available on windows)
-        :param host: str
-        :type host: str
-        :param port: int
-        :type port: int
-        """
-
-        try:
-            self._soc = socket.socket(socket.AF_INET, type=socket.SOCK_DGRAM)
-            self._soc.connect((host, port))
-        except Exception as e:
-            logger.warn("connect failed, ex=%s", SolBase.extostr(e))
+            logger.warning("connect failed, ex=%s", SolBase.extostr(e))
             raise
 
     def disconnect(self):
@@ -118,7 +102,7 @@ class UdpClient(object):
         # We pre-encode all items len (approximate) to boost up a bit the for loop
         pre_encoded_list = list()
         for cur_list in json_list:
-            pre_encoded_list.append(len(ujson.dumps([cur_list], ensure_ascii=False)))
+            pre_encoded_list.append(len(ujson.dumps([cur_list], ensure_ascii=False).encode("utf8")))
 
         # Ok
         cur_total_len = 0
@@ -135,7 +119,7 @@ class UdpClient(object):
                 # Too big, cur_idx do not fit, extract from [start_idx, cur_idx[
 
                 # Re-encode
-                b_buf = ujson.dumps(json_list[start_idx:cur_idx], ensure_ascii=False)
+                b_buf = ujson.dumps(json_list[start_idx:cur_idx], ensure_ascii=False).encode("utf8")
 
                 # Check
                 if len(b_buf) > self._max_udp_size:
@@ -154,7 +138,7 @@ class UdpClient(object):
         # Last stuff
         if cur_total_len > 0:
             # Re-encode (do not forget last item, so +1)
-            b_buf = ujson.dumps(json_list[start_idx:cur_idx + 1], ensure_ascii=False)
+            b_buf = ujson.dumps(json_list[start_idx:cur_idx + 1], ensure_ascii=False).encode("utf8")
 
             # Check
             if len(b_buf) > self._max_udp_size:
@@ -169,8 +153,8 @@ class UdpClient(object):
     def send_binary(self, bin_buf):
         """
         Send binary
-        :param bin_buf: str
-        :type bin_buf: str
+        :param bin_buf: bytes
+        :type bin_buf: bytes
         """
 
         if not self._soc:
@@ -179,5 +163,5 @@ class UdpClient(object):
         try:
             self._soc.sendall(bin_buf)
         except Exception as e:
-            logger.warn("send failed, ex=%s", SolBase.extostr(e))
+            logger.warning("send failed, ex=%s", SolBase.extostr(e))
             raise

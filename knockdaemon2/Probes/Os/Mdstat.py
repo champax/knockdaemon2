@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -27,10 +27,6 @@ import os
 import mdstat
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
-from knockdaemon2.Platform.PTools import PTools
-
-if PTools.get_distribution_type() == "windows":
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -53,34 +49,37 @@ class Mdstat(KnockProbe):
         """
         Exec
         """
-        if not os.path.isfile('/proc/mdstat'):
+
+        self.process_from_path()
+
+    def process_from_path(self, path="/proc/mdstat"):
+        """
+        Process for path
+        :param path: Path to mdstat file
+        :type path: str
+        """
+        if not os.path.isfile(path):
             return
-        for md, result in Mdstat.parse():
+        for md, result in Mdstat.get_from_path(path=path):
             self.notify_value_n("k.os.disk.mdstat", {'md': md}, result)
 
-    def _execute_windows(self):
-        """
-        Windows
-        """
-
-        return
-
     @classmethod
-    def parse(cls, mdjson=False):
+    def get_from_path(cls, mdjson=False, path="/proc/mdstat"):
         """
         result :
             0: ok
             1: info checking
             2: warning rebuild
             3: critical degraded or broken
-
+        :param path: path to mdstat
+        :type path: str
         :param mdjson: fake data for unittest
         :type mdjson: dict
         :return: md_name, result
         :rtype: list of tuple
         """
         if not mdjson:
-            mdjson = mdstat.parse()
+            mdjson = mdstat.parse(path)
         for device_name, device in mdjson['devices'].items():
 
             # search for faulty disk

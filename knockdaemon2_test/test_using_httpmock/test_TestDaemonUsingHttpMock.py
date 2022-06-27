@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -21,34 +21,42 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
+from pysolbase.SolBase import SolBase
+
+SolBase.voodoo_init()
+
 import logging
+import os
 import sys
 import unittest
 from multiprocessing import Process
-from string import join
-
-import os
-import redis
 from os.path import dirname, abspath
+
+import redis
 from pysolbase.FileUtility import FileUtility
-from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Daemon.KnockDaemon import KnockDaemon
 from knockdaemon2.HttpMock.HttpMock import HttpMock
-from knockdaemon2.Platform.PTools import PTools
-
-SolBase.voodoo_init()
 
 logger = logging.getLogger(__name__)
 
 # Patch to dispatch env to subprocess
 oldPath = os.environ.get("PYTHONPATH")
+print("*** PYTHONPATH01=%s" % os.environ.get("PYTHONPATH"))
+print("*** sys.path=%s" % sys.path)
 if oldPath is not None:
-    os.environ["PYTHONPATH"] = join(sys.path, ":") + ":" + oldPath
+    os.environ["PYTHONPATH"] = ":".join(sys.path) + ":" + oldPath
 else:
-    os.environ["PYTHONPATH"] = join(sys.path, ":")
-os.environ["PATH"] = join(sys.path, ", ") + ", " + os.environ["PATH"]
+    os.environ["PYTHONPATH"] = ":".join(sys.path)
+print("*** PYTHONPATH02=%s" % os.environ.get("PYTHONPATH"))
+print("*** PATH01=%s" % os.environ["PATH"])
+os.environ["PATH"] = ":".join(sys.path) + ":" + os.environ["PATH"]
+print("*** PATH02=%s" % os.environ["PATH"])
+
+real_stdout = sys.stdout
+real_stderr = sys.stderr
+real_stdin = sys.stdin
 
 
 class TestDaemonUsingHttpMock(unittest.TestCase):
@@ -65,6 +73,23 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
 
         SolBase.voodoo_init()
 
+        # Reset (teamcity broke the whole stuff)
+        logger.info("GOT sys.stdin=%s", sys.stdin)
+        logger.info("GOT real_stdin=%s", real_stdin)
+        if "TEAMCITY_VERSION" in os.environ:
+            self.hack_console=True
+        else:
+            self.hack_console=False
+        logger.info("*** Using hack_console=%s", self.hack_console)
+
+        if self.hack_console:
+            self.tc_stdin = sys.stdin
+            self.tc_stdout = sys.stdout
+            self.tc_stderr = sys.stderr
+            sys.stdin = real_stdin
+            sys.stdout = real_stdout
+            sys.stderr = real_stderr
+
         # Wait 2 sec
         SolBase.sleep(1000)
         self.run_idx = 0
@@ -73,9 +98,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
         logger.info("setup : Entering, %s", SolBase.get_current_pid_as_string())
 
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
-        self.manager_config_file = \
-            self.current_dir + "conf" + SolBase.get_pathseparator() + "real" \
-            + SolBase.get_pathseparator() + "knockdaemon2.yaml"
+        self.manager_config_file = self.current_dir + "conf" + SolBase.get_pathseparator() + "real" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
 
         # Config
         self.testtimeout_ms = 5000
@@ -110,16 +133,38 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
         """
         Test
         """
+        SolBase.logging_init(log_level="INFO", force_reset=True)
+
         if self.h:
             self.h.stop()
             self.h = None
+
+        for cur_f in [self.daemon_std_err, self.daemon_std_out]:
+            try:
+                logger.info("*** FLUSH, cur_f=%s", cur_f)
+                ar = self._file_to_list(cur_f)
+                for s in ar:
+                    print(s)
+            except Exception as e:
+                logger.warning("Ex=%s", SolBase.extostr(e))
 
         for cur_f in [self.daemon_pid_file, self.daemon_std_err, self.daemon_std_out]:
             try:
                 if FileUtility.is_file_exist(cur_f):
                     os.remove(cur_f)
             except Exception as e:
-                logger.warn("Ex=%s", SolBase.extostr(e))
+                logger.warning("Ex=%s", SolBase.extostr(e))
+
+        # Reset (otherwise it blows up into teamcity again)
+        logger.info("*** TEARDOWN in")
+        if self.hack_console:
+            sys.stdin.close()
+            sys.stderr.close()
+            sys.stdin.close()
+            sys.stdin = self.tc_stdin
+            sys.stdout = self.tc_stdout
+            sys.stderr = self.tc_stderr
+        logger.info("*** TEARDOWN out")
 
     # ==============================
     # HTTP MOCK
@@ -184,7 +229,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
         try:
             if FileUtility.is_file_exist(file_name):
                 ret = FileUtility.file_to_textbuffer(file_name, "ascii")
-        except:
+        except Exception:
             ret = None
         finally:
             if ret and len(ret) > 0:
@@ -247,8 +292,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             else:
                 SolBase.sleep(10)
 
-    @unittest.skipIf(PTools.get_distribution_type() == "windows", "no unix daemon on windows")
-    @unittest.skip("TODO : Re-enable later")
+    @unittest.skipIf(SolBase.get_machine_name().find("lchdeb") == -1, "need lch laptop, this is jenkins failing with 253 exit code")
     def test_start_status_reload_stop_debian(self):
         """
         Test
@@ -256,8 +300,6 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
 
         p_list = list()
         try:
-            # MAJOR BUG WITH GEVENT : join will lock if it has been called (gevent #600)
-            # self.assertFalse(ButcherTools.HAS_BEEN_CALLED)
 
             # Start
             self._reset_std_capture()
@@ -276,6 +318,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             # =========================
 
             # Launch
+            SolBase.logging_init(log_level="DEBUG", force_reset=True)
             logger.info("Firing main_helper, ar=%s", ar)
             p = Process(target=KnockDaemon.main_helper, args=(ar, {}))
 
@@ -292,7 +335,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             logger.info("Wait now")
             ms_start = SolBase.mscurrent()
             while SolBase.msdiff(ms_start) < self.stdout_timeout_ms:
-                if join(self._get_std_out(), '\n').find("knockdaemon2 started") >= 0:
+                if "n".join(self._get_std_out()).find("knockdaemon2 started") >= 0:
                     break
                 else:
                     SolBase.sleep(10)
@@ -314,14 +357,15 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             # Check
             self.assertTrue(p.exitcode == 0)
             self.assertTrue(len(self._get_std_err()) == 0)
-            self.assertTrue(join(self._get_std_out(), '\n').find(" ERROR ") < 0)
-            self.assertTrue(join(self._get_std_out(), '\n').find(" WARN ") < 0)
+            self.assertTrue("\n".join(self._get_std_out()).find(" ERROR ") < 0)
+            self.assertTrue("\n".join(self._get_std_out()).find(" WARN ") < 0)
 
             # =========================
             # STATUS
             # =========================
 
-            for _ in range(0, 10):
+            for ii in range(0, 10):
+                logger.info("*** STATUS, ii=%s", ii)
                 # Args
                 ar = list()
                 ar.append("testProgram")
@@ -340,7 +384,9 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             # RELOAD
             # =========================
 
-            for _ in range(0, 10):
+            for ii in range(0, 10):
+                logger.info("*** RELOAD, ii=%s", ii)
+
                 # Args
                 ar = list()
                 ar.append("testProgram")
@@ -378,7 +424,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             # Try wait for stdout
             ms_start = SolBase.mscurrent()
             while SolBase.msdiff(ms_start) < self.stdout_timeout_ms:
-                if join(self._get_std_out(), '\n').find("knockdaemon2 started") >= 0:
+                if "\n".join(self._get_std_out()).find("knockdaemon2 started") >= 0:
                     break
                 else:
                     SolBase.sleep(10)
@@ -397,13 +443,13 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             # Check
             self.assertTrue(p.exitcode == 0)
             self.assertTrue(len(self._get_std_err()) == 0)
-            self.assertTrue(join(self._get_std_out(), '\n').find(" ERROR ") < 0)
-            self.assertTrue(join(self._get_std_out(), '\n').find(" WARN ") < 0)
+            self.assertTrue("\n".join(self._get_std_out()).find(" ERROR ") < 0)
+            self.assertTrue("\n".join(self._get_std_out()).find(" WARN ") < 0)
 
         finally:
             try:
                 for p in p_list:
                     p.terminate()
             except Exception as e:
-                logger.warn("Ex=%s", e)
+                logger.warning("Ex=%s", e)
             logger.info("Exiting test, idx=%s", self.run_idx)

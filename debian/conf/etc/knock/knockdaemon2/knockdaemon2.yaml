@@ -10,25 +10,12 @@ knockd:
   # Notify timestamp override (default true)
   # If set, notify timestamp are overriden by KnockManager at probe end and set to probe execution start timestamp (so execute latencies has no impact on timestamps)
   timestamp_override: true
-  # If timestamp_override is set : if this is set, timestamp is calculated based on probes expected exec start, otherwise it use current timestamp
+  # If timestamp_override is set : if this is set, timestamp is calculated based on probes expected exec start, otherwise it uses current timestamp
   timestamp_override_use_expected: true
   # Lifecycle log interal in ms
   lifecycle_interval_ms: 30000
 
 transports: {}
-
-  # ============================
-  # Managed instance transport
-  # - requires knockd acc_namespace and acc_key provided
-  # - refer to ./conf.d/10_auth.yaml.sample
-  # ============================
-  # HttpAsyncTransport:
-  #   class_name: knockdaemon2.Transport.HttpAsyncTransport.HttpAsyncTransport
-  #   http_uri: "https://api.knock.center:443/pv2"
-  #   # Http min interval : 30 sec
-  #   http_send_min_interval_ms: 30000
-  #   # Http max bytes : 128K
-  #  http_send_max_bytes: 131072
 
   # ============================
   # Influxdb direct transport
@@ -42,7 +29,6 @@ transports: {}
   #  http_send_max_bytes: 131072
   #  # Influx connection
   #  influx_timeout_ms: 20000 (default)
-  #  influx_mode: knock (default)|influx (official client)
   #  influx_host: 127.0.0.1
   #  influx_port: 8086
   #  influx_login: login
@@ -168,36 +154,12 @@ probes:
     class_name: knockdaemon2.Probes.Haproxy.Haproxy.Haproxy
     exec_interval_sec: 60
     exec_enabled: true
-
-  # ============================
-  # PHP-FPM
-  # url format : fpm_pool_id|uri0|...|uriN
-  # each url target a pool, multiple pools possible
-  #
-  # uri0: pool_id_0|http://127.0.0.1:80/status|http://127.0.0.1:8080/status
-  # ....
-  # uriN: pool_id_N|http://127.0.0.1:80/statusN|http://127.0.0.1:8080/statusN
-  # ============================
-  PhpFpm:
-    class_name: knockdaemon2.Probes.PhpFpm.PhpFpmStat.PhpFpmStat
-    exec_interval_sec: 60
-    exec_enabled: true
-    url0: www|http://127.0.0.1:80/status|http://127.0.0.1:80/phpfpm-status|http://127.0.0.1:80/php5fpm-status
   
   # ============================
   # REDIS
   # ============================
   RedisStat:
     class_name: knockdaemon2.Probes.Redis.RedisStat.RedisStat
-    exec_interval_sec: 60
-    exec_enabled: true
-  
-  # ============================
-  # MEMCACHED
-  # ============================
-  
-  MemCachedStat:
-    class_name: knockdaemon2.Probes.MemCached.MemCachedStat.MemCachedStat
     exec_interval_sec: 60
     exec_enabled: true
   
@@ -216,6 +178,8 @@ probes:
     class_name: knockdaemon2.Probes.Mongodb.MongoDbStat.MongoDbStat
     exec_interval_sec: 60
     exec_enabled: true
+    stats_per_col_enabled: true
+    stats_per_idx_enabled: true
 
   # ============================
   # Service

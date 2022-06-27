@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -24,7 +24,7 @@
 
 import logging
 from base64 import b64encode
-from urllib import urlencode
+from urllib.parse import urlencode
 
 from pysolbase.SolBase import SolBase
 from pysolhttpclient.Http.HttpClient import HttpClient
@@ -50,7 +50,7 @@ class Tools(object):
         :type account_hash; dict
         :param node_hash: Hash str to value
         :type node_hash; dict
-        :param notify_values: List of (superv_key, tag, value, d_opt_tags). Cleared upon success.
+        :param notify_values: List of (counter_key, d_tags, value, d_values). Cleared upon success.
         :type notify_values; list
         :return list of dict
         :rtype list
@@ -66,8 +66,7 @@ class Tools(object):
         # dict string (formatted) => tuple (disco_name, disco_id, disco_value)
         # notify_hash => {'test.dummy|TYPE|one': ('test.dummy', 'TYPE', 'one'), 'test.dummy|TYPE|all': ('test.dummy', 'TYPE', 'all'), 'test.dummy|TYPE|two': ('test.dummy', 'TYPE', 'two')}
         #
-        # list : tuple (probe_name, disco_value, value, timestamp)
-        # notify_values => <type 'list'>: [('test.dummy.count', 'all', 100, 1503045097.626604), ('test.dummy.count', 'one', 90, 1503045097.626629), ('test.dummy.count[two]', None, 10, 1503045097.626639), ('test.dummy.error', 'all', 5, 1503045097.62668), ('test.dummy.error', 'one', 3, 1503045097.626704), ('test.dummy.error', 'two', 2, 1503045097.626728)]
+        # list : List of (counter_key, d_tags, value, d_values). Cleared upon success.
 
         # We must send blocks like :
         # [
@@ -82,43 +81,35 @@ class Tools(object):
         # ]
 
         # Get host
-        assert len(node_hash) == 1, "len(node_hash) must be 1, got node_hash={0}".format(node_hash)
+        if not len(node_hash) == 1:
+            raise Exception("len(node_hash) must be 1, got node_hash={0}".format(node_hash))
         c_host = node_hash["host"]
         logger.debug("Processing c_host=%s", c_host)
 
         # Process data and build output dict
         ar_out = list()
-        for item in notify_values:
-            # additional_fields : default value {}
-            if len(item) == 5:
-                probe_name, dd, value, timestamp, d_opt_tags = item
-                additional_fields = {}
-            else:
-                probe_name, dd, value, timestamp, d_opt_tags, additional_fields = item
+        for counter_key, d_tags, value, timestamp, d_values in notify_values:
 
             # We got a unix timestamp (1503045097.626604)
             # Convert it to required date format
             dt_temp = SolBase.dt_ensure_utc_naive(SolBase.epoch_to_dt(timestamp))
             s_dt_temp = dt_temp.strftime('%Y-%m-%dT%H:%M:%SZ')
 
-            # Init
-            d_tags = {"host": c_host, "ns": account_hash["acc_namespace"]}
+            # Tags dict
+            d_tags_effective = {"host": c_host, "ns": account_hash["acc_namespace"]}
+            d_tags_effective.update(d_tags)
 
-            # Discovery
-            if dd:
-                d_tags.update(dd)
-
-            # Add optional tags
-            if d_opt_tags:
-                d_tags.update(d_opt_tags)
-
+            # Value dict
             f_dict = {"value": value}
-            f_dict.update(additional_fields)
+            if d_values:
+                if "value" in d_values:
+                    raise Exception("Got 'value' key in d_value (will lost it - not allowed)")
+                f_dict.update(d_values)
 
             # Build
             d_temp = {
-                "measurement": probe_name,
-                "tags": d_tags,
+                "measurement": counter_key,
+                "tags": d_tags_effective,
                 "time": s_dt_temp,
                 "fields": f_dict
             }
@@ -140,8 +131,12 @@ class Tools(object):
         :rtype dict
         """
 
+        buf = ':'.join((username, password))
+        bin_buf = buf.encode("utf8")
+        bin_b64 = b64encode(bin_buf)
+        b64 = bin_b64.decode("utf8")
         return {
-            "Authorization": "Basic " + b64encode(b':'.join((username, password)))
+            "Authorization": "Basic " + b64
         }
 
     @classmethod
@@ -179,7 +174,7 @@ class Tools(object):
         http_req.headers = {
             "Accept-Encoding": "gzip",
             "Accept": "text / plain",
-            'Content-type': u'application/json'
+            'Content-type': 'application/json'
         }
         d_auth = cls.influx_get_auth_header(username, password)
         http_req.headers.update(d_auth)
@@ -197,17 +192,18 @@ class Tools(object):
             else:
                 http_req.https_insecure = False
         else:
+            # noinspection HttpUrlsUsage
             http_req.uri = "http://{0}:{1}/query?{2}".format(host, port, s_qs)
         http_req.method = "POST"
 
         # Go
-        logger.info("Influx, http go, req=%s", http_req)
-        logger.info("Influx, http go, post_data=%s", repr(http_req.post_data))
+        logger.debug("Influx, http go, req=%s", http_req)
+        logger.debug("Influx, http go, post_data=%s", repr(http_req.post_data))
         http_rep = http_client.go_http(http_req)
 
         # Ok
-        logger.info("Influx, http reply, rep=%s", http_rep)
-        logger.info("Influx, http reply, buf=%s", repr(http_rep.buffer))
+        logger.debug("Influx, http reply, rep=%s", http_rep)
+        logger.debug("Influx, http reply, buf=%s", repr(http_rep.buffer))
         return http_rep
 
     @classmethod
@@ -245,7 +241,7 @@ class Tools(object):
         http_req.headers = {
             "Accept-Encoding": "gzip",
             "Accept": "text / plain",
-            'Content-type': u'application/json'
+            'Content-type': 'application/json'
         }
         d_auth = cls.influx_get_auth_header(username, password)
         http_req.headers.update(d_auth)
@@ -263,17 +259,18 @@ class Tools(object):
             else:
                 http_req.https_insecure = False
         else:
+            # noinspection HttpUrlsUsage
             http_req.uri = "http://{0}:{1}/query?{2}".format(host, port, s_qs)
         http_req.method = "POST"
 
         # Go
-        logger.info("Influx, http go, req=%s", http_req)
-        logger.info("Influx, http go, post_data=%s", repr(http_req.post_data))
+        logger.debug("Influx, http go, req=%s", http_req)
+        logger.debug("Influx, http go, post_data=%s", repr(http_req.post_data))
         http_rep = http_client.go_http(http_req)
 
         # Ok
-        logger.info("Influx, http reply, rep=%s", http_rep)
-        logger.info("Influx, http reply, buf=%s", repr(http_rep.buffer))
+        logger.debug("Influx, http reply, rep=%s", http_rep)
+        logger.debug("Influx, http reply, buf=%s", repr(http_rep.buffer))
         return http_rep
 
     @classmethod
@@ -313,7 +310,7 @@ class Tools(object):
         http_req.headers = {
             "Accept-Encoding": "gzip",
             "Accept": "text / plain",
-            'Content-type': u'application/octet-stream'
+            'Content-type': 'application/octet-stream'
         }
         d_auth = cls.influx_get_auth_header(username, password)
         http_req.headers.update(d_auth)
@@ -330,17 +327,19 @@ class Tools(object):
             else:
                 http_req.https_insecure = False
         else:
+            # noinspection HttpUrlsUsage
             http_req.uri = "http://{0}:{1}/write?{2}".format(host, port, s_qs)
         http_req.method = "POST"
-        http_req.post_data = ('\n'.join(ar_data) + '\n').encode('utf-8')
-        assert http_req.post_data.endswith("\n\n"), "Need \n\n ended post_data, got={0}".format(http_req.post_data[:-16])
+        http_req.post_data = ('\n'.join(ar_data) + '\n').encode('utf8')
+        if not http_req.post_data.decode("utf8").endswith("\n\n"):
+            raise Exception("Need \n\n ended post_data, got={0}".format(http_req.post_data[:-16]))
 
         # Go
-        logger.info("Influx, http go, req=%s", http_req)
+        logger.debug("Influx, http go, req=%s", http_req)
         logger.debug("Influx, http go, post_data=%s", repr(http_req.post_data))
         http_rep = http_client.go_http(http_req)
 
         # Ok
-        logger.info("Influx, http reply, rep=%s", http_rep)
-        logger.info("Influx, http reply, buf=%s", repr(http_rep.buffer))
+        logger.debug("Influx, http reply, rep=%s", http_rep)
+        logger.debug("Influx, http reply, buf=%s", repr(http_rep.buffer))
         return http_rep

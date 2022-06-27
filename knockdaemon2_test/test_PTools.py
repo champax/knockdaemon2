@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -23,10 +23,10 @@
 """
 
 import logging
-import platform
+import os
 import unittest
 
-import os
+import distro
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Platform.PTools import PTools
@@ -60,26 +60,26 @@ class TestPTools(unittest.TestCase):
         """
 
         # Internal method check
-        self.assertEqual("windows", PTools._get_distribution_type("Windows", platform.dist(), platform.linux_distribution()))
-        self.assertEqual("windows", PTools._get_distribution_type("Windows xxx", platform.dist(), platform.linux_distribution()))
+        self.assertEqual("windows", PTools._get_distribution_type("Windows", distro.id(), distro.codename()))
+        self.assertEqual("windows", PTools._get_distribution_type("Windows xxx", distro.id(), distro.codename()))
 
-        self.assertEqual("debian", PTools._get_distribution_type(None, platform.dist(), platform.linux_distribution()))
-        self.assertEqual("debian", PTools._get_distribution_type("debian", platform.dist(), platform.linux_distribution()))
-        self.assertEqual("debian", PTools._get_distribution_type("Debian", platform.dist(), platform.linux_distribution()))
-        self.assertEqual("debian", PTools._get_distribution_type("invalid", platform.dist(), platform.linux_distribution()))
-        self.assertEqual("debian", PTools._get_distribution_type("Ubuntu", platform.dist(), platform.linux_distribution()))
+        self.assertEqual("debian", PTools._get_distribution_type(None, distro.id(), distro.codename()))
+        self.assertEqual("debian", PTools._get_distribution_type("debian", distro.id(), distro.codename()))
+        self.assertEqual("debian", PTools._get_distribution_type("Debian", distro.id(), distro.codename()))
+        self.assertEqual("debian", PTools._get_distribution_type("invalid", distro.id(), distro.codename()))
+        self.assertEqual("debian", PTools._get_distribution_type("Ubuntu", distro.id(), distro.codename()))
 
-        self.assertEqual("redhat", PTools._get_distribution_type("CentOs", platform.dist(), platform.linux_distribution()))
-        self.assertEqual("redhat", PTools._get_distribution_type("CentOs xxx", platform.dist(), platform.linux_distribution()))
-        self.assertEqual("redhat", PTools._get_distribution_type("redhat", platform.dist(), platform.linux_distribution()))
-        self.assertEqual("redhat", PTools._get_distribution_type("redhat xxx", platform.dist(), platform.linux_distribution()))
-        self.assertEqual("redhat", PTools._get_distribution_type("Redhat xxx", platform.dist(), platform.linux_distribution()))
-        self.assertEqual("redhat", PTools._get_distribution_type("red hat", platform.dist(), platform.linux_distribution()))
-        self.assertEqual("redhat", PTools._get_distribution_type("red hat xxx", platform.dist(), platform.linux_distribution()))
-        self.assertEqual("redhat", PTools._get_distribution_type("Red hat xxx", platform.dist(), platform.linux_distribution()))
-        self.assertEqual("redhat", PTools._get_distribution_type("rehl", platform.dist(), platform.linux_distribution()))
-        self.assertEqual("redhat", PTools._get_distribution_type("rehl xxx", platform.dist(), platform.linux_distribution()))
-        self.assertEqual("redhat", PTools._get_distribution_type("REhl xxx", platform.dist(), platform.linux_distribution()))
+        self.assertEqual("redhat", PTools._get_distribution_type("CentOs", distro.id(), distro.codename()))
+        self.assertEqual("redhat", PTools._get_distribution_type("CentOs xxx", distro.id(), distro.codename()))
+        self.assertEqual("redhat", PTools._get_distribution_type("redhat", distro.id(), distro.codename()))
+        self.assertEqual("redhat", PTools._get_distribution_type("redhat xxx", distro.id(), distro.codename()))
+        self.assertEqual("redhat", PTools._get_distribution_type("Redhat xxx", distro.id(), distro.codename()))
+        self.assertEqual("redhat", PTools._get_distribution_type("red hat", distro.id(), distro.codename()))
+        self.assertEqual("redhat", PTools._get_distribution_type("red hat xxx", distro.id(), distro.codename()))
+        self.assertEqual("redhat", PTools._get_distribution_type("Red hat xxx", distro.id(), distro.codename()))
+        self.assertEqual("redhat", PTools._get_distribution_type("rehl", distro.id(), distro.codename()))
+        self.assertEqual("redhat", PTools._get_distribution_type("rehl xxx", distro.id(), distro.codename()))
+        self.assertEqual("redhat", PTools._get_distribution_type("REhl xxx", distro.id(), distro.codename()))
 
         # Current stuff
         self.assertIn(PTools.get_distribution_type(), ["debian", "redhat", "windows"])

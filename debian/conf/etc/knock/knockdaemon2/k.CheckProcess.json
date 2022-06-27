@@ -1,6 +1,8 @@
 {
   "knockdaemon2": {
-    "startup": "/opt/knock/knockdaemon2/bin/knockdaemon2",
+    "startup": [
+      "/usr/lib/systemd/system/knockdaemon2.service"
+    ],
     "pid": "/var/run/knockdaemon2.pid"
   }
 }

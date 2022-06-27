@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -22,7 +22,8 @@
 # ===============================================================================
 """
 import logging
-from Queue import Queue
+
+from gevent.queue import Queue
 
 logger = logging.getLogger(__name__)
 lifecyclelogger = logging.getLogger("LifeCycle")
@@ -47,6 +48,13 @@ class KnockTransport(object):
         # Max
         self._http_send_max_bytes = 64000
 
+        # Current bytes in queue
+        self._current_queue_bytes = 0
+
+        # Max bytes in send queue (if reached, older items are kicked)
+        # default : 16MB
+        self._max_bytes_in_queue = 1024 * 1024 * 16
+
     def init_from_config(self, d_yaml_config, d, auto_start=True):
         """
         Initialize from configuration
@@ -59,15 +67,13 @@ class KnockTransport(object):
         """
         raise NotImplementedError()
 
-    def process_notify(self, account_hash, node_hash, notify_hash, notify_values):
+    def process_notify(self, account_hash, node_hash, notify_values):
         """
         Process notify
-        :param account_hash: Hash str to value
+        :param account_hash: Hash bytes to value
         :type account_hash; dict
-        :param node_hash: Hash str to value
+        :param node_hash: Hash bytes to value
         :type node_hash; dict
-        :param notify_hash: Hash str to (disco_key, disco_id, tag)
-        :type notify_hash; dict
         :param notify_values: List of (superv_key, tag, value)
         :type notify_values; list
         :return True if success

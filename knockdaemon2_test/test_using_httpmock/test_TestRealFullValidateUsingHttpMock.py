@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -22,17 +22,19 @@
 # ===============================================================================
 """
 
+from pysolbase.SolBase import SolBase
+
+SolBase.voodoo_init()
+
 import logging
+import os
 import shutil
 import unittest
-
-import os
-import redis
-# noinspection PyUnresolvedReferences,PyPackageRequirements
-from nose.plugins.attrib import attr
 from os.path import dirname, abspath
+
+import redis
 from pysolbase.FileUtility import FileUtility
-from pysolbase.SolBase import SolBase
+
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.Core.KnockManager import KnockManager
@@ -49,16 +51,13 @@ from knockdaemon2.Probes.Os.NetStat import Netstat
 from knockdaemon2.Probes.Os.Network import Network
 from knockdaemon2.Probes.Os.ProcNum import NumberOfProcesses
 from knockdaemon2.Probes.Os.UpTime import Uptime
-from knockdaemon2.Probes.PhpFpm.PhpFpmStat import PhpFpmStat
 from knockdaemon2.Probes.Uwsgi.UwsgiStat import UwsgiStat
 from knockdaemon2.Probes.Varnish.VarnishStat import VarnishStat
-from knockdaemon2.Transport.HttpAsyncTransport import HttpAsyncTransport
+from knockdaemon2.Transport.InfluxAsyncTransport import InfluxAsyncTransport
 
-SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
 
 
-@attr('prov')
 class TestRealAll(unittest.TestCase):
     """
     Test description
@@ -75,16 +74,14 @@ class TestRealAll(unittest.TestCase):
         self.h = None
 
         self.current_dir = dirname(abspath(__file__)) + SolBase.get_pathseparator()
-        self.manager_config_file = \
-            self.current_dir + "conf" + SolBase.get_pathseparator() + "realall" \
-            + SolBase.get_pathseparator() + "knockdaemon2.yaml"
+        self.manager_config_file = self.current_dir + "conf" + SolBase.get_pathseparator() + "realall" + SolBase.get_pathseparator() + "knockdaemon2.yaml"
         self.k = None
 
         # Config files
         for f in [
+            "knockdaemon2.yaml",
             "k.CheckProcess.json",
             "k.CheckDns.json",
-            "knockdaemon2.yaml",
             SolBase.get_pathseparator().join(["conf.d", "10_auth.yaml"])
         ]:
             src = self.current_dir + "conf" + SolBase.get_pathseparator() + "realall" + SolBase.get_pathseparator() + f
@@ -118,23 +115,15 @@ class TestRealAll(unittest.TestCase):
         r.flushall()
         del r
 
-        # If windows, perform a WMI initial refresh to get datas
-        if PTools.get_distribution_type() == "windows":
-            from knockdaemon2.Windows.Wmi.Wmi import Wmi
-            Wmi._wmi_fetch_all()
-            Wmi._flush_props(Wmi._WMI_DICT, Wmi._WMI_DICT_PROPS)
-
     def tearDown(self):
         """
         Setup (called after each test)
         """
         if self.k:
-            logger.warn("k set, stopping, not normal")
             self.k.stop()
             self.k = None
 
         if self.h:
-            logger.warn("h set, stopping, not normal")
             self.h.stop()
             self.h = None
 
@@ -203,16 +192,16 @@ class TestRealAll(unittest.TestCase):
         # Start, without starting manager, then cleanup manager probe list
         self._start_all()
         self.h._paranoid_enabled = True
-        self.k._probe_list = list()
-        self.k.get_first_transport_by_type(HttpAsyncTransport)._http_send_min_interval_ms = 1000
-        self.k.get_first_transport_by_type(HttpAsyncTransport)._http_network_timeout_ms = 60000
+        self.k.probe_list = list()
+        self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_send_min_interval_ms = 1000
+        self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_network_timeout_ms = 60000
 
         # Meters prefix, first transport
-        self.ft_meters_prefix = self.k.get_first_meters_prefix_by_type(HttpAsyncTransport)
+        self.ft_meters_prefix = self.k.get_first_meters_prefix_by_type(InfluxAsyncTransport)
 
         # Init our probes
         i_count = 0
-        for k, d in self.k._d_yaml_config["probes"].iteritems():
+        for k, d in self.k._d_yaml_config["probes"].items():
             class_name = d["class_name"]
             f_name = self.fullname(p)
             if class_name == f_name:
@@ -234,49 +223,27 @@ class TestRealAll(unittest.TestCase):
             # Execute
             p.execute()
 
-            # Check how many disco do we have
-            disco_count = len(self.k._superv_notify_disco_hash)
-            for (superv_key, dd, v, timestamp, d_opt_tags) in self.k._superv_notify_value_list:
-                if superv_key.find(".discovery") >= 0:
-                    disco_count += 1
-
             # Manager : request a send
             self.k._process_superv_notify()
 
             # Wait for everything pushed and processed
             logger.info("***** WAITING PASS ONE [%s]", loop_idx)
-            timeout_ms = timeout_ms
             ms_start = SolBase.mscurrent()
             while SolBase.msdiff(ms_start) < timeout_ms:
-                if self.k.get_first_transport_by_type(HttpAsyncTransport)._queue_to_send.qsize() == 0 \
-                        and not self.k.get_first_transport_by_type(HttpAsyncTransport)._http_pending:
+                if self.k.get_first_transport_by_type(InfluxAsyncTransport)._queue_to_send.qsize() == 0 \
+                        and not self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_pending:
                     break
                 else:
                     SolBase.sleep(100)
 
-            # If we got at least disco_count + 1 ok, we are fine
-            processed_ok = Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed")
-            if processed_ok > disco_count:
-                logger.info(
-                    "Success, having=%s, target=%s, delay=%s",
-                    processed_ok,
-                    disco_count + 1,
-                    SolBase.msdiff(ms_start_loop)
-                )
-                break
-
-            # NOT OK
-            logger.warn(
-                "Re-looping, having=%s, target=%s",
-                processed_ok,
-                disco_count + 1
-            )
+            # Ok
+            break
 
         self.assertGreaterEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count"), 1)
         self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_exception_count"), 0)
         self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_failed_count"), 0)
-        self.assertEqual(self.k.get_first_transport_by_type(HttpAsyncTransport)._queue_to_send.qsize(), 0)
-        self.assertFalse(self.k.get_first_transport_by_type(HttpAsyncTransport)._http_pending)
+        self.assertEqual(self.k.get_first_transport_by_type(InfluxAsyncTransport)._queue_to_send.qsize(), 0)
+        self.assertFalse(self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_pending)
 
         # Ok, here.... let's play... we reset ALL counters
         logger.info("***** EXEC PASS TWO")
@@ -292,8 +259,8 @@ class TestRealAll(unittest.TestCase):
         ms_start = SolBase.mscurrent()
         while SolBase.msdiff(ms_start) < timeout_ms:
             if Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count") == 1 \
-                    and self.k.get_first_transport_by_type(HttpAsyncTransport)._queue_to_send.qsize() == 0 \
-                    and not self.k.get_first_transport_by_type(HttpAsyncTransport)._http_pending:
+                    and self.k.get_first_transport_by_type(InfluxAsyncTransport)._queue_to_send.qsize() == 0 \
+                    and not self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_pending:
                 break
             else:
                 SolBase.sleep(100)
@@ -302,14 +269,10 @@ class TestRealAll(unittest.TestCase):
         self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_ok_count"), 1)
         self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_exception_count"), 0)
         self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_failed_count"), 0)
-        self.assertEqual(self.k.get_first_transport_by_type(HttpAsyncTransport)._queue_to_send.qsize(), 0)
-        self.assertFalse(self.k.get_first_transport_by_type(HttpAsyncTransport)._http_pending)
+        self.assertEqual(self.k.get_first_transport_by_type(InfluxAsyncTransport)._queue_to_send.qsize(), 0)
+        self.assertFalse(self.k.get_first_transport_by_type(InfluxAsyncTransport)._http_pending)
         self.assertGreaterEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed"), 1)
         self.assertEqual(Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_failed"), 0)
-        self.assertEqual(
-            Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_total"),
-            Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed"))
-
         self.assertGreaterEqual(
             Meters.aig(self.ft_meters_prefix + "knock_stat_transport_spv_processed"),
             Meters.aig(self.ft_meters_prefix + "knock_stat_notify_simple_value") +
@@ -507,7 +470,8 @@ class TestRealAll(unittest.TestCase):
 
             if request['PATH_INFO'].endswith('/nginx_status'):
                 response("200 OK", [('Content-Type', 'text/html')])
-                return status_buffer
+                o = status_buffer.encode("utf8")
+                return [o]
 
         # start Web server
         http_server = pywsgi.WSGIServer(('127.0.0.1', 0), http_process)
@@ -516,60 +480,6 @@ class TestRealAll(unittest.TestCase):
 
         # start Unit test
         self._validate_internal(NginxStat(url='http://127.0.0.1:' + str(server_port) + '/nginx_status'))
-
-        # stop server
-        http_server.stop(timeout=2)
-
-    @unittest.skipIf(PhpFpmStat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % ApacheStat())
-    def test_probe_full_phpfpm(self):
-        """
-        Test
-        :return:
-        """
-        logger.info("GO")
-
-        from gevent import pywsgi
-
-        def http_process(request, response):
-            """
-            Internal http method
-            :param request:
-            :param response
-            :return:
-            """
-            status_buffer = '{' \
-                            '"pool":"www",' \
-                            '"process manager":"dynamic",' \
-                            '"start time":1415829290,' \
-                            '"start since":2615,' \
-                            '"accepted conn":271839,' \
-                            '"listen queue":0,' \
-                            '"max listen queue":0,' \
-                            '"listen queue len":0,' \
-                            '"idle processes":2,' \
-                            '"active processes":1,' \
-                            '"total processes":3,' \
-                            '"max active processes":5,' \
-                            '"max children reached":6,' \
-                            '"slow requests":0}'
-
-            # request['PATH_INFO'] => 'http://127.0.0.1:48168/status'
-            if request['PATH_INFO'].endswith('/status'):
-                logger.info("/status CALLED")
-                response("200 OK", [('Content-Type', 'application/json')])
-                return status_buffer
-            else:
-                self.fail("No /status CALLED")
-
-        # start Web server
-        http_server = pywsgi.WSGIServer(('127.0.0.1', 0), http_process)
-        http_server.start()
-        server_port = http_server.server_port
-
-        # start Unit test
-        self._validate_internal(PhpFpmStat(
-            d_pool_from_url={'www': ['http://127.0.0.1:' + str(server_port) + '/status?json']}
-        ))
 
         # stop server
         http_server.stop(timeout=2)

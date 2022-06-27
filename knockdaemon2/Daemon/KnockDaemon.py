@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -21,18 +21,20 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
+from pysolbase.SolBase import SolBase
+SolBase.voodoo_init()
+
 import logging
 import sys
 from logging.handlers import SysLogHandler
 
 from gevent import util
-from pysolbase.SolBase import SolBase
+
 from pysoldaemon.daemon.Daemon import Daemon
 
 from knockdaemon2.Core.KnockManager import KnockManager
 
 # Override logging to file (no syslog)
-SolBase.voodoo_init()
 SolBase.logging_init(log_level="INFO", force_reset=True, log_to_file=None, log_to_syslog=False)
 logger = logging.getLogger(__name__)
 
@@ -109,6 +111,15 @@ class KnockDaemon(Daemon):
             help="knockdaemon2 ini file [default: /etc/knock/knockdaemon2.yaml]"
         )
 
+        arg_parser.add_argument(
+            "-logconfig",
+            metavar="logconfig",
+            type=str,
+            default="/etc/knock/knockdaemon2/logging.yaml",
+            action="store",
+            help="knockdaemon2 log config file [default: /etc/knock/knockdaemon2/logging.yaml]"
+        )
+
         return arg_parser
 
     # noinspection PyUnusedLocal,PyMethodMayBeStatic
@@ -119,7 +130,7 @@ class KnockDaemon(Daemon):
         logger.debug("Called")
 
     # noinspection PyMethodMayBeStatic
-    def _on_status(self):
+    def _on_status(self, *argv, **kwargs):
         """
         Test
         """
@@ -136,14 +147,20 @@ class KnockDaemon(Daemon):
                 )
         except Exception as e:
             s = SolBase.extostr(e)
-            print(s)
-            logger.warn("Ex=%s", s)
+            logger.warning("Ex=%s", s)
 
     def _on_start(self):
         """
         Test
         """
         logger.info("knockdaemon2 starting")
+
+        # Logger config file
+        log_config_file = self.vars.get("logconfig", None)
+        logger.info("using log_config_file=%s", log_config_file)
+        if log_config_file is not None:
+            logger.info("loading log_config_file=%s (this may redirect logs)", log_config_file)
+            SolBase.logging_initfromfile(config_file_name=log_config_file, force_reset=True)
 
         # Fetch config
         config_file = self.vars["c"]

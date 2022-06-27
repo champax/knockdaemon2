@@ -2,7 +2,7 @@
 -*- coding: utf-8 -*-
 ===============================================================================
 
-Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 
 
 
@@ -22,8 +22,8 @@ Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
  ===============================================================================
 """
 import logging
-
 import os
+
 from gevent.pool import Pool
 
 from knockdaemon2.Core.UDPBusinessServerDomainLinux import UDPBusinessServerDomainLinux
@@ -140,7 +140,7 @@ class UDPServer(object):
 
         # Check
         if self._is_started:
-            logger.warn("Already started, bypass")
+            logger.warning("Already started, bypass")
             return
 
         # Start
@@ -180,7 +180,7 @@ class UDPServer(object):
 
         # Check
         if not self._is_started:
-            logger.warn("Not started, bypass")
+            logger.warning("Not started, bypass")
             return
 
         # Stop

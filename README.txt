@@ -5,7 +5,7 @@ Welcome to Knock Daemon source code repository
 
 https://knock.center
 
-Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 
 Source code
 ===============
@@ -22,16 +22,12 @@ Source code
 - We are using docstring (:return, :rtype, :param, :type etc..), PyCharm "noinspection", feel free to use them
 - User running tests must be able to raise rlimit to 1048576
 - User running tests must be able to fire several commands as sudo without password
-CentOs : /usr/bin/yum,/usr/sbin/dmidecode,/usr/sbin/smartctl,/sbin/sysctl,/usr/sbin/uwsgi,/bin/cat
 Debian : /usr/bin/apt-get,/usr/sbin/dmidecode,/usr/sbin/smartctl,/sbin/sysctl,/usr/bin/uwsgi,/bin/cat
 
 Requirements
 ===============
 
-- Debian 8 Jessie or greater, Ubuntu equivalent, x64, Python 2.7
-- Debian 7 Wheezy is supported by unittests & build system
-- REHL 7 or CentOs 7, x64, Python 2.7
-- Windows Vista or greater, Windows Server 2008 or greater, x64, Python 2.7
+- Debian 10 or greater
 
 Unittests
 ===============
@@ -43,7 +39,6 @@ To run unittests, you will need:
 - port 7900 free and available on your computer (HttpMock will listen onto it)
 - apache running, with a status page replying on "http://127.0.0.1:80/server-status", "http://127.0.0.1:8080/server-status", or "http://127.0.0.1:8090/server-status"
 - varnish running, "varnishstat -1" and "varnishstat -j" working
-- phpfpm running, with a pool "www" backed by a status page replying on "http://127.0.0.1:80/status", "http://127.0.0.1:8080/status", or "http://127.0.0.1:8090/status"
 - mysql running
 - uwsgi running, with at least one application named z_frontends and stats enabled in configuration
 - memcached running, listening on localhost or unix domain socket
@@ -51,11 +46,6 @@ To run unittests, you will need:
 - smartmontools installed
 - /etc/resolv.conf set to nameserver 8.8.8.8, nameserver 194.98.65.65, nameserver 213.186.33.99
 - sysctl tuned, allowing max open files raised to 1048576
-
-For windows :
-
-- redis installed
-- squid installed and configured
 
 --------
 

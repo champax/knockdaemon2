@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -46,8 +46,6 @@ class ButcherTools(object):
     Tools
     """
 
-    HAS_BEEN_CALLED = False
-
     @classmethod
     def invoke(cls, cmd, timeout_ms=10000, shell=False):
         """
@@ -66,8 +64,7 @@ class ButcherTools(object):
             return cls._invoke_internal(cmd, timeout_ms, shell=shell)
         else:
             if cmd.find("|") >= 0:
-                logger.error("Pipe not support in invoke, cmd=%s", cmd)
-                raise Exception("Pipe not support in invoke")
+                raise Exception("Pipe not support in invoke, cmd=%s" % cmd)
 
             return cls._invoke_internal(cmd.split(' '), timeout_ms, shell=False)
 
@@ -85,8 +82,6 @@ class ButcherTools(object):
         :return tuple (exit code, stdout, stderr)
         :rtype tuple
         """
-
-        cls.HAS_BEEN_CALLED = True
 
         so = ""
         se = ""
@@ -107,14 +102,19 @@ class ButcherTools(object):
                 so, se = p.communicate()
                 SolBase.sleep(0)
 
+                if so is not None:
+                    so = so.decode("utf8")
+                if se is not None:
+                    se = se.decode("utf8")
+
                 ret_code = p.returncode
                 p = None
                 return ret_code, so, se
         except InvokeTimeout:
-            logger.warn("invoke timeout, ar_or_string=%s, ms=%s", ar_or_string, SolBase.msdiff(ms))
+            logger.warning("invoke timeout, ar_or_string=%s, ms=%s", ar_or_string, SolBase.msdiff(ms))
             return -999, so, se
         except Exception as e:
-            logger.warn("Exception in invoke, ar_or_string=%s, ex=%s", ar_or_string, SolBase.extostr(e))
+            logger.warning("Exception in invoke, ar_or_string=%s, ex=%s", ar_or_string, SolBase.extostr(e))
             return -998, so, se
         finally:
             # Kill if set
@@ -123,18 +123,17 @@ class ButcherTools(object):
                     p.kill()
                     del p
                 except Exception as e:
-                    logger.warn("Exception in kill, ar=%s, ex=%s", ar_or_string, SolBase.extostr(e))
+                    logger.warning("Exception in kill, ar=%s, ex=%s", ar_or_string, SolBase.extostr(e))
 
     @classmethod
     def split(cls, orig, sep=None):
         """
-        Generator function for iterating through large strings, particularly useful
-        as a replacement for str.splitlines().
-
-        See http://stackoverflow.com/a/3865367
-        :param orig:
-        :param sep:
-        :return:
+        :param orig: str
+        :type orig: str
+        :param sep: str,None
+        :type sep: str,None
+        :return generator
+        :rtype generator
         """
         exp = re.compile(r'\s+' if sep is None else re.escape(sep))
         pos = 0

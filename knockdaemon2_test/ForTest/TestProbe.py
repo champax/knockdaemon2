@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -42,7 +42,7 @@ class TestProbe(KnockProbe):
         """
 
         # Base (both support)
-        KnockProbe.__init__(self, linux_support=True, windows_support=True)
+        KnockProbe.__init__(self, linux_support=True, windows_support=False)
 
         # Go
         self.custom_key_b = None
@@ -78,13 +78,6 @@ class TestProbe(KnockProbe):
         logger.info("Go")
         self._execute_all()
 
-    def _execute_windows(self):
-        """
-        Execute a probe.
-        """
-        logger.info("Go")
-        self._execute_all()
-
     def _execute_all(self):
         """
         Execute a probe.
@@ -101,11 +94,6 @@ class TestProbe(KnockProbe):
 
             self.exec_count += 1
 
-            # Discovery
-            self.notify_discovery_n("test.dummy.discovery", {"TYPE": "all"})
-            self.notify_discovery_n("test.dummy.discovery", {"TYPE": "one"})
-            self.notify_discovery_n("test.dummy.discovery", {"TYPE": "two"})
-
             # Values
             self.notify_value_n("test.dummy.count", {"TYPE": "all"}, 100)
             self.notify_value_n("test.dummy.count", {"TYPE": "one"}, 90)
@@ -115,7 +103,7 @@ class TestProbe(KnockProbe):
             self.notify_value_n("test.dummy.error", {"TYPE": "one"}, 3)
             self.notify_value_n("test.dummy.error", {"TYPE": "two"}, 2)
         except Exception as e:
-            logger.warn("Ex=%s", SolBase.extostr(e))
+            logger.warning("Ex=%s", SolBase.extostr(e))
         finally:
             logger.info("Finally")
 

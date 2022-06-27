@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -40,6 +40,7 @@ from greenlet import GreenletExit
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
 from pysolmeters.Meters import Meters
+from yaml import SafeLoader
 
 from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Core.KnockProbeContext import KnockProbeContext
@@ -82,8 +83,7 @@ class KnockManager(object):
         logger.info("PTools, is_cpu_arm=%s", PTools.is_cpu_arm())
         logger.info("PTools, is_os_64=%s", PTools.is_os_64())
 
-        if PTools.get_distribution_type() != "windows":
-            logger.info("Os, uname=%s", os.uname())
+        logger.info("Os, uname=%s", os.uname())
 
         logger.info("Manager launching now")
 
@@ -118,7 +118,7 @@ class KnockManager(object):
         self._ar_knock_transport = list()
 
         # Probe list
-        self._probe_list = list()
+        self.probe_list = list()
 
         # Probe context
         self._hash_context = dict()
@@ -126,15 +126,8 @@ class KnockManager(object):
         # Timeout per probe
         self._exectimeout_ms = 10000
 
-        # Timestamp override
-        self._timestamp_override = True
-        self._timestamp_override_use_expected = True
-
-        # Disco hash
-        self._superv_notify_disco_hash = dict()
-
         # Value list
-        self._superv_notify_value_list = list()
+        self.superv_notify_value_list = list()
 
         # Account management
         self._account_hash = dict()
@@ -180,7 +173,7 @@ class KnockManager(object):
         for cur_file in ar_to_load:
             logger.info("Loading cur_file=%s", cur_file)
             with open(cur_file, 'r') as yml_file:
-                cur_d = yaml.load(yml_file)
+                cur_d = yaml.load(yml_file, Loader=SafeLoader)
 
             logger.info("Merging cur_d=%s", cur_d)
 
@@ -203,10 +196,12 @@ class KnockManager(object):
         :rtype dict
         """
 
-        assert isinstance(d1, dict), "need a dict"
-        assert isinstance(d2, dict), "need a dict"
+        if not isinstance(d1, dict):
+            raise Exception("need a dict")
+        elif not isinstance(d2, dict):
+            raise Exception("need a dict")
 
-        for cur_k, cur_v in d2.iteritems():
+        for cur_k, cur_v in d2.items():
             if cur_k in d1:
                 # Need both dict to merge, otherwise d2 wins
                 if not isinstance(cur_v, dict) or not isinstance(d1[cur_k], dict):
@@ -237,16 +232,6 @@ class KnockManager(object):
             if "exectimeout_ms" in self._d_yaml_config["knockd"]:
                 self._exectimeout_ms = self._d_yaml_config["knockd"]["exectimeout_ms"]
 
-            if "timestamp_override" in self._d_yaml_config["knockd"]:
-                self._timestamp_override = self._d_yaml_config["knockd"]["timestamp_override"]
-            if self._timestamp_override:
-                logger.warn("_timestamp_override enabled (this is experimental)")
-
-            if "timestamp_override_use_expected" in self._d_yaml_config["knockd"]:
-                self._timestamp_override_use_expected = self._d_yaml_config["knockd"]["timestamp_override"]
-            if self._timestamp_override_use_expected:
-                logger.warn("_timestamp_override_use_expected enabled (this is experimental)")
-
             # Account for managed instance, which is optional now due to influx support
             if "acc_namespace" in self._d_yaml_config["knockd"]:
                 self._account_hash["acc_namespace"] = self._d_yaml_config["knockd"]["acc_namespace"]
@@ -254,15 +239,17 @@ class KnockManager(object):
 
                 logger.info("Account hash=%s", self._account_hash)
             else:
-                logger.warn("No acc_namespace defined in configuration, using default, HttpAsyncTransport will not be able to push datas to remote managed instance")
+                logger.warning("No acc_namespace defined in configuration, using default, transports may not be able to push datas to remote managed instance")
                 self._account_hash = {
                     "acc_namespace": "unset",
                     "acc_key": "unset"
                 }
 
             # Check them
-            assert len(self._account_hash["acc_namespace"]) > 0, "Invalid acc_namespace"
-            assert len(self._account_hash["acc_key"]) > 0, "Invalid acc_key"
+            if not len(self._account_hash["acc_namespace"]) > 0:
+                raise Exception("Invalid acc_namespace")
+            elif not len(self._account_hash["acc_key"]) > 0:
+                raise Exception("Invalid acc_key")
 
             # Lifecycle
             try:
@@ -280,11 +267,11 @@ class KnockManager(object):
 
             # Init transports
             logger.info("Init transports")
-            if "transports" in self._d_yaml_config:
-                for k, d in self._d_yaml_config["transports"].iteritems():
+            if "transports" in self._d_yaml_config and self._d_yaml_config["transports"] is not None:
+                for k, d in self._d_yaml_config["transports"].items():
                     self._init_transport(k, d)
             else:
-                logger.warn("No transports defined, daemon will run in noop mode, please configure some transports")
+                logger.warning("No transports defined, daemon will run in noop mode, please configure some transports")
 
             # Init Udp Listener
             logger.info("Init udp")
@@ -292,7 +279,7 @@ class KnockManager(object):
 
             # Init probes
             logger.info("Init probes")
-            for k, d in self._d_yaml_config["probes"].iteritems():
+            for k, d in self._d_yaml_config["probes"].items():
                 self._init_probe(k, d)
 
             # Init custom probes
@@ -359,7 +346,7 @@ class KnockManager(object):
         p.init_from_config(k, self._d_yaml_config, d)
 
         # Ok, register it
-        self._probe_list.append(p)
+        self.probe_list.append(p)
         logger.info("Probe registered, p=%s", p)
 
     def _init_udp_server(self):
@@ -454,7 +441,7 @@ class KnockManager(object):
 
                 # Check
                 if self._is_running:
-                    logger.warn("Already running, doing nothing")
+                    logger.warning("Already running, doing nothing")
 
                 # Start logs
                 lifecyclelogger.info("Start : _exectimeout_ms=%s", self._exectimeout_ms)
@@ -524,7 +511,7 @@ class KnockManager(object):
         """
 
         # Exec all
-        for p in self._probe_list:
+        for p in self.probe_list:
             self._try_execute_probe_go(p)
 
         # Notify all
@@ -582,16 +569,16 @@ class KnockManager(object):
         logger.debug("Entering")
         ms = SolBase.mscurrent()
         try:
-            for p in self._probe_list:
+            for p in self.probe_list:
                 try:
                     self._try_execute_probe(p)
                 except Exception as e:
-                    logger.warn("Inner exception, p=%s, ex=%s", p, SolBase.extostr(e))
+                    logger.warning("Inner exception, p=%s, ex=%s", p, SolBase.extostr(e))
                     Meters.aii("knock_stat_exec_all_inner_exception")
                 finally:
                     SolBase.sleep(0)
         except Exception as e:
-            logger.warn("Outer exception, ex=%s", SolBase.extostr(e))
+            logger.warning("Outer exception, ex=%s", SolBase.extostr(e))
             Meters.aii("knock_stat_exec_all_outer_exception")
         finally:
             ms_elapsed = SolBase.msdiff(ms)
@@ -604,7 +591,7 @@ class KnockManager(object):
 
             # Check execution time
             if next_diff_ms <= 0.0:
-                logger.warn("Execution to slow, next_diff_ms=%s, ms_elapsed=%s", next_diff_ms, ms_elapsed)
+                logger.warning("Execution to slow, next_diff_ms=%s, ms_elapsed=%s", next_diff_ms, ms_elapsed)
                 Meters.aii("knock_stat_exec_all_too_slow")
 
     def _try_execute_probe(self, p):
@@ -644,9 +631,6 @@ class KnockManager(object):
         if c.initial_ms_start == 0.0:
             c.initial_ms_start = SolBase.mscurrent()
 
-        # Get expected ms
-        expected_ms = self._need_exec_compute_next_start_ms(p, c)
-
         # Increment
         c.exec_count_so_far += 1.0
 
@@ -656,14 +640,7 @@ class KnockManager(object):
             exec_timeout_ms = self._exectimeout_ms
             if p.exec_timeout_override_ms:
                 exec_timeout_ms = p.exec_timeout_override_ms
-                logger.info("Exec timeout override set at probe end, using exec_timeout_ms=%s", exec_timeout_ms)
-
-            # If config specify to use timestamp override by manager, we force
-            if self._timestamp_override:
-                if self._timestamp_override_use_expected:
-                    p.notify_ts_override = float(expected_ms / 1000.0)
-                else:
-                    p.notify_ts_override = time()
+                logger.debug("Exec timeout override set at probe end, using exec_timeout_ms=%s", exec_timeout_ms)
 
             # FIRE
             with Timeout(exec_timeout_ms * 0.001):
@@ -673,10 +650,10 @@ class KnockManager(object):
                 ms_elapsed = SolBase.msdiff(ms)
                 logger.debug("Exec done, ms=%s, p=%s", ms_elapsed, p)
         except Timeout:
-            logger.warn("Execute timeout, p=%s", p)
+            logger.warning("Execute timeout, p=%s", p)
             Meters.aii("knock_stat_exec_probe_timeout")
         except Exception as e:
-            logger.warn("Execute exception, p=%s, ex=%s", p, SolBase.extostr(e))
+            logger.warning("Execute exception, p=%s, ex=%s", p, SolBase.extostr(e))
             Meters.aii("knock_stat_exec_probe_exception")
         finally:
             if ms_elapsed is None:
@@ -686,48 +663,10 @@ class KnockManager(object):
             Meters.aii("knock_stat_exec_probe_count")
 
     # ==============================
-    # SUPERV NOTIFY : DISCOVERY
-    # ==============================
-
-    def notify_discovery_n(self, disco_key, d_disco_id_tag):
-        """
-        Notify discovery (1..n)
-
-        Sample:
-        - notify_discovery_n("k.dns", {"HOST": "my_host", "SERVER": "my_server"})
-        :param disco_key: discovery key
-        :type disco_key: str
-        :param d_disco_id_tag: dict {"disco_tag_1": "value", "disco_tag_n": "value"}
-        :type d_disco_id_tag: dict
-        """
-
-        # We use a sort toward OrderedDict to have consistent and predictive matching
-        do = OrderedDict(sorted(d_disco_id_tag.items(), key=lambda t: t[0]))
-
-        # Compute key
-        key = "{0}".format(disco_key)
-        for disco_id, disco_tag in do.iteritems():
-            assert isinstance(disco_id, (str, unicode)), "disco_id must be str,unicode, got={0}, value={1}".format(SolBase.get_classname(disco_id), disco_id)
-            assert isinstance(disco_tag, (str, unicode)), "disco_tag must be str,unicode, got={0}, value={1}".format(SolBase.get_classname(disco_tag), disco_tag)
-            key += "|{0}|{1}".format(disco_id, disco_tag)
-
-        if key in self._superv_notify_disco_hash:
-            # Hashed, exit
-            return
-        else:
-            # Add
-            tu = (disco_key, do)
-            logger.debug("ADDING tu=%s", tu)
-            self._superv_notify_disco_hash[key] = tu
-
-            # Stats
-            Meters.aii("knock_stat_notify_disco")
-
-    # ==============================
     # SUPERV NOTIFY : VALUE
     # ==============================
 
-    def notify_value_n(self, counter_key, d_disco_id_tag, counter_value, ts=None, d_opt_tags=None, additional_fields=None):
+    def notify_value_n(self, counter_key, d_tags, counter_value, ts=None, d_values=None):
         """
         Notify value
 
@@ -736,60 +675,57 @@ class KnockManager(object):
 
         :param counter_key: Counter key (str)
         :type counter_key: str
-        :param d_disco_id_tag: None (if no discovery) or dict of {disco_id: disco_tag}
-        :type d_disco_id_tag: None, dict
+        :param d_tags: Dict of tags
+        :type d_tags: None, dict
         :param counter_value: Counter value
         :type counter_value: object
         :param ts: timestamp (epoch), or None to use current
         :type ts: None, float
-        :param d_opt_tags: None,dict (additional tags)
-        :type d_opt_tags: None,dict
-        :param additional_fields: dict
-        :type additional_fields: dict
+        :param d_values: Additional counter values (dict)
+        :type d_values: dict
         """
 
         # Strict mode : we refuse keys with [ or ] or with .discovery
-        assert counter_key.find("[") == -1, "counter_key : [] chars are not allowed, got counter_key={0}".format(counter_key)
-        assert counter_key.find("]") == -1, "counter_key : [] chars are not allowed, got counter_key={0}".format(counter_key)
-        assert counter_key.find(".discovery") == - 1, "counter_key : '.discovery' is not allowed, got counter_key={0}".format(counter_key)
+        if not counter_key.find("[") == -1:
+            raise Exception("counter_key : [] chars are not allowed, got counter_key={0}".format(counter_key))
+        elif not counter_key.find("]") == -1:
+            raise Exception("counter_key : [] chars are not allowed, got counter_key={0}".format(counter_key))
+        elif not counter_key.find(".discovery") == - 1:
+            raise Exception("counter_key : '.discovery' is not allowed, got counter_key={0}".format(counter_key))
 
         # Value must NOT be a tuple or a list, it must an int,float,bool,string
-        assert isinstance(counter_value, (int, long, float, bool, basestring)), "counter_value must be an int, float, bool, basestring k=%s, v=%s type=%s" % (counter_key, counter_value, type(counter_value))
+        if not isinstance(counter_value, (int, float, bool, str)):
+            raise Exception("counter_value must be an int, float, bool, basestring k=%s, v=%s type=%s" % (counter_key, counter_value, type(counter_value)))
 
-        if additional_fields is None:
-            additional_fields = {}
+        if d_values is None:
+            d_values = dict()
+        if d_tags is None:
+            d_tags = dict()
+
         # Stat
         Meters.aii("knock_stat_notify_value")
 
         # PID : d_opt_tags : we may receive "PID" in this dict from client libs
         # This will put pressure on supervision backends
         # If we have it, we remove it
-        if d_opt_tags and "PID" in d_opt_tags:
-            del d_opt_tags["PID"]
+        if "PID" in d_tags:
+            del d_tags["PID"]
 
-        # Sort
-        if d_disco_id_tag:
-            # PID : d_disco_id_tag : we may receive "PID" in this dict from client libs
-            # This will put pressure on supervision backends
-            # If we have it, we remove it
-            if "PID" in d_disco_id_tag:
-                del d_disco_id_tag["PID"]
+        # Ordered
+        d_tags = OrderedDict(sorted(d_tags.items(), key=lambda t: t[0]))
 
-            # Ordered
-            dd = OrderedDict(sorted(d_disco_id_tag.items(), key=lambda t: t[0]))
-
-            # Validate
-            for k, v in dd.iteritems():
-                assert isinstance(k, (str, unicode)), "k must be str,unicode, got class={0}, k={1}".format(SolBase.get_classname(k), k)
-                assert isinstance(v, (str, unicode)), "v must be str,unicode, got class={0}, v={1}".format(SolBase.get_classname(v), v)
-        else:
-            dd = None
+        # Validate
+        for k, v in d_tags.items():
+            if not isinstance(k, str):
+                raise Exception("tags : k must be str, got class={0}, k={1}".format(SolBase.get_classname(k), k))
+            elif not isinstance(v, str):
+                raise Exception("tags : v must be str, got class={0}, v={1}".format(SolBase.get_classname(v), v))
 
         # Append
         if not ts:
             ts = time()
 
-        self._superv_notify_value_list.append((counter_key, dd, counter_value, ts, d_opt_tags, additional_fields))
+        self.superv_notify_value_list.append((counter_key, d_tags, counter_value, ts, d_values))
 
     # ==============================
     # SUPERV : TOOLS
@@ -800,16 +736,11 @@ class KnockManager(object):
         Reset Superv pending notify
         """
 
-        if self._superv_notify_disco_hash and len(self._superv_notify_disco_hash) > 0:
-            logger.warn("Discarding pending _superv_notify_disco_hash=%s",
-                        self._superv_notify_disco_hash)
-        if self._superv_notify_value_list and len(self._superv_notify_value_list) > 0:
-            logger.warn("Discarding pending _superv_notify_value_list=%s",
-                        self._superv_notify_value_list)
+        if self.superv_notify_value_list and len(self.superv_notify_value_list) > 0:
+            logger.warning("Discarding pending superv_notify_value_list=%s", self.superv_notify_value_list)
 
         # Reset
-        self._superv_notify_disco_hash = dict()
-        self._superv_notify_value_list = list()
+        self.superv_notify_value_list = list()
 
     def _process_superv_notify(self):
         """
@@ -826,21 +757,21 @@ class KnockManager(object):
         clear_hash = True
         for t in self._ar_knock_transport:
             b = t.process_notify(
-                self._account_hash, node_hash, self._superv_notify_disco_hash,
-                self._superv_notify_value_list)
+                self._account_hash,
+                node_hash,
+                self.superv_notify_value_list)
             if not b:
                 if len(self._ar_knock_transport) == 1:
-                    # Only only one transport and failed, do not clear the hashes
-                    logger.info("Got false from process_notify and only one transport, will not empty the hashes, t=%s", t)
+                    # Only one transport and failed, do not clear the hashes
+                    logger.debug("Got false from process_notify and only one transport, will not empty the hashes, t=%s", t)
                     clear_hash = False
                 else:
                     # Several transport, we clear in call cases
-                    logger.warn("Got false from process_notify and multi transport, will empty the hashes, t=%s", t)
+                    logger.warning("Got false from process_notify and multi transport, will empty the hashes, t=%s", t)
 
         # We reset if required
         if clear_hash:
-            self._superv_notify_disco_hash = dict()
-            self._superv_notify_value_list = list()
+            self.superv_notify_value_list = list()
 
     def get_first_transport_by_type(self, transport_class):
         """
@@ -919,11 +850,34 @@ class KnockManager(object):
         # Compute next start ms
         next_start_ms = self._need_exec_compute_next_start_ms(p, c)
 
-        # Check
+        # Interval in ms
+        exec_interval_ms = p.exec_interval_ms
+
+        # Current
         cur_ms = SolBase.mscurrent()
+
+        # Diff
+        diff_ms = cur_ms - next_start_ms
+
+        # Check
         if next_start_ms <= cur_ms:
-            # Interval reached => yes
-            return True
+            if diff_ms > (exec_interval_ms * 2):
+                # Interval reached, but GREATER than exec_interval_ms * 2
+                # This mean we are late, we skip this one (and we full reset, so we execute again asap)
+                logger.warning(
+                    "Interval reached but diff_ms > exec_interval_ms*2 (full skip / full reset), cur_ms=%s, next_start_ms=%s, interval*2=%s, diff=%s, p=%s",
+                    cur_ms,
+                    next_start_ms,
+                    exec_interval_ms * 2,
+                    cur_ms - next_start_ms,
+                    p
+                )
+                c.exec_count_so_far = 0.0
+                c.initial_ms_start = 0.0
+                return False
+            else:
+                # Interval reached and we are not later => yes
+                return True
         else:
             # Interval not reached => no
             return False
@@ -964,7 +918,7 @@ class KnockManager(object):
         :return:
         """
         ms = sys.float_info.max
-        for p in self._probe_list:
+        for p in self.probe_list:
             c = self._get_probe_context(p)
             ms = min(ms, self._need_exec_ms(p, c))
         return ms
@@ -997,7 +951,7 @@ class KnockManager(object):
 
         # Check
         if self._lifecycle_greenlet:
-            logger.warn("_lifecycle_greenlet already set, doing nothing")
+            logger.warning("_lifecycle_greenlet already set, doing nothing")
             return
 
         # Fire
@@ -1017,7 +971,7 @@ class KnockManager(object):
 
         # Check
         if not self._lifecycle_greenlet:
-            logger.warn("_lifecycle_greenlet not set, doing nothing")
+            logger.debug("_lifecycle_greenlet not set, doing nothing")
             return
 
         # Kill
@@ -1056,7 +1010,7 @@ class KnockManager(object):
 
                     # Check transport
                     if len(self._ar_knock_transport) == 0:
-                        logger.warn("No transport defined, daemon running in noop mode, please configure at least one transport")
+                        logger.warning("No transport defined, daemon running in noop mode, please configure at least one transport")
 
                     # ---------------------
                     # Loop over transports
@@ -1064,22 +1018,28 @@ class KnockManager(object):
                     for cur_transport in self._ar_knock_transport:
                         # noinspection PyProtectedMember
                         lifecyclelogger.info(
-                            "Running, %s, "
-                            "q.cur/max/di=%s/%s/%s, "
-                            "pbuf.pend/limit=%s/%s, "
-                            "pbuf.last/max=%s/%s, "
-                            "wbuf.last/max=%s/%s, "
-                            "wms.last/max=%s/%s, "
+                            "Running (pf=%s), "
+                            "q.c/bytes/limit=%s/%s/%s, "
+                            "q.max=%s, "
+                            "discard.c/c_bytes=%s/%s, "
+                            "transp_buf.len.pend/last/max=%s/%s/%s, "
+                            "transp_wire.len.last/max=%s/%s, "
+                            "transp_wire.ms.last/max=%s/%s, "
                             "http.count:ok/ex/fail=%s:%s/%s/%s, "
-                            "s.ok/ko=%s/%s, "
-                            "t=%s",
+                            "spv.ok/ko=%s/%s, "
+                            "id=%s",
                             cur_transport.meters_prefix,
+
                             cur_transport._queue_to_send.qsize(),
+                            cur_transport._current_queue_bytes,
+                            cur_transport._max_bytes_in_queue,
+
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_queue_max_size"),
+
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_queue_discard"),
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_queue_discard_bytes"),
 
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_buffer_pending_length"),
-                            cur_transport._http_send_max_bytes,
 
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_buffer_last_length"),
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_buffer_max_length"),
@@ -1095,8 +1055,8 @@ class KnockManager(object):
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_exception_count"),
                             Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_failed_count"),
 
-                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_client_spv_processed"),
-                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_client_spv_failed"),
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_spv_processed"),
+                            Meters.aig(cur_transport.meters_prefix + "knock_stat_transport_spv_failed"),
                             id(cur_transport),
                         )
 
@@ -1123,7 +1083,7 @@ class KnockManager(object):
                     self._lifecycle_exit.set()
                     return
                 except Exception as e:
-                    logger.warn("Exception in loop2=%s", SolBase.extostr(e))
+                    logger.warning("Exception in loop2=%s", SolBase.extostr(e))
         except GreenletExit:
             logger.info("GreenletExit in loop1")
             self._lifecycle_exit.set()
@@ -1157,7 +1117,7 @@ class KnockManager(object):
 
         # Locate __init__py., if not found, add it toward all dir if required
         if not FileUtility.is_file_exist(probe_dir + "__init__.py"):
-            FileUtility.append_text_to_file(probe_dir + "__init__.py", "# auto-generated by knockdaemon2", encoding="utf-8")
+            FileUtility.append_text_to_file(probe_dir + "__init__.py", "# auto-generated by knockdaemon2", encoding="utf8")
             logger.info("Added %s", probe_dir + "__init__.py")
             ar_files.append(probe_dir + "__init__.py")
 
@@ -1194,7 +1154,7 @@ class KnockManager(object):
                             logger.info("Allocated, i_obj=%s", i_obj)
                             ar_probes.append(i_obj)
             except Exception as e:
-                logger.warn("Exception while loading probes, ex=%s", SolBase.extostr(e))
+                logger.warning("Exception while loading probes, ex=%s", SolBase.extostr(e))
 
         # Over
         return ar_probes, ar_files

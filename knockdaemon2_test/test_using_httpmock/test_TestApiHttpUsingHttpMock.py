@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -21,27 +21,26 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
+from pysolbase.SolBase import SolBase
+
+SolBase.voodoo_init()
 
 import logging
-import unittest
-import urllib
-
 import os
+import unittest
+from urllib.parse import urlencode
+
 import redis
-# noinspection PyUnresolvedReferences,PyPackageRequirements
-from nose.plugins.attrib import attr
-from pysolbase.SolBase import SolBase
+
 from pysolhttpclient.Http.HttpClient import HttpClient
 from pysolhttpclient.Http.HttpRequest import HttpRequest
 from pysolmeters.Meters import Meters
 
 from knockdaemon2.HttpMock.HttpMock import HttpMock
 
-SolBase.voodoo_init()
 logger = logging.getLogger(__name__)
 
 
-@attr('prov')
 class TestApiHttpUsingHttpMock(unittest.TestCase):
     """
     Test description
@@ -73,7 +72,7 @@ class TestApiHttpUsingHttpMock(unittest.TestCase):
         """
 
         if self.h:
-            logger.warn("h set, stopping, not normal")
+            logger.warning("h set, stopping, not normal")
             self.h.stop()
             self.h = None
 
@@ -106,7 +105,7 @@ class TestApiHttpUsingHttpMock(unittest.TestCase):
         self.assertIsNotNone(self.h._server_greenlet)
 
         # Param
-        v = urllib.urlencode({"p1": "v1 2.3/4"})
+        v = urlencode({"p1": "v1 2.3/4"})
 
         # Client
         hc = HttpClient()
@@ -123,8 +122,7 @@ class TestApiHttpUsingHttpMock(unittest.TestCase):
         hresp = hc.go_http(hreq)
         logger.info("Got=%s", hresp)
         self.assertEqual(hresp.status_code, 200)
-        self.assertEqual(hresp.buffer,
-                         "OK\nfrom_qs={'p1': 'v1 2.3/4'} -EOL\nfrom_post={} -EOL\n")
+        self.assertEqual(hresp.buffer.decode("utf8"), "OK\nfrom_qs={'p1': 'v1 2.3/4'} -EOL\nfrom_post={} -EOL\n")
 
         # Http post
         hreq = HttpRequest()
@@ -137,8 +135,7 @@ class TestApiHttpUsingHttpMock(unittest.TestCase):
         hresp = hc.go_http(hreq)
         logger.info("Got=%s", hresp)
         self.assertEqual(hresp.status_code, 200)
-        self.assertEqual(hresp.buffer,
-                         "OK\nfrom_qs={} -EOL\nfrom_post={'p1': 'v1 2.3/4'} -EOL\n")
+        self.assertEqual(hresp.buffer.decode("utf8"), "OK\nfrom_qs={} -EOL\nfrom_post={'p1': 'v1 2.3/4'} -EOL\n")
 
         # Http get toward invalid
         hreq = HttpRequest()

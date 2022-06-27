@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ===============================================================================
 #
-# Copyright (C) 2013/2017 Laurent Labatut / Laurent Champagnac
+# Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
 #
 #
 #
@@ -67,13 +67,7 @@ class CheckDns(KnockProbe):
         Init
         """
 
-        KnockProbe.__init__(self, linux_support=True, windows_support=True)
-
-        self.record = None
-        self.dnsserver = None
-        self.discoverylist = None
-
-        self.dns_check_config = None
+        KnockProbe.__init__(self, linux_support=True, windows_support=False)
 
         self.host_to_check = None
 
@@ -96,15 +90,17 @@ class CheckDns(KnockProbe):
         # Go
         self.host_to_check = d["dns_host"].split(',')
 
-    def resolv(self, record, dnsserver):
+    @classmethod
+    def resolv(cls, record, dnsserver):
         """
         Resolv
-        :param record:
-        :param dnsserver:
-        :return:
+        :param record: str
+        :type record: str
+        :param dnsserver: str
+        :type dnsserver: str
+        :return: tuple string_result, time_to_check, success
+        :rtype tuple
         """
-        self.record = record
-        self.dnsserver = dnsserver
 
         additional_rdclass = 65535
         timeout = 5
@@ -133,7 +129,7 @@ class CheckDns(KnockProbe):
             except gaierror as e:
                 string_result = "KO: Dns server: %s[%s] " % (e.strerror, e.errno)
             except BaseException as e:
-                string_result = "KO: Exception %s" % e.message
+                string_result = "KO: Exception %s" % str(e)
 
             if not response:
                 if not string_result:
@@ -168,23 +164,15 @@ class CheckDns(KnockProbe):
         Exec
         :return:
         """
-        self.dns_check_config = get_resolv()
-
-        for dns_servers in self.dns_check_config:
-            self.dns_check_group(dns_servers)
-
-    def _execute_windows(self):
-        """
-        Exec
-        """
-
-        return self._execute_linux()
+        dns_check_config = get_resolv()
+        for dns_server in dns_check_config:
+            self.dns_check_group(dns_server)
 
     def dns_check_group(self, dns_server):
         """
-        Doc
-        :param dns_server:
-        :return:
+        Check dns server
+        :param dns_server: str
+        :type dns_server: str
         """
 
         for host_to_resolv in self.host_to_check:
@@ -202,8 +190,6 @@ class CheckDns(KnockProbe):
             # Data dict => list
             data_dict = dict()
             data_dict["data"] = disco_list
-
-            self.notify_discovery_n("k.dns.discovery", {"HOST": host_to_resolv, "SERVER": dns_server})
 
             string_result = ""
 
