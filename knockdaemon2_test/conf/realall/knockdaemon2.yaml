@@ -60,7 +60,6 @@ probes:
     exec_interval_sec: 1
     exec_enabled: true
     time_target_server: 2.pool.ntp.org
-    time_http_target_server: https://api.knock.center/
 
   Uptime:
     class_name: knockdaemon2.Probes.Os.UpTime.Uptime

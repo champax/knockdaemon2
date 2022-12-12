@@ -60,7 +60,7 @@ probes:
     class_name: knockdaemon2.Probes.Os.CheckDns.CheckDns
     exec_interval_sec: 60
     exec_enabled: true
-    dns_host: www.google.com,api.knock.center
+    dns_host: www.google.com
   
   HddStatus:
     class_name: knockdaemon2.Probes.Os.HddStatus.HddStatus
@@ -93,8 +93,7 @@ probes:
     exec_interval_sec: 60
     exec_enabled: true
     time_target_server: 2.pool.ntp.org
-    time_http_target_server: https://api.knock.center/
-  
+
   Uptime:
     class_name: knockdaemon2.Probes.Os.UpTime.Uptime
     exec_interval_sec: 60
