@@ -1038,6 +1038,7 @@ class MongoDbStat(KnockProbe):
         else:
             # We are secondary
             # Note : we may have secondary_optime > primary_optime, which result in negative lag_seconds
+            # refer to : https://www.mongodb.com/community/forums/t/replication-oplog-is-ahead-of-time/5666/8
             # => if < 0 : put 0
             lag_seconds = float((primary_optime - secondary_optime).total_seconds())
             if lag_seconds < 0.0:
