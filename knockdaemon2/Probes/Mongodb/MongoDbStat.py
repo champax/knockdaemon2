@@ -996,7 +996,7 @@ class MongoDbStat(KnockProbe):
             name = d["name"]
             state = d["stateStr"]
             optime = d["optimeDate"]
-            logger.debug("Got repl, name=%s, state=%s, optime=%s", name, state, optime)
+            logger.info("Got repl, name=%s, state=%s, optime=%s", name, state, optime)
 
             # Get primary
             if state == "PRIMARY":
