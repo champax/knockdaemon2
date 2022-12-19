@@ -998,16 +998,17 @@ class MongoDbStat(KnockProbe):
         # Check
         if primary_optime is None:
             # No primary optime => giveup
-            lag_seconds = -2
+            lag_seconds = -2.0
         elif secondary_optime is None:
             # We are the master
-            lag_seconds = -1
+            lag_seconds = -1.0
         else:
             # We are secondary
-            lag_seconds = (primary_optime - secondary_optime).total_seconds()
-
-        # Cast to float
-        lag_seconds = float(lag_seconds)
+            # Note : we may have secondary_optime > primary_optime, which result in negative lag_seconds
+            # => if < 0 : put 0
+            lag_seconds = float((secondary_optime - primary_optime).total_seconds())
+            if lag_seconds < 0.0:
+                lag_seconds = 0.0
 
         # Notify
         logger.debug("Got repl, lag_seconds=%s, hostname=%s, optime.PRI/SEC=%s/%s", lag_seconds, hostname, primary_optime, secondary_optime)
