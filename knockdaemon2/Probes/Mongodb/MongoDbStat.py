@@ -977,9 +977,20 @@ class MongoDbStat(KnockProbe):
         mongo_client = self._mongo_get_client(host, port, direct_connection=True)
         db_stats = mongo_client.admin.command({'replSetGetStatus': 1})
 
-        primary_optime = None
-        secondary_optime = None
+        # Detect if we are primary
+        is_primary = False
         hostname = SolBase.get_machine_name()
+        for d in db_stats['members']:
+            name = d["name"]
+            state = d["stateStr"]
+            if state == "PRIMARY" and name.startswith(hostname):
+                is_primary = True
+                break
+
+        # Go
+        primary_optime = None
+        ar_primary_secondaries_optime = list()
+        secondary_optime = None
 
         for d in db_stats['members']:
             name = d["name"]
@@ -991,28 +1002,51 @@ class MongoDbStat(KnockProbe):
             if state == "PRIMARY":
                 primary_optime = optime
 
-            # Get us
-            if state == "SECONDARY" and name.startswith(hostname):
-                secondary_optime = optime
+            # Secondaries
+            if state == "SECONDARY":
+                if name.startswith(hostname):
+                    # It is US, we are secondary, store our time
+                    secondary_optime = optime
+                elif is_primary:
+                    # It is not us... we are primary, append to secondaries
+                    ar_primary_secondaries_optime.append(optime)
 
         # Check
+        lag_seconds = 0.0
+        lag_seconds_max = 0.0
         if primary_optime is None:
             # No primary optime => giveup
-            lag_seconds = -2.0
-        elif secondary_optime is None:
-            # We are the master
             lag_seconds = -1.0
+        elif secondary_optime is None:
+            # We should be the master
+            if is_primary:
+                if len(ar_primary_secondaries_optime) > 0:
+                    # We are master, with slave optimes, compute the max
+                    for optime in ar_primary_secondaries_optime:
+                        lag_seconds = float((primary_optime - optime).total_seconds())
+                        if lag_seconds < 0.0:
+                            lag_seconds = 0.0
+                        lag_seconds_max = max(lag_seconds_max, lag_seconds)
+                else:
+                    # Master without secondaries
+                    logger.info("secondary_optime None + is_primary True + ar_primary_secondaries_optime empty, cannot process")
+                    lag_seconds = -2.0
+            else:
+                # Secondary optime without master flag...
+                logger.info("secondary_optime None + is_primary False, cannot process")
+                lag_seconds = -3.0
         else:
             # We are secondary
             # Note : we may have secondary_optime > primary_optime, which result in negative lag_seconds
             # => if < 0 : put 0
-            lag_seconds = float((secondary_optime - primary_optime).total_seconds())
+            lag_seconds = float((primary_optime - secondary_optime).total_seconds())
             if lag_seconds < 0.0:
                 lag_seconds = 0.0
 
         # Notify
-        logger.debug("Got repl, lag_seconds=%s, hostname=%s, optime.PRI/SEC=%s/%s", lag_seconds, hostname, primary_optime, secondary_optime)
-        self.notify_value_n("k.mongodb.repli.lag_sec", {"PORT": str(port)}, lag_seconds)
+        logger.info("Got repl, lag_seconds/max=%s/%s, hostname=%s, is_primary=%s, optime.PRI/SEC=%s/%s, ar=%s", lag_seconds, lag_seconds_max, hostname, is_primary, primary_optime, secondary_optime, ar_primary_secondaries_optime)
+        self.notify_value_n("k.mongodb.repli.sec.lag_sec", {"PORT": str(port)}, lag_seconds)
+        self.notify_value_n("k.mongodb.repli.pri.max_sec_lag_sec", {"PORT": str(port)}, lag_seconds_max)
 
     def process_per_db_and_col(self, host, port):
         """
