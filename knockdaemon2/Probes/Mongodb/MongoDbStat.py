@@ -518,13 +518,23 @@ class MongoDbStat(KnockProbe):
             except Exception as e:
                 logger.warning("Ex=%s", SolBase.extostr(e))
 
-    def _mongo_get_client(self, host, port):
+            # Lag (onto data only)
+            #  port=27018, shardsvr=True, config_db=False, t=data
+            try:
+                if t == "data":
+                    self.process_data_repl_lag("127.0.0.1", port)
+            except Exception as e:
+                logger.warning("Ex=%s", SolBase.extostr(e))
+
+    def _mongo_get_client(self, host, port, direct_connection=False):
         """
         Mongo get client
         :param host: str
         :type host: str
         :param port: int
         :type port: int
+        :param direct_connection: bool
+        :type direct_connection: bool
         :return: pymongo.mongo_client.MongoClient
         :rtype pymongo.mongo_client.MongoClient
         """
@@ -543,7 +553,7 @@ class MongoDbStat(KnockProbe):
         else:
             cnx_string = "mongodb://%s:%s/%s" % (host, port, db_auth)
 
-        return pymongo.MongoClient(cnx_string)
+        return pymongo.MongoClient(cnx_string, directConnection=direct_connection)
 
     def _mongo_get_client_to_db(self, host, port, db_name):
         """
@@ -953,6 +963,91 @@ class MongoDbStat(KnockProbe):
                                 c = "k.mongodb.col.idx.cursor.%s" % s.replace(" ", "_")
                                 self.notify_value_n(c, d_tags_index, v)
                                 SolBase.sleep(0)
+
+    def process_data_repl_lag(self, host, port):
+        """
+        Replication lag
+        :param host: str
+        :type host: str
+        :param port: int
+        :type port: int
+        """
+
+        # Connect (27018, direct connection)
+        mongo_client = self._mongo_get_client(host, port, direct_connection=True)
+        db_stats = mongo_client.admin.command({'replSetGetStatus': 1})
+
+        # Detect if we are primary
+        is_primary = False
+        hostname = SolBase.get_machine_name()
+        for d in db_stats['members']:
+            name = d["name"]
+            state = d["stateStr"]
+            if state == "PRIMARY" and name.startswith(hostname):
+                is_primary = True
+                break
+
+        # Go
+        primary_optime = None
+        ar_primary_secondaries_optime = list()
+        secondary_optime = None
+
+        for d in db_stats['members']:
+            name = d["name"]
+            state = d["stateStr"]
+            optime = d["optimeDate"]
+            logger.info("Got repl, name=%s, state=%s, optime=%s", name, state, optime)
+
+            # Get primary
+            if state == "PRIMARY":
+                primary_optime = optime
+
+            # Secondaries
+            if state == "SECONDARY":
+                if name.startswith(hostname):
+                    # It is US, we are secondary, store our time
+                    secondary_optime = optime
+                elif is_primary:
+                    # It is not us... we are primary, append to secondaries
+                    ar_primary_secondaries_optime.append(optime)
+
+        # Check
+        lag_seconds = 0.0
+        lag_seconds_max = 0.0
+        if primary_optime is None:
+            # No primary optime => giveup
+            lag_seconds = -1.0
+        elif secondary_optime is None:
+            # We should be the master
+            if is_primary:
+                if len(ar_primary_secondaries_optime) > 0:
+                    # We are master, with slave optimes, compute the max
+                    for optime in ar_primary_secondaries_optime:
+                        lag_seconds = float((primary_optime - optime).total_seconds())
+                        if lag_seconds < 0.0:
+                            lag_seconds = 0.0
+                        lag_seconds_max = max(lag_seconds_max, lag_seconds)
+                else:
+                    # Master without secondaries
+                    logger.info("secondary_optime None + is_primary True + ar_primary_secondaries_optime empty, cannot process")
+                    lag_seconds = -2.0
+            else:
+                # Secondary optime without master flag...
+                logger.info("secondary_optime None + is_primary False, cannot process")
+                lag_seconds = -3.0
+        else:
+            # We are secondary
+            # Note : we may have secondary_optime > primary_optime, which result in negative lag_seconds
+            # refer to : https://www.mongodb.com/community/forums/t/replication-oplog-is-ahead-of-time/5666/8
+            # => if < 0 : put 0
+            lag_seconds = float((primary_optime - secondary_optime).total_seconds())
+            if lag_seconds < 0.0:
+                lag_seconds = 0.0
+
+        # Notify
+        logger.info("Got repl, lag_seconds/max=%s/%s, hostname=%s, is_primary=%s, optime.PRI/SEC=%s/%s, ar=%s", lag_seconds, lag_seconds_max, hostname, is_primary, primary_optime, secondary_optime, ar_primary_secondaries_optime)
+        self.notify_value_n("k.mongodb.repli.sec.lag_sec", {"PORT": str(port)}, lag_seconds)
+        self.notify_value_n("k.mongodb.repli.pri.max_sec_lag_sec", {"PORT": str(port)}, lag_seconds_max)
 
     def process_per_db_and_col(self, host, port):
         """
