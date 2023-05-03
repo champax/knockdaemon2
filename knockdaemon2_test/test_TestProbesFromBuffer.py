@@ -21,6 +21,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
+import json
 
 from pysolbase.SolBase import SolBase
 
@@ -32,9 +33,6 @@ from unittest.mock import patch
 # noinspection PyProtectedMember
 from psutil._pslinux import pmem, pcputimes, pio
 
-import re
-import dateutil.parser
-import ujson
 import logging
 import os
 import shutil
@@ -1751,51 +1749,6 @@ class TestProbesFromBuffer(unittest.TestCase):
                 elif knock_type == "str":
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
 
-    @classmethod
-    def mongo_cleanup_buffer(cls, buf):
-        """
-        Mongo cleanup buffer
-        :param buf: str
-        :type buf: str
-        :return: str
-        :rtype str
-        """
-
-        # NumberLong(772349720)
-        # NumberLong("6970055494123651073")
-        # ISODate("2021-09-16T08:12:00.002Z")
-        # Timestamp(1631779918, 11)
-        # BinData(0,"mPIrxO2yyOyZgIXyYGL7awzFgKo="),
-        ar_regex = [
-            r'NumberLong\(\d+\)',
-            r'NumberLong\("\d+"\)',
-            r'ISODate\(".*"\)',
-            r'Timestamp\(\d+, \d+\)',
-            r'BinData\(.*\)',
-        ]
-
-        # Totally sub-optimal, unittests, we dont care
-        for s in ar_regex:
-            for ss in re.findall(s, buf):
-                if 'NumberLong("' in ss:
-                    buf = buf.replace(ss, ss.replace('NumberLong("', '').replace('")', ''))
-                elif 'NumberLong(' in ss:
-                    buf = buf.replace(ss, ss.replace('NumberLong(', '').replace(')', ''))
-                elif 'ISODate("' in ss:
-                    buf_dt = ss.replace('ISODate("', "").replace('")', "")
-                    dt = dateutil.parser.parse(buf_dt)
-                    epoch = SolBase.dt_to_epoch(SolBase.dt_ensure_utc_naive(dt))
-                    buf = buf.replace(ss, str(epoch))
-                elif 'Timestamp(' in ss:
-                    ts = ss.replace('Timestamp(', '').replace(')', '').split(',')[0]
-                    buf = buf.replace(ss, ts)
-                elif 'BinData(' in ss:
-                    buf = buf.replace(ss, '"bin_data"')
-                else:
-                    raise Exception("Invalid ss=%s" % ss)
-
-        return buf
-
     def test_from_buffer_mongo(self):
         """
         Test
@@ -1849,8 +1802,8 @@ class TestProbesFromBuffer(unittest.TestCase):
             self.assertTrue(FileUtility.is_file_exist(fn))
 
             buf = FileUtility.file_to_textbuffer(fn, "utf8")
-            buf = self.mongo_cleanup_buffer(buf)
-            d_json = ujson.loads(buf)
+            buf = MongoDbStat.mongo_cleanup_buffer(buf)
+            d_json = json.loads(buf)
 
             md.process_mongo_server_status(d_json, str(cur_port))
 
@@ -1950,3 +1903,25 @@ class TestProbesFromBuffer(unittest.TestCase):
             for idx in ["IDX_a_1_b_1_", "IDX_a_1_b_1_d_1_"]:
                 dd = {'PORT': str(cur_port), "DB": "my_db", "COL": "my_col", "IDX": idx}
                 expect_value(self, self.k, k_expected, v_expected, "exists", dd)
+
+        self.k._reset_superv_notify()
+
+        fn = self.sample_dir + "mongodb/mongo_index_stats.out"
+        self.assertTrue(FileUtility.is_file_exist(fn))
+        buf = FileUtility.file_to_textbuffer(fn, "utf8")
+        md.process_from_buffer_index_stat(cur_port, "vulog_consumers", "vulog_raw_v2_geo", buf)
+
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
+
+        dd = {'PORT': str(cur_port), "DB": "vulog_consumers", "COL": "vulog_raw_v2_geo"}
+        for index_name, ops in (
+                ("IDX#vulog_consumers#vulog_raw_v2_geo#v_recv_date_ASC/data.fi_ASC/data.ti_ASC/sp_False/", 1730490),
+                ("IDX#vulog_consumers#vulog_raw_v2_geo#v_auto_del_date_ASC/sp_False/exp_31622400/", 0),
+                ("_id_", 150364149),
+                ("data.ti_1", 485996),
+        ):
+            dd['IDX'] = index_name
+            expect_value(self, self.k, "k.mongodb.index_stats.ops", ops, "eq", dd)
+            expect_value(self, self.k, "k.mongodb.index_stats.last_used_millis", "", "exists", dd)

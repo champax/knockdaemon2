@@ -25,11 +25,14 @@
 import glob
 import json
 import logging
+import re
 from collections import defaultdict
 from datetime import datetime
 
+import dateutil
 import pymongo
 import yaml
+from dateutil.parser import parser
 from pymongo.errors import OperationFailure
 from pysolbase.SolBase import SolBase
 from yaml import SafeLoader
@@ -964,6 +967,55 @@ class MongoDbStat(KnockProbe):
                                 self.notify_value_n(c, d_tags_index, v)
                                 SolBase.sleep(0)
 
+    def process_from_buffer_index_stat(self, port, db_name, col_name, index_stat_buf):
+        """
+        Process col from buffer
+        :param port: int
+        :type port: int
+        :param db_name: str
+        :type db_name: str
+        :param col_name: str
+        :type col_name: str
+        :param index_stat_buf: str, list[str]
+        :type index_stat_buf: str, list[str]
+        """
+
+        if not self.stats_per_col_enabled and not self.stats_per_idx_enabled:
+            return
+
+        # str to dict if required
+        if isinstance(index_stat_buf, str):
+            list_stat = index_stat_buf.split("\n")
+        else:
+            list_stat = index_stat_buf
+
+        # Check dict
+        if not isinstance(list_stat, list):
+            raise Exception("Cannot process, not a dict, got=%s" % SolBase.get_classname(index_stat_buf))
+
+        # Go
+        if self.stats_per_idx_enabled:
+            d_tags = {"PORT": str(port), "DB": db_name, "COL": col_name}
+            for index_stat in list_stat:
+                if len(index_stat) == 0: continue
+
+                index_stat = self.mongo_cleanup_buffer(index_stat)
+                try:
+                    index_stat = json.loads(index_stat)
+                except json.decoder.JSONDecodeError:
+                    logger.warning('cannot decode %s', index_stat)
+                    continue
+                d_tags['IDX'] = index_stat['name']
+                if "accesses" in index_stat:
+                    accesses = index_stat["accesses"]
+                    v = int(accesses.get("ops", 0))
+
+                    self.notify_value_n("k.mongodb.index_stats.ops", d_tags, v)
+                    if 'since' in accesses:
+                        since = dateutil.parser.parse(accesses['since'])
+                        since_milis = (datetime.utcnow().timestamp() - since.timestamp()) * 1000
+                        self.notify_value_n("k.mongodb.index_stats.last_used_millis", d_tags, since_milis)
+
     def process_data_repl_lag(self, host, port):
         """
         Replication lag
@@ -1120,7 +1172,67 @@ class MongoDbStat(KnockProbe):
                             SolBase.sleep(0)
                         except Exception as e:
                             logger.warning("Ex (skipped, possible rights, collStats), host=%s, port=%s, db=%s, col=%s, =%s", host, port, db, col, SolBase.extostr(e))
+
+                        # Go index stats
+                        try:
+                            index_stats = cur_db.aggregate([{'$indexStats': {}}])
+                            SolBase.sleep(0)
+                            try:
+                                self.process_from_buffer_index_stat(port, db, col, index_stats)
+                            except Exception as e:
+                                logger.warning("Ex (skipped, bug, process_from_buffer_index_stat), host=%s, port=%s, db=%s, col=%s, =%s", host, port, db, col, SolBase.extostr(e))
+                            SolBase.sleep(0)
+                        except Exception as e:
+                            logger.warning("Ex (skipped, possible rights, indexStats), host=%s, port=%s, db=%s, col=%s, =%s", host, port, db, col, SolBase.extostr(e))
+
                 except Exception as e:
                     logger.warning("Ex(skipped, possible rights, list_collection_names), host=%s, port=%s, db=%s, col=%s, =%s", host, port, db, col, SolBase.extostr(e))
         except Exception as e:
             logger.warning("Ex(fatal, possible rights, list_database_names), host=%s, port=%s, db=%s, col=%s, =%s", host, port, db, col, SolBase.extostr(e))
+
+    @classmethod
+    def mongo_cleanup_buffer(cls, buf):
+        """
+        Mongo cleanup buffer
+        :param buf: str
+        :type buf: str
+        :return: str
+        :rtype str
+        """
+
+        # NumberLong(772349720)
+        # NumberLong("6970055494123651073")
+        # ISODate("2021-09-16T08:12:00.002Z")
+        # Timestamp(1631779918, 11)
+        # BinData(0,"mPIrxO2yyOyZgIXyYGL7awzFgKo="),
+        ar_regex = [
+            r'NumberLong\(\d+\)',
+            r'NumberLong\("\d+"\)',
+            r'ISODate\(".*"\)',
+            r'Timestamp\(\d+, \d+\)',
+            r'BinData\(.*\)',
+        ]
+
+        # Totally sub-optimal, unittests, we dont care
+        for s in ar_regex:
+            for ss in re.findall(s, buf):
+                if 'NumberLong("' in ss:
+                    buf = buf.replace(ss, ss.replace('NumberLong("', '').replace('")', ''))
+                elif 'NumberLong(' in ss:
+                    buf = buf.replace(ss, ss.replace('NumberLong(', '').replace(')', ''))
+                elif 'ISODate("' in ss:
+                    buf_dt = ss.replace('ISODate("', "").replace('")', "")
+                    try:
+                        dt = dateutil.parser.parse(buf_dt)
+                    except TypeError as e:
+                        logger.error("Parse date error %s, %s", buf_dt, SolBase.extostr(e))
+                    buf = buf.replace(ss, f'"{dt.isoformat()}"')
+                elif 'Timestamp(' in ss:
+                    ts = ss.replace('Timestamp(', '').replace(')', '').split(',')[0]
+                    buf = buf.replace(ss, ts)
+                elif 'BinData(' in ss:
+                    buf = buf.replace(ss, '"bin_data"')
+                else:
+                    raise Exception("Invalid ss=%s" % ss)
+
+        return buf
