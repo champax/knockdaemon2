@@ -989,9 +989,9 @@ class MongoDbStat(KnockProbe):
         else:
             list_stat = index_stat_buf
 
-        # Check dict
+        # Check list
         if not isinstance(list_stat, list):
-            raise Exception("Cannot process, not a dict, got=%s" % SolBase.get_classname(index_stat_buf))
+            raise Exception("Cannot process, not a list, got=%s" % SolBase.get_classname(index_stat_buf))
 
         # Go
         if self.stats_per_idx_enabled:
