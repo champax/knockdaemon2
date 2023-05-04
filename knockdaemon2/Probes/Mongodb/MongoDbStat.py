@@ -1008,13 +1008,13 @@ class MongoDbStat(KnockProbe):
                 d_tags['IDX'] = index_stat['name']
                 if "accesses" in index_stat:
                     accesses = index_stat["accesses"]
-                    v = int(accesses.get("ops", 0))
+                    v = float(accesses.get("ops", 0.0))
 
                     self.notify_value_n("k.mongodb.index_stats.ops", d_tags, v)
                     if 'since' in accesses:
                         since = dateutil.parser.parse(accesses['since'])
-                        since_milis = (datetime.utcnow().timestamp() - since.timestamp()) * 1000
-                        self.notify_value_n("k.mongodb.index_stats.last_used_millis", d_tags, since_milis)
+                        since_millis = float((datetime.utcnow().timestamp() - since.timestamp()) * 1000)
+                        self.notify_value_n("k.mongodb.index_stats.last_used_millis", d_tags, since_millis)
 
     def process_data_repl_lag(self, host, port):
         """
