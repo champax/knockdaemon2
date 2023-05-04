@@ -64,7 +64,7 @@ p_author = "Laurent Champagnac / Laurent Labatut"
 p_email = "debian@knock.center"
 p_url = "https://knock.center"
 
-p_version = "3.7.0"
+p_version = "3.7.1"
 
 
 def entry_point_resolv():
