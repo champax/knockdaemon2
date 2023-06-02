@@ -976,18 +976,14 @@ class MongoDbStat(KnockProbe):
         :type db_name: str
         :param col_name: str
         :type col_name: str
-        :param index_stat_buf: str, list[str]
-        :type index_stat_buf: str, list[str]
+        :param index_stat_buf: list
+        :type index_stat_buf: list
         """
 
         if not self.stats_per_col_enabled and not self.stats_per_idx_enabled:
             return
 
-        # str to dict if required
-        if isinstance(index_stat_buf, str):
-            list_stat = index_stat_buf.split("\n")
-        else:
-            list_stat = index_stat_buf
+        list_stat = index_stat_buf
 
         # Check list
         if not isinstance(list_stat, list):
@@ -999,12 +995,12 @@ class MongoDbStat(KnockProbe):
             for index_stat in list_stat:
                 if len(index_stat) == 0: continue
 
-                index_stat = self.mongo_cleanup_buffer(index_stat)
-                try:
-                    index_stat = json.loads(index_stat)
-                except json.decoder.JSONDecodeError:
-                    logger.warning('cannot decode %s', index_stat)
-                    continue
+                # sample = {'accesses': {'ops': 0, 'since': datetime.datetime(2023, 5, 17, 8, 56, 37, 141000)},
+                #     'host': 'node01:27017',
+                #     'key': {'_id': 1},
+                #     'name': '_id_',
+                #     'spec': {'key': {'_id': 1}, 'name': '_id_', 'v': 2}}
+
                 d_tags['IDX'] = index_stat['name']
                 if "accesses" in index_stat:
                     accesses = index_stat["accesses"]
