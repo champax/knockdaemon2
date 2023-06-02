@@ -1008,7 +1008,7 @@ class MongoDbStat(KnockProbe):
 
                     self.notify_value_n("k.mongodb.index_stats.ops", d_tags, v)
                     if 'since' in accesses:
-                        since = dateutil.parser.parse(accesses['since'])
+                        since = accesses['since']
                         since_millis = float((datetime.utcnow().timestamp() - since.timestamp()) * 1000)
                         self.notify_value_n("k.mongodb.index_stats.last_used_millis", d_tags, since_millis)
 
@@ -1171,7 +1171,7 @@ class MongoDbStat(KnockProbe):
 
                         # Go index stats
                         try:
-                            index_stats = cur_db.aggregate([{'$indexStats': {}}])
+                            index_stats = list(cur_db[col].aggregate([{'$indexStats': {}}]))
                             SolBase.sleep(0)
                             try:
                                 self.process_from_buffer_index_stat(port, db, col, index_stats)
