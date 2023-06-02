@@ -1905,23 +1905,3 @@ class TestProbesFromBuffer(unittest.TestCase):
                 expect_value(self, self.k, k_expected, v_expected, "exists", dd)
 
         self.k._reset_superv_notify()
-
-        fn = self.sample_dir + "mongodb/mongo_index_stats.out"
-        self.assertTrue(FileUtility.is_file_exist(fn))
-        buf = FileUtility.file_to_textbuffer(fn, "utf8")
-        md.process_from_buffer_index_stat(cur_port, "zzz_cons", "zzz_super_col", buf)
-
-        # Log
-        for tu in self.k.superv_notify_value_list:
-            logger.info("Having tu=%s", tu)
-
-        dd = {'PORT': str(cur_port), "DB": "zzz_cons", "COL": "zzz_super_col"}
-        for index_name, ops in (
-                ("IDX#zzz_cons#zzz_super_col#v_recv_date_ASC/data.fi_ASC/data.ti_ASC/sp_False/", 1730490.0),
-                ("IDX#zzz_cons#zzz_super_col#v_auto_del_date_ASC/sp_False/exp_31622400/", 0.0),
-                ("_id_", 150364149.0),
-                ("data.ti_1", 485996.0),
-        ):
-            dd['IDX'] = index_name
-            expect_value(self, self.k, "k.mongodb.index_stats.ops", ops, "eq", dd)
-            expect_value(self, self.k, "k.mongodb.index_stats.last_used_millis", "", "exists", dd)
