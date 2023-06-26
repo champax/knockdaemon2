@@ -1669,13 +1669,21 @@ class TestProbesFromBuffer(unittest.TestCase):
         m.set_manager(self.k)
 
         # Go
-        for f_status, f_variables, f_slave in [
-            ("mysql/status.out", "mysql/variables.out", "mysql/slave.out"),
+        for f_status, f_variables, f_slave, f_user_stat, f_table_stat, f_index_stat, f_inno_table_stat in [
+            (
+                    "mysql/status.out", "mysql/variables.out", "mysql/slave.out",
+                    "mysql/USER_STATISTICS.out", "mysql/TABLE_STATISTICS.out", "mysql/INDEX_STATISTICS.out", "mysql/innodb_table_stats.out",
+            ),
         ]:
             # Path
             f_status = self.sample_dir + f_status
             f_variables = self.sample_dir + f_variables
             f_slave = self.sample_dir + f_slave
+
+            f_user_stat = self.sample_dir + f_user_stat
+            f_table_stat = self.sample_dir + f_table_stat
+            f_index_stat = self.sample_dir + f_index_stat
+            f_inno_table_stat = self.sample_dir + f_inno_table_stat
 
             # Reset
             self.k._reset_superv_notify()
@@ -1689,7 +1697,16 @@ class TestProbesFromBuffer(unittest.TestCase):
             self.assertTrue(FileUtility.is_file_exist(f_slave))
             slave_buf = FileUtility.file_to_textbuffer(f_slave, "utf8")
 
-            # Switch to arrays - status
+            self.assertTrue(FileUtility.is_file_exist(f_user_stat))
+            user_stat_buf = FileUtility.file_to_textbuffer(f_user_stat, "utf8")
+            self.assertTrue(FileUtility.is_file_exist(f_table_stat))
+            table_stat_buf = FileUtility.file_to_textbuffer(f_table_stat, "utf8")
+            self.assertTrue(FileUtility.is_file_exist(f_index_stat))
+            index_stat_buf = FileUtility.file_to_textbuffer(f_index_stat, "utf8")
+            self.assertTrue(FileUtility.is_file_exist(f_inno_table_stat))
+            inno_table_stat_buf = FileUtility.file_to_textbuffer(f_inno_table_stat, "utf8")
+
+            # Switch to list - status
             ar_status = list()
             for s in status_buf.split("\n"):
                 s = s.strip()
@@ -1702,7 +1719,7 @@ class TestProbesFromBuffer(unittest.TestCase):
                 v = ar[2].strip()
                 ar_status.append({"Variable_name": k, "Value": v})
 
-            # Switch to arrays - variables
+            # Switch to list - variables
             ar_variables = list()
             for s in variables_buf.split("\n"):
                 s = s.strip()
@@ -1715,7 +1732,7 @@ class TestProbesFromBuffer(unittest.TestCase):
                 v = ar[2].strip()
                 ar_variables.append({"Variable_name": k, "Value": v})
 
-            # Switch to arrays - slave
+            # Switch to list - slave
             d_slave = dict()
             for s in slave_buf.split("\n"):
                 s = s.strip()
@@ -1729,8 +1746,46 @@ class TestProbesFromBuffer(unittest.TestCase):
                 d_slave[k] = v
             ar_slave = [d_slave]
 
+            # Switch to list - user_stat_buf / table_stat_buf / index_stat_buf / inno_table_stat_buf
+            ar_user_stats = list()
+            ar_table_stats = list()
+            ar_index_stats = list()
+            ar_innodb_table_stats = list()
+            for s_type, header, ar_out, buf_in in [
+                ("ar_user_stats", "| USER", ar_user_stats, user_stat_buf),
+                ("ar_table_stats", "| TABLE_SCHEMA ", ar_table_stats, table_stat_buf),
+                ("ar_index_stats", "| TABLE_SCHEMA ", ar_index_stats, index_stat_buf),
+                ("ar_innodb_table_stats", "| database_name", ar_innodb_table_stats, inno_table_stat_buf),
+            ]:
+                ar_fields = None
+                for s in buf_in.split("\n"):
+                    s = s.strip()
+                    if not s.startswith("|"):
+                        continue
+                    elif s.startswith(header):
+                        # headers / fields
+                        ar_fields = s.split("|")
+                        for i in range(0, len(ar_fields) - 1):
+                            ar_fields[i] = ar_fields[i].strip()
+                    else:
+                        if ar_fields is None:
+                            raise Exception("ar_fields None, cannot process (bug), type=%s" % s_type)
+                        # data
+                        d = dict()
+                        ar = s.split("|")
+                        for i in range(0, len(ar) - 1):
+                            field_name = ar_fields[i]
+                            v = ar[i].strip()
+                            d[field_name] = v
+                        ar_out.append(d)
+
             # Process
-            m.process_mysql_buffers(ar_status, ar_slave, ar_variables, "default", 22)
+            m.process_mysql_buffers(
+                ar_status, ar_slave, ar_variables,
+                ar_table_stats, ar_user_stats, ar_index_stats,
+                ar_innodb_table_stats,
+                "default",
+                22)
 
             # Log
             for tu in self.k.superv_notify_value_list:
@@ -1748,6 +1803,83 @@ class TestProbesFromBuffer(unittest.TestCase):
                     expect_value(self, self.k, knock_key, 0.0, "gte", dd)
                 elif knock_type == "str":
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
+
+            # Check, stat, table
+            for schema, table, rows_read, rows_changed, rows_changed_index in [
+                ("db01", "ta", 1565, 3, 6),
+                ("db01", "tb", 1566, 4, 7),
+                ("db02", "tc", 16156788, 174, 348),
+                ("db02", "td", 16156789, 175, 349),
+            ]:
+                dd = {"ID": "default", "schema": schema, "table": table}
+                expect_value(self, self.k, "k.mysql.stats.table.ROWS_READ", float(rows_read), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.table.ROWS_CHANGED", float(rows_changed), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.table.ROWS_CHANGED_X_INDEXES", float(rows_changed_index), "eq", dd, )
+
+            # Check, stat, user
+            for user, total_connections, concurrent_connections, connected_time, busy_time, cpu_time, \
+                bytes_received, bytes_sent, \
+                binlog_bytes_written, rows_read, rows_sent, rows_deleted, rows_inserted, rows_updated, \
+                select_commands, update_commands, other_commands, commit_transactions, rollback_transactions, \
+                denied_connections, lost_connections, access_denied, \
+                empty_queries, total_ssl_connections, max_statement_time_exceeded in \
+                    [
+                        ("zzzz", 11, 0, 3210, 0.07573099999999999, 0.05983699999999998, 28856, 382005, 0, 20077, 2700, 0, 0, 0, 111, 0, 116, 32, 2, 1, 0, 1, 25, 0, 0,),
+                        ("user01", 911622, 0, 51057853, 103307.76056384486, 86972.37930978586, 256376400310, 508652204841, 660864536, 1663804892, 475976244, 130374, 207514, 701465, 384027899, 1480665, 300725032, 959443523, 39760, 0, 0, 0, 241005297, 0, 0,),
+                        ("user02", 69, 0, 1202740, 58.081382000000936, 57.86767730000072, 1791136, 547008082, 0, 0, 12555625, 0, 0, 0, 0, 0, 112, 0, 0, 0, 0, 0, 0, 0, 0,),
+
+                    ]:
+                dd = {"ID": "default", "user": user}
+                expect_value(self, self.k, "k.mysql.stats.user.TOTAL_CONNECTIONS", float(total_connections), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.CONCURRENT_CONNECTIONS", float(concurrent_connections), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.CONNECTED_TIME", float(connected_time), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.BUSY_TIME", float(busy_time), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.CPU_TIME", float(cpu_time), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.BYTES_RECEIVED", float(bytes_received), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.BYTES_SENT", float(bytes_sent), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.BINLOG_BYTES_WRITTEN", float(binlog_bytes_written), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.ROWS_READ", float(rows_read), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.ROWS_SENT", float(rows_sent), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.ROWS_DELETED", float(rows_deleted), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.ROWS_INSERTED", float(rows_inserted), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.ROWS_UPDATED", float(rows_updated), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.SELECT_COMMANDS", float(select_commands), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.UPDATE_COMMANDS", float(update_commands), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.OTHER_COMMANDS", float(other_commands), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.COMMIT_TRANSACTIONS", float(commit_transactions), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.ROLLBACK_TRANSACTIONS", float(rollback_transactions), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.DENIED_CONNECTIONS", float(denied_connections), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.LOST_CONNECTIONS", float(lost_connections), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.ACCESS_DENIED", float(access_denied), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.EMPTY_QUERIES", float(empty_queries), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.TOTAL_SSL_CONNECTIONS", float(total_ssl_connections), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.user.MAX_STATEMENT_TIME_EXCEEDED", float(max_statement_time_exceeded), "eq", dd, )
+
+            # Check, stat, index
+            for schema, table, index, rows_read in [
+                ("db01", "ta", "PRIMARY", 8,),
+                ("db01", "ta", "idxa", 56027,),
+                ("db01", "tb", "PRIMARY", 9,),
+                ("db01", "tb", "idxb", 56028,),
+                ("db02", "tc", "PRIMARY", 10,),
+                ("db02", "tc", "idxc", 56029,),
+                ("db02", "td", "PRIMARY", 11,),
+                ("db02", "td", "idxd", 56030,),
+            ]:
+                dd = {"ID": "default", "schema": schema, "table": table, "index": index}
+                expect_value(self, self.k, "k.mysql.stats.index.ROWS_READ", float(rows_read), "eq", dd, )
+
+            # Check, stat, innodb, table
+            for schema, table, _, n1, n2, n3 in [
+                ("db01", "ta", "2022-07-27 22:10:29", 8, 1, 10),
+                ("db01", "ta", "2022-07-27 22:10:29", 37, 2, 11),
+                ("db02", "tb", "2022-07-27 22:10:29", 9, 3, 12),
+                ("db02", "tb", "2022-07-27 22:10:29", 38, 4, 13),
+            ]:
+                dd = {"ID": "default", "schema": schema, "table": table}
+                expect_value(self, self.k, "k.mysql.stats.innodb_table.n_rows", float(n1), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.innodb_table.clustered_index_size", float(n2), "eq", dd, )
+                expect_value(self, self.k, "k.mysql.stats.innodb_table.sum_of_other_index_sizes", float(n3), "eq", dd, )
 
     def test_from_buffer_mongo(self):
         """

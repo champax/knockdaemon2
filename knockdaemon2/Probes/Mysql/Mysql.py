@@ -259,52 +259,111 @@ class Mysql(KnockProbe):
             # Fetch (MUST NOT FAILS)
             login, pwd, soc = self._parse_config_debian()
 
-            # Check
-            if not login:
-                # FATAL
-                # Notify instance down (type : 0)
-                logger.info("_parse_config returned None, signaling instance down, started=0")
-                self.notify_value_n("k.mysql.started", {"ID": id_mysql}, 0)
-                return
-
-            # Config OK
-            d_conf = {
-                "unix": soc,
-                "port": 3306,
-                "database": None,
-                "user": login,
-                "password": pwd,
-                "autocommit": True,
-                "pool_name": "p1",  # not used
-                "pool_size": 5  # not used
-            }
-
-            # -----------------------------
-            # MYSQL FETCH
-            # -----------------------------
-
-            # Fetch variables
-            ms = SolBase.mscurrent()
-
-            logger.debug("Mysql connect/exec now")
-            ar_show_global_status = MysqlApi.exec_n(d_conf, "show global status;")
-
-            logger.debug("Mysql connect/exec now")
-            ar_show_slave_status = MysqlApi.exec_n(d_conf, "show slave status;")
-
-            logger.debug("Mysql connect/exec now")
-            ar_show_global_variables = MysqlApi.exec_n(d_conf, "show global variables;")
-
-            # Process
-            self.process_mysql_buffers(ar_show_global_status, ar_show_slave_status, ar_show_global_variables, id_mysql, SolBase.msdiff(ms))
-
+            self._execute_via_creds(login, pwd, soc, id_mysql)
         except Exception as e:
             # Notify instance down (type : 0)
             logger.warning("Execute failed, signaling instance down, started=0, ex=%s", SolBase.extostr(e))
             self.notify_value_n("k.mysql.started", {"ID": id_mysql}, 0)
             return
 
-    def process_mysql_buffers(self, ar_show_global_status, ar_show_slave_status, ar_show_global_variables, mysql_id, ms_mysql):
+    def _execute_via_creds(self, login, pwd, soc, id_mysql):
+        """
+        Execute
+        :param login: str:
+        :type login: str 
+        :param pwd: str
+        :type pwd: str
+        :param soc: str
+        :type soc: str
+        :param id_mysql: str
+        :type id_mysql: str
+        """
+
+        # Check
+        if not login:
+            # FATAL
+            # Notify instance down (type : 0)
+            logger.info("_parse_config returned None, signaling instance down, started=0")
+            self.notify_value_n("k.mysql.started", {"ID": id_mysql}, 0)
+            return
+
+        # Config OK
+        d_conf = {
+            "unix": soc,
+            "port": 3306,
+            "database": None,
+            "user": login,
+            "password": pwd,
+            "autocommit": True,
+            "pool_name": "p1",  # not used
+            "pool_size": 5  # not used
+        }
+
+        # -----------------------------
+        # MYSQL FETCH
+        # -----------------------------
+
+        # Fetch variables
+        ms = SolBase.mscurrent()
+
+        logger.debug("Mysql connect/exec now")
+        ar_show_global_status = MysqlApi.exec_n(d_conf, "show global status;")
+
+        logger.debug("Mysql connect/exec now")
+        ar_show_slave_status = MysqlApi.exec_n(d_conf, "show slave status;")
+
+        logger.debug("Mysql connect/exec now")
+        ar_show_global_variables = MysqlApi.exec_n(d_conf, "show global variables;")
+
+        # Stats
+        # https://mariadb.com/kb/en/mysqlinnodb_index_stats/
+        # => later
+
+        # https://mariadb.com/kb/en/mysqlinnodb_table_stats/
+        try:
+            ar_innodb_table_stats = MysqlApi.exec_n(d_conf, "SELECT * FROM mysql.innodb_table_stats;")
+        except Exception as e:
+            logger.info("innodb_table_stats failed (non fatal), ex=%s", SolBase.extostr(e))
+            ar_innodb_table_stats = None
+
+        # https://mariadb.com/kb/en/user-statistics/
+        try:
+            ar_user_stats = MysqlApi.exec_n(d_conf, "SELECT * FROM INFORMATION_SCHEMA.USER_STATISTICS;")
+        except Exception as e:
+            logger.info("USER_STATISTICS failed (non fatal), ex=%s", SolBase.extostr(e))
+            ar_user_stats = None
+
+        # https://mariadb.com/kb/en/information-schema-client_statistics-table/
+        # => later
+
+        # https://mariadb.com/kb/en/information-schema-index_statistics-table/
+        try:
+            ar_index_stats = MysqlApi.exec_n(d_conf, "SELECT * FROM information_schema.INDEX_STATISTICS;")
+        except Exception as e:
+            logger.info("INDEX_STATISTICS failed (non fatal), ex=%s", SolBase.extostr(e))
+            ar_index_stats = None
+
+        # https://mariadb.com/kb/en/information-schema-table_statistics-table/
+        try:
+            ar_table_stats = MysqlApi.exec_n(d_conf, "d;")
+        except Exception as e:
+            logger.info("TABLE_STATISTICS failed (non fatal), ex=%s", SolBase.extostr(e))
+            ar_table_stats = None
+
+        # Process
+        self.process_mysql_buffers(
+            ar_show_global_status, ar_show_slave_status, ar_show_global_variables,
+            ar_table_stats, ar_user_stats, ar_index_stats,
+            ar_innodb_table_stats,
+            id_mysql, SolBase.msdiff(ms)
+        )
+
+    def process_mysql_buffers(
+            self,
+            ar_show_global_status, ar_show_slave_status, ar_show_global_variables,
+            ar_table_stats, ar_user_stats, ar_index_stats,
+            ar_innodb_table_stats,
+            mysql_id, ms_mysql):
         """
         Process mysql buffer
         :param ar_show_global_status: list
@@ -313,6 +372,14 @@ class Mysql(KnockProbe):
         :type ar_show_slave_status: list
         :param ar_show_global_variables: list
         :type ar_show_global_variables: list
+        :param ar_table_stats: list,None
+        :type ar_table_stats: list,None
+        :param ar_user_stats: list,None
+        :type ar_user_stats: list,None
+        :param ar_index_stats: list,None
+        :type ar_index_stats: list,None
+        :param ar_innodb_table_stats: list,None
+        :type ar_innodb_table_stats: list,None
         :param mysql_id: str
         :type mysql_id: str
         :param ms_mysql: float
@@ -487,6 +554,71 @@ class Mysql(KnockProbe):
 
         # Log
         logger.debug("Got d_out[Seconds_Behind_Master]=%s", d_out["Seconds_Behind_Master"])
+
+        # -----------------------------
+        # ar_table_stats
+        # -----------------------------
+
+        # GOT : TABLE_SCHEMA, TABLE_NAME, ROWS_READ, ROWS_CHANGED, ROWS_CHANGED_X_INDEXES
+        if ar_table_stats is not None:
+            for d in ar_table_stats:
+                schema = d["TABLE_SCHEMA"].strip()
+                table = d["TABLE_NAME"].strip()
+                tags = {"ID": mysql_id, "schema": schema, "table": table}
+                for f in ["ROWS_READ", "ROWS_CHANGED", "ROWS_CHANGED_X_INDEXES"]:
+                    v = float(d[f])
+                    self.notify_value_n("k.mysql.stats.table.%s" % f, tags, v)
+
+        # -----------------------------
+        # ar_user_stats
+        # -----------------------------
+
+        # GOT : USER, TOTAL_CONNECTIONS, CONCURRENT_CONNECTIONS, CONNECTED_TIME,
+        # GOT : BUSY_TIME, CPU_TIME, BYTES_RECEIVED, BYTES_SENT, BINLOG_BYTES_WRITTEN,
+        # GOT : ROWS_READ, ROWS_SENT, ROWS_DELETED, ROWS_INSERTED, ROWS_UPDATED,
+        # GOT : SELECT_COMMANDS, UPDATE_COMMANDS, OTHER_COMMANDS,
+        # GOT : COMMIT_TRANSACTIONS, ROLLBACK_TRANSACTIONS,
+        # GOT : DENIED_CONNECTIONS, LOST_CONNECTIONS, ACCESS_DENIED, EMPTY_QUERIES, TOTAL_SSL_CONNECTIONS, MAX_STATEMENT_TIME_EXCEEDED,
+
+        if ar_user_stats is not None:
+            for d in ar_user_stats:
+                user = d["USER"].strip()
+                tags = {"ID": mysql_id, "user": user}
+                for f in ["TOTAL_CONNECTIONS", "CONCURRENT_CONNECTIONS", "CONNECTED_TIME", "BUSY_TIME", "CPU_TIME",
+                          "BYTES_RECEIVED", "BYTES_SENT",
+                          "BINLOG_BYTES_WRITTEN", "ROWS_READ", "ROWS_SENT", "ROWS_DELETED", "ROWS_INSERTED", "ROWS_UPDATED",
+                          "SELECT_COMMANDS", "UPDATE_COMMANDS", "OTHER_COMMANDS", "COMMIT_TRANSACTIONS", "ROLLBACK_TRANSACTIONS",
+                          "DENIED_CONNECTIONS", "LOST_CONNECTIONS", "ACCESS_DENIED",
+                          "EMPTY_QUERIES", "TOTAL_SSL_CONNECTIONS", "MAX_STATEMENT_TIME_EXCEEDED", ]:
+                    v = float(d[f])
+                    self.notify_value_n("k.mysql.stats.user.%s" % f, tags, v)
+
+        # -----------------------------
+        # ar_index_stats
+        # -----------------------------
+
+        if ar_index_stats is not None:
+            for d in ar_index_stats:
+                schema = d["TABLE_SCHEMA"].strip()
+                table = d["TABLE_NAME"].strip()
+                index = d["INDEX_NAME"].strip()
+                tags = {"ID": mysql_id, "schema": schema, "table": table, "index": index}
+                for f in ["ROWS_READ"]:
+                    v = float(d[f])
+                    self.notify_value_n("k.mysql.stats.index.%s" % f, tags, v)
+
+        # -----------------------------
+        # ar_innodb_table_stats
+        # -----------------------------
+
+        if ar_innodb_table_stats is not None:
+            for d in ar_innodb_table_stats:
+                schema = d["database_name"].strip()
+                table = d["table_name"].strip()
+                tags = {"ID": mysql_id, "schema": schema, "table": table}
+                for f in ["n_rows", "clustered_index_size", "sum_of_other_index_sizes"]:
+                    v = float(d[f])
+                    self.notify_value_n("k.mysql.stats.innodb_table.%s" % f, tags, v)
 
         # -----------------------------
         # Debug
