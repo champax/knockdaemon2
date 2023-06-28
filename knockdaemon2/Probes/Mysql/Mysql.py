@@ -345,7 +345,7 @@ class Mysql(KnockProbe):
 
         # https://mariadb.com/kb/en/information-schema-table_statistics-table/
         try:
-            ar_table_stats = MysqlApi.exec_n(d_conf, "d;")
+            ar_table_stats = MysqlApi.exec_n(d_conf, "SELECT * FROM information_schema.TABLE_STATISTICS;")
         except Exception as e:
             logger.info("TABLE_STATISTICS failed (non fatal), ex=%s", SolBase.extostr(e))
             ar_table_stats = None
