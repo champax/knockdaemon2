@@ -28,7 +28,7 @@ import ujson
 logger = logging.getLogger(__name__)
 
 
-def expect_value(self, k, key, value, operator, d_tags_expected=None, cast_to_float=False, target_count=None):
+def expect_value(self, k, key, value, operator, d_tags_expected=None, cast_to_float=False, target_count=None, d_values_key=None):
     """
     Expect key to have value
     :param self: self (must be a unittest.case.TestCase)
@@ -45,7 +45,9 @@ def expect_value(self, k, key, value, operator, d_tags_expected=None, cast_to_fl
     :param cast_to_float: bool
     :type cast_to_float bool
     :param target_count: None, int
-    :param target_count: None, int
+    :type target_count: None, int
+    :param d_values_key: key to lookup into d_values
+    :type d_values_key: None,str
     """
 
     # LLA fix
@@ -60,6 +62,7 @@ def expect_value(self, k, key, value, operator, d_tags_expected=None, cast_to_fl
         counter_key = tu[0]
         d_tags = tu[1]
         counter_value = tu[2]
+        d_values = tu[4]
         if cast_to_float:
             try:
                 counter_value = float(counter_value)
@@ -92,21 +95,40 @@ def expect_value(self, k, key, value, operator, d_tags_expected=None, cast_to_fl
 
             # Check
             if tags_ok:
-                if operator == "eq":
-                    if counter_value == value:
+                if d_values_key is None:
+                    if operator == "eq":
+                        if counter_value == value:
+                            count += 1
+                    elif operator == "gte":
+                        counter_value = float(counter_value)
+                        value = float(value)
+                        if counter_value >= value:
+                            count += 1
+                    elif operator == "lte":
+                        counter_value = float(counter_value)
+                        value = float(value)
+                        if counter_value <= value:
+                            count += 1
+                    elif operator == "exists":
                         count += 1
-                elif operator == "gte":
-                    counter_value = float(counter_value)
-                    value = float(value)
-                    if counter_value >= value:
+                elif d_values_key in d_values:
+                    # Look into d_values
+                    counter_value = d_values[d_values_key]
+                    if operator == "eq":
+                        if counter_value == value:
+                            count += 1
+                    elif operator == "gte":
+                        counter_value = float(counter_value)
+                        value = float(value)
+                        if counter_value >= value:
+                            count += 1
+                    elif operator == "lte":
+                        counter_value = float(counter_value)
+                        value = float(value)
+                        if counter_value <= value:
+                            count += 1
+                    elif operator == "exists":
                         count += 1
-                elif operator == "lte":
-                    counter_value = float(counter_value)
-                    value = float(value)
-                    if counter_value <= value:
-                        count += 1
-                elif operator == "exists":
-                    count += 1
 
     if count == 0:
         self.fail(msg="Key/Value not found, hit={0}, count={1}, ope={2}, {3}={4}, d_tags_expected={5} vlist={6}".format(hit, count, operator, key, value, d_tags_expected, vlist))

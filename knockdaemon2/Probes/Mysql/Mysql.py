@@ -565,9 +565,11 @@ class Mysql(KnockProbe):
                 schema = d["TABLE_SCHEMA"].strip()
                 table = d["TABLE_NAME"].strip()
                 tags = {"ID": mysql_id, "schema": schema, "table": table}
+                d_values = dict()
                 for f in ["ROWS_READ", "ROWS_CHANGED", "ROWS_CHANGED_X_INDEXES"]:
                     v = float(d[f])
-                    self.notify_value_n("k.mysql.stats.table.%s" % f, tags, v)
+                    d_values[f] = v
+                self.notify_value_n("k.mysql.stats.table", tags, counter_value=0.0, d_values=d_values)
 
         # -----------------------------
         # ar_user_stats
@@ -584,6 +586,7 @@ class Mysql(KnockProbe):
             for d in ar_user_stats:
                 user = d["USER"].strip()
                 tags = {"ID": mysql_id, "user": user}
+                d_values = dict()
                 for f in ["TOTAL_CONNECTIONS", "CONCURRENT_CONNECTIONS", "CONNECTED_TIME", "BUSY_TIME", "CPU_TIME",
                           "BYTES_RECEIVED", "BYTES_SENT",
                           "BINLOG_BYTES_WRITTEN", "ROWS_READ", "ROWS_SENT", "ROWS_DELETED", "ROWS_INSERTED", "ROWS_UPDATED",
@@ -591,7 +594,8 @@ class Mysql(KnockProbe):
                           "DENIED_CONNECTIONS", "LOST_CONNECTIONS", "ACCESS_DENIED",
                           "EMPTY_QUERIES", "TOTAL_SSL_CONNECTIONS", "MAX_STATEMENT_TIME_EXCEEDED", ]:
                     v = float(d[f])
-                    self.notify_value_n("k.mysql.stats.user.%s" % f, tags, v)
+                    d_values[f] = v
+                self.notify_value_n("k.mysql.stats.user", tags, 0.0, d_values=d_values)
 
         # -----------------------------
         # ar_index_stats
@@ -603,9 +607,11 @@ class Mysql(KnockProbe):
                 table = d["TABLE_NAME"].strip()
                 index = d["INDEX_NAME"].strip()
                 tags = {"ID": mysql_id, "schema": schema, "table": table, "index": index}
+                d_values = dict()
                 for f in ["ROWS_READ"]:
                     v = float(d[f])
-                    self.notify_value_n("k.mysql.stats.index.%s" % f, tags, v)
+                    d_values[f] = v
+                self.notify_value_n("k.mysql.stats.index", tags, 0.0, d_values=d_values)
 
         # -----------------------------
         # ar_innodb_table_stats
@@ -616,9 +622,11 @@ class Mysql(KnockProbe):
                 schema = d["database_name"].strip()
                 table = d["table_name"].strip()
                 tags = {"ID": mysql_id, "schema": schema, "table": table}
+                d_values = dict()
                 for f in ["n_rows", "clustered_index_size", "sum_of_other_index_sizes"]:
                     v = float(d[f])
-                    self.notify_value_n("k.mysql.stats.innodb_table.%s" % f, tags, v)
+                    d_values[f] = v
+                self.notify_value_n("k.mysql.stats.innodb_table", tags, 0.0, d_values=d_values)
 
         # -----------------------------
         # Debug
