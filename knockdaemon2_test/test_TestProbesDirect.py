@@ -783,6 +783,17 @@ class TestProbesDirect(unittest.TestCase):
                 except Exception as e:
                     logger.warning("io_counters failed, bypassing checks, ex=%s", SolBase.extostr(e))
 
+    @unittest.skipIf(SolBase.get_machine_name() != "lchdebhome2", "local debug")
+    def test_Mysql_via_creds(self):
+        """
+        Test
+        """
+        # Init
+        m = Mysql()
+        m.set_manager(self.k)
+
+        m._execute_via_creds("root", "root", "/run/mysqld/mysqld.sock", "default")
+
     @unittest.skipIf(Mysql().is_supported_on_platform() is False or not os.access(Mysql.MYSQL_CONFIG_FILE, os.R_OK), "Not support on current platform, probe=%s" % Mysql())
     def test_Mysql(self):
         """
