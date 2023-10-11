@@ -526,7 +526,7 @@ class TestProbesFromBuffer(unittest.TestCase):
         cd.set_manager(self.k)
 
         # Set
-        cd.host_to_check = "www.google.com,knock.center".split(",")
+        cd.host_to_check = "www.google.com,resolver1.opendns.com".split(",")
 
         # Exec
         cd.execute()
@@ -541,13 +541,13 @@ class TestProbesFromBuffer(unittest.TestCase):
 
         # Check
         for ns in ar_ns:
-            for hn in ["www.google.com", "knock.center"]:
+            for hn in ["www.google.com", "resolver1.opendns.com"]:
                 dd = {"HOST": hn, "SERVER": ns}
-                if hn == "knock.center":
-                    expect_value(self, self.k, "k.dns.resolv", "198.27.81.204", "eq", dd)
+                if hn == "resolver1.opendns.com":
+                    expect_value(self, self.k, "k.dns.resolv", "208.67.222.222", "eq", dd)
                     expect_value(self, self.k, "k.dns.time", 0, "gte", dd)
                 else:
-                    expect_value(self, self.k, "k.dns.resolv", "198.27.81.204", "exists", dd)
+                    expect_value(self, self.k, "k.dns.resolv", "208.67.222.222", "exists", dd)
                     expect_value(self, self.k, "k.dns.time", 0, "gte", dd)
 
     @patch('knockdaemon2.Probes.Os.TimeDiff.get_ntp_offset', return_value=88.7)

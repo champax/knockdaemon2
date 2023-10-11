@@ -27,7 +27,7 @@ probes:
     class_name: knockdaemon2.Probes.Os.CheckDns.CheckDns
     exec_interval_sec: 1
     exec_enabled: true
-    dns_host: www.google.com,knock.center
+    dns_host: www.google.com,resolver1.opendns.com
 
   HddStatus:
     class_name: knockdaemon2.Probes.Os.HddStatus.HddStatus

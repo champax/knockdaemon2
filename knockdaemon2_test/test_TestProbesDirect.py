@@ -265,10 +265,10 @@ class TestProbesDirect(unittest.TestCase):
         exec_helper(self, CheckDns)
         ns = Resolver().nameservers[0]
 
-        dd = {"HOST": "knock.center", "SERVER": ns}
+        dd = {"HOST": "resolver1.opendns.com", "SERVER": ns}
 
         # Validate results - data
-        expect_value(self, self.k, "k.dns.resolv", "198.27.81.204", "eq", dd)
+        expect_value(self, self.k, "k.dns.resolv", "208.67.222.222", "eq", dd)
         expect_value(self, self.k, "k.dns.time", 0, "gte", dd)
 
     @unittest.skip("refer to test_from_buffer_timediff_with_mock")
@@ -333,6 +333,7 @@ class TestProbesDirect(unittest.TestCase):
         # CANNOT VALIDATE ON vm, requires a PHYSICAL server (need /dev/sd*)
         hds = glob.glob('/dev/sd[a-z]')
         hds.extend(glob.glob('/dev/sd[a-z][a-z]'))
+        hds.extend(glob.glob('/dev/nvme[0-9]n[0-9]'))
         if len(hds) == 0:
             logger.info("Assuming VM, lightweight checks")
             dd = {"HDD": "ALL"}

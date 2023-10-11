@@ -44,7 +44,7 @@ To run unittests, you will need:
 - memcached running, listening on localhost or unix domain socket
 - redis running (using localhost, default port)
 - smartmontools installed
-- /etc/resolv.conf set to nameserver 8.8.8.8, nameserver 194.98.65.65, nameserver 213.186.33.99
+- /etc/resolv.conf set to nameserver 208.67.222.222, nameserver 194.98.65.65, nameserver 213.186.33.99
 - sysctl tuned, allowing max open files raised to 1048576
 
 --------
