@@ -64,8 +64,8 @@ rm -fr .env
 echo "Removing B"
 rmvirtualenv ${ENV}
 
-echo "Virtualenv now (python3.7)"
-virtualenv ${ENV} -p /usr/bin/python3.7
+echo "Virtualenv now (python3.7 or python3.11)"
+virtualenv ${ENV} -p /usr/bin/python3
 
 echo "Activate now"
 source ${ENV}/bin/activate

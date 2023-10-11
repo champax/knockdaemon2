@@ -24,7 +24,7 @@ export V_ENV_ROOT="/tmp/ktemp/.virtualenvs"
 export Branch="local"
 
 echo "*** CD"
-cd /tmp/ktemp/python3-knockdaemon2/label/debian10
+cd /tmp/ktemp/python3-knockdaemon2/label/debian`cat /etc/debian_version| cut -f1 -d.`
 pwd
 
 echo "*** INVOKE"
