@@ -1,4 +1,6 @@
-nose
+pytest
+pytest-venv
+pytest-cov
 python-dateutil
 
 
