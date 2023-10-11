@@ -13,7 +13,7 @@ echo "Init"
 echo "=========================="
 
 echo "Python native"
-/usr/bin/python --version
+/usr/bin/python3 --version
 
 export VIRTUALENVWRAPPER_ENV_BIN_DIR=bin
 export VIRTUALENVWRAPPER_HOOK_DIR=${V_ENV_ROOT}
@@ -132,10 +132,16 @@ echo "=========================="
 pipdeptree
 
 echo "=========================="
-echo "Firing nosetests"
+echo "Reload venv"
+echo "=========================="
+deactivate
+source ${ENV}/bin/activate
+
+echo "=========================="
+echo "Firing pytest"
 echo "=========================="
 
-nosetests --where=${PACKAGE_NAME}_test -s --all-modules --traverse-namespace
+pytest -v --junitxml=results.xml --cov=src --cov-report=html
 OUT=$?
 
 echo "=========================="
