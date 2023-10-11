@@ -456,8 +456,11 @@ class HttpMock(object):
 
             vk = ar[1].split("=")[0]
             vv = ar[1].split("=")[1].replace("\"", "")
-            ts = int(ar[2])
-
+            try:
+                ts = int(ar[2])
+            except ValueError as e:
+                logger.warning("ar[2] value error in %s - %s", ar, ar_post_data)
+                raise e
             if vk != "value":
                 raise Exception("Invalid vk=%s" % vk)
             if len(vv) == 0:
