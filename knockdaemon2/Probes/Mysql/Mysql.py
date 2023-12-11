@@ -322,6 +322,7 @@ class Mysql(KnockProbe):
         # https://mariadb.com/kb/en/mysqlinnodb_table_stats/
         try:
             ar_innodb_table_stats = MysqlApi.exec_n(d_conf, "SELECT * FROM mysql.innodb_table_stats;")
+            logger.info("innodb_table_stats OK, len=%s", len(ar_innodb_table_stats))
         except Exception as e:
             logger.info("innodb_table_stats failed (non fatal), ex=%s", SolBase.extostr(e))
             ar_innodb_table_stats = None
@@ -329,6 +330,7 @@ class Mysql(KnockProbe):
         # https://mariadb.com/kb/en/user-statistics/
         try:
             ar_user_stats = MysqlApi.exec_n(d_conf, "SELECT * FROM INFORMATION_SCHEMA.USER_STATISTICS;")
+            logger.info("USER_STATISTICS OK, len=%s", len(ar_user_stats))
         except Exception as e:
             logger.info("USER_STATISTICS failed (non fatal), ex=%s", SolBase.extostr(e))
             ar_user_stats = None
@@ -339,6 +341,7 @@ class Mysql(KnockProbe):
         # https://mariadb.com/kb/en/information-schema-index_statistics-table/
         try:
             ar_index_stats = MysqlApi.exec_n(d_conf, "SELECT * FROM information_schema.INDEX_STATISTICS;")
+            logger.info("INDEX_STATISTICS OK, len=%s", len(ar_index_stats))
         except Exception as e:
             logger.info("INDEX_STATISTICS failed (non fatal), ex=%s", SolBase.extostr(e))
             ar_index_stats = None
@@ -346,6 +349,7 @@ class Mysql(KnockProbe):
         # https://mariadb.com/kb/en/information-schema-table_statistics-table/
         try:
             ar_table_stats = MysqlApi.exec_n(d_conf, "SELECT * FROM information_schema.TABLE_STATISTICS;")
+            logger.info("TABLE_STATISTICS OK, len=%s", len(ar_table_stats))
         except Exception as e:
             logger.info("TABLE_STATISTICS failed (non fatal), ex=%s", SolBase.extostr(e))
             ar_table_stats = None
@@ -570,6 +574,8 @@ class Mysql(KnockProbe):
                     v = float(d[f])
                     d_values[f] = v
                 self.notify_value_n("k.mysql.stats.table", tags, counter_value=0.0, d_values=d_values)
+        else:
+            logger.info("ar_table_stats None")
 
         # -----------------------------
         # ar_user_stats
@@ -596,6 +602,8 @@ class Mysql(KnockProbe):
                     v = float(d[f])
                     d_values[f] = v
                 self.notify_value_n("k.mysql.stats.user", tags, 0.0, d_values=d_values)
+        else:
+            logger.info("ar_user_stats None")
 
         # -----------------------------
         # ar_index_stats
@@ -612,6 +620,8 @@ class Mysql(KnockProbe):
                     v = float(d[f])
                     d_values[f] = v
                 self.notify_value_n("k.mysql.stats.index", tags, 0.0, d_values=d_values)
+        else:
+            logger.info("ar_index_stats None")
 
         # -----------------------------
         # ar_innodb_table_stats
@@ -627,6 +637,8 @@ class Mysql(KnockProbe):
                     v = float(d[f])
                     d_values[f] = v
                 self.notify_value_n("k.mysql.stats.innodb_table", tags, 0.0, d_values=d_values)
+        else:
+            logger.info("ar_index_stats None")
 
         # -----------------------------
         # Debug
