@@ -77,6 +77,9 @@ echo "=========================="
 echo "Installing initial packages"
 echo "=========================="
 
+export TMPDIR=$HOME/tmp
+mkdir -p $TMPDIR
+
 echo "Pip"
 pip install pip --upgrade --no-cache-dir
 
