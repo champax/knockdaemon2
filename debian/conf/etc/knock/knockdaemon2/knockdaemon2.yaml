@@ -177,6 +177,8 @@ probes:
     class_name: knockdaemon2.Probes.Mongodb.MongoDbStat.MongoDbStat
     exec_interval_sec: 60
     exec_enabled: true
+    # This is pretty heavy, we increase the timeout
+    exec_timeout_override_ms: 20000
     stats_per_col_enabled: true
     stats_per_idx_enabled: true
 
