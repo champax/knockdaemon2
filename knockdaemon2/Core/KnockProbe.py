@@ -69,6 +69,7 @@ class KnockProbe(object):
         self.category = "/undef"
 
         # Timeout override (can be usefull for some slow probes that are executed not often)
+        # Can be set in code or via config
         self.exec_timeout_override_ms = None
 
     def set_manager(self, knock_manager):
@@ -95,6 +96,10 @@ class KnockProbe(object):
         self.probe_class = d["class_name"]
         self.exec_enabled = d["exec_enabled"]
         self.exec_interval_ms = d["exec_interval_sec"] * 1000
+
+        if "exec_timeout_override_ms" in d and self.exec_timeout_override_ms is None and d["exec_timeout_override_ms"] is not None:
+            self.exec_timeout_override_ms = int(d["exec_timeout_override_ms"])
+            logger.info("Exec timeout override by config=%s", self.exec_timeout_override_ms)
 
         self._check_and_fix_limits()
 
@@ -177,8 +182,9 @@ class KnockProbe(object):
         :rtype string
         """
 
-        return "kprobe:ms={0}*s={1}*c={2}*on={3}*ux={4}*pl={5}*sup={6}*k={7}".format(
+        return "kprobe:msi={0}*msto={1}*s={2}*c={3}*on={4}*ux={5}*pl={6}*sup={7}*k={8}".format(
             self.exec_interval_ms,
+            self.exec_timeout_override_ms,
             self.probe_class,
             self.class_name,
             self.exec_enabled,
