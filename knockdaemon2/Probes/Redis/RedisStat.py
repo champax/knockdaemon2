@@ -193,6 +193,12 @@ class RedisStat(KnockProbe):
                 # Ok, fetch
                 v = d_info[k]
 
+            # Discard invalid values  (mem_fragmentation_ratio can be nan on restart)
+            if v is None:
+                continue
+            elif isinstance(v, str) and (len(v) == 0 or v.lower() == "nan"):
+                continue
+
             # Cast
             if knock_type == "int":
                 v = int(v)
@@ -313,6 +319,11 @@ class RedisStat(KnockProbe):
         :param aggreg_op: str
         :type aggreg_op: str
         """
+
+        if value is None:
+            return
+        elif isinstance(value, str) and (len(value) == 0 or value.lower() == "nan"):
+            return
 
         self.notify_value_n(key, {"RDPORT": str(redis_port)}, value)
 
