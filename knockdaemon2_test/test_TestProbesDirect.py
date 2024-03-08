@@ -498,6 +498,13 @@ class TestProbesDirect(unittest.TestCase):
             expect_value(self, self.k, "k.vfs.dev.write.totalms", 0, "gte", dd)
             expect_value(self, self.k, "k.vfs.dev.io.currentcount", 0, "gte", dd)
             expect_value(self, self.k, "k.vfs.dev.io.totalms", 0, "gte", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.discard.io", 0, "gte", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.discard.merged", 0, "gte", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.discard.sector", 0, "gte", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.discard.totalms", 0, "gte", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.fush.count", 0, "gte", dd)
+            expect_value(self, self.k, "k.vfs.dev.io.fush.totalms", 0, "gte", dd)
+
 
     @unittest.skipIf(IpvsAdm().is_supported_on_platform() is False or not os.access("/proc/net/ip_vs", os.R_OK), "Not support on current platform, probe=%s" % IpvsAdm())
     def test_IpvsAdm(self):
