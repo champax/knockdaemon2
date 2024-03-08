@@ -540,7 +540,6 @@ class TestProbesDirect(unittest.TestCase):
         mem_file = os.path.join(dirname(abspath(__file__)), 'conf/mock_mem.txt')
         self.conf_probe_override['mem_info'] = mem_file
         exec_helper(self, Memory)
-        logger.info('tamer %s', self.k)
 
         expect_value(self, self.k, "k.os.memory.size.available", 0, "gte")
         expect_value(self, self.k, "k.os.swap.size.free", 0, "gte")
