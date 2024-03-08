@@ -553,6 +553,10 @@ class TestProbesDirect(unittest.TestCase):
         expect_value(self, self.k, "k.os.memory.size.buffers", 0, "gte")
         expect_value(self, self.k, "k.os.memory.size.cached", 0, "gte")
         expect_value(self, self.k, "k.os.memory.size.used", 0, "gte")
+        expect_value(self, self.k, "k.os.memory.size.pagestables", 0, "gte")
+        expect_value(self, self.k, "k.os.memory.size.hardwarecorrupted", 0, "gte")
+        expect_value(self, self.k, "k.os.memory.size.slab", 0, "gte")
+        expect_value(self, self.k, "k.os.memory.size.swapcached", 0, "gte")
         expect_value(self, self.k, "k.os.swap.size.used", 0, "gte")
 
     @unittest.skipIf(Netstat().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Netstat())
