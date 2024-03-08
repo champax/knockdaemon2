@@ -1028,20 +1028,10 @@ class TestProbesFromBuffer(unittest.TestCase):
         buf = FileUtility.file_to_textbuffer(s, "utf8")
 
         # Get
-        memory_total, memory_used, swap_total, swap_used, memory_free, swap_free, memory_buffers, memory_cached, memory_available = us.get_mem_info_from_buffer(buf)
-
+        dict_mem_info = us.get_mem_info_from_buffer(buf)
         # Notify
-        us.notify_mem_info(
-            memory_total=memory_total,
-            memory_used=memory_used,
-            memory_available=memory_available,
-            memory_cached=memory_cached,
-            memory_buffers=memory_buffers,
-            memory_free=memory_free,
-            swap_total=swap_total,
-            swap_used=swap_used,
-            swap_free=swap_free,
-        )
+        us.notify_mem_info(**dict_mem_info)
+
 
         # Log
         for tu in self.k.superv_notify_value_list:

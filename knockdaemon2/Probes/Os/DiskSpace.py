@@ -337,6 +337,42 @@ class DiskSpace(KnockProbe):
                     temp_ar = line2.split()
 
                     # line is THE good line
+                    """
+                                    
+                        ==  ===================================
+                         1  major number
+                         2  minor number
+                         3  device name
+                         4  reads completed successfully
+                         5  reads merged
+                         6  sectors read
+                         7  time spent reading (ms)
+                         8  writes completed
+                         9  writes merged
+                        10  sectors written
+                        11  time spent writing (ms)
+                        12  I/Os currently in progress
+                        13  time spent doing I/Os (ms)
+                        14  weighted time spent doing I/Os (ms)
+                        ==  ===================================
+                        
+                        Kernel 4.18+ appends four more fields for discard
+                        tracking putting the total at 18:
+                        
+                        ==  ===================================
+                        15  discards completed successfully
+                        16  discards merged
+                        17  sectors discarded
+                        18  time spent discarding
+                        ==  ===================================
+                        
+                        Kernel 5.5+ appends two more fields for flush requests:
+                        
+                        ==  =====================================
+                        19  flush requests completed successfully
+                        20  time spent flushing
+                        ==  =====================================
+                    """
                     self.notify_value_n("k.vfs.dev.read.totalcount", {"FSNAME": mountpoint}, int(temp_ar[3]))
                     self.notify_value_n("k.vfs.dev.read.totalsectorcount", {"FSNAME": mountpoint}, int(temp_ar[5]))
                     self.notify_value_n("k.vfs.dev.read.totalbytes", {"FSNAME": mountpoint}, int(temp_ar[5]) * 512)
@@ -347,6 +383,16 @@ class DiskSpace(KnockProbe):
                     self.notify_value_n("k.vfs.dev.write.totalms", {"FSNAME": mountpoint}, int(temp_ar[10]))
                     self.notify_value_n("k.vfs.dev.io.currentcount", {"FSNAME": mountpoint}, int(temp_ar[11]))
                     self.notify_value_n("k.vfs.dev.io.totalms", {"FSNAME": mountpoint}, int(temp_ar[12]))
+                    self.notify_value_n("k.vfs.dev.io.weightedtotalms", {"FSNAME": mountpoint}, int(temp_ar[13]))
+
+                    if len(temp_ar) > 14:
+                        self.notify_value_n("k.vfs.dev.io.discard.io", {"FSNAME": mountpoint}, int(temp_ar[14]))
+                        self.notify_value_n("k.vfs.dev.io.discard.merged", {"FSNAME": mountpoint}, int(temp_ar[15]))
+                        self.notify_value_n("k.vfs.dev.io.discard.sector", {"FSNAME": mountpoint}, int(temp_ar[16]))
+                        self.notify_value_n("k.vfs.dev.io.discard.totalms", {"FSNAME": mountpoint}, int(temp_ar[17]))
+                    if len(temp_ar) > 18:
+                        self.notify_value_n("k.vfs.dev.io.fush.count", {"FSNAME": mountpoint}, int(temp_ar[18]))
+                        self.notify_value_n("k.vfs.dev.io.fush.totalms", {"FSNAME": mountpoint}, int(temp_ar[19]))
 
                     # ALL handling
                     self.add_to_hash(all_hash, 'k.vfs.dev.read.totalcount', int(temp_ar[3]))
@@ -362,6 +408,15 @@ class DiskSpace(KnockProbe):
 
                     self.add_to_hash(all_hash, 'k.vfs.dev.io.currentcount', int(temp_ar[11]))
                     self.add_to_hash(all_hash, 'k.vfs.dev.io.totalms', int(temp_ar[12]))
+
+                    if len(temp_ar) > 14:
+                        self.add_to_hash(all_hash,"k.vfs.dev.io.discard.io", int(temp_ar[14]))
+                        self.add_to_hash(all_hash,"k.vfs.dev.io.discard.merged", int(temp_ar[15]))
+                        self.add_to_hash(all_hash,"k.vfs.dev.io.discard.sector", int(temp_ar[16]))
+                        self.add_to_hash(all_hash,"k.vfs.dev.io.discard.totalms", int(temp_ar[17]))
+                    if len(temp_ar) > 18:
+                        self.add_to_hash(all_hash,"k.vfs.dev.io.fush.count", int(temp_ar[18]))
+                        self.add_to_hash(all_hash,"k.vfs.dev.io.fush.totalms", int(temp_ar[19]))
 
                     if mountpoint not in self.previous_stat:
                         self.previous_stat[mountpoint] = dict()
