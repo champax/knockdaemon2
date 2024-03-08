@@ -78,11 +78,11 @@ class IpvsAdm(KnockProbe):
             return
 
         for key, value in hashtab.items():
-            self._push_result("knock.ipvsadm.activerip", key, value=value)
+            self._push_result("k.os.ipvsadm.activerip", key, value=value)
 
         for key, value in resulttab.items():
             vip, key = key.split('_')
-            self._push_result("knock.ipvsadm." + key, vip, value=value)
+            self._push_result("k.os.ipvsadm." + key, vip, value=value)
 
         self._send_all_result()
 
