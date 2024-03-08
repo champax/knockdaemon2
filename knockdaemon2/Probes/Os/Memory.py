@@ -55,24 +55,16 @@ class Memory(KnockProbe):
         """
 
         # Fetch
-        memory_total, memory_used, swap_total, swap_used, memory_free, swap_free, memory_buffers, memory_cached, memory_available = self.get_mem_info()
+        dict_memory_info = self.get_mem_info()
 
         # Notify
-        self.notify_mem_info(
-            memory_total=memory_total,
-            memory_used=memory_used,
-            memory_available=memory_available,
-            memory_cached=memory_cached,
-            memory_buffers=memory_buffers,
-            memory_free=memory_free,
-            swap_total=swap_total,
-            swap_used=swap_used,
-            swap_free=swap_free,
-        )
+        self.notify_mem_info(**dict_memory_info)
 
-    def notify_mem_info(self, memory_total, memory_used, memory_cached, memory_buffers, memory_free, swap_total, swap_used, swap_free, memory_available=None):
+    def notify_mem_info(self, memory_total, memory_used, memory_cached, memory_buffers, memory_free, swap_total, swap_used,
+                        swap_free, memory_available, pages_tables, hardware_corrupted, slab, swap_cached):
         """
-        Notify
+        Notify.
+
         :param memory_total: int
         :type memory_total: int
         :param memory_used: float
@@ -89,10 +81,18 @@ class Memory(KnockProbe):
         :type swap_used: float
         :param swap_free: int
         :type swap_free: int
-        :param memory_available: int,None
-        :type memory_available: int,None
-
+        :param memory_available: int
+        :type memory_available: int
+        :param pages_tables: int
+        :type pages_tables: int
+        :param hardware_corrupted: int
+        :type hardware_corrupted: int
+        :param slab: int
+        :type slab: int
+        :param swap_cached: int
+        :type swap_cached: int
         """
+
         self.notify_value_n("k.os.memory.size.free", None, memory_free)
         if memory_available is not None:
             self.notify_value_n("k.os.memory.size.available", None, memory_available)
@@ -107,12 +107,16 @@ class Memory(KnockProbe):
         self.notify_value_n("k.os.memory.size.cached", None, memory_cached)
         self.notify_value_n("k.os.memory.size.used", None, memory_used)
         self.notify_value_n("k.os.swap.size.used", None, swap_used)
+        self.notify_value_n("k.os.memory.size.pagestables", None, pages_tables)
+        self.notify_value_n("k.os.memory.size.hardwarecorrupted", None, hardware_corrupted)
+        self.notify_value_n("k.os.memory.size.slab", None, slab)
+        self.notify_value_n("k.os.memory.size.swapcached", None, swap_cached)
 
     def get_mem_info(self):
         """
         Get memory info
-        :return tuple
-        :rtype tuple
+        :return dict: Memory info
+        :rtype dict
         """
 
         with open(self.mem_info_file) as f1:
@@ -127,36 +131,49 @@ class Memory(KnockProbe):
         :return: tuple
         :rtype tuple
         """
-
-        memory_total = 0
-        memory_free = 0
-        memory_buffers = 0
-        memory_cached = 0
-        swap_total = 0
-        swap_free = 0
-        memory_available = 0
+        dict_value = {
+            'memory_total': 0,
+            'memory_free': 0,
+            'memory_buffers': 0,
+            'memory_cached': 0,
+            'swap_total': 0,
+            'swap_free': 0,
+            'memory_available': 0,
+            'pages_tables': 0,
+            'hardware_corrupted': 0,
+            'slab': 0,
+            'swap_cached': 0,
+        }
 
         ar = buf.split("\n")
         for line in ar:
             if line.startswith('MemTotal'):
-                memory_total = cls.get_value_from_line(line)
+                dict_value['memory_total'] = cls.get_value_from_line(line)
             elif line.startswith('MemFree'):
-                memory_free = cls.get_value_from_line(line)
+                dict_value['memory_free'] = cls.get_value_from_line(line)
             elif line.startswith('MemAvailable'):
-                memory_available = cls.get_value_from_line(line)
+                dict_value['memory_available'] = cls.get_value_from_line(line)
             elif line.startswith('Buffers'):
-                memory_buffers = cls.get_value_from_line(line)
+                dict_value['memory_buffers'] = cls.get_value_from_line(line)
             elif line.startswith('Cached'):
-                memory_cached = cls.get_value_from_line(line)
+                dict_value['memory_cached'] = cls.get_value_from_line(line)
             elif line.startswith('SwapTotal'):
-                swap_total = cls.get_value_from_line(line)
+                dict_value['swap_total'] = cls.get_value_from_line(line)
             elif line.startswith('SwapFree'):
-                swap_free = cls.get_value_from_line(line)
+                dict_value['swap_free'] = cls.get_value_from_line(line)
+            elif line.startswith('PageTables'):
+                dict_value['pages_tables'] = cls.get_value_from_line(line)
+            elif line.startswith('HardwareCorrupted'):
+                dict_value['hardware_corrupted'] = cls.get_value_from_line(line)
+            elif line.startswith('Slab'):
+                dict_value['slab'] = cls.get_value_from_line(line)
+            elif line.startswith('SwapCached'):
+                dict_value['swap_cached'] = cls.get_value_from_line(line)
 
         # Finish it
-        memory_used = memory_total - memory_free - memory_buffers - memory_cached
-        swap_used = swap_total - swap_free
-        return memory_total, memory_used, swap_total, swap_used, memory_free, swap_free, memory_buffers, memory_cached, memory_available
+        dict_value['memory_used'] = dict_value['memory_total'] - dict_value['memory_free'] - dict_value['memory_buffers'] - dict_value['memory_cached']
+        dict_value['swap_used'] = dict_value['swap_total'] - dict_value['swap_free']
+        return dict_value
 
     @classmethod
     def get_value_from_line(cls, line):
