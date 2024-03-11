@@ -200,3 +200,11 @@ probes:
     class_name: knockdaemon2.Probes.Os.Mdstat.Mdstat
     exec_interval_sec: 60
     exec_enabled: true
+
+  # ============================
+  # IpvsAdmn
+  # ============================
+  IpvsAdm:
+    class_name: knockdaemon2.Probes.Os.IpvsAdm.IpvsAdm
+    exec_interval_sec: 60
+    exec_enabled: true

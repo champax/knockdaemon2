@@ -1549,15 +1549,15 @@ class TestProbesFromBuffer(unittest.TestCase):
 
         # Check
         dd = {"VIP": "10.4.103.40:11406"}
-        expect_value(self, self.k, "knock.ipvsadm.activerip", "10.66.103.21:11406 - 10.66.103.20:11406", "eq", dd)
-        expect_value(self, self.k, "knock.ipvsadm.weightRip", 2, "eq", dd)
-        expect_value(self, self.k, "knock.ipvsadm.activeConRip", 0, "eq", dd)
-        expect_value(self, self.k, "knock.ipvsadm.InActConnRip", 0, "eq", dd)
+        expect_value(self, self.k, "k.os.ipvsadm.activerip", "10.66.103.21:11406 - 10.66.103.20:11406", "eq", dd)
+        expect_value(self, self.k, "k.os.ipvsadm.weightRip", 2, "eq", dd)
+        expect_value(self, self.k, "k.os.ipvsadm.activeConRip", 0, "eq", dd)
+        expect_value(self, self.k, "k.os.ipvsadm.InActConnRip", 0, "eq", dd)
         dd = {"VIP": "ALL"}
-        expect_value(self, self.k, "knock.ipvsadm.activerip", "10.66.103.21:11406 - 10.66.103.20:11406", "eq", dd)
-        expect_value(self, self.k, "knock.ipvsadm.weightRip", 2, "eq", dd)
-        expect_value(self, self.k, "knock.ipvsadm.activeConRip", 0, "eq", dd)
-        expect_value(self, self.k, "knock.ipvsadm.InActConnRip", 0, "eq", dd)
+        expect_value(self, self.k, "k.os.ipvsadm.activerip", "10.66.103.21:11406 - 10.66.103.20:11406", "eq", dd)
+        expect_value(self, self.k, "k.os.ipvsadm.weightRip", 2, "eq", dd)
+        expect_value(self, self.k, "k.os.ipvsadm.activeConRip", 0, "eq", dd)
+        expect_value(self, self.k, "k.os.ipvsadm.InActConnRip", 0, "eq", dd)
 
     def test_from_buffer_uwsgi(self):
         """
