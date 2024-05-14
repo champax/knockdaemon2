@@ -27,6 +27,7 @@ import os
 import re
 
 import psutil
+from psutil import ZombieProcess
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Api.ButcherTools import ButcherTools
@@ -363,7 +364,11 @@ class Service(KnockProbe):
         # Enumerate all processes
         for proc in get_process_list():
             # Command line
-            cmd_line = proc.cmdline()
+            try:
+                cmd_line = proc.cmdline()
+            except ZombieProcess as e:
+                logger.debug("ZombieProcess exception (SKIP), proc=%s, ex=%s", proc, SolBase.extostr(e))
+                continue
 
             # Process uwsgi ONLY
             if len(cmd_line) == 0:
