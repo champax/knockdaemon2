@@ -596,7 +596,7 @@
 | wsrep_cert_interval                                    | 391.314                                                                                                                                        |
 | wsrep_open_transactions                                | 0                                                                                                                                              |
 | wsrep_open_connections                                 | 0                                                                                                                                              |
-| wsrep_incoming_addresses                               | 10.66.103.62:3306,10.66.103.63:3306,10.66.103.60:3306,10.66.103.61:3306                                                                        |
+| wsrep_incoming_addresses                               | 127.0.0.1:3306,127.0.0.1:3306,127.0.0.1:3306,127.0.0.1:3306                                                                        |
 | wsrep_cluster_weight                                   | 4                                                                                                                                              |
 | wsrep_desync_count                                     | 0                                                                                                                                              |
 | wsrep_evs_delayed                                      |                                                                                                                                                |
