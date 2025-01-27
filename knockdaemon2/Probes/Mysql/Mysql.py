@@ -40,13 +40,13 @@ class Mysql(KnockProbe):
     """
 
     # Debian : extract creds from file
-    MYSQL_CONFIG_FILE = "/etc/mysql/debian.cnf"
-
-    # Centos : extract sockt from file, assuming root /
-    CENTOS_CONFIG_FILE = "/etc/my.cnf"
-
-    # Redhat / Centos : client lib (mariadb-libs) ship the server config file, we also check the binary (zzzz)
-    CENTOS_BINARY_FILE = "/usr/libexec/mysqld"
+    MYSQL_CONFIG_FILES = [
+        # Will use daemon configuration
+        # As /etc/mysql/debian.cnf is deprecated, will be removed and this was the only file containing login/pwd
+        ("V2", None),
+        # Old ones
+        ("V1", "/etc/mysql/debian.cnf"),
+    ]
 
     KEYS = [
         # float => per second
@@ -57,89 +57,117 @@ class Mysql(KnockProbe):
         # 0  : RUNNING
         # >0 : FAILED
 
-        ("k.mysql.exec.ss.ms", "float", "k.mysql.exec.ss.ms"),
-        ("k.mysql.started", "int", "k.mysql.started"),
+        # Format is
+        # - native counter
+        # - type (float|int)
+        # - target counter
+        # - target cumulative counter (can be None)
 
-        ("Aborted_clients", "float", "k.mysql.conn.abort.client"),
-        ("Aborted_connects", "float", "k.mysql.conn.abort.connect"),
-        ("Connections", "float", "k.mysql.conn.total"),
+        ("k.mysql.exec.ss.ms", "float", "k.mysql.exec.ss.ms", None),
+        ("k.mysql.started", "int", "k.mysql.started", None),
 
-        ("Bytes_received", "float", "k.mysql.bytes.recv"),
-        ("Bytes_sent", "float", "k.mysql.bytes.sent"),
+        ("Aborted_clients", "float", "k.mysql.conn.abort.client", None),
+        ("Aborted_connects", "float", "k.mysql.conn.abort.connect", None),
+        ("Connections", "float", "k.mysql.conn.total", None),
 
-        ("Com_delete", "float", "k.mysql.com.delete"),
-        ("Com_insert", "float", "k.mysql.com.insert"),
-        ("Com_select", "float", "k.mysql.com.select"),
-        ("Com_update", "float", "k.mysql.com.update"),
+        ("Bytes_received", "float", "k.mysql.bytes.recv", None),
+        ("Bytes_sent", "float", "k.mysql.bytes.sent", None),
 
-        ("Com_begin", "float", "k.mysql.com.begin"),
-        ("Com_commit", "float", "k.mysql.com.commit"),
-        ("Com_rollback", "float", "k.mysql.com.rollback"),
+        ("Com_delete", "float", "k.mysql.com.delete", None),
+        ("Com_insert", "float", "k.mysql.com.insert", None),
+        ("Com_select", "float", "k.mysql.com.select", None),
+        ("Com_update", "float", "k.mysql.com.update", None),
 
-        ("Com_slave_start", "float", "k.mysql.com.slave.start"),
-        ("Com_slave_stop", "float", "k.mysql.com.slave.stop"),
+        ("Com_begin", "float", "k.mysql.com.begin", None),
+        ("Com_commit", "float", "k.mysql.com.commit", None),
+        ("Com_rollback", "float", "k.mysql.com.rollback", None),
 
-        ("Created_tmp_disk_tables", "float", "k.mysql.tmp.disktables"),
-        ("Created_tmp_files", "float", "k.mysql.tmp.files"),
-        ("Created_tmp_tables", "float", "k.mysql.tmp.tables"),
+        ("Com_slave_start", "float", "k.mysql.com.slave.start", None),
+        ("Com_slave_stop", "float", "k.mysql.com.slave.stop", None),
 
-        ("Innodb_data_fsyncs", "float", "k.mysql.inno.fsyncs"),
-        ("Innodb_data_reads", "float", "k.mysql.inno.count.read"),
-        ("Innodb_data_writes", "float", "k.mysql.inno.count.write"),
-        ("Innodb_data_read", "float", "k.mysql.inno.bytes.read"),
-        ("Innodb_data_written", "float", "k.mysql.inno.bytes.write"),
+        # Mariadb
+        ("Com_start_slave", "float", "k.mysql.com.slave.start", None),
+        ("Com_stop_slave", "float", "k.mysql.com.slave.stop", None),
 
-        ("Innodb_rows_deleted", "float", "k.mysql.inno.rows.delete"),
-        ("Innodb_rows_inserted", "float", "k.mysql.inno.rows.insert"),
-        ("Innodb_rows_read", "float", "k.mysql.inno.rows.select"),
-        ("Innodb_rows_updated", "float", "k.mysql.inno.rows.update"),
+        ("Created_tmp_disk_tables", "float", "k.mysql.tmp.disktables", None),
+        ("Created_tmp_files", "float", "k.mysql.tmp.files", None),
+        ("Created_tmp_tables", "float", "k.mysql.tmp.tables", None),
+
+        ("Innodb_data_fsyncs", "float", "k.mysql.inno.fsyncs", None),
+        ("Innodb_data_reads", "float", "k.mysql.inno.count.read", None),
+        ("Innodb_data_writes", "float", "k.mysql.inno.count.write", None),
+        ("Innodb_data_read", "float", "k.mysql.inno.bytes.read", None),
+        ("Innodb_data_written", "float", "k.mysql.inno.bytes.write", None),
+
+        # This is removed maria 10.10
+        # https://mariadb.com/kb/en/innodb-status-variables/#innodb_rows_deleted
+        ("Innodb_rows_deleted", "float", "k.mysql.inno.rows.delete", None), # now is Handler_delete
+        ("Innodb_rows_inserted", "float", "k.mysql.inno.rows.insert", None), # removed, no equivalent
+        ("Innodb_rows_read", "float", "k.mysql.inno.rows.select", None), # Sum of "Handler_read_"
+        ("Innodb_rows_updated", "float", "k.mysql.inno.rows.update", None), # now is Handler_update
+
+        # Maria >= 10.10
+        ("Handler_delete", "float", "k.mysql.inno.rows.delete", None),
+
+        ("Handler_read_first", "float", "k.mysql.inno.rows.read_first", "k.mysql.inno.rows.select"),
+        ("Handler_read_key", "float", "k.mysql.inno.rows.read_key", "k.mysql.inno.rows.select"),
+        ("Handler_read_last", "float", "k.mysql.inno.rows.read_last", "k.mysql.inno.rows.select"),
+        ("Handler_read_next", "float", "k.mysql.inno.rows.read_next", "k.mysql.inno.rows.select"),
+        ("Handler_read_prev", "float", "k.mysql.inno.rows.read_prev", "k.mysql.inno.rows.select"),
+        ("Handler_read_retry", "float", "k.mysql.inno.rows.read_retry", "k.mysql.inno.rows.select"),
+        ("Handler_read_rnd", "float", "k.mysql.inno.rows.read_rnd", "k.mysql.inno.rows.select"),
+        ("Handler_read_rnd_deleted", "float", "k.mysql.inno.rows.read_rnd_deleted", "k.mysql.inno.rows.select"),
+        ("Handler_read_rnd_next", "float", "k.mysql.inno.rows.read_next", "k.mysql.inno.rows.select"),
+
+        ("Handler_update", "float", "k.mysql.inno.rows.update", None),
 
         # -----------------------
         # MEMORY POOLS
         # -----------------------
 
         # Inno pool bytes clean and dirty (hacked) (bytes)
-        ("k.mysql.inno.pool.cur_clean_bytes", "int", "k.mysql.inno.pool.cur_clean_bytes"),
-        ("k.mysql.inno.pool.cur_dirty_bytes", "int", "k.mysql.inno.pool.cur_dirty_bytes"),
+        ("k.mysql.inno.pool.cur_clean_bytes", "int", "k.mysql.inno.pool.cur_clean_bytes", None),
+        ("k.mysql.inno.pool.cur_dirty_bytes", "int", "k.mysql.inno.pool.cur_dirty_bytes", None),
         # Inno log buffer in ram (bytes)
-        ("innodb_log_buffer_size", "int", "k.mysql.inno.pool.cur_logbuffer_bytes"),
+        ("innodb_log_buffer_size", "int", "k.mysql.inno.pool.cur_logbuffer_bytes", None),
         # Inno additional buffer (bytes)
-        ("innodb_additional_mem_pool_size", "int", "k.mysql.inno.pool.cur_addpool_bytes"),
+        # Removed in mariadb 10.2
+        ("innodb_additional_mem_pool_size", "int", "k.mysql.inno.pool.cur_addpool_bytes", None),
         # Myisam key buffer in ram (bytes)
-        ("key_buffer_size", "int", "k.mysql.myisam.pool.cur_keybuffer_bytes"),
+        ("key_buffer_size", "int", "k.mysql.myisam.pool.cur_keybuffer_bytes", None),
         # Query cache buffer in ram (bytes)
-        ("query_cache_size", "int", "k.mysql.qcache.pool.cur_bytes"),
+        ("query_cache_size", "int", "k.mysql.qcache.pool.cur_bytes", None),
         # Connection allocated ram (Threads_connected * bytes per connection)
         # Bytes per connection approx : join_buffer_size + sort_buffer_size + read_buffer_size + read_rnd_buffer_size + binlog_cache_size
         # This is a maximum (buffers can be allocated or not depending on underlying requests)
-        ("k.mysql.conn.pool.cur_bytes", "int", "k.mysql.conn.pool.cur_bytes"),
+        ("k.mysql.conn.pool.cur_bytes", "int", "k.mysql.conn.pool.cur_bytes", None),
         # Thread allocated ram (Threads_cached * (thread_stack + net_buffer_length + net_buffer_length))
-        ("k.mysql.thread.pool.cur_bytes", "int", "k.mysql.thread.pool.cur_bytes"),
+        ("k.mysql.thread.pool.cur_bytes", "int", "k.mysql.thread.pool.cur_bytes", None),
 
         # QUERY CACHE HITS
         # Query hit rate = qcache_hits / (qcache_hits + com_select)
-        ("Qcache_hits", "int", "k.mysql.com.select_qcache_hit"),
+        ("Qcache_hits", "int", "k.mysql.com.select_qcache_hit", None),
 
         # OPEN STUFF
-        ("Open_files", "int", "k.mysql.open.cur.files"),
-        ("Open_tables", "int", "k.mysql.open.cur.tables"),
-        ("Opened_files", "float", "k.mysql.open.total.files"),
-        ("Opened_tables", "float", "k.mysql.open.total.tables"),
+        ("Open_files", "int", "k.mysql.open.cur.files", None),
+        ("Open_tables", "int", "k.mysql.open.cur.tables", None),
+        ("Opened_files", "float", "k.mysql.open.total.files", None),
+        ("Opened_tables", "float", "k.mysql.open.total.tables", None),
 
         # THREAD STUFF
-        ("Threads_cached", "int", "k.mysql.thread.cur.cached"),
-        ("Threads_connected", "int", "k.mysql.thread.cur.connected"),
-        ("Threads_running", "int", "k.mysql.thread.cur.running"),
+        ("Threads_cached", "int", "k.mysql.thread.cur.cached", None),
+        ("Threads_connected", "int", "k.mysql.thread.cur.connected", None),
+        ("Threads_running", "int", "k.mysql.thread.cur.running", None),
 
         # Lag in second (failed : -1, no repli ; 0, repli : value from server)
-        ("Seconds_Behind_Master", "float", "k.mysql.repli.cur.lag_sec"),
+        ("Seconds_Behind_Master", "float", "k.mysql.repli.cur.lag_sec", None),
 
         # Max stuff / limit etc..
 
         # Compared to => Threads_Connected
-        ("max_connections", "int", "k.mysql.limit.max_connections"),
+        ("max_connections", "int", "k.mysql.limit.max_connections", None),
         # Compared to => Open_tables
-        ("table_open_cache", "int", "k.mysql.limit.table_open_cache"),
+        ("table_open_cache", "int", "k.mysql.limit.table_open_cache", None),
     ]
 
     def __init__(self):
@@ -154,88 +182,100 @@ class Mysql(KnockProbe):
     def _parse_config_debian(self):
         """
         Parse config file
-        :return: tuple (login,pwd,socket), tuple (None, None, None)
+        :return: tuple (login,pwd,socket,file used,version used), tuple (None, None, None, None, None)
         :rtype tuple
         """
 
-        try:
-            # File is root access only, try to load
-            buf = None
-            if FileUtility.is_file_exist(Mysql.MYSQL_CONFIG_FILE):
-                buf = FileUtility.file_to_textbuffer(Mysql.MYSQL_CONFIG_FILE, "ascii")
+        for cur_version, cur_file in Mysql.MYSQL_CONFIG_FILES:
+            try:
+                if cur_version == "V1":
+                    # File is root access only, try to load
+                    buf = None
 
-            # Check
-            if not buf:
-                # IOError 13 possible (file is root only) Retry invoke, invoke sudo (unittest mainly)
-                logger.debug("Load failed, retry invoke, fallback invoke now")
-                cmd = "cat {0}".format(Mysql.MYSQL_CONFIG_FILE)
-                ec, so, se = ButcherTools.invoke(cmd)
-                if ec != 0:
-                    logger.debug("invoke failed, retry sudo, ec=%s, so=%s, se=%s", ec, so, se)
-                    # Retry sudo
-                    cmd = "sudo cat {0}".format(Mysql.MYSQL_CONFIG_FILE)
-                    ec, so, se = ButcherTools.invoke(cmd)
-                    if ec != 0:
-                        logger.info("invoke failed (sudo fallback), give up, ec=%s, so=%s, se=%s", ec, so, se)
-                        return None, None, None
-                # Ok
-                buf = so
+                    if FileUtility.is_file_exist(cur_file):
+                        buf = FileUtility.file_to_textbuffer(cur_file, "ascii")
 
-            # Split
-            logger.debug("Buffer loaded, parsing...")
-            ar = buf.split("\n")
-            cur_section = None
-            cur_login = None
-            cur_pwd = None
-            cur_socket = None
-            for r in ar:
-                r = r.strip()
+                    # Check
+                    if not buf:
+                        # IOError 13 possible (file is root only) Retry invoke, invoke sudo (unittest mainly)
+                        logger.debug("Load failed, retry invoke, fallback invoke now")
+                        cmd = "cat {0}".format(cur_file)
+                        ec, so, se = ButcherTools.invoke(cmd)
+                        if ec != 0:
+                            logger.debug("invoke failed, retry sudo, ec=%s, so=%s, se=%s", ec, so, se)
+                            # Retry sudo
+                            cmd = "sudo cat {0}".format(cur_file)
+                            ec, so, se = ButcherTools.invoke(cmd)
+                            if ec != 0:
+                                logger.info("invoke failed (sudo fallback), give up, ec=%s, so=%s, se=%s", ec, so, se)
+                                continue
+                        # Ok
+                        buf = so
 
-                # Empty
-                if len(r) == 0:
-                    continue
-                # Comment
-                if r[0] == "\"":
-                    continue
+                    # Split
+                    logger.debug("Buffer loaded, parsing...")
+                    ar = buf.split("\n")
+                    cur_section = None
+                    cur_login = None
+                    cur_pwd = None
+                    cur_socket = None
+                    for r in ar:
+                        r = r.strip()
 
-                # Section
-                if r.find("[") == 0:
-                    # Section start
-                    cur_section = r
-                    logger.debug("Section set, cur_section=%s", cur_section)
-                    continue
+                        # Empty
+                        if len(r) == 0:
+                            continue
+                        # Comment
+                        if r[0] == "\"":
+                            continue
 
-                if not cur_section == "[client]":
-                    continue
+                        # Section
+                        if r.find("[") == 0:
+                            # Section start
+                            cur_section = r
+                            logger.debug("Section set, cur_section=%s", cur_section)
+                            continue
 
-                # Item in cur_section
-                # Do not log this... (pwd)
-                # logger.debug("Parsing now, r=%s", r)
-                row_ar = r.split("=", 1)
-                row_ar[0] = row_ar[0].strip()
-                row_ar[1] = row_ar[1].strip()
-                if row_ar[0] == "user":
-                    cur_login = row_ar[1]
-                elif row_ar[0] == "password":
-                    cur_pwd = row_ar[1]
-                elif row_ar[0] == "socket":
-                    cur_socket = row_ar[1]
+                        if not cur_section == "[client]":
+                            continue
 
-            # Check
-            if not cur_login or not cur_pwd or not cur_socket:
-                if buf is not None:
-                    buf = buf.replace("\n", "")
-                logger.info("Unable to detect creds, buf=%s", buf)
-                return None, None, None
+                        # Item in cur_section
+                        # Do not log this... (pwd)
+                        # logger.debug("Parsing now, r=%s", r)
+                        row_ar = r.split("=", 1)
+                        row_ar[0] = row_ar[0].strip()
+                        row_ar[1] = row_ar[1].strip()
+                        if row_ar[0] == "user":
+                            cur_login = row_ar[1]
+                        elif row_ar[0] == "password":
+                            cur_pwd = row_ar[1]
+                        elif row_ar[0] == "socket":
+                            cur_socket = row_ar[1]
 
-            # Ok
-            t_out = cur_login, cur_pwd, cur_socket
-            logger.debug("Located stuff, t_out=%s", t_out)
-            return t_out
+                    # Check
+                    if not cur_login or not cur_pwd or not cur_socket:
+                        if buf is not None:
+                            buf = buf.replace("\n", "")
+                        logger.info("Unable to detect creds, buf=%s", buf)
+                        continue
 
-        except Exception as e:
-            logger.warning("Parse failed, ex=%s", SolBase.extostr(e))
-            return None, None, None
+                    # Ok
+                    t_out = cur_login, cur_pwd, cur_socket, cur_file, cur_version
+                elif cur_version == "V2":
+                    # We use daemon configuration
+                    t_out = self.d_local_conf["mysql_login"], self.d_local_conf["mysql_password"], self.d_local_conf["mysql_socket"], "", cur_version
+                else:
+                    raise Exception("Invalid version=%s" % cur_version)
+
+                # This one is OK
+                logger.debug("Located stuff, t_out=%s", t_out)
+                return t_out
+
+            except Exception as e:
+                logger.warning("Parse failed, ex=%s", SolBase.extostr(e))
+
+        # All parsing failed
+        return None, None, None, None, None
 
     def _execute_linux(self):
         """
@@ -251,13 +291,8 @@ class Mysql(KnockProbe):
         id_mysql = "default"
 
         try:
-            # Check file
-            if not FileUtility.is_file_exist(Mysql.MYSQL_CONFIG_FILE) and not FileUtility.is_file_exist(Mysql.CENTOS_CONFIG_FILE):
-                logger.debug("No mysql located (no file=%s)", Mysql.MYSQL_CONFIG_FILE)
-                return
-
             # Fetch (MUST NOT FAILS)
-            login, pwd, soc = self._parse_config_debian()
+            login, pwd, soc, config_file, config_version = self._parse_config_debian()
 
             self._execute_via_creds(login, pwd, soc, id_mysql)
         except Exception as e:
@@ -644,10 +679,11 @@ class Mysql(KnockProbe):
         # Debug
         # -----------------------------
         for k, v in d_out.items():
-            logger.debug("Final, k=%s, v=%s, vtype=%s", k, v, type(v))
+            logger.info("Final, k=%s, v=%s, vtype=%s", k, v, type(v))
 
         # Browse our stuff and try to locate
-        for k, knock_type, knock_key in Mysql.KEYS:
+        d_accumulate = dict()
+        for k, knock_type, knock_key, knock_key_accumulate in Mysql.KEYS:
             # Try
             if k not in d_out:
                 if k.find("k.mysql.") != 0:
@@ -664,7 +700,21 @@ class Mysql(KnockProbe):
                 logger.warning("Not managed type=%s", knock_type)
 
             # Ok, notify it (no discovery, we assume 1 instance per box)
+
+            # Push it
             self.notify_value_n(knock_key, {"ID": mysql_id}, v)
+
+            # Accumulate
+            if knock_key_accumulate is not None:
+                # We need to accumulate and push at the end
+                if knock_key_accumulate not in d_accumulate:
+                    d_accumulate[knock_key_accumulate] = v
+                else:
+                    d_accumulate[knock_key_accumulate] = d_accumulate[knock_key_accumulate] + v
+
+        # Push accumulated
+        for knock_key_accumulate, v in d_accumulate.items():
+            self.notify_value_n(knock_key_accumulate, {"ID": mysql_id}, v)
 
         # Over, instance up
         logger.debug("Execute ok, signaling instance up, started=1")

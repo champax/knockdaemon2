@@ -24,6 +24,9 @@
 
 import logging
 
+from pysolbase.SolBase import SolBase
+
+from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockProbe import KnockProbe
 
 logger = logging.getLogger(__name__)
@@ -86,11 +89,20 @@ class Netstat(KnockProbe):
         self.process_net_tcp_from_list(ar_tcp)
 
         # Conntrack
-        with open("/proc/sys/net/netfilter/nf_conntrack_count") as f:
-            nf_conntrack_count = float(f.readline())
-        with open("/proc/sys/net/netfilter/nf_conntrack_max") as f:
-            nf_conntrack_max = float(f.readline())
-        self.process_conntrack(nf_conntrack_count, nf_conntrack_max)
+        nf_conntrack_count = None
+        nf_conntrack_max = None
+        try:
+            with open("/proc/sys/net/netfilter/nf_conntrack_count") as f:
+                nf_conntrack_count = float(f.readline())
+            with open("/proc/sys/net/netfilter/nf_conntrack_max") as f:
+                nf_conntrack_max = float(f.readline())
+        except FileNotFoundError:
+            logger.info("Unable to fetch conntrack, assuming not installed")
+
+        if nf_conntrack_count is not None and nf_conntrack_max is not None:
+            self.process_conntrack(nf_conntrack_count, nf_conntrack_max)
+        else:
+            self.process_conntrack(0, 0)
 
     def process_net_tcp_from_list(self, ar_tcp):
         """
@@ -133,7 +145,10 @@ class Netstat(KnockProbe):
         self.notify_value_n("k.net.conntrack.count", None, nf_conntrack_count)
         self.notify_value_n("k.net.conntrack.max", None, nf_conntrack_max)
         # Ratio
-        self.notify_value_n("k.net.conntrack.used", None, 100.0 * nf_conntrack_count / nf_conntrack_max)
+        if nf_conntrack_max > 0:
+            self.notify_value_n("k.net.conntrack.used", None, 100.0 * nf_conntrack_count / nf_conntrack_max)
+        else:
+            self.notify_value_n("k.net.conntrack.used", None, 0.0)
 
     def _get_counter_value(self, state):
         """
