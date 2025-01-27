@@ -679,7 +679,7 @@ class Mysql(KnockProbe):
         # Debug
         # -----------------------------
         for k, v in d_out.items():
-            logger.info("Final, k=%s, v=%s, vtype=%s", k, v, type(v))
+            logger.debug("Final, k=%s, v=%s, vtype=%s", k, v, type(v))
 
         # Browse our stuff and try to locate
         d_accumulate = dict()
