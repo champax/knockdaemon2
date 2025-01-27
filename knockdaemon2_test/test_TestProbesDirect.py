@@ -806,7 +806,7 @@ class TestProbesDirect(unittest.TestCase):
 
         m._execute_via_creds("root", "root", "/run/mysqld/mysqld.sock", "default")
 
-    @unittest.skipIf(Mysql().is_supported_on_platform() is False or not os.access(Mysql.MYSQL_CONFIG_FILE, os.R_OK), "Not support on current platform, probe=%s" % Mysql())
+    @unittest.skipIf(Mysql().is_supported_on_platform() is False, "Not support on current platform, probe=%s" % Mysql())
     def test_Mysql(self):
         """
         Test
@@ -815,7 +815,16 @@ class TestProbesDirect(unittest.TestCase):
         # Exec it
         exec_helper(self, Mysql)
 
-        for _, knock_type, knock_key in Mysql.KEYS:
+        for _, knock_type, knock_key,knock_key_accumulate in Mysql.KEYS:
+            if knock_key in [
+                # removed maria 10.10
+                "k.mysql.inno.rows.insert",
+                # removed maria 10.2
+                "k.mysql.inno.pool.cur_addpool_bytes",
+            ]:
+                continue
+
+            # Check
             dd = {"ID": "default"}
             if knock_type == "int":
                 if knock_key == "k.mysql.repli.cur.lag_sec":
@@ -826,6 +835,18 @@ class TestProbesDirect(unittest.TestCase):
                 expect_value(self, self.k, knock_key, 0.0, "gte", dd)
             elif knock_type == "str":
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
+
+            # Check accumulate
+            if knock_key_accumulate is not None:
+                if knock_type == "int":
+                    if knock_key == "k.mysql.repli.cur.lag_sec":
+                        expect_value(self, self.k, knock_key_accumulate, -2, "gte", dd)
+                    else:
+                        expect_value(self, self.k, knock_key_accumulate, 0, "gte", dd)
+                elif knock_type == "float":
+                    expect_value(self, self.k, knock_key_accumulate, 0.0, "gte", dd)
+                elif knock_type == "str":
+                    expect_value(self, self.k, knock_key_accumulate, 0, "exists", dd)
 
     @unittest.skipIf(
         MongoDbStat().is_supported_on_platform() is False or not os.access("/etc/mongod.conf", os.R_OK),

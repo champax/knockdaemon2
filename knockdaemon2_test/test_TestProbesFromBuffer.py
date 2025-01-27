@@ -1659,12 +1659,28 @@ class TestProbesFromBuffer(unittest.TestCase):
         m.set_manager(self.k)
 
         # Go
-        for f_status, f_variables, f_slave, f_user_stat, f_table_stat, f_index_stat, f_inno_table_stat in [
+        for cur_version, f_status, f_variables, f_slave, f_user_stat, f_table_stat, f_index_stat, f_inno_table_stat in [
+            # Old
             (
-                    "mysql/status.out", "mysql/variables.out", "mysql/slave.out",
-                    "mysql/USER_STATISTICS.out", "mysql/TABLE_STATISTICS.out", "mysql/INDEX_STATISTICS.out", "mysql/innodb_table_stats.out",
+                    "OLD",
+                    "mysql/old/status.out", "mysql/old/variables.out", "mysql/old/slave.out",
+                    "mysql/old/USER_STATISTICS.out", "mysql/old/TABLE_STATISTICS.out", "mysql/old/INDEX_STATISTICS.out", "mysql/old/innodb_table_stats.out",
+            ),
+            # maria 10.5
+            (
+                    "MARIA_10.5",
+                    "mysql/maria_10.5.24-18/status.out", "mysql/maria_10.5.24-18/variables.out", "mysql/maria_10.5.24-18/slave.out",
+                    "mysql/maria_10.5.24-18/USER_STATISTICS.out", "mysql/maria_10.5.24-18/TABLE_STATISTICS.out", "mysql/maria_10.5.24-18/INDEX_STATISTICS.out", "mysql/maria_10.5.24-18/innodb_table_stats.out",
+            ),
+            # maria 10.11
+            (
+                    "MARIA_10.11",
+                    "mysql/maria_10.11.6/status.out", "mysql/maria_10.11.6/variables.out", "mysql/maria_10.11.6/slave.out",
+                    "mysql/maria_10.11.6/USER_STATISTICS.out", "mysql/maria_10.11.6/TABLE_STATISTICS.out", "mysql/maria_10.11.6/INDEX_STATISTICS.out", "mysql/maria_10.11.6/innodb_table_stats.out",
             ),
         ]:
+            logger.info("CHECKING v=%s", cur_version)
+
             # Path
             f_status = self.sample_dir + f_status
             f_variables = self.sample_dir + f_variables
@@ -1782,7 +1798,30 @@ class TestProbesFromBuffer(unittest.TestCase):
                 logger.info("Having tu=%s", tu)
 
             # Check
-            for _, knock_type, knock_key in Mysql.KEYS:
+            for _, knock_type, knock_key, knock_key_accumulate in Mysql.KEYS:
+                if knock_key in [
+                    # removed maria 10.10
+                    "k.mysql.inno.rows.insert",
+                    # removed maria 10.2
+                    "k.mysql.inno.pool.cur_addpool_bytes",
+                ]:
+                    continue
+
+                # Backward compat stuff
+                if cur_version == "OLD":
+                    if knock_key in [
+                        "k.mysql.inno.rows.read_retry",
+                        "k.mysql.inno.rows.read_rnd_deleted",
+                    ]:
+                        continue
+
+                # Don't have this for 10.5 in samples
+                if cur_version in ["MARIA_10.5", "MARIA_10.11"]:
+                    if knock_key in [
+                        "k.mysql.repli.cur.lag_sec",
+                    ]:
+                        continue
+
                 dd = {"ID": "default"}
                 if knock_type == "int":
                     if knock_key == "k.mysql.repli.cur.lag_sec":
@@ -1793,6 +1832,18 @@ class TestProbesFromBuffer(unittest.TestCase):
                     expect_value(self, self.k, knock_key, 0.0, "gte", dd)
                 elif knock_type == "str":
                     expect_value(self, self.k, knock_key, 0, "exists", dd)
+
+                # Check accumulate
+                if knock_key_accumulate is not None:
+                    if knock_type == "int":
+                        if knock_key == "k.mysql.repli.cur.lag_sec":
+                            expect_value(self, self.k, knock_key_accumulate, -2, "gte", dd)
+                        else:
+                            expect_value(self, self.k, knock_key_accumulate, 0, "gte", dd)
+                    elif knock_type == "float":
+                        expect_value(self, self.k, knock_key_accumulate, 0.0, "gte", dd)
+                    elif knock_type == "str":
+                        expect_value(self, self.k, knock_key_accumulate, 0, "exists", dd)
 
             # Check, stat, table
             for schema, table, rows_read, rows_changed, rows_changed_index in [
@@ -1807,43 +1858,44 @@ class TestProbesFromBuffer(unittest.TestCase):
                 expect_value(self, self.k, "k.mysql.stats.table", float(rows_changed_index), "eq", dd, d_values_key="ROWS_CHANGED_X_INDEXES")
 
             # Check, stat, user
-            for user, total_connections, concurrent_connections, connected_time, busy_time, cpu_time, \
-                bytes_received, bytes_sent, \
-                binlog_bytes_written, rows_read, rows_sent, rows_deleted, rows_inserted, rows_updated, \
-                select_commands, update_commands, other_commands, commit_transactions, rollback_transactions, \
-                denied_connections, lost_connections, access_denied, \
-                empty_queries, total_ssl_connections, max_statement_time_exceeded in \
-                    [
-                        ("zzzz", 11, 0, 3210, 0.07573099999999999, 0.05983699999999998, 28856, 382005, 0, 20077, 2700, 0, 0, 0, 111, 0, 116, 32, 2, 1, 0, 1, 25, 0, 0,),
-                        ("user01", 911622, 0, 51057853, 103307.76056384486, 86972.37930978586, 256376400310, 508652204841, 660864536, 1663804892, 475976244, 130374, 207514, 701465, 384027899, 1480665, 300725032, 959443523, 39760, 0, 0, 0, 241005297, 0, 0,),
-                        ("user02", 69, 0, 1202740, 58.081382000000936, 57.86767730000072, 1791136, 547008082, 0, 0, 12555625, 0, 0, 0, 0, 0, 112, 0, 0, 0, 0, 0, 0, 0, 0,),
+            if cur_version != "MARIA_10.5":
+                for user, total_connections, concurrent_connections, connected_time, busy_time, cpu_time, \
+                    bytes_received, bytes_sent, \
+                    binlog_bytes_written, rows_read, rows_sent, rows_deleted, rows_inserted, rows_updated, \
+                    select_commands, update_commands, other_commands, commit_transactions, rollback_transactions, \
+                    denied_connections, lost_connections, access_denied, \
+                    empty_queries, total_ssl_connections, max_statement_time_exceeded in \
+                        [
+                            ("zzzz", 11, 0, 3210, 0.07573099999999999, 0.05983699999999998, 28856, 382005, 0, 20077, 2700, 0, 0, 0, 111, 0, 116, 32, 2, 1, 0, 1, 25, 0, 0,),
+                            ("user01", 911622, 0, 51057853, 103307.76056384486, 86972.37930978586, 256376400310, 508652204841, 660864536, 1663804892, 475976244, 130374, 207514, 701465, 384027899, 1480665, 300725032, 959443523, 39760, 0, 0, 0, 241005297, 0, 0,),
+                            ("user02", 69, 0, 1202740, 58.081382000000936, 57.86767730000072, 1791136, 547008082, 0, 0, 12555625, 0, 0, 0, 0, 0, 112, 0, 0, 0, 0, 0, 0, 0, 0,),
 
-                    ]:
-                dd = {"ID": "default", "user": user}
-                expect_value(self, self.k, "k.mysql.stats.user", float(total_connections), "eq", dd, d_values_key="TOTAL_CONNECTIONS")
-                expect_value(self, self.k, "k.mysql.stats.user", float(concurrent_connections), "eq", dd, d_values_key="CONCURRENT_CONNECTIONS")
-                expect_value(self, self.k, "k.mysql.stats.user", float(connected_time), "eq", dd, d_values_key="CONNECTED_TIME")
-                expect_value(self, self.k, "k.mysql.stats.user", float(busy_time), "eq", dd, d_values_key="BUSY_TIME")
-                expect_value(self, self.k, "k.mysql.stats.user", float(cpu_time), "eq", dd, d_values_key="CPU_TIME")
-                expect_value(self, self.k, "k.mysql.stats.user", float(bytes_received), "eq", dd, d_values_key="BYTES_RECEIVED")
-                expect_value(self, self.k, "k.mysql.stats.user", float(bytes_sent), "eq", dd, d_values_key="BYTES_SENT")
-                expect_value(self, self.k, "k.mysql.stats.user", float(binlog_bytes_written), "eq", dd, d_values_key="BINLOG_BYTES_WRITTEN")
-                expect_value(self, self.k, "k.mysql.stats.user", float(rows_read), "eq", dd, d_values_key="ROWS_READ")
-                expect_value(self, self.k, "k.mysql.stats.user", float(rows_sent), "eq", dd, d_values_key="ROWS_SENT")
-                expect_value(self, self.k, "k.mysql.stats.user", float(rows_deleted), "eq", dd, d_values_key="ROWS_DELETED")
-                expect_value(self, self.k, "k.mysql.stats.user", float(rows_inserted), "eq", dd, d_values_key="ROWS_INSERTED")
-                expect_value(self, self.k, "k.mysql.stats.user", float(rows_updated), "eq", dd, d_values_key="ROWS_UPDATED")
-                expect_value(self, self.k, "k.mysql.stats.user", float(select_commands), "eq", dd, d_values_key="SELECT_COMMANDS")
-                expect_value(self, self.k, "k.mysql.stats.user", float(update_commands), "eq", dd, d_values_key="UPDATE_COMMANDS")
-                expect_value(self, self.k, "k.mysql.stats.user", float(other_commands), "eq", dd, d_values_key="OTHER_COMMANDS")
-                expect_value(self, self.k, "k.mysql.stats.user", float(commit_transactions), "eq", dd, d_values_key="COMMIT_TRANSACTIONS")
-                expect_value(self, self.k, "k.mysql.stats.user", float(rollback_transactions), "eq", dd, d_values_key="ROLLBACK_TRANSACTIONS")
-                expect_value(self, self.k, "k.mysql.stats.user", float(denied_connections), "eq", dd, d_values_key="DENIED_CONNECTIONS")
-                expect_value(self, self.k, "k.mysql.stats.user", float(lost_connections), "eq", dd, d_values_key="LOST_CONNECTIONS")
-                expect_value(self, self.k, "k.mysql.stats.user", float(access_denied), "eq", dd, d_values_key="ACCESS_DENIED")
-                expect_value(self, self.k, "k.mysql.stats.user", float(empty_queries), "eq", dd, d_values_key="EMPTY_QUERIES")
-                expect_value(self, self.k, "k.mysql.stats.user", float(total_ssl_connections), "eq", dd, d_values_key="TOTAL_SSL_CONNECTIONS")
-                expect_value(self, self.k, "k.mysql.stats.user", float(max_statement_time_exceeded), "eq", dd, d_values_key="MAX_STATEMENT_TIME_EXCEEDED")
+                        ]:
+                    dd = {"ID": "default", "user": user}
+                    expect_value(self, self.k, "k.mysql.stats.user", float(total_connections), "eq", dd, d_values_key="TOTAL_CONNECTIONS")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(concurrent_connections), "eq", dd, d_values_key="CONCURRENT_CONNECTIONS")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(connected_time), "eq", dd, d_values_key="CONNECTED_TIME")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(busy_time), "eq", dd, d_values_key="BUSY_TIME")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(cpu_time), "eq", dd, d_values_key="CPU_TIME")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(bytes_received), "eq", dd, d_values_key="BYTES_RECEIVED")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(bytes_sent), "eq", dd, d_values_key="BYTES_SENT")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(binlog_bytes_written), "eq", dd, d_values_key="BINLOG_BYTES_WRITTEN")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(rows_read), "eq", dd, d_values_key="ROWS_READ")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(rows_sent), "eq", dd, d_values_key="ROWS_SENT")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(rows_deleted), "eq", dd, d_values_key="ROWS_DELETED")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(rows_inserted), "eq", dd, d_values_key="ROWS_INSERTED")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(rows_updated), "eq", dd, d_values_key="ROWS_UPDATED")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(select_commands), "eq", dd, d_values_key="SELECT_COMMANDS")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(update_commands), "eq", dd, d_values_key="UPDATE_COMMANDS")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(other_commands), "eq", dd, d_values_key="OTHER_COMMANDS")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(commit_transactions), "eq", dd, d_values_key="COMMIT_TRANSACTIONS")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(rollback_transactions), "eq", dd, d_values_key="ROLLBACK_TRANSACTIONS")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(denied_connections), "eq", dd, d_values_key="DENIED_CONNECTIONS")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(lost_connections), "eq", dd, d_values_key="LOST_CONNECTIONS")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(access_denied), "eq", dd, d_values_key="ACCESS_DENIED")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(empty_queries), "eq", dd, d_values_key="EMPTY_QUERIES")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(total_ssl_connections), "eq", dd, d_values_key="TOTAL_SSL_CONNECTIONS")
+                    expect_value(self, self.k, "k.mysql.stats.user", float(max_statement_time_exceeded), "eq", dd, d_values_key="MAX_STATEMENT_TIME_EXCEEDED")
 
             # Check, stat, index
             for schema, table, index, rows_read in [
