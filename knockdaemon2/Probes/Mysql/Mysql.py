@@ -23,6 +23,7 @@
 """
 
 import logging
+import os.path
 
 from pysolbase.FileUtility import FileUtility
 from pysolbase.SolBase import SolBase
@@ -38,6 +39,8 @@ class Mysql(KnockProbe):
     """
     Probe
     """
+
+    MYSQL_CONF_DIR = "/etc/mysql"
 
     # Debian : extract creds from file
     MYSQL_CONFIG_FILES = [
@@ -287,6 +290,12 @@ class Mysql(KnockProbe):
         """
         Exec, native
         """
+
+        # Check we have the mysql DIR (in this case we go ahead, otherwise we do not go)
+        if not os.path.exists(self.MYSQL_CONF_DIR):
+            return
+        elif not os.path.isdir(self.MYSQL_CONF_DIR):
+            return
 
         id_mysql = "default"
 
