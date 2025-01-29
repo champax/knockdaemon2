@@ -458,35 +458,38 @@ class HttpMock(object):
             # 'value=0.0'
             # 'clustered_index_size=1.0,n_rows=0.0,sum_of_other_index_sizes=3.0,value=0.0'
             found_value = False
-            for value_buf in ar[1].split(','):
-                value_buf=value_buf.strip()
-                if len(value_buf) == 0:
-                    continue
-                vk = value_buf.split("=")[0]
-                vv = value_buf.split("=")[1].replace("\"", "")
-                if vk == "value":
-                    found_value = True
+            try:
+                for value_buf in ar[1].split(','):
+                    value_buf=value_buf.strip()
+                    if len(value_buf) == 0:
+                        continue
+                    vk = value_buf.split("=")[0]
+                    vv = value_buf.split("=")[1].replace("\"", "")
+                    if vk == "value":
+                        found_value = True
 
-                try:
-                    ts = int(ar[2])
-                except ValueError as e:
-                    logger.warning("ar[2] value error in %s - %s", ar, ar_post_data)
-                    raise e
-                if len(vk) == 0:
-                    raise Exception("Invalid vk=%s, s=%s" % (vk, s))
-                if len(vv) == 0:
-                    raise Exception("Invalid vv=%s, s=%s" % (vv, s))
-                if not isinstance(ts, int):
-                    raise Exception("Invalid ts=%s, s=%s" % (ts, s))
-                if "host" not in d_tags:
-                    raise Exception("Invalid d_tags.host, s=%s" % s)
-                if "ns" not in d_tags:
-                    raise Exception("Invalid d_tags.ns, s=%s" % s)
-                if len(counter) == 0:
-                    raise Exception("Invalid counter, s=%s" % s)
+                    try:
+                        ts = int(ar[2])
+                    except ValueError as e:
+                        logger.warning("ar[2] value error in %s - %s", ar, ar_post_data)
+                        raise e
+                    if len(vk) == 0:
+                        raise Exception("Invalid vk=%s, s=%s" % (vk, s))
+                    if len(vv) == 0:
+                        raise Exception("Invalid vv=%s, s=%s" % (vv, s))
+                    if not isinstance(ts, int):
+                        raise Exception("Invalid ts=%s, s=%s" % (ts, s))
+                    if "host" not in d_tags:
+                        raise Exception("Invalid d_tags.host, s=%s" % s)
+                    if "ns" not in d_tags:
+                        raise Exception("Invalid d_tags.ns, s=%s" % s)
+                    if len(counter) == 0:
+                        raise Exception("Invalid counter, s=%s" % s)
 
-            if not found_value:
-                raise Exception("value not found, s=%s" % s)
+                if not found_value:
+                    raise Exception("value not found, s=%s" % s)
+            except Exception as e:
+                raise Exception("Exception for s=%s" % s, e)
 
         # Reply
         rd = dict()
