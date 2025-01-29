@@ -104,10 +104,10 @@ class Mysql(KnockProbe):
 
         # This is removed maria 10.10
         # https://mariadb.com/kb/en/innodb-status-variables/#innodb_rows_deleted
-        ("Innodb_rows_deleted", "float", "k.mysql.inno.rows.delete", None), # now is Handler_delete
-        ("Innodb_rows_inserted", "float", "k.mysql.inno.rows.insert", None), # removed, no equivalent
-        ("Innodb_rows_read", "float", "k.mysql.inno.rows.select", None), # Sum of "Handler_read_"
-        ("Innodb_rows_updated", "float", "k.mysql.inno.rows.update", None), # now is Handler_update
+        ("Innodb_rows_deleted", "float", "k.mysql.inno.rows.delete", None),  # now is Handler_delete
+        ("Innodb_rows_inserted", "float", "k.mysql.inno.rows.insert", None),  # removed, no equivalent
+        ("Innodb_rows_read", "float", "k.mysql.inno.rows.select", None),  # Sum of "Handler_read_"
+        ("Innodb_rows_updated", "float", "k.mysql.inno.rows.update", None),  # now is Handler_update
 
         # Maria >= 10.10
         ("Handler_delete", "float", "k.mysql.inno.rows.delete", None),
@@ -265,8 +265,9 @@ class Mysql(KnockProbe):
                     # Ok
                     t_out = cur_login, cur_pwd, cur_socket, cur_file, cur_version
                 elif cur_version == "V2":
-                    # We use daemon configuration
-                    t_out = self.d_local_conf["mysql_login"], self.d_local_conf["mysql_password"], self.d_local_conf["mysql_socket"], "", cur_version
+                    # We use daemon configuration if we have (mysql_login based)
+                    if "mysql_login" in self.d_local_conf and self.d_local_conf["mysql_login"] is not None and len(self.d_local_conf["mysql_login"]) > 0:
+                        t_out = self.d_local_conf["mysql_login"], self.d_local_conf["mysql_password"], self.d_local_conf["mysql_socket"], "", cur_version
                 else:
                     raise Exception("Invalid version=%s" % cur_version)
 

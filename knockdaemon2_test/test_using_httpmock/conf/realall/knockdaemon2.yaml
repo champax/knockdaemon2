@@ -157,6 +157,10 @@ probes:
     class_name: knockdaemon2.Probes.Mysql.Mysql.Mysql
     exec_interval_sec: 60
     exec_enabled: true
+    # For V2, mariadb
+    mysql_socket: "/run/mysqld/mysqld.sock"
+    mysql_login: root
+    mysql_password: root
 
   # ============================
   # MONGODB
