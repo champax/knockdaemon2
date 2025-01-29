@@ -21,6 +21,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
+import re
 
 from pysolbase.SolBase import SolBase
 
@@ -457,9 +458,11 @@ class HttpMock(object):
 
             # 'value=0.0'
             # 'clustered_index_size=1.0,n_rows=0.0,sum_of_other_index_sizes=3.0,value=0.0'
+            # 'k.dns.resolv,HOST=www.google.com,SERVER=8.8.8.8,host=zzz,ns=unittest value="173.194.76.103,173.194.76.104,173.194.76.105,173.194.76.106,173.194.76.147,173.194.76.99" 1738159390000000000'
             found_value = False
             try:
-                for value_buf in ar[1].split(','):
+                # This fail is value contain "," inside "..." => re
+                for value_buf in re.split(r',\s*(?![^"]*\"[^"]*(?:\"[^"]*\"[^"]*)*$)', ar[1]):
                     value_buf=value_buf.strip()
                     if len(value_buf) == 0:
                         continue
