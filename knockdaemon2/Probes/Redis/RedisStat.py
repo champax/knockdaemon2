@@ -196,8 +196,16 @@ class RedisStat(KnockProbe):
             # Discard invalid values  (mem_fragmentation_ratio can be nan on restart)
             if v is None:
                 continue
-            elif isinstance(v, str) and (len(v) == 0 or v.lower() == "nan"):
+            elif isinstance(v, str) and (len(v) == 0 or v.lower() == "nan" ):
                 continue
+            else:
+                # Still have "nan" coming, weird, double protect
+                # noinspection PyBroadException
+                try:
+                    if "nan" in str(v):
+                        continue
+                except Exception:
+                    continue
 
             # Cast
             if knock_type == "int":
