@@ -819,8 +819,8 @@ class MongoDbStat(KnockProbe):
         :type port: int
         :param db_name: str
         :type db_name: str
-        :param db_stat_buf: str
-        :type db_stat_buf: str
+        :param db_stat_buf: str,dict
+        :type db_stat_buf: str,dict
         """
 
         # str to dict if required
@@ -1127,6 +1127,8 @@ class MongoDbStat(KnockProbe):
             # For each db
             for db in mongo_client.list_database_names():
                 db = str(db)
+                if db == "local":
+                    continue
                 col = None
 
                 # Skip admin and config (mongo stuff)
