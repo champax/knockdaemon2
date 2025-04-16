@@ -39,19 +39,20 @@ def requirement_read(req_file):
     :return: Doc
     """
     req_list = list()
-    for rowBuffer in open(req_file).readlines():
-        # Skip empty
-        if len(rowBuffer.strip()) == 0:
-            continue
-            # Skip "- ..."
-        if re.match("^-", rowBuffer):
-            continue
-            # Skip "# ..."
-        if re.match("^#", rowBuffer):
-            continue
+    with open(req_file, 'r') as f:
+        for rowBuffer in f.readlines():
+            # Skip empty
+            if len(rowBuffer.strip()) == 0:
+                continue
+                # Skip "- ..."
+            if re.match("^-", rowBuffer):
+                continue
+                # Skip "# ..."
+            if re.match("^#", rowBuffer):
+                continue
 
-        # Ok
-        req_list.append(rowBuffer)
+            # Ok
+            req_list.append(rowBuffer)
     return req_list
 
 

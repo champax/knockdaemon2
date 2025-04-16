@@ -770,9 +770,7 @@ class TestProbesFromBuffer(unittest.TestCase):
             d_info = dict()
             for s in buf.split("\n"):
                 s = s.strip()
-                if len(s) == 0:
-                    continue
-                elif s.startswith("#"):
+                if len(s) == 0 or s.startswith("#"):
                     continue
                 ar = s.split(":", 2)
                 k = ar[0]
@@ -1718,8 +1716,6 @@ class TestProbesFromBuffer(unittest.TestCase):
                 s = s.strip()
                 if not s.startswith("|"):
                     continue
-                elif s.startswith("| Variable_name"):
-                    continue
                 ar = s.split("|")
                 k = ar[1].strip()
                 v = ar[2].strip()
@@ -1730,8 +1726,6 @@ class TestProbesFromBuffer(unittest.TestCase):
             for s in variables_buf.split("\n"):
                 s = s.strip()
                 if not s.startswith("|"):
-                    continue
-                elif s.startswith("| Variable_name"):
                     continue
                 ar = s.split("|")
                 k = ar[1].strip()

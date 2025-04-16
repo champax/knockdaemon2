@@ -273,9 +273,7 @@ class RedisStat(KnockProbe):
         for conf in conf_files:
             # Read
             buf = FileUtility.file_to_textbuffer(conf, "utf8")
-            if buf is None:
-                continue
-            elif "sentinel monitor" in buf:
+            if buf is None or "sentinel monitor" in buf:
                 # Sentinel bypass # TODO : regex detection of "sentinel monitor"
                 continue
 
@@ -328,9 +326,8 @@ class RedisStat(KnockProbe):
         :type aggreg_op: str
         """
 
-        if value is None:
-            return
-        elif isinstance(value, str) and (len(value) == 0 or value.lower() == "nan"):
+        if (value is None or
+                (isinstance(value, str) and (len(value) == 0 or value.lower() == "nan"))):
             return
 
         self.notify_value_n(key, {"RDPORT": str(redis_port)}, value)
@@ -360,9 +357,7 @@ class RedisStat(KnockProbe):
                 "k.redis.aof_last_bgrewrite_status",
                 "k.redis.aof_last_write_status",
             ]:
-                if key not in self._d_aggregate:
-                    self._d_aggregate[key] = value
-                elif value != "ok":
+                if key not in self._d_aggregate or value != "ok":
                     # Not ok win
                     self._d_aggregate[key] = value
                 return

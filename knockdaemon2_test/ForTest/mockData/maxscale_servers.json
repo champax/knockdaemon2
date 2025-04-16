@@ -1,0 +1,923 @@
+{
+  "data": [
+    {
+      "attributes": {
+        "gtid_binlog_pos": "",
+        "gtid_current_pos": "",
+        "last_event": "new_slave",
+        "master_id": 0,
+        "name": "10.66.103.60",
+        "node_id": 1,
+        "parameters": {
+          "address": "10.66.103.60",
+          "disk_space_threshold": null,
+          "extra_port": 0,
+          "max_routing_connections": 0,
+          "monitorpw": null,
+          "monitoruser": null,
+          "persistmaxtime": "59000ms",
+          "persistpoolmax": 0,
+          "port": 3306,
+          "priority": 0,
+          "private_address": null,
+          "proxy_protocol": false,
+          "rank": "primary",
+          "replication_custom_options": null,
+          "socket": null,
+          "ssl": false,
+          "ssl_ca": null,
+          "ssl_cert": null,
+          "ssl_cert_verify_depth": 9,
+          "ssl_cipher": null,
+          "ssl_key": null,
+          "ssl_verify_peer_certificate": false,
+          "ssl_verify_peer_host": false,
+          "ssl_version": "MAX"
+        },
+        "read_only": false,
+        "replication_lag": 0,
+        "server_id": 1,
+        "source": {
+          "file": "/etc/maxscale.cnf.d/vulog.cnf",
+          "type": "static"
+        },
+        "state": "Slave, Synced, Running",
+        "statistics": {
+          "active_operations": 1,
+          "adaptive_avg_select_time": "265.299us",
+          "connection_pool_empty": 0,
+          "connections": 57,
+          "failed_auths": 0,
+          "max_connections": 92,
+          "max_pool_size": 0,
+          "persistent_connections": 0,
+          "response_time_distribution": {
+            "read": {
+              "distribution": [
+                {
+                  "count": 6350,
+                  "time": "0.000001",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "0.000010",
+                  "total": 0.0
+                },
+                {
+                  "count": 5116,
+                  "time": "0.000100",
+                  "total": 0.397067393
+                },
+                {
+                  "count": 515681549,
+                  "time": "0.001000",
+                  "total": 189221.890790027
+                },
+                {
+                  "count": 7323736,
+                  "time": "0.010000",
+                  "total": 16475.884504387
+                },
+                {
+                  "count": 2165730,
+                  "time": "0.100000",
+                  "total": 53919.732825242
+                },
+                {
+                  "count": 4008,
+                  "time": "1.000000",
+                  "total": 510.320272087
+                },
+                {
+                  "count": 121,
+                  "time": "10.000000",
+                  "total": 594.234483197
+                },
+                {
+                  "count": 136,
+                  "time": "100.000000",
+                  "total": 3449.162686297
+                },
+                {
+                  "count": 0,
+                  "time": "1000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "10000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "100000.000000",
+                  "total": 0.0
+                }
+              ],
+              "operation": "read",
+              "range_base": 10
+            },
+            "write": {
+              "distribution": [
+                {
+                  "count": 0,
+                  "time": "0.000001",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "0.000010",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "0.000100",
+                  "total": 0.0
+                },
+                {
+                  "count": 49870733,
+                  "time": "0.001000",
+                  "total": 14096.04694552
+                },
+                {
+                  "count": 259226,
+                  "time": "0.010000",
+                  "total": 540.725143435
+                },
+                {
+                  "count": 5531,
+                  "time": "0.100000",
+                  "total": 85.803123521
+                },
+                {
+                  "count": 0,
+                  "time": "1.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 1,
+                  "time": "10.000000",
+                  "total": 1.482040616
+                },
+                {
+                  "count": 0,
+                  "time": "100.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "1000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "10000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "100000.000000",
+                  "total": 0.0
+                }
+              ],
+              "operation": "write",
+              "range_base": 10
+            }
+          },
+          "reused_connections": 0,
+          "routed_packets": 578129670,
+          "total_connections": 1769390
+        },
+        "triggered_at": "Fri, 21 Mar 2025 14:29:41 GMT",
+        "uptime": 2267442,
+        "version_string": "10.6.19-15-MariaDB-enterprise-log"
+      },
+      "id": "10.66.103.60",
+      "links": {
+        "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.60/"
+      },
+      "relationships": {
+        "monitors": {
+          "data": [
+            {
+              "id": "Galera_Cluster",
+              "type": "monitors"
+            }
+          ],
+          "links": {
+            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/monitors/",
+            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.60/relationships/monitors/"
+          }
+        },
+        "services": {
+          "data": [
+            {
+              "id": "Read-Only-Service",
+              "type": "services"
+            },
+            {
+              "id": "Read-Write-Service",
+              "type": "services"
+            }
+          ],
+          "links": {
+            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/services/",
+            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.60/relationships/services/"
+          }
+        }
+      },
+      "type": "servers"
+    },
+    {
+      "attributes": {
+        "gtid_binlog_pos": "",
+        "gtid_current_pos": "",
+        "last_event": "new_master",
+        "master_id": 0,
+        "name": "10.66.103.61",
+        "node_id": 0,
+        "parameters": {
+          "address": "10.66.103.61",
+          "disk_space_threshold": null,
+          "extra_port": 0,
+          "max_routing_connections": 0,
+          "monitorpw": null,
+          "monitoruser": null,
+          "persistmaxtime": "59000ms",
+          "persistpoolmax": 0,
+          "port": 3306,
+          "priority": 0,
+          "private_address": null,
+          "proxy_protocol": false,
+          "rank": "primary",
+          "replication_custom_options": null,
+          "socket": null,
+          "ssl": false,
+          "ssl_ca": null,
+          "ssl_cert": null,
+          "ssl_cert_verify_depth": 9,
+          "ssl_cipher": null,
+          "ssl_key": null,
+          "ssl_verify_peer_certificate": false,
+          "ssl_verify_peer_host": false,
+          "ssl_version": "MAX"
+        },
+        "read_only": false,
+        "replication_lag": 0,
+        "server_id": 1,
+        "source": {
+          "file": "/etc/maxscale.cnf.d/vulog.cnf",
+          "type": "static"
+        },
+        "state": "Master, Synced, Running",
+        "statistics": {
+          "active_operations": 0,
+          "adaptive_avg_select_time": "927.439us",
+          "connection_pool_empty": 0,
+          "connections": 22,
+          "failed_auths": 0,
+          "max_connections": 91,
+          "max_pool_size": 0,
+          "persistent_connections": 0,
+          "response_time_distribution": {
+            "read": {
+              "distribution": [
+                {
+                  "count": 159268,
+                  "time": "0.000001",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "0.000010",
+                  "total": 0.0
+                },
+                {
+                  "count": 441039,
+                  "time": "0.000100",
+                  "total": 37.174339457
+                },
+                {
+                  "count": 261044805,
+                  "time": "0.001000",
+                  "total": 246424.332873268
+                },
+                {
+                  "count": 883154189,
+                  "time": "0.010000",
+                  "total": 1111281.477902414
+                },
+                {
+                  "count": 3163991,
+                  "time": "0.100000",
+                  "total": 182726.085340862
+                },
+                {
+                  "count": 89165,
+                  "time": "1.000000",
+                  "total": 10389.09991721
+                },
+                {
+                  "count": 40,
+                  "time": "10.000000",
+                  "total": 89.548550205
+                },
+                {
+                  "count": 1,
+                  "time": "100.000000",
+                  "total": 12.437571132
+                },
+                {
+                  "count": 0,
+                  "time": "1000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "10000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "100000.000000",
+                  "total": 0.0
+                }
+              ],
+              "operation": "read",
+              "range_base": 10
+            },
+            "write": {
+              "distribution": [
+                {
+                  "count": 0,
+                  "time": "0.000001",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "0.000010",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "0.000100",
+                  "total": 0.0
+                },
+                {
+                  "count": 518538147,
+                  "time": "0.001000",
+                  "total": 481090.612652423
+                },
+                {
+                  "count": 152483959,
+                  "time": "0.010000",
+                  "total": 182398.744568125
+                },
+                {
+                  "count": 128814,
+                  "time": "0.100000",
+                  "total": 1886.509096283
+                },
+                {
+                  "count": 430,
+                  "time": "1.000000",
+                  "total": 89.385140673
+                },
+                {
+                  "count": 0,
+                  "time": "10.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "100.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "1000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "10000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "100000.000000",
+                  "total": 0.0
+                }
+              ],
+              "operation": "write",
+              "range_base": 10
+            }
+          },
+          "reused_connections": 0,
+          "routed_packets": 1789703666,
+          "total_connections": 2470454
+        },
+        "triggered_at": "Fri, 21 Mar 2025 14:29:41 GMT",
+        "uptime": 2420831,
+        "version_string": "10.6.19-15-MariaDB-enterprise-log"
+      },
+      "id": "10.66.103.61",
+      "links": {
+        "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.61/"
+      },
+      "relationships": {
+        "monitors": {
+          "data": [
+            {
+              "id": "Galera_Cluster",
+              "type": "monitors"
+            }
+          ],
+          "links": {
+            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/monitors/",
+            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.61/relationships/monitors/"
+          }
+        },
+        "services": {
+          "data": [
+            {
+              "id": "Read-Only-Service",
+              "type": "services"
+            },
+            {
+              "id": "Read-Write-Service",
+              "type": "services"
+            }
+          ],
+          "links": {
+            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/services/",
+            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.61/relationships/services/"
+          }
+        }
+      },
+      "type": "servers"
+    },
+    {
+      "attributes": {
+        "gtid_binlog_pos": "0-1-1741421",
+        "gtid_current_pos": "0-1-1741421",
+        "last_event": "slave_up",
+        "master_id": 0,
+        "name": "10.66.103.62",
+        "node_id": 3,
+        "parameters": {
+          "address": "10.66.103.62",
+          "disk_space_threshold": null,
+          "extra_port": 0,
+          "max_routing_connections": 0,
+          "monitorpw": null,
+          "monitoruser": null,
+          "persistmaxtime": "59000ms",
+          "persistpoolmax": 0,
+          "port": 3306,
+          "priority": 0,
+          "private_address": null,
+          "proxy_protocol": false,
+          "rank": "primary",
+          "replication_custom_options": null,
+          "socket": null,
+          "ssl": false,
+          "ssl_ca": null,
+          "ssl_cert": null,
+          "ssl_cert_verify_depth": 9,
+          "ssl_cipher": null,
+          "ssl_key": null,
+          "ssl_verify_peer_certificate": false,
+          "ssl_verify_peer_host": false,
+          "ssl_version": "MAX"
+        },
+        "read_only": false,
+        "replication_lag": 0,
+        "server_id": 1,
+        "source": {
+          "file": "/etc/maxscale.cnf.d/vulog.cnf",
+          "type": "static"
+        },
+        "state": "Slave, Synced, Running",
+        "statistics": {
+          "active_operations": 0,
+          "adaptive_avg_select_time": "493.778us",
+          "connection_pool_empty": 0,
+          "connections": 50,
+          "failed_auths": 0,
+          "max_connections": 93,
+          "max_pool_size": 0,
+          "persistent_connections": 0,
+          "response_time_distribution": {
+            "read": {
+              "distribution": [
+                {
+                  "count": 39657,
+                  "time": "0.000001",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "0.000010",
+                  "total": 0.0
+                },
+                {
+                  "count": 89518,
+                  "time": "0.000100",
+                  "total": 6.698426816
+                },
+                {
+                  "count": 786274077,
+                  "time": "0.001000",
+                  "total": 468956.55816847
+                },
+                {
+                  "count": 55855146,
+                  "time": "0.010000",
+                  "total": 78655.703464064
+                },
+                {
+                  "count": 3539838,
+                  "time": "0.100000",
+                  "total": 119068.882437872
+                },
+                {
+                  "count": 4797,
+                  "time": "1.000000",
+                  "total": 655.721345831
+                },
+                {
+                  "count": 58,
+                  "time": "10.000000",
+                  "total": 195.119021645
+                },
+                {
+                  "count": 85,
+                  "time": "100.000000",
+                  "total": 2010.415265328
+                },
+                {
+                  "count": 0,
+                  "time": "1000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "10000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "100000.000000",
+                  "total": 0.0
+                }
+              ],
+              "operation": "read",
+              "range_base": 10
+            },
+            "write": {
+              "distribution": [
+                {
+                  "count": 0,
+                  "time": "0.000001",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "0.000010",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "0.000100",
+                  "total": 0.0
+                },
+                {
+                  "count": 191889996,
+                  "time": "0.001000",
+                  "total": 99697.632934502
+                },
+                {
+                  "count": 1915275,
+                  "time": "0.010000",
+                  "total": 3485.925171826
+                },
+                {
+                  "count": 25962,
+                  "time": "0.100000",
+                  "total": 434.724047792
+                },
+                {
+                  "count": 76,
+                  "time": "1.000000",
+                  "total": 15.826224715
+                },
+                {
+                  "count": 0,
+                  "time": "10.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "100.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "1000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "10000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "100000.000000",
+                  "total": 0.0
+                }
+              ],
+              "operation": "write",
+              "range_base": 10
+            }
+          },
+          "reused_connections": 0,
+          "routed_packets": 1027238941,
+          "total_connections": 2467013
+        },
+        "triggered_at": "Wed, 19 Mar 2025 20:08:38 GMT",
+        "uptime": 2420636,
+        "version_string": "10.6.19-15-MariaDB-enterprise-log"
+      },
+      "id": "10.66.103.62",
+      "links": {
+        "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.62/"
+      },
+      "relationships": {
+        "monitors": {
+          "data": [
+            {
+              "id": "Galera_Cluster",
+              "type": "monitors"
+            }
+          ],
+          "links": {
+            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/monitors/",
+            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.62/relationships/monitors/"
+          }
+        },
+        "services": {
+          "data": [
+            {
+              "id": "Read-Only-Service",
+              "type": "services"
+            },
+            {
+              "id": "Read-Write-Service",
+              "type": "services"
+            }
+          ],
+          "links": {
+            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/services/",
+            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.62/relationships/services/"
+          }
+        }
+      },
+      "type": "servers"
+    },
+    {
+      "attributes": {
+        "gtid_binlog_pos": "",
+        "gtid_current_pos": "",
+        "last_event": "new_master",
+        "master_id": 0,
+        "name": "10.66.103.63",
+        "node_id": 2,
+        "parameters": {
+          "address": "10.66.103.63",
+          "disk_space_threshold": null,
+          "extra_port": 0,
+          "max_routing_connections": 0,
+          "monitorpw": null,
+          "monitoruser": null,
+          "persistmaxtime": "59000ms",
+          "persistpoolmax": 0,
+          "port": 3306,
+          "priority": 0,
+          "private_address": null,
+          "proxy_protocol": false,
+          "rank": "primary",
+          "replication_custom_options": null,
+          "socket": null,
+          "ssl": false,
+          "ssl_ca": null,
+          "ssl_cert": null,
+          "ssl_cert_verify_depth": 9,
+          "ssl_cipher": null,
+          "ssl_key": null,
+          "ssl_verify_peer_certificate": false,
+          "ssl_verify_peer_host": false,
+          "ssl_version": "MAX"
+        },
+        "read_only": false,
+        "replication_lag": 0,
+        "server_id": 1,
+        "source": {
+          "file": "/etc/maxscale.cnf.d/vulog.cnf",
+          "type": "static"
+        },
+        "state": "Slave, Synced, Running",
+        "statistics": {
+          "active_operations": 1,
+          "adaptive_avg_select_time": "257.519us",
+          "connection_pool_empty": 0,
+          "connections": 34,
+          "failed_auths": 0,
+          "max_connections": 92,
+          "max_pool_size": 0,
+          "persistent_connections": 0,
+          "response_time_distribution": {
+            "read": {
+              "distribution": [
+                {
+                  "count": 9933,
+                  "time": "0.000001",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "0.000010",
+                  "total": 0.0
+                },
+                {
+                  "count": 9542,
+                  "time": "0.000100",
+                  "total": 0.733549571
+                },
+                {
+                  "count": 455720668,
+                  "time": "0.001000",
+                  "total": 161178.890919855
+                },
+                {
+                  "count": 4010046,
+                  "time": "0.010000",
+                  "total": 10703.672613165
+                },
+                {
+                  "count": 917347,
+                  "time": "0.100000",
+                  "total": 17531.429450746
+                },
+                {
+                  "count": 549,
+                  "time": "1.000000",
+                  "total": 94.83567437
+                },
+                {
+                  "count": 22,
+                  "time": "10.000000",
+                  "total": 41.166252638
+                },
+                {
+                  "count": 2,
+                  "time": "100.000000",
+                  "total": 22.014863534
+                },
+                {
+                  "count": 0,
+                  "time": "1000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "10000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "100000.000000",
+                  "total": 0.0
+                }
+              ],
+              "operation": "read",
+              "range_base": 10
+            },
+            "write": {
+              "distribution": [
+                {
+                  "count": 0,
+                  "time": "0.000001",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "0.000010",
+                  "total": 0.0
+                },
+                {
+                  "count": 1,
+                  "time": "0.000100",
+                  "total": 8.8821e-05
+                },
+                {
+                  "count": 1870213,
+                  "time": "0.001000",
+                  "total": 539.031861449
+                },
+                {
+                  "count": 7752,
+                  "time": "0.010000",
+                  "total": 15.37973998
+                },
+                {
+                  "count": 180,
+                  "time": "0.100000",
+                  "total": 3.029847134
+                },
+                {
+                  "count": 0,
+                  "time": "1.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "10.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "100.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "1000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "10000.000000",
+                  "total": 0.0
+                },
+                {
+                  "count": 0,
+                  "time": "100000.000000",
+                  "total": 0.0
+                }
+              ],
+              "operation": "write",
+              "range_base": 10
+            }
+          },
+          "reused_connections": 0,
+          "routed_packets": 471101766,
+          "total_connections": 1764839
+        },
+        "triggered_at": "Fri, 21 Mar 2025 14:22:38 GMT",
+        "uptime": 2420725,
+        "version_string": "10.6.19-15-MariaDB-enterprise-log"
+      },
+      "id": "10.66.103.63",
+      "links": {
+        "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.63/"
+      },
+      "relationships": {
+        "monitors": {
+          "data": [
+            {
+              "id": "Galera_Cluster",
+              "type": "monitors"
+            }
+          ],
+          "links": {
+            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/monitors/",
+            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.63/relationships/monitors/"
+          }
+        },
+        "services": {
+          "data": [
+            {
+              "id": "Read-Only-Service",
+              "type": "services"
+            },
+            {
+              "id": "Read-Write-Service",
+              "type": "services"
+            }
+          ],
+          "links": {
+            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/services/",
+            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.63/relationships/services/"
+          }
+        }
+      },
+      "type": "servers"
+    }
+  ],
+  "links": {
+    "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/"
+  }
+}
