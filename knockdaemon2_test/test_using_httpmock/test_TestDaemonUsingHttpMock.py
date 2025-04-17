@@ -355,7 +355,7 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             logger.debug("stdErr ### END")
 
             # Check
-            self.assertNotEquals(p.exitcode, 0)
+            self.assertNotEqual(p.exitcode, 0)
             self.assertCountEqual(self._get_std_err(), 0)
             self.assertLess("\n".join(self._get_std_out()).find(" ERROR "), 0)
             self.assertLess("\n".join(self._get_std_out()).find(" WARN "), 0)

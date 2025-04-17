@@ -45,6 +45,18 @@ INITSCRIPT_PATH = '/etc/init.d'
 VALID_UNIT_TYPES = ('service', 'socket', 'device', 'mount', 'automount', 'swap', 'target', 'path', 'timer')
 
 
+def get_units():
+    """
+    Get units
+    :return: list
+    :rtype: list
+    """
+
+    manager = Manager()
+    manager.load()
+    return manager.Manager.ListUnits()
+
+
 def systemd_get_pid(unit_name):
     """
     Get pid
@@ -194,7 +206,7 @@ class Service(KnockProbe):
         self.helpers = KnockHelpers()
 
         self.ar_service = list()
-        self.pattern_list = list()
+        self.patern_list = list()
         self.category = "/os/services"
 
     def init_from_config(self, k, d_yaml_config, d):
@@ -212,7 +224,7 @@ class Service(KnockProbe):
         KnockProbe.init_from_config(self, k, d_yaml_config, d)
 
         # Go
-        self.pattern_list = d["patern"]
+        self.patern_list = d["patern"]
         pass
 
     def _execute_linux(self):
@@ -222,16 +234,15 @@ class Service(KnockProbe):
 
         # Init if required
         if len(self.ar_service) == 0:
-            for p in self.pattern_list:
+            for p in self.patern_list:
                 try:
                     self.ar_service.append(re.compile(p))
                 except Exception as e:
                     logger.warning("Ex=%s", SolBase.extostr(e))
         # count service to be checked:
         count_service_running = 0
-        manager = Manager()
-        manager.load()
-        for unit in manager.Manager.ListUnits():
+
+        for unit in get_units():
             unit_name, _, unit_substate, _, unit_running, *_ = unit
             unit_name = unit_name.decode('utf-8').rsplit('.', 1)[0]
             if '.dpkg-new' not in unit_name and self._is_monitored_service(unit_name):

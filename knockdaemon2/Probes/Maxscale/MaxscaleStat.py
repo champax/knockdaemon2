@@ -182,7 +182,7 @@ class MaxscaleStat(KnockProbe):
                     logger.error("Failed to get statistics for %s: %s", item, SolBase.extostr(e))
                     continue
             # send result
-            self.notify_value_n(f'k.maxscale.servers', {'BACKEND': backend_id}, values)
+            self.notify_value_n(f'k.maxscale.server.general', {'BACKEND': backend_id}, 1.0, d_values=values)
 
             # cumulate all counters
             values = dict()
@@ -191,7 +191,7 @@ class MaxscaleStat(KnockProbe):
                 for time_distribution in statistics['response_time_distribution'][ops]['distribution']:
                     count += time_distribution['count']
                 values[ops] = float(count)
-            self.notify_value_n(f'k.maxscale.server.ops', {'BACKEND': backend_id}, values)
+            self.notify_value_n(f'k.maxscale.server.ops', {'BACKEND': backend_id}, 1.0, d_values=values)
 
             # Initialize status
             all_status = {
@@ -209,7 +209,7 @@ class MaxscaleStat(KnockProbe):
                 status = status.strip().replace(' ', '_')
                 all_status[status] = 1
                 # Notify
-            self.notify_value_n('k.maxscale.state', {'BACKEND': backend_id}, all_status)
+            self.notify_value_n('k.maxscale.server.state', {'BACKEND': backend_id}, 1.0, d_values=all_status)
 
         # Good, notify & exit
         logger.debug("Processing ok, notify started=1 and return")
