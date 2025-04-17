@@ -253,7 +253,7 @@ class MaxscaleStat(KnockProbe):
             hreq.https_insecure = False
             # Disable caching (if we pass through varnish or similar, yeah this basterd bullshit is possible)
             hreq.headers["Cache-Control"] = "no-cache"
-Fixe            hreq.force_http_implementation = HttpClient.HTTP_IMPL_GEVENT
+            hreq.force_http_implementation = HttpClient.HTTP_IMPL_GEVENT
             # Add auth
             if self.username:
                 b64 = base64.b64encode(f'{self.username}:{self.password}'.encode()).decode()
