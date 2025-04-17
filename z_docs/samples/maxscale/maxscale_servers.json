@@ -6,10 +6,10 @@
         "gtid_current_pos": "",
         "last_event": "new_slave",
         "master_id": 0,
-        "name": "10.66.103.60",
+        "name": "127.0.0.60",
         "node_id": 1,
         "parameters": {
-          "address": "10.66.103.60",
+          "address": "127.0.0.60",
           "disk_space_threshold": null,
           "extra_port": 0,
           "max_routing_connections": 0,
@@ -38,7 +38,7 @@
         "replication_lag": 0,
         "server_id": 1,
         "source": {
-          "file": "/etc/maxscale.cnf.d/vulog.cnf",
+          "file": "/etc/maxscale.cnf.d/knock.cnf",
           "type": "static"
         },
         "state": "Slave, Synced, Running",
@@ -191,11 +191,11 @@
         },
         "triggered_at": "Fri, 21 Mar 2025 14:29:41 GMT",
         "uptime": 2267442,
-        "version_string": "10.6.19-15-MariaDB-enterprise-log"
+        "version_string": "mariadb"
       },
-      "id": "10.66.103.60",
+      "id": "127.0.0.60",
       "links": {
-        "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.60/"
+        "self": "http://node001.knock.local:8989/v1/servers/127.0.0.60/"
       },
       "relationships": {
         "monitors": {
@@ -206,8 +206,8 @@
             }
           ],
           "links": {
-            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/monitors/",
-            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.60/relationships/monitors/"
+            "related": "http://node001.knock.local:8989/v1/monitors/",
+            "self": "http://node001.knock.local:8989/v1/servers/127.0.0.60/relationships/monitors/"
           }
         },
         "services": {
@@ -222,8 +222,8 @@
             }
           ],
           "links": {
-            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/services/",
-            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.60/relationships/services/"
+            "related": "http://node001.knock.local:8989/v1/services/",
+            "self": "http://node001.knock.local:8989/v1/servers/127.0.0.60/relationships/services/"
           }
         }
       },
@@ -235,10 +235,10 @@
         "gtid_current_pos": "",
         "last_event": "new_master",
         "master_id": 0,
-        "name": "10.66.103.61",
+        "name": "127.0.0.61",
         "node_id": 0,
         "parameters": {
-          "address": "10.66.103.61",
+          "address": "127.0.0.61",
           "disk_space_threshold": null,
           "extra_port": 0,
           "max_routing_connections": 0,
@@ -267,7 +267,7 @@
         "replication_lag": 0,
         "server_id": 1,
         "source": {
-          "file": "/etc/maxscale.cnf.d/vulog.cnf",
+          "file": "/etc/maxscale.cnf.d/knock.cnf",
           "type": "static"
         },
         "state": "Master, Synced, Running",
@@ -420,11 +420,11 @@
         },
         "triggered_at": "Fri, 21 Mar 2025 14:29:41 GMT",
         "uptime": 2420831,
-        "version_string": "10.6.19-15-MariaDB-enterprise-log"
+        "version_string": "mariadb"
       },
-      "id": "10.66.103.61",
+      "id": "127.0.0.61",
       "links": {
-        "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.61/"
+        "self": "http://node001.knock.local:8989/v1/servers/127.0.0.61/"
       },
       "relationships": {
         "monitors": {
@@ -435,8 +435,8 @@
             }
           ],
           "links": {
-            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/monitors/",
-            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.61/relationships/monitors/"
+            "related": "http://node001.knock.local:8989/v1/monitors/",
+            "self": "http://node001.knock.local:8989/v1/servers/127.0.0.61/relationships/monitors/"
           }
         },
         "services": {
@@ -451,8 +451,8 @@
             }
           ],
           "links": {
-            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/services/",
-            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.61/relationships/services/"
+            "related": "http://node001.knock.local:8989/v1/services/",
+            "self": "http://node001.knock.local:8989/v1/servers/127.0.0.61/relationships/services/"
           }
         }
       },
@@ -464,10 +464,10 @@
         "gtid_current_pos": "0-1-1741421",
         "last_event": "slave_up",
         "master_id": 0,
-        "name": "10.66.103.62",
+        "name": "127.0.0.62",
         "node_id": 3,
         "parameters": {
-          "address": "10.66.103.62",
+          "address": "127.0.0.62",
           "disk_space_threshold": null,
           "extra_port": 0,
           "max_routing_connections": 0,
@@ -496,7 +496,7 @@
         "replication_lag": 0,
         "server_id": 1,
         "source": {
-          "file": "/etc/maxscale.cnf.d/vulog.cnf",
+          "file": "/etc/maxscale.cnf.d/knock.cnf",
           "type": "static"
         },
         "state": "Slave, Synced, Running",
@@ -649,11 +649,11 @@
         },
         "triggered_at": "Wed, 19 Mar 2025 20:08:38 GMT",
         "uptime": 2420636,
-        "version_string": "10.6.19-15-MariaDB-enterprise-log"
+        "version_string": "mariadb"
       },
-      "id": "10.66.103.62",
+      "id": "127.0.0.62",
       "links": {
-        "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.62/"
+        "self": "http://node001.knock.local:8989/v1/servers/127.0.0.62/"
       },
       "relationships": {
         "monitors": {
@@ -664,8 +664,8 @@
             }
           ],
           "links": {
-            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/monitors/",
-            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.62/relationships/monitors/"
+            "related": "http://node001.knock.local:8989/v1/monitors/",
+            "self": "http://node001.knock.local:8989/v1/servers/127.0.0.62/relationships/monitors/"
           }
         },
         "services": {
@@ -680,8 +680,8 @@
             }
           ],
           "links": {
-            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/services/",
-            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.62/relationships/services/"
+            "related": "http://node001.knock.local:8989/v1/services/",
+            "self": "http://node001.knock.local:8989/v1/servers/127.0.0.62/relationships/services/"
           }
         }
       },
@@ -693,10 +693,10 @@
         "gtid_current_pos": "",
         "last_event": "new_master",
         "master_id": 0,
-        "name": "10.66.103.63",
+        "name": "127.0.0.63",
         "node_id": 2,
         "parameters": {
-          "address": "10.66.103.63",
+          "address": "127.0.0.63",
           "disk_space_threshold": null,
           "extra_port": 0,
           "max_routing_connections": 0,
@@ -725,7 +725,7 @@
         "replication_lag": 0,
         "server_id": 1,
         "source": {
-          "file": "/etc/maxscale.cnf.d/vulog.cnf",
+          "file": "/etc/maxscale.cnf.d/knock.cnf",
           "type": "static"
         },
         "state": "Slave, Synced, Running",
@@ -878,11 +878,11 @@
         },
         "triggered_at": "Fri, 21 Mar 2025 14:22:38 GMT",
         "uptime": 2420725,
-        "version_string": "10.6.19-15-MariaDB-enterprise-log"
+        "version_string": "mariadb"
       },
-      "id": "10.66.103.63",
+      "id": "127.0.0.63",
       "links": {
-        "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.63/"
+        "self": "http://node001.knock.local:8989/v1/servers/127.0.0.63/"
       },
       "relationships": {
         "monitors": {
@@ -893,8 +893,8 @@
             }
           ],
           "links": {
-            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/monitors/",
-            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.63/relationships/monitors/"
+            "related": "http://node001.knock.local:8989/v1/monitors/",
+            "self": "http://node001.knock.local:8989/v1/servers/127.0.0.63/relationships/monitors/"
           }
         },
         "services": {
@@ -909,8 +909,8 @@
             }
           ],
           "links": {
-            "related": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/services/",
-            "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/10.66.103.63/relationships/services/"
+            "related": "http://node001.knock.local:8989/v1/services/",
+            "self": "http://node001.knock.local:8989/v1/servers/127.0.0.63/relationships/services/"
           }
         }
       },
@@ -918,6 +918,6 @@
     }
   ],
   "links": {
-    "self": "http://node001.mutu.gcp-europe-west2-dev.vulog.local:8989/v1/servers/"
+    "self": "http://node001.knock.local:8989/v1/servers/"
   }
 }

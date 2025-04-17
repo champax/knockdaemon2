@@ -25,6 +25,8 @@ import json
 
 from pysolbase.SolBase import SolBase
 
+from knockdaemon2.Probes.Maxscale.MaxscaleStat import MaxscaleStat
+
 SolBase.voodoo_init()
 
 import glob
@@ -1096,6 +1098,37 @@ class TestProbesFromBuffer(unittest.TestCase):
         # Check
         expect_value(self, self.k, "k.os.processes.total", 3, "eq")
 
+    def test_from_buffer_maxscale(self):
+        """
+        Test
+        """
+
+        # Init
+        ms = MaxscaleStat()
+        ms.set_manager(self.k)
+
+        # Go
+        for fn in [
+            "maxscale/maxscale_servers.json",
+        ]:
+            # Path
+            fn = self.sample_dir + fn
+
+            # Reset
+            self.k._reset_superv_notify()
+            Meters.reset()
+
+            # Load
+            self.assertTrue(FileUtility.is_file_exist(fn))
+            buf = FileUtility.file_to_binary(fn)
+
+            # Process
+            ms.process_maxscale_buffer(maxscale_buff=buf, ms_http=100)
+
+            # Log
+            for tu in self.k.superv_notify_value_list:
+                logger.info("Having tu=%s", tu)
+        
     def test_from_buffer_apache(self):
         """
         Test
