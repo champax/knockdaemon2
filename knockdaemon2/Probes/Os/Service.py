@@ -194,7 +194,7 @@ class Service(KnockProbe):
         self.helpers = KnockHelpers()
 
         self.ar_service = list()
-        self.patern_list = list()
+        self.pattern_list = list()
         self.category = "/os/services"
 
     def init_from_config(self, k, d_yaml_config, d):
@@ -212,7 +212,7 @@ class Service(KnockProbe):
         KnockProbe.init_from_config(self, k, d_yaml_config, d)
 
         # Go
-        self.patern_list = d["patern"]
+        self.pattern_list = d["patern"]
         pass
 
     def _execute_linux(self):
@@ -222,7 +222,7 @@ class Service(KnockProbe):
 
         # Init if required
         if len(self.ar_service) == 0:
-            for p in self.patern_list:
+            for p in self.pattern_list:
                 try:
                     self.ar_service.append(re.compile(p))
                 except Exception as e:
@@ -420,7 +420,7 @@ class Service(KnockProbe):
         :return: True if is monitored, False otherwise
         :rtype: bool
         """
-        for service_patern in self.ar_service:
-            if service_patern.match(unit_name):
+        for service_pattern in self.ar_service:
+            if service_pattern.match(unit_name):
                 return True
         return False
