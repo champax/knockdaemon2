@@ -253,9 +253,10 @@ class MaxscaleStat(KnockProbe):
             hreq.https_insecure = False
             # Disable caching (if we pass through varnish or similar, yeah this basterd bullshit is possible)
             hreq.headers["Cache-Control"] = "no-cache"
+            hreq.force_http_implementation = HttpClient.HTTP_IMPL_GEVENT
             # Add auth
             if self.username:
-                b64 = base64.b64encode(f'{self.username}:{self.password}'.encode())
+                b64 = base64.b64encode(f'{self.username}:{self.password}'.encode()).decode()
                 hreq.headers.update({"Authorization": f"Basic {b64}"})
 
             # Uri
@@ -274,9 +275,6 @@ class MaxscaleStat(KnockProbe):
             # Check
             if not hresp.buffer:
                 logger.debug("Give up (buffer None)")
-                return None
-            elif hresp.buffer.find("data") < 0:
-                logger.debug("Give up (no data)")
                 return None
             else:
                 logger.debug("Success, len.buffer=%s", len(hresp.buffer))
