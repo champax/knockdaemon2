@@ -202,9 +202,7 @@ class RabbitmqStat(KnockProbe):
         for cur_line in ar:
             # Clean and check
             cur_line = cur_line.strip()
-            if len(cur_line) == 0:
-                continue
-            elif not cur_line.startswith("|"):
+            if len(cur_line) == 0 or not cur_line.startswith("|"):
                 continue
 
             # Ok split

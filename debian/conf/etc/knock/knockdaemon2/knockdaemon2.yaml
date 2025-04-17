@@ -208,3 +208,14 @@ probes:
     class_name: knockdaemon2.Probes.Os.IpvsAdm.IpvsAdm
     exec_interval_sec: 60
     exec_enabled: true
+
+  # ============================
+  # maxscale
+  # ============================
+  Maxscale:
+    class_name: knockdaemon2.Probes.Maxscale.MaxscaleStat.MaxscaleStat
+    exec_interval_sec: 60
+    exec_enabled: true
+    url: http://127.0.0.1:8989/v1/
+    username: False
+    password: False

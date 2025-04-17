@@ -46,3 +46,6 @@ mdstat
 # services check
 # aptitude install libdbus-1-dev libglib2.0-dev
 dbus-python
+
+pystemd~=0.13.2
+python-dateutil~=2.8.2

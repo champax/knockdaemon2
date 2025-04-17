@@ -34,6 +34,7 @@ from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockHelpers import KnockHelpers
 from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Core.systemd import SystemdManager
+from pystemd.systemd1 import Manager
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,18 @@ SYSTEM_CONFIG_PATHS = ('/lib/systemd/system', '/usr/lib/systemd/system')
 LOCAL_CONFIG_PATH = '/etc/systemd/system'
 INITSCRIPT_PATH = '/etc/init.d'
 VALID_UNIT_TYPES = ('service', 'socket', 'device', 'mount', 'automount', 'swap', 'target', 'path', 'timer')
+
+
+def get_units():
+    """
+    Get units
+    :return: list
+    :rtype: list
+    """
+
+    manager = Manager()
+    manager.load()
+    return manager.Manager.ListUnits()
 
 
 def systemd_get_pid(unit_name):
@@ -118,66 +131,6 @@ def get_process_stat(pid):
     :rtype dict
     """
     return psutil.Process(pid).as_dict()
-
-
-def get_local_services():
-    """
-    Get local services list (systemd and sysv, dpkg-new filtered)
-    :return set of str
-    :rtype set
-    """
-    ret = get_systemd_services()
-    ret.update(get_sysv_services(systemd_services=ret))
-
-    # Filter .dpkg-new service
-    ret = [service for service in ret if not service.find(".dpkg-new") > 0]
-
-    return set(ret)
-
-
-def get_running_services():
-    """
-    Return a list of all running services, so far as systemd is concerned
-
-    :return: set of str
-    :rtype set
-    """
-    ret = set()
-    # Get running systemd units
-    cmd = "systemctl --full --no-legend --no-pager"
-    ec, out, se = ButcherTools.invoke(cmd, shell=False, timeout_ms=10 * 1000)
-    if ec != 0:
-        logger.warning("Invoke failed, ec=%s, so=%s, se=%s", ec, out, se)
-        return list()
-    else:
-        logger.debug("Invoke ok, ec=%s, so=%s, se=%s", ec, str(out.split('\n')[0:10]) + "...", se)
-
-    for line in ButcherTools.split(out, '\n'):
-        active_state = ''
-        fullname = ''
-        if line == "":
-            continue
-        try:
-            comps = line.strip().split()
-            fullname = comps[0]
-            if len(comps) > 3:
-                active_state = comps[3]
-        except ValueError as exc:
-            logger.error("Ex=%s", SolBase.extostr(exc))
-            continue
-        except IndexError as e:
-            logger.warning("Ex=%s", SolBase.extostr(e))
-        else:
-            if active_state != 'running':
-                continue
-        try:
-            unit_name, unit_type = fullname.rsplit('.', 1)
-        except ValueError:
-            continue
-        if unit_type in VALID_UNIT_TYPES:
-            ret.add(unit_name if unit_type == 'service' else fullname)
-
-    return set(ret)
 
 
 def get_systemd_services():
@@ -286,36 +239,28 @@ class Service(KnockProbe):
                     self.ar_service.append(re.compile(p))
                 except Exception as e:
                     logger.warning("Ex=%s", SolBase.extostr(e))
+        # count service to be checked:
+        count_service_running = 0
 
-        # Get local services
-        d_services_local = get_local_services()
-
-        # Get running services
-        d_services_running = get_running_services()
-
-        # Services to check
-        d_services_to_check = set()
-        for p in self.ar_service:
-            for s in d_services_local:
-                if p.match(s):
-                    d_services_to_check.add(s)
-
-        # Not running services
-        d_services_not_running = d_services_local - d_services_running
-
-        # Not running, to check => signal DOWN
-        d_services_not_running_to_check = d_services_not_running.intersection(d_services_to_check)
-        for s in d_services_not_running_to_check:
-            self.notify_value_n("k.os.service.running", {"SERVICE": s}, 0)
-
-        # Running, to check => signal UP
-        d_services_running_to_check = d_services_running.intersection(d_services_to_check)
-        for s in d_services_running_to_check:
-            self.notify_value_n("k.os.service.running", {"SERVICE": s}, 1)
-            try:
-                self.notify_service(s)
-            except Exception as e:
-                logger.debug("Exception, s=%s, ex=%s", s, SolBase.extostr(e))
+        for unit in get_units():
+            unit_name, _, unit_substate, _, unit_running, *_ = unit
+            unit_name = unit_name.decode('utf-8').rsplit('.', 1)[0]
+            if '.dpkg-new' not in unit_name and self._is_monitored_service(unit_name):
+                masked = unit_substate.decode('utf-8') == "masked"
+                running = unit_running.decode('utf-8') == 'running'
+                if masked:
+                    # masked service is not monitored
+                    continue
+                # increment service count
+                count_service_running += 1
+                if not running:
+                    self.notify_value_n("k.os.service.running", {"SERVICE": unit_name}, 0)
+                else:
+                    self.notify_value_n("k.os.service.running", {"SERVICE": unit_name}, 1)
+                    try:
+                        self.notify_service(unit_name)
+                    except Exception as e:
+                        logger.warning("Exception, s=%s, ex=%s", unit_name, SolBase.extostr(e))
 
         # -----------------------------
         # Handle uwsgi
@@ -328,7 +273,7 @@ class Service(KnockProbe):
             self.notify_service_pid(pid=uwsgi_pid, service=uwsgi_type)
 
         # Running count
-        self.notify_value_n("k.os.service.running_count", None, len(d_services_running_to_check) + len(d_uwsgi))
+        self.notify_value_n("k.os.service.running_count", None, count_service_running + len(d_uwsgi))
 
     def notify_service(self, service_name):
         """
@@ -476,3 +421,17 @@ class Service(KnockProbe):
         except NotImplementedError:
             # patch rapsberry NotImplementedError: couldn't find /proc/xxxx/io (kernel too old?)
             logger.debug("Couldn't find /proc/xxxx/io (possible kernel too old), discarding k.proc.io.read_bytes / k.proc.io.write_bytes")
+
+    def _is_monitored_service(self, unit_name):
+        """
+        Checks if the service is monitored.
+
+        :param unit_name: service name
+        :type unit_name: str
+        :return: True if is monitored, False otherwise
+        :rtype: bool
+        """
+        for service_pattern in self.ar_service:
+            if service_pattern.match(unit_name):
+                return True
+        return False

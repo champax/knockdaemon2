@@ -355,10 +355,10 @@ class TestDaemonUsingHttpMock(unittest.TestCase):
             logger.debug("stdErr ### END")
 
             # Check
-            self.assertTrue(p.exitcode == 0)
-            self.assertTrue(len(self._get_std_err()) == 0)
-            self.assertTrue("\n".join(self._get_std_out()).find(" ERROR ") < 0)
-            self.assertTrue("\n".join(self._get_std_out()).find(" WARN ") < 0)
+            self.assertEqual(p.exitcode, 0)
+            self.assertEqual(len(self._get_std_err()), 0)
+            self.assertLess("\n".join(self._get_std_out()).find(" ERROR "), 0)
+            self.assertLess("\n".join(self._get_std_out()).find(" WARN "), 0)
 
             # =========================
             # STATUS

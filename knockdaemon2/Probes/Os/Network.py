@@ -95,6 +95,7 @@ class Network(KnockProbe):
 
             # Check "UP" bit and print a message
             up = flags & 1
+            s.close()
             return ("down", "up")[up]
         finally:
             if s is not None:

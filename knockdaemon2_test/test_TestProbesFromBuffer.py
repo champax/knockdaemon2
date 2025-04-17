@@ -25,6 +25,8 @@ import json
 
 from pysolbase.SolBase import SolBase
 
+from knockdaemon2.Probes.Maxscale.MaxscaleStat import MaxscaleStat
+
 SolBase.voodoo_init()
 
 import glob
@@ -138,28 +140,62 @@ class MockProcessForService(object):
         return self.v_ppid
 
 
-def get_service_running_services_mocked():
+def get_manager_list_units_mocked():
     """
     Get
-    :return: set of str
-    :rtype set
+    :return: list
+    :rtype list
     """
-    return {
-        "systemd_01_running",
-        "sysv_03_running",
-    }
-
-
-def get_service_systemd_services_mocked():
-    """
-    Get
-    :return: set of str
-    :rtype set
-    """
-    return {
-        "systemd_01_running",
-        "systemd_02_not_running",
-    }
+    return [
+        (
+            b'systemd_01_running.service',  # HANDLED : unit_name
+            b'display_name',  # BYPASS : display name
+            b'loaded',  # HANDLED : unit_substate (IF masked : "masked")
+            b'active',  # BYPASS : inactive|active
+            b'running',  # HANDLED : unit_running (IF running : "running") => dead|running
+            b'',
+            b'/mock/systemd_01_running.service',
+            0,
+            b'',
+            b'/'
+        ),
+        (
+            b'systemd_02_not_running.service',  # HANDLED : unit_name
+            b'display_name',  # BYPASS : display name
+            b'loaded',  # HANDLED : unit_substate (IF masked : "masked")
+            b'active',  # BYPASS : inactive|active
+            b'dead',  # HANDLED : unit_running (IF running : "running") => dead|running
+            b'',
+            b'/mock/systemd_02_not_running.service',
+            0,
+            b'',
+            b'/'
+        ),
+        (
+            b'systemd_03_running.service',  # HANDLED : unit_name
+            b'display_name',  # BYPASS : display name
+            b'loaded',  # HANDLED : unit_substate (IF masked : "masked")
+            b'active',  # BYPASS : inactive|active
+            b'running',  # HANDLED : unit_running (IF running : "running") => dead|running
+            b'',
+            b'/mock/sysv_03_running.service',
+            0,
+            b'',
+            b'/'
+        ),
+        (
+            b'systemd_04_masked.service',  # HANDLED : unit_name
+            b'display_name',  # BYPASS : display name
+            b'masked',  # HANDLED : unit_substate (IF masked : "masked")
+            b'active',  # BYPASS : inactive|active
+            b'running',  # HANDLED : unit_running (IF running : "running") => dead|running
+            b'',
+            b'/mock/systemd_01_running.service',
+            0,
+            b'',
+            b'/'
+        ),
+    ]
 
 
 def get_service_sysv_services_mocked():
@@ -397,13 +433,12 @@ class TestProbesFromBuffer(unittest.TestCase):
     @patch('knockdaemon2.Probes.Os.Service.get_process_list', return_value=get_service_get_process_list_mocked())
     @patch('knockdaemon2.Probes.Os.Service.get_io_counters', return_value=get_service_io_counters_mocked())
     @patch('knockdaemon2.Probes.Os.Service.get_process_child', return_value=get_service_process_child_mocked())
-    @patch('knockdaemon2.Probes.Os.Service.get_running_services', return_value=get_service_running_services_mocked())
-    @patch('knockdaemon2.Probes.Os.Service.get_systemd_services', return_value=get_service_systemd_services_mocked())
     @patch('knockdaemon2.Probes.Os.Service.get_sysv_services', return_value=get_service_sysv_services_mocked())
     @patch('knockdaemon2.Probes.Os.Service.get_process_stat', return_value=get_service_process_stat_mocked())
     @patch('knockdaemon2.Probes.Os.Service.systemd_is_active', return_value=True)
     @patch('knockdaemon2.Probes.Os.Service.systemd_get_pid', return_value=999901)
-    def test_from_buffer_service_with_mock(self, m1, m2, m3, m4, m5, m6, m7, m8, m9):
+    @patch('knockdaemon2.Probes.Os.Service.get_units', return_value=get_manager_list_units_mocked())
+    def test_from_buffer_service_with_mock(self, m1, m2, m3, m4, m5, m6, m7, m8):
         """
         Test
         """
@@ -416,7 +451,6 @@ class TestProbesFromBuffer(unittest.TestCase):
         self.assertIsNotNone(m6)
         self.assertIsNotNone(m7)
         self.assertIsNotNone(m8)
-        self.assertIsNotNone(m9)
 
         # Init
         s = Service()
@@ -430,13 +464,30 @@ class TestProbesFromBuffer(unittest.TestCase):
         for tu in self.k.superv_notify_value_list:
             logger.info("Having tu=%s", tu)
 
+        # We have
+        # systemd_01_running => running
+        # systemd_02_not_running => NOT running
+        # systemd_03_running => running
+        # systemd_04_masked => masked
+        # uwsgi_default_a01 => running
+        # uwsgi_default_a02 => running
+
         # Validate results
+        expect_value(self, self.k, "k.os.service.running_count", 5, 'eq', None)
+        expect_value(self, self.k, "k.os.service.running", 1, 'eq', {"SERVICE": "systemd_01_running"})
         expect_value(self, self.k, "k.os.service.running", 0, 'eq', {"SERVICE": "systemd_02_not_running"})
-        expect_value(self, self.k, "k.os.service.running", 0, 'eq', {"SERVICE": "sysv_04_not_running"})
-        expect_value(self, self.k, "k.os.service.running_count", 4, 'eq', None)
+        expect_value(self, self.k, "k.os.service.running", 1, 'eq', {"SERVICE": "systemd_03_running"})
 
         # Validate results : uwsgi
-        for s in ["systemd_01_running", "sysv_03_running", "uwsgi_default_a01", "uwsgi_default_a02"]:
+        for s in ["systemd_01_running", "systemd_02_not_running", "systemd_03_running", "uwsgi_default_a01", "uwsgi_default_a02"]:
+            logger.info("CHECKING=%s", s)
+
+            # Not running
+            if s == "systemd_02_not_running":
+                expect_value(self, self.k, "k.os.service.running", 0, 'eq', {"SERVICE": s})
+                continue
+
+            # Running
             expect_value(self, self.k, "k.os.service.running", 1, 'eq', {"SERVICE": s})
             expect_value(self, self.k, "k.proc.io.read_bytes", 154, 'eq', {"PROCNAME": s})
             expect_value(self, self.k, "k.proc.io.write_bytes", 176, 'eq', {"PROCNAME": s})
@@ -770,9 +821,7 @@ class TestProbesFromBuffer(unittest.TestCase):
             d_info = dict()
             for s in buf.split("\n"):
                 s = s.strip()
-                if len(s) == 0:
-                    continue
-                elif s.startswith("#"):
+                if len(s) == 0 or s.startswith("#"):
                     continue
                 ar = s.split(":", 2)
                 k = ar[0]
@@ -1032,7 +1081,6 @@ class TestProbesFromBuffer(unittest.TestCase):
         # Notify
         us.notify_mem_info(**dict_mem_info)
 
-
         # Log
         for tu in self.k.superv_notify_value_list:
             logger.info("Having tu=%s", tu)
@@ -1097,6 +1145,72 @@ class TestProbesFromBuffer(unittest.TestCase):
 
         # Check
         expect_value(self, self.k, "k.os.processes.total", 3, "eq")
+
+    def test_from_buffer_maxscale(self):
+        """
+        Test
+        """
+
+        # Init
+        ms = MaxscaleStat()
+        ms.set_manager(self.k)
+
+        # Go
+        for fn in [
+            "maxscale/maxscale_servers.json",
+        ]:
+            # Path
+            fn = self.sample_dir + fn
+
+            # Reset
+            self.k._reset_superv_notify()
+            Meters.reset()
+
+            # Load
+            self.assertTrue(FileUtility.is_file_exist(fn))
+            buf = FileUtility.file_to_binary(fn)
+
+            # Process
+            ms.process_maxscale_buffer(maxscale_buff=buf, ms_http=100)
+
+            # Log
+            for tu in self.k.superv_notify_value_list:
+                logger.info("Having tu=%s", tu)
+
+            # Check them
+            for key, expected_dicts in [
+                (
+                        "k.maxscale.server.general",
+                        {
+                            ('BACKEND', '127.0.0.60'): {'routed_packets': 578129670.0, 'total_connections': 1769390.0, 'active_operations': 1.0, 'connections': 57.0},
+                            ('BACKEND', '127.0.0.61'): {'routed_packets': 1789703666.0, 'total_connections': 2470454.0, 'active_operations': 0.0, 'connections': 22.0},
+                            ('BACKEND', '127.0.0.62'): {'routed_packets': 1027238941.0, 'total_connections': 2467013.0, 'active_operations': 0.0, 'connections': 50.0},
+                            ('BACKEND', '127.0.0.63'): {'routed_packets': 471101766.0, 'total_connections': 1764839.0, 'active_operations': 1.0, 'connections': 34.0},
+                        }
+                ),
+                (
+                        "k.maxscale.server.ops",
+                        {
+                            ('BACKEND', '127.0.0.60'): {'read': 525186746.0, 'write': 50135491.0},
+                            ('BACKEND', '127.0.0.61'): {'read': 1148052498.0, 'write': 671151350.0},
+                            ('BACKEND', '127.0.0.62'): {'read': 845803176.0, 'write': 193831309.0},
+                            ('BACKEND', '127.0.0.63'): {'read': 460668109.0, 'write': 1878146.0},
+                        }
+                ),
+                (
+                        "k.maxscale.server.state",
+                        {
+                            ('BACKEND', '127.0.0.60'): {'Running': 1, 'Master': 0, 'Slave': 1, 'Draining': 0, 'Drained': 0, 'Auth_Error': 0, 'Maintenance': 0, 'Slave_of_External_Master': 0, 'Synced': 1},
+                            ('BACKEND', '127.0.0.61'): {'Running': 1, 'Master': 1, 'Slave': 0, 'Draining': 0, 'Drained': 0, 'Auth_Error': 0, 'Maintenance': 0, 'Slave_of_External_Master': 0, 'Synced': 1},
+                            ('BACKEND', '127.0.0.62'): {'Running': 1, 'Master': 0, 'Slave': 1, 'Draining': 0, 'Drained': 0, 'Auth_Error': 0, 'Maintenance': 0, 'Slave_of_External_Master': 0, 'Synced': 1},
+                            ('BACKEND', '127.0.0.63'): {'Running': 1, 'Master': 0, 'Slave': 1, 'Draining': 0, 'Drained': 0, 'Auth_Error': 0, 'Maintenance': 0, 'Slave_of_External_Master': 0, 'Synced': 1},
+                        }
+                ),
+            ]:
+                for ar_tag, d_expected in expected_dicts.items():
+                    dd = {ar_tag[0]: ar_tag[1]}
+                    for value_key, value_expected in d_expected.items():
+                        expect_value(self, self.k, key, value_expected, "eq", dd, d_values_key=value_key)
 
     def test_from_buffer_apache(self):
         """
@@ -1718,8 +1832,6 @@ class TestProbesFromBuffer(unittest.TestCase):
                 s = s.strip()
                 if not s.startswith("|"):
                     continue
-                elif s.startswith("| Variable_name"):
-                    continue
                 ar = s.split("|")
                 k = ar[1].strip()
                 v = ar[2].strip()
@@ -1730,8 +1842,6 @@ class TestProbesFromBuffer(unittest.TestCase):
             for s in variables_buf.split("\n"):
                 s = s.strip()
                 if not s.startswith("|"):
-                    continue
-                elif s.startswith("| Variable_name"):
                     continue
                 ar = s.split("|")
                 k = ar[1].strip()
@@ -1860,11 +1970,11 @@ class TestProbesFromBuffer(unittest.TestCase):
             # Check, stat, user
             if cur_version != "MARIA_10.5":
                 for user, total_connections, concurrent_connections, connected_time, busy_time, cpu_time, \
-                    bytes_received, bytes_sent, \
-                    binlog_bytes_written, rows_read, rows_sent, rows_deleted, rows_inserted, rows_updated, \
-                    select_commands, update_commands, other_commands, commit_transactions, rollback_transactions, \
-                    denied_connections, lost_connections, access_denied, \
-                    empty_queries, total_ssl_connections, max_statement_time_exceeded in \
+                        bytes_received, bytes_sent, \
+                        binlog_bytes_written, rows_read, rows_sent, rows_deleted, rows_inserted, rows_updated, \
+                        select_commands, update_commands, other_commands, commit_transactions, rollback_transactions, \
+                        denied_connections, lost_connections, access_denied, \
+                        empty_queries, total_ssl_connections, max_statement_time_exceeded in \
                         [
                             ("zzzz", 11, 0, 3210, 0.07573099999999999, 0.05983699999999998, 28856, 382005, 0, 20077, 2700, 0, 0, 0, 111, 0, 116, 32, 2, 1, 0, 1, 25, 0, 0,),
                             ("user01", 911622, 0, 51057853, 103307.76056384486, 86972.37930978586, 256376400310, 508652204841, 660864536, 1663804892, 475976244, 130374, 207514, 701465, 384027899, 1480665, 300725032, 959443523, 39760, 0, 0, 0, 241005297, 0, 0,),
