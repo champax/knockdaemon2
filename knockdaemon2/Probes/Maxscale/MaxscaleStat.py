@@ -83,10 +83,14 @@ class MaxscaleStat(KnockProbe):
         # Base
         KnockProbe.init_from_config(self, k, d_yaml_config, d)
 
-        # Go
+        # Get username and password
+        self.password = d.get('password', None)
+        if self.password is not None and len(self.password) > 0:
+            self.username = d.get("username", None)
+
+        # Get url
         if self.ar_url:
             logger.debug("Got (set) ar_url=%s", self.ar_url)
-            return
         elif "url" in d:
             url = d["url"].strip().lower()
             if url == "auto":
@@ -99,9 +103,13 @@ class MaxscaleStat(KnockProbe):
             self.ar_url = ["http://127.0.0.1:8989/v1/"]
             logger.debug("Got (default) ar_url=%s", self.ar_url)
 
-        self.password = d.get('password', None)
-        if self.password is not None:
-            self.username = d.get("username", None)
+        # Fix if NOT list
+        if not isinstance(self.ar_url, list):
+            if isinstance(self.ar_url, str):
+                self.ar_url = [self.ar_url]
+
+        # Log
+        logger.debug("Using u=%s, p=%s, ar=%s, from d=%s", self.username, self.password, self.ar_url, d)
 
     def _execute_linux(self):
         """
