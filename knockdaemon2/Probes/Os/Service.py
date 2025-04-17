@@ -30,7 +30,6 @@ import psutil
 from psutil import ZombieProcess
 from pysolbase.SolBase import SolBase
 
-from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockHelpers import KnockHelpers
 from knockdaemon2.Core.KnockProbe import KnockProbe
 from knockdaemon2.Core.systemd import SystemdManager
@@ -244,12 +243,16 @@ class Service(KnockProbe):
 
         for unit in get_units():
             unit_name, _, unit_substate, _, unit_running, *_ = unit
+            unit_substate = unit_substate.decode('utf-8')
+            unit_running = unit_running.decode('utf-8')
             unit_name = unit_name.decode('utf-8').rsplit('.', 1)[0]
             if '.dpkg-new' not in unit_name and self._is_monitored_service(unit_name):
-                masked = unit_substate.decode('utf-8') == "masked"
-                running = unit_running.decode('utf-8') == 'running'
-                if masked:
-                    # masked service is not monitored
+                masked = unit_substate == "masked"
+                running = unit_running == 'running'
+                not_found = unit_running == 'not-found'
+
+                if masked or not_found:
+                    # masked and not found service is not monitored
                     continue
                 # increment service count
                 count_service_running += 1
