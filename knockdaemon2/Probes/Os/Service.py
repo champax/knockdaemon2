@@ -248,8 +248,8 @@ class Service(KnockProbe):
             unit_name = unit_name.decode('utf-8').rsplit('.', 1)[0]
             if '.dpkg-new' not in unit_name and self._is_monitored_service(unit_name):
                 masked = unit_substate == "masked"
+                not_found = unit_substate == 'not-found'
                 running = unit_running == 'running'
-                not_found = unit_running == 'not-found'
 
                 if masked or not_found:
                     # masked and not found service is not monitored
