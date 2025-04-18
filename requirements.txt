@@ -11,7 +11,8 @@ pysolhttpclient>=3.0.4
 pysolmeters>=3.0.2
 pysoltcp>=3.0.0
 
-gevent
+# Got SIGABRT with 25.4.1 in libev, locking
+gevent==24.11.1
 geventhttpclient
 greenlet
 
