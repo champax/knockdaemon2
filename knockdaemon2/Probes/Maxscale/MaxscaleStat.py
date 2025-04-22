@@ -85,7 +85,7 @@ class MaxscaleStat(KnockProbe):
 
         # Get username and password
         self.password = d.get('password', None)
-        if self.password is not None and len(self.password) > 0:
+        if self.password and self.password is not None and len(self.password) > 0:
             self.username = d.get("username", None)
 
         # Get url
