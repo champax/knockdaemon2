@@ -27,7 +27,7 @@ import os
 import re
 
 import psutil
-from psutil import ZombieProcess
+from psutil import ZombieProcess, NoSuchProcess
 from pysolbase.SolBase import SolBase
 
 from knockdaemon2.Core.KnockHelpers import KnockHelpers
@@ -253,6 +253,7 @@ class Service(KnockProbe):
 
                 if masked or not_found:
                     # masked and not found service is not monitored
+                    logger.debug('ignored service %s m=%s nf=%s r=%s', unit_name, masked, not_found, running)
                     continue
                 # increment service count
                 count_service_running += 1
@@ -424,7 +425,8 @@ class Service(KnockProbe):
         except NotImplementedError:
             # patch rapsberry NotImplementedError: couldn't find /proc/xxxx/io (kernel too old?)
             logger.debug("Couldn't find /proc/xxxx/io (possible kernel too old), discarding k.proc.io.read_bytes / k.proc.io.write_bytes")
-
+        except NoSuchProcess as e:
+            logger.debug('service is running without process, case: master service of multi service unit IE: uwsgi, openvpn, %s', SolBase.extostr(e))
     def _is_monitored_service(self, unit_name):
         """
         Checks if the service is monitored.
