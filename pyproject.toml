@@ -56,9 +56,6 @@ optional-dependencies.test = { file = ["requirements_test.txt"] }
 [project.scripts]
 knockdaemon2 = "knockdaemon2.Daemon.KnockDaemon:run"
 
-# [project.entry-points."knockdaemon2"]
-# "knockdaemon2" =
-
 [project.urls]
 Homepage = "https://github.com/champax/knockdaemon2"
 Repository = "https://github.com/champax/knockdaemon2"
