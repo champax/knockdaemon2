@@ -48,6 +48,6 @@ mdstat
 dbus-python
 
 # remove version contraint when descope python 3.7
-pystemd<0.13
+pystemd
 
 python-dateutil
