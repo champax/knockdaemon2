@@ -24,7 +24,8 @@ mypkg = [
 name = "knockdaemon2"
 description = "knockdaemon2"
 version = "3.13.0"
-requires-python = ">= 3.11"
+# Official support for 3.11 and 3.13+ only...
+requires-python = ">= 3.7"
 dynamic = ["dependencies", "optional-dependencies"]
 readme = "README.md"
 license = "GPL-3.0"
