@@ -209,7 +209,7 @@ class RabbitmqStat(KnockProbe):
             ar_temp = cur_line.split("|")
             logger.debug("Processing ar_temp=%s", ar_temp)
 
-            # If we have "name", its the header, we bypass
+            # If we have "name", it's the header, we bypass
             if ar_temp[1].strip() == "name":
                 continue
 
@@ -282,7 +282,7 @@ class RabbitmqStat(KnockProbe):
             ar_temp = cur_line.split("|")
             logger.debug("Processing ar_temp=%s", ar_temp)
 
-            # If we have "vhost", its the header, we bypass
+            # If we have "vhost", it's the header, we bypass
             if ar_temp[1].strip() == "vhost":
                 continue
 

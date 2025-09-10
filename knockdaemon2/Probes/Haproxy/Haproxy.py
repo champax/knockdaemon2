@@ -158,7 +158,7 @@ class Haproxy(KnockProbe):
         # Output dict
         agregated_dict = dict()
 
-        # Lets rock
+        # Let's rock
         for cur_d in csv_dict:
             proxy_name = cur_d["# pxname"]
             if proxy_name == "stats":

@@ -91,7 +91,7 @@ class UdpClient(object):
         Method assume the socket is connected and running and act as fire-and-forget.
         Any socket issue will interrupt the processing. No reconnection on the socket is performed.
 
-        The caller is responsible of calling connect before this method and disconnect method afterward to close the socket.
+        The caller is responsible for calling connect before this method and disconnect method afterward to close the socket.
 
         :param json_list: list
         :type json_list: list

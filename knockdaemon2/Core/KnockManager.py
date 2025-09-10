@@ -288,7 +288,7 @@ class KnockManager(object):
             logger.info("Init custom probes, loaded count=%s", len(ar_probes))
             idx = 0
             for p in ar_probes:
-                # Need a key for this one, we use the and id
+                # Need a key for this one
                 k = "custom_probes_" + str(idx)
                 logger.info("Initializing custom probes, k=%s, p=%s", k, p)
 
@@ -532,7 +532,7 @@ class KnockManager(object):
             logger.debug("Not running, bypass.1")
             return
 
-        # Try execute now (without sleep)
+        # Try to execute now (without sleep)
         try:
             # Try exec
             logger.debug("Trying _try_execute_all")
@@ -563,7 +563,7 @@ class KnockManager(object):
 
     def _try_execute_all(self):
         """
-        Try execute everything
+        Try to execute everything
         """
 
         logger.debug("Entering")
@@ -837,7 +837,7 @@ class KnockManager(object):
         :type p: KnockProbe
         :param c: KnockProbeContext
         :type c: KnockProbeContext
-        :return True if execution is required.
+        :return True if execution is required
         :rtype bool
         """
 
@@ -890,7 +890,7 @@ class KnockManager(object):
         :type p: KnockProbe
         :param c: KnockProbeContext
         :type c: KnockProbeContext
-        :return The millis within the probe should be executed, or sys.float_info.max if no execution is required.
+        :return The millis within the probe should be executed, or sys.float_info.max if no execution is required
         :rtype float
         """
 
@@ -1145,7 +1145,7 @@ class KnockManager(object):
                         if issubclass(obj, KnockProbe):
                             logger.info("Detected KnockProbe, module_name=%s, name=%s, obj=%s, cn=%s", module_name, name, obj, SolBase.get_classname(obj))
 
-                            # Mro (may be usefull later on when we will support multiple derivation in a single .py)
+                            # Mro (it may be usefull later on when we will support multiple derivation in a single .py)
                             mro = inspect.getmro(obj)
                             logger.info("mro=%s", mro)
 

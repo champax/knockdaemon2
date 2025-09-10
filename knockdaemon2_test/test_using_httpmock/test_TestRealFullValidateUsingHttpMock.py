@@ -21,6 +21,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 # ===============================================================================
 """
+from typing import Any, Iterable
+from wsgiref.types import StartResponse
 
 from pysolbase.SolBase import SolBase
 
@@ -223,7 +225,7 @@ class TestRealAll(unittest.TestCase):
             # Execute
             p.execute()
 
-            # Manager : request a send
+            # Manager : request to notify
             self.k._process_superv_notify()
 
             # Wait for everything pushed and processed
@@ -407,12 +409,13 @@ class TestRealAll(unittest.TestCase):
 
         from gevent import pywsgi
 
-        def http_process(request, response):
+        def http_process(request: dict[str, Any], response: StartResponse) -> Iterable[bytes]:
             """
             Internal http method
             :param request:
             :param response
-            :return:
+            :return: bytes
+            :rtype: bytes
             """
             status_buffer = "Total Accesses: 95\n" + \
                             "Total kBytes: 65\n" + \
@@ -431,7 +434,10 @@ class TestRealAll(unittest.TestCase):
 
             if request['PATH_INFO'].endswith('/server-status'):
                 response("200 OK", [('Content-Type', 'text/html')])
-                return status_buffer
+                return [status_buffer.encode("utf8")]
+            else:
+                response("404 NOT FOUND", [('Content-Type', 'text/plain')])
+                return ["404 NOT FOUND APACHE".encode("utf8")]
 
         # start Web server
         http_server = pywsgi.WSGIServer(('127.0.0.1', 0), http_process)
@@ -456,12 +462,13 @@ class TestRealAll(unittest.TestCase):
 
         from gevent import pywsgi
 
-        def http_process(request, response):
+        def http_process(request: dict[str, Any], response: StartResponse) -> Iterable[bytes]:
             """
             Internal http method
             :param request:
             :param response
-            :return:
+            :return: bytes
+            :rtype: bytes
             """
             status_buffer = "Active connections: 1\n" + \
                             "server accepts handled requests\n" + \
@@ -472,6 +479,9 @@ class TestRealAll(unittest.TestCase):
                 response("200 OK", [('Content-Type', 'text/html')])
                 o = status_buffer.encode("utf8")
                 return [o]
+            else:
+                response("404 NOT FOUND", [('Content-Type', 'text/plain')])
+                return ["404 NOT FOUND NGINX".encode("utf8")]
 
         # start Web server
         http_server = pywsgi.WSGIServer(('127.0.0.1', 0), http_process)

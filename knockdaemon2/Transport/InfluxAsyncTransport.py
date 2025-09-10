@@ -78,7 +78,7 @@ class InfluxAsyncTransport(KnockTransport):
         # Wait ms if send is bypassed before re-trying
         self._http_send_bypass_wait_ms = 1000
 
-        # Minimum http send interval. If reached, a send will occurs
+        # Minimum http send interval. If reached, send will occur
         # (even if _http_send_max_bytes is not reached).
         self._http_send_min_interval_ms = 60000
 
@@ -264,7 +264,7 @@ class InfluxAsyncTransport(KnockTransport):
         :type account_hash; dict
         :param node_hash: Hash bytes to value
         :type node_hash; dict
-        :param notify_values: List of (counter_key, d_tags, counter_value, ts, d_values). Cleared upon success.
+        :param notify_values: List of (counter_key, d_tags, counter_value, ts, d_values). Cleared upon success
         :type notify_values; list
         """
 
@@ -546,7 +546,7 @@ class InfluxAsyncTransport(KnockTransport):
             Meters.aii(self.meters_prefix + "knock_stat_transport_ok_count")
 
             # Stats (we have no return from Influx client....)
-            # We hack (may be slow and may be not accurate due to last \n)
+            # We hack (it may be slow and may be not accurate due to last \n)
             spv_processed = 0
             for cur_buf in ar_lines:
                 spv_processed += cur_buf.count("\n")

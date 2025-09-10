@@ -184,11 +184,11 @@ class TestProbesDirect(unittest.TestCase):
 
         ar = "/usr/bin/uwsgi --ini /usr/share/uwsgi/conf/default.ini --ini /etc/uwsgi/apps-enabled/toto.ini --daemonize /var/log/uwsgi/app/toto.log".split(" ")
         s_uwsgi = Service.uwsgi_get_type(ar)
-        self.assertEquals(s_uwsgi, "uwsgi_default_toto")
+        self.assertEqual(s_uwsgi, "uwsgi_default_toto")
 
         ar = "/usr/bin/uwsgi".split(" ")
         s_uwsgi = Service.uwsgi_get_type(ar)
-        self.assertEquals(s_uwsgi, "uwsgi_na")
+        self.assertEqual(s_uwsgi, "uwsgi_na")
 
     def test_uwsgi_get_processes(self):
         """
@@ -348,7 +348,7 @@ class TestProbesDirect(unittest.TestCase):
             expect_value(self, self.k, "k.hard.hd.device_model", "ALL", "eq", dd)
 
         else:
-            # Try invoke on first sdX
+            # Try to invoke on first sdX
             ec, so, se = ButcherTools.invoke("smartctl -q errorsonly -H -l selftest -b " + hds[0], timeout_ms=120000)
             logger.info("Got ec=%s, so=%s, se=%s", ec, so, se)
             if ec == 0:

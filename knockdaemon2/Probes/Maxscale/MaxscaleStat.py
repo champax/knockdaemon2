@@ -145,26 +145,23 @@ class MaxscaleStat(KnockProbe):
             logger.debug("Trying u=%s", u)
 
             # Try fetch
-            ms_http_start = SolBase.mscurrent()
             buf_maxscale = self.fetch_maxscale_servers_url(u)
             if buf_maxscale is None:
                 continue
 
             # Try process
-            if self.process_maxscale_buffer(buf_maxscale, SolBase.msdiff(ms_http_start)):
+            if self.process_maxscale_buffer(buf_maxscale):
                 return
 
         # Here we are NOT ok
         logger.info("All Uri down, notify started=0 and return")
         self.notify_value_n("k.maxscale.started", None, 0)
 
-    def process_maxscale_buffer(self, maxscale_buff, ms_http):
+    def process_maxscale_buffer(self, maxscale_buff):
         """
         Process apache buffer, return True if ok
         :param maxscale_buff: bytes
         :type maxscale_buff: bytes
-        :param ms_http: float
-        :type ms_http: float
         :return bool
         :rtype bool
         """

@@ -110,7 +110,7 @@ class CheckDns(KnockProbe):
         response = None
         success = False
 
-        with Timeout(timeout + 2, False):
+        with Timeout(timeout + 2):
             try:
                 domain = dns.name.from_text(record)
 

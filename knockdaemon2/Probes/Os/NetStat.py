@@ -24,9 +24,6 @@
 
 import logging
 
-from pysolbase.SolBase import SolBase
-
-from knockdaemon2.Api.ButcherTools import ButcherTools
 from knockdaemon2.Core.KnockProbe import KnockProbe
 
 logger = logging.getLogger(__name__)

@@ -214,7 +214,7 @@ class HddStatus(KnockProbe):
         # Process it
         self.process_smartctl_error_only_buffer(c_hd, so)
 
-        # Check again - this may output exit code 4, so we dont check it
+        # Check again - this may output exit code 4, so we don't check it
         cmd = self.helpers.sudoize("smartctl -a %s" % hd)
         logger.debug("going invoke, cmd=%s", cmd)
         ec, so, se = ButcherTools.invoke(cmd)

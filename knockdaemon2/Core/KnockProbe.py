@@ -128,16 +128,16 @@ class KnockProbe(object):
         """
         Execute a probe.
         IMPORTANT note on execute() behavior :
-        A) ALL discovery MUST be notified ASAP, BEFORE checking instance(s) themselves (ie: BEFORE io/socket)
-        B1) Instance checks must be fired after A
-        B2) "running" key must be notified correctly (and will be nodata backed at server level)
+        A= ALL discovery MUST be notified ASAP, BEFORE checking instance(s) themselves (ie: BEFORE io/socket)
+        B1= Instance checks must be fired after A
+        B2= "running" key must be notified correctly (and will be nodata backed at server level)
 
         In all cases, execute will be stopped if execution time is too long, so it is CRITICAL than discoveries are fired in high prio.
 
         Reasons :
         - Discoveries register instances at server level
         - "running" key (for each discovered instance) will be backed by a nodata trigger
-        - SO : as discoveries are send ASAP, even if instance is down, even is execute() exec is cut => the nodata trigger on running keys will be fired
+        - SO : as discoveries are send ASAP, even if instance is down, even if execute() exec is cut => the nodata trigger on running keys will be fired
         """
 
         # LINUX

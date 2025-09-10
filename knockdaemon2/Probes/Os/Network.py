@@ -133,7 +133,7 @@ class Network(KnockProbe):
             interfaces = glob.glob("/sys/class/net/*")
             for interface_dir in interfaces:
 
-                # Non physical interface
+                # Nonphysical interface
                 if not os.path.islink(interface_dir):
                     continue
 
