@@ -27,7 +27,7 @@ import json
 import logging
 import re
 from collections import defaultdict
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 
 import dateutil
 import pymongo
@@ -1009,7 +1009,7 @@ class MongoDbStat(KnockProbe):
                     self.notify_value_n("k.mongodb.index_stats.ops", d_tags, v)
                     if 'since' in accesses:
                         since = accesses['since']
-                        since_millis = float((datetime.now(UTC).timestamp() - since.timestamp()) * 1000)
+                        since_millis = float((datetime.now(timezone.utc).timestamp() - since.timestamp()) * 1000)
                         self.notify_value_n("k.mongodb.index_stats.last_used_millis", d_tags, since_millis)
 
     def process_data_repl_lag(self, host, port):
