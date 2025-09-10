@@ -22,19 +22,20 @@
 # ===============================================================================
 """
 
+import toml
 from setuptools import find_packages, setup
 
 # ===========================
 # SETUP
 # ===========================
 
-p_name = "knockdaemon2"
-p_author = "Laurent Champagnac / Laurent Labatut"
-p_email = "champagnac.laurent@gmail.com"
-p_url = "https://github.com/champax/knockdaemon2"
-
-p_version = "3.13.0"
-
+with open("pyproject.toml", "r") as f:
+    data_pyproject = toml.load(f)
+p_name = data_pyproject['project']['name']
+p_author = data_pyproject['project']['authors'][0]['name']
+p_email = data_pyproject['project']['authors'][0]['email']
+p_url = data_pyproject['project']['urls']['Repository']
+p_version = data_pyproject['project']['version']
 
 setup(
 
@@ -62,16 +63,7 @@ setup(
     ],
 
     # Classifiers
-    classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "Environment :: Other Environment",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-        "Operating System :: POSIX :: Linux",
-        "Programming Language :: Python",
-        "Topic :: Software Development :: Libraries",
-        "Natural Language :: English",
-    ],
+    classifiers=data_pyproject['project']['classifiers'],
 
     # Zip
     zip_safe=False,
