@@ -88,7 +88,11 @@ class Network(KnockProbe):
             s = socket(AF_INET, SOCK_DGRAM)
 
             # Call ioctl(  ) to get the flags for the given interface
-            result = fcntl.ioctl(s.fileno(), siocgifflags, interface_name + null256)
+            # interface_name must be bytes
+            interface_name = str(interface_name + null256)
+            interface_name = interface_name.encode("utf8")
+
+            result = fcntl.ioctl(s.fileno(), siocgifflags, interface_name)
 
             # Extract the interface's flags from the return value
             flags, = struct.unpack("H", result[16:18])

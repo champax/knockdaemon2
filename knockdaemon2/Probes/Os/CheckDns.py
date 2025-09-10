@@ -29,6 +29,7 @@ from _socket import gaierror
 
 # noinspection PyPackageRequirements
 import dns
+from dns.rdataclass import RdataClass
 from dns.resolver import NoAnswer, NXDOMAIN, Resolver
 from gevent import Timeout
 
@@ -102,7 +103,8 @@ class CheckDns(KnockProbe):
         :rtype tuple
         """
 
-        additional_rdclass = 65535
+        # noinspection PyProtectedMember
+        additional_rdclass : RdataClass = RdataClass._maximum()
         timeout = 5
         star_time = time.time()
         string_result = None
