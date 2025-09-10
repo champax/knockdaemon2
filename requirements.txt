@@ -47,5 +47,7 @@ mdstat
 # aptitude install libdbus-1-dev libglib2.0-dev
 dbus-python
 
-pystemd
+# remove version contraint when descope python 3.7
+pystemd<0.13
+
 python-dateutil
