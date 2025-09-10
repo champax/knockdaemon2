@@ -408,7 +408,7 @@ class TestRealAll(unittest.TestCase):
 
         from gevent import pywsgi
 
-        def http_process(request: dict[str, Any], response) -> Iterable[bytes]:
+        def http_process(request: dict, response) -> Iterable[bytes]:
             """
             Internal http method
             :param request:
@@ -461,7 +461,7 @@ class TestRealAll(unittest.TestCase):
 
         from gevent import pywsgi
 
-        def http_process(request: dict[str, Any], response) -> Iterable[bytes]:
+        def http_process(request: dict, response) -> Iterable[bytes]:
             """
             Internal http method
             :param request:
