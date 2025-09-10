@@ -715,7 +715,7 @@ class TestProbesDirect(unittest.TestCase):
                 expect_value(self, self.k, knock_key, 0, "exists", dd)
 
     # @unittest.skipIf(UwsgiStat().is_supported_on_platform() is False or not os.access("/etc/default/uwsgi", os.R_OK), "Not support on current platform, probe=%s" % UwsgiStat())
-    unittest.skip("Requires one uwsgi app enabled")
+    @unittest.skip("Requires one uwsgi app enabled")
     def test_UwsgiStat(self):
         """
         Test
