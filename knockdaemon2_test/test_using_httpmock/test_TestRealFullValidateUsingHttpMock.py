@@ -22,7 +22,6 @@
 # ===============================================================================
 """
 from typing import Any, Iterable
-from wsgiref.types import StartResponse
 
 from pysolbase.SolBase import SolBase
 
@@ -409,7 +408,7 @@ class TestRealAll(unittest.TestCase):
 
         from gevent import pywsgi
 
-        def http_process(request: dict[str, Any], response: StartResponse) -> Iterable[bytes]:
+        def http_process(request: dict[str, Any], response) -> Iterable[bytes]:
             """
             Internal http method
             :param request:
@@ -462,7 +461,7 @@ class TestRealAll(unittest.TestCase):
 
         from gevent import pywsgi
 
-        def http_process(request: dict[str, Any], response: StartResponse) -> Iterable[bytes]:
+        def http_process(request: dict[str, Any], response) -> Iterable[bytes]:
             """
             Internal http method
             :param request:
