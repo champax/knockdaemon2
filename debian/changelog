@@ -1,5 +1,5 @@
-knockdaemon2 (3.0.0-BUILD_NUMBER) testing; urgency=low
+knockdaemon2 (3.13.0-BUILD_NUMBER) testing; urgency=low
 
   * v3 release
 
- -- Knock Center (GPG sign package key) <debian@knock.center>  Tue, 05 Aug 2016 15:05:47 +0200
+ -- Knockdaemon2 (GPG sign package key) <laurent@labatut.net>  Wed, 10 Sep 2025 00:00:00 +0000
