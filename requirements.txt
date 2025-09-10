@@ -3,13 +3,13 @@ pip
 setuptools
 
 # pysol
-pysolbase>=3.13.0
-pysolcache>=3.13.0
-pysoldaemon>=3.13.0
-pysolmysql>=3.13.0
-pysolhttpclient>=3.13.0
-pysolmeters>=3.13.0
-pysoltcp>=3.13.0
+pysolbase>=3.13.2
+pysolcache>=3.13.2
+pysoldaemon>=3.13.2
+pysolmysql>=3.13.2
+pysolhttpclient>=3.13.2
+pysolmeters>=3.13.2
+pysoltcp>=3.13.2
 
 # Got SIGABRT with 25.4.1 in libev, locking : was due to assert stuff + DEBUG => all are removed
 gevent
