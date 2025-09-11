@@ -100,12 +100,6 @@ echo "=========================="
 echo "Installing requirements.txt"
 echo "=========================="
 
-if [ `lsb_release -rs` = "10" ] ; then
-  echo "python3.7 pystemd patch"
-  sed -i 's/^pystemd$/pystemd<=0.13/' requirements.txt
-fi
-grep pystemd requirements.txt
-
 pip install -r requirements.txt --no-cache-dir
 
 echo "=========================="

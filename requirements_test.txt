@@ -3,5 +3,6 @@ pytest-venv
 pytest-cov
 python-dateutil
 toml
+tox
 
 
