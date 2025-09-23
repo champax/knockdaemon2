@@ -8,7 +8,7 @@ pysolcache
 pysoldaemon
 pysolmysql
 pysolhttpclient
-pysolmeters
+pysolmeters>=3.13.7
 pysoltcp
 
 # Got SIGABRT with 25.4.1 in libev, locking : was due to assert stuff + DEBUG => all are removed
