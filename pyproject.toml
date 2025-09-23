@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools", "toml"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = [
+    ".",
+]
+include = [
+    "knockdaemon2*",
+]
+exclude = [
+    "knockdaemon2_test*",
+]
+
+[tool.setuptools.package-data]
+mypkg = [
+    "*.txt",
+    "*.md",
+    "*.py",
+]
+
+[project]
+name = "knockdaemon2"
+description = "knockdaemon2"
+version = "3.13.0"
+requires-python = ">= 3.7"
+dynamic = ["dependencies", "optional-dependencies"]
+readme = "README.md"
+license = { text = "GPL-3.0" }
+keywords = ["python", "gevent"]
+authors = [
+    { name = "Laurent Champagnac", email = "champagnac.laurent@gmail.com" },
+    { name = "Laurent Labatut", email = "laurent@labatut.net" },
+]
+maintainers = [
+    { name = "Laurent Champagnac", email = "champagnac.laurent@gmail.com" },
+    { name = "Laurent Labatut", email = "laurent@labatut.net" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Other Environment",
+    "Intended Audience :: Developers",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Natural Language :: English",
+]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+optional-dependencies.test = { file = ["requirements_test.txt"] }
+
+[project.scripts]
+knockdaemon2 = "knockdaemon2.Daemon.KnockDaemon:run"
+
+[project.urls]
+Homepage = "https://github.com/champax/knockdaemon2"
+Repository = "https://github.com/champax/knockdaemon2"

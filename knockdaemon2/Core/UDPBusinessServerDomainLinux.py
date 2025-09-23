@@ -69,7 +69,7 @@ class UDPBusinessServerDomainLinux(UDPBusinessServerBase):
         Create socket
         """
 
-        if self._soc:
+        if self._socket:
             logger.info("Bypass, _soc set")
             return
 
@@ -81,26 +81,26 @@ class UDPBusinessServerDomainLinux(UDPBusinessServerBase):
         # ==========================
 
         # noinspection PyUnresolvedReferences
-        self._soc = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         if os.path.exists(self._socket_name):
             os.remove(self._socket_name)
 
-        # Switch to non blocking
-        self._soc.setblocking(False)
+        # Switch to non-blocking
+        self._socket.setblocking(False)
 
         # Bind
-        self._soc.bind(self._socket_name)
+        self._socket.bind(self._socket_name)
 
         # Buffer
-        logger.info("Recv buf=%s", self._soc.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF))
-        logger.info("Send buf=%s", self._soc.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF))
+        logger.info("Recv buf=%s", self._socket.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF))
+        logger.info("Send buf=%s", self._socket.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF))
 
         # Increase recv
         try:
-            self._soc.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 1024 * 1024)
+            self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 1024 * 1024)
         except Exception as e:
             logger.info("SO_RCVBUF increased failed, ex=%s", SolBase.extostr(e))
 
         # Buffer
-        logger.info("Recv buf=%s", self._soc.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF))
-        logger.info("Send buf=%s", self._soc.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF))
+        logger.info("Recv buf=%s", self._socket.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF))
+        logger.info("Send buf=%s", self._socket.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF))

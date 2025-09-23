@@ -76,7 +76,7 @@ class VarnishStat(KnockProbe):
         ("k.varnish.started", "int", "k.varnish.started"),
 
         # STAT Millis (Not so relevant at is goes to the stats socket, which is not the standard process pipeline of incoming request, but we add it for consistency)
-        # This include the invocation stuff
+        # This includes the invocation stuff
         ("k.varnish.stat.ms", "float", "k.varnish.stat.ms"),
 
         # CURRENT : UPTIME

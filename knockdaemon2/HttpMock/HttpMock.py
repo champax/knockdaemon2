@@ -34,8 +34,6 @@ from urllib.parse import parse_qsl
 
 import gevent
 import ujson
-# noinspection PyProtectedMember
-from gevent.baseserver import _parse_address
 from gevent.event import Event
 from gevent.pywsgi import WSGIServer
 from pysolmeters.Meters import Meters
@@ -180,7 +178,7 @@ class HttpMock(object):
             logger.info("Allocating WSGIServer")
             self._wsgi_server = WSGIServer(listener=('localhost', 7900), application=self.on_request)
 
-            logger.info("DEBUG SOS, %s, %s", self._wsgi_server.address, _parse_address(self._wsgi_server.address))
+            logger.info("DEBUG SOS, %s", self._wsgi_server.address)
             SolBase.sleep(0)
 
             # Signal
@@ -398,7 +396,7 @@ class HttpMock(object):
         # We expect POST DATA, not url encoded
         post_data = self._get_post_data(environ)
 
-        # We fallback to QS for debug only
+        # We fall back to QS for debug only
         if len(post_data) == 0:
             # Process and decode QS
             dqs = self._get_param_from_qs(environ)

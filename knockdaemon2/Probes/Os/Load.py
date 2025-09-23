@@ -376,7 +376,8 @@ class Load(KnockProbe):
     def get_users_count(cls):
         """
         Get
-        :return:
+        :return int
+        :rtype int
         """
 
         # number = os.popen('users|wc -w').read().strip()
@@ -386,6 +387,7 @@ class Load(KnockProbe):
         ec, so, se = ButcherTools.invoke("users")
         if ec != 0:
             logger.warning("ex=%s, so=%s, se=%s", ec, so, se)
+            return 0
         else:
             return cls.get_users_count_from_buffer(so)
 

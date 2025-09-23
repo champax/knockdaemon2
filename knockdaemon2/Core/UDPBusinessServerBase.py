@@ -27,12 +27,13 @@ import os
 import sys
 from collections import OrderedDict
 from errno import EWOULDBLOCK
+from threading import Lock
 
 import gevent
 import ujson
 from gevent.lock import RLock
 from gevent.server import DatagramServer
-from gevent.threading import Lock
+
 from pysolbase.SolBase import SolBase
 from pysolmeters.AtomicFloat import AtomicFloatSafe
 from pysolmeters.DelayToCount import DelayToCount
@@ -122,13 +123,15 @@ class UDPBusinessServerBase(DatagramServer):
 
         # Socket
         self._socket_name = socket_name
-        self._soc = None
+        self._socket = None
 
         # Allocate socket and bind it
         self._create_socket_and_bind()
+        if self._socket is None:
+            raise Exception("_socket None")
 
         # Call base
-        super(UDPBusinessServerBase, self).__init__(self._soc, *args, **kwargs)
+        super(UDPBusinessServerBase, self).__init__(self._socket, *args, **kwargs)
 
     def _create_socket_and_bind(self):
         """
@@ -185,11 +188,11 @@ class UDPBusinessServerBase(DatagramServer):
             self._server_greenlet = None
 
         # Notify cancel
-        # We may lost some stuff (in memory, not yet notified), dont care at this stage
+        # We may lose some stuff (in memory, not yet notified), don't care at this stage
         self._notify_schedule_cancel()
 
         # Close socket
-        SolBase.safe_close_socket(self._soc)
+        SolBase.safe_close_socket(self._socket)
 
         # Remove socket
         try:
@@ -213,7 +216,7 @@ class UDPBusinessServerBase(DatagramServer):
             data, address = self._socket.recvfrom(61440)
         except _socket.error as err:
             if err.args[0] == EWOULDBLOCK:
-                return
+                return None, None
             raise
         return data, address
 
@@ -232,8 +235,14 @@ class UDPBusinessServerBase(DatagramServer):
         :param address: address
         """
 
+        # We now receive data none (?)
+        if data is None:
+            Meters.aii("knock_stat_udp_recv_None")
+            return
+
         ms_start = SolBase.mscurrent()
         try:
+
 
             # logger.info('Incoming, addr=%s, data=%s', address[0], repr(data))
 

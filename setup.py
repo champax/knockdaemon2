@@ -22,80 +22,20 @@
 # ===============================================================================
 """
 
-import re
-from distutils.core import setup
-
-from setuptools import find_packages
-
-
-# ===========================
-# TOOLS
-# ===========================
-
-def requirement_read(req_file):
-    """
-    Doc
-    :param req_file: Doc
-    :return: Doc
-    """
-    req_list = list()
-    with open(req_file, 'r') as f:
-        for rowBuffer in f.readlines():
-            # Skip empty
-            if len(rowBuffer.strip()) == 0:
-                continue
-                # Skip "- ..."
-            if re.match("^-", rowBuffer):
-                continue
-                # Skip "# ..."
-            if re.match("^#", rowBuffer):
-                continue
-
-            # Ok
-            req_list.append(rowBuffer)
-    return req_list
-
+import toml
+from setuptools import find_packages, setup
 
 # ===========================
 # SETUP
 # ===========================
 
-p_name = "knockdaemon2"
-p_author = "Laurent Champagnac / Laurent Labatut"
-p_email = "debian@knock.center"
-p_url = "https://knock.center"
-
-p_version = "3.7.1"
-
-
-def entry_point_resolv():
-    """
-
-
-    :return:
-    """
-    ep = {
-        'console_scripts': [
-            'knockdaemon2 = knockdaemon2.Daemon.KnockDaemon:run',
-        ]
-    }
-
-    return ep
-
-
-def data_file_resolv():
-    """
-    Data files
-    :return: list
-    :rtype: list
-    """
-    datafile = [("",
-                 [
-                     "requirements_test.txt", "requirements.txt", "README.txt", "LICENSE.txt",
-                 ])]
-
-    return datafile
-
+with open("pyproject.toml", "r") as f:
+    data_pyproject = toml.load(f)
+p_name = data_pyproject['project']['name']
+p_author = data_pyproject['project']['authors'][0]['name']
+p_email = data_pyproject['project']['authors'][0]['email']
+p_url = data_pyproject['project']['urls']['Repository']
+p_version = data_pyproject['project']['version']
 
 setup(
 
@@ -114,32 +54,17 @@ setup(
     include_package_data=True,
 
     # License & read me
-    license=open("LICENSE.txt").read(),
-    long_description=open("README.txt").read(),
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
 
     # Data files
-    data_files=data_file_resolv(),
-
-    # Classifiers
-    classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "Environment :: Other Environment",
-        "Intended Audience :: Developers",
-        "License :: GPLv2",
-        "Operating System :: POSIX :: Linux",
-        "Programming Language :: Python :: 3.7",
-        "Topic :: Software Development :: Libraries",
+    data_files=[
+        ("", ["requirements_test.txt", "requirements.txt", "README.md", "LICENSE.md"]),
     ],
 
-    # Dependencies
-    install_requires=requirement_read("requirements.txt"),
+    # Classifiers
+    classifiers=data_pyproject['project']['classifiers'],
 
-    # Dependencies : test
-    tests_require=requirement_read("requirements_test.txt"),
-
-    # Entry points
-    entry_points=entry_point_resolv(),
-
-    # Disable egg zip format
+    # Zip
     zip_safe=False,
 )

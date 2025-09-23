@@ -22,6 +22,7 @@
 # ===============================================================================
 """
 import json
+from typing import Union, List
 
 from pysolbase.SolBase import SolBase
 
@@ -502,11 +503,11 @@ class TestProbesFromBuffer(unittest.TestCase):
 
         ar = "/usr/bin/uwsgi --ini /usr/share/uwsgi/conf/default.ini --ini /etc/uwsgi/apps-enabled/toto.ini --daemonize /var/log/uwsgi/app/toto.log".split(" ")
         s_uwsgi = Service.uwsgi_get_type(ar)
-        self.assertEquals(s_uwsgi, "uwsgi_default_toto")
+        self.assertEqual(s_uwsgi, "uwsgi_default_toto")
 
         ar = "/usr/bin/uwsgi".split(" ")
         s_uwsgi = Service.uwsgi_get_type(ar)
-        self.assertEquals(s_uwsgi, "uwsgi_na")
+        self.assertEqual(s_uwsgi, "uwsgi_na")
 
     def test_from_buffer_haproxy(self):
         """
@@ -1171,7 +1172,7 @@ class TestProbesFromBuffer(unittest.TestCase):
             buf = FileUtility.file_to_binary(fn)
 
             # Process
-            ms.process_maxscale_buffer(maxscale_buff=buf, ms_http=100)
+            ms.process_maxscale_buffer(maxscale_buff=buf)
 
             # Log
             for tu in self.k.superv_notify_value_list:
@@ -1711,7 +1712,7 @@ class TestProbesFromBuffer(unittest.TestCase):
                 logger.info("Having tu=%s", tu)
 
             # Browse all ids and "ALL"
-            ar = list(range(0, len(ar_files)))
+            ar: List[Union[int, str]] = list(range(0, len(ar_files)))
             ar.append("ALL")
             for cur_p in ar:
                 cur_p = str(cur_p)

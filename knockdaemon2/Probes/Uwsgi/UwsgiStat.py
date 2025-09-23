@@ -56,7 +56,7 @@ class UwsgiStat(KnockProbe):
         ("k.uwsgi.started", "int", "k.uwsgi.started"),
 
         # STAT Millis (Not so relevant at is goes to the stats socket, which is not the standard process pipeline of incoming request, but we add it for consistency)
-        # This include the invocation stuff
+        # This includes the invocation stuff
         ("k.uwsgi.stat.ms", "float", "k.uwsgi.stat.ms"),
 
         # GLOBAL : current queues
@@ -360,8 +360,8 @@ class UwsgiStat(KnockProbe):
         # --------------------------------
         # - acc_core
         # => c_count (sum 1)
-        # => static_requests (sum)      total static requests (file server mode, i never used it....)
-        # => routed_requests (sum)      total routed requests (routing mode, i never used it....)
+        # => static_requests (sum)      total static requests (file server mode, I never used it....)
+        # => routed_requests (sum)      total routed requests (routing mode, I never used it....)
         # => offloaded_requests (sum)   total offloaded request
         # => write_errors (sum)
         # => read_errors (sum)
@@ -374,7 +374,7 @@ class UwsgiStat(KnockProbe):
         d_acc_core["write_errors"] = 0
         d_acc_core["read_errors"] = 0
         d_acc_core["in_request"] = 0
-        # Yeah i know, i re-browse again, shut-up basterds
+        # Yeah I know, I re-browse again, shut-up basterds
         for d_workers in d_uwsgi["workers"]:
             for d_core in d_workers["cores"]:
                 d_acc_core["c_count"] += 1

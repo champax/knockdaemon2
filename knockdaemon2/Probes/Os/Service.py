@@ -25,6 +25,7 @@ import errno
 import logging
 import os
 import re
+from typing import List
 
 import psutil
 from psutil import ZombieProcess, NoSuchProcess
@@ -109,7 +110,7 @@ def get_io_counters(pid):
     return psutil.Process(pid).io_counters()
 
 
-def get_process_child(pid):
+def get_process_child(pid) -> List[psutil.Process] :
     """
     Get process child
     :param pid: int
@@ -347,7 +348,7 @@ class Service(KnockProbe):
     @classmethod
     def uwsgi_get_type(cls, ar_uwsgi_cmd):
         """
-        From a uwsgi cmd_line list, extract "--ini" .ini items and return them as string
+        From an uwsgi cmd_line list, extract "--ini" .ini items and return them as string
         return "na" if nothing matches
         :param ar_uwsgi_cmd: list
         :type ar_uwsgi_cmd: list
@@ -396,12 +397,12 @@ class Service(KnockProbe):
                 num_fds = 0
 
             # Child processes
-            ar_child = get_process_child(pid)
+            ar_child: List[psutil.Process] = get_process_child(pid)
             for p_child in ar_child:
                 # noinspection PyProtectedMember
-                io_stat_child = get_io_counters(p_child._pid)
+                io_stat_child = get_io_counters(p_child.pid)
                 # noinspection PyProtectedMember
-                d_stat_child = get_process_stat(p_child._pid)
+                d_stat_child = get_process_stat(p_child.pid)
 
                 read_bytes += io_stat_child[2]
                 write_bytes += io_stat_child[3]

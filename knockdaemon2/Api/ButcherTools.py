@@ -50,7 +50,7 @@ class ButcherTools(object):
     def invoke(cls, cmd, timeout_ms=10000, shell=False):
         """
         Invoke a command line with timeout handling, sending back exit code, stdout & stderr buffers
-        :param cmd: command line (will be splitted using ' ')
+        :param cmd: command line (will be split using ' ')
         :type cmd: str
         :param timeout_ms: timeout in millis (will return exit code -999 if it occurs)
         :type timeout_ms: int

@@ -50,7 +50,7 @@ class Tools(object):
         :type account_hash; dict
         :param node_hash: Hash str to value
         :type node_hash; dict
-        :param notify_values: List of (counter_key, d_tags, value, d_values). Cleared upon success.
+        :param notify_values: List of (counter_key, d_tags, value, d_values). Cleared upon success
         :type notify_values; list
         :return list of dict
         :rtype list

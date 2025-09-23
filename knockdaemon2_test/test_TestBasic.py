@@ -178,7 +178,7 @@ class TestBasic(unittest.TestCase):
         # Start
         self.k.start()
 
-        # 100 ms for each probes, wait 1 sec, we should have 10 exec for each at least
+        # 100 ms for each probe, wait 1 sec, we should have 10 exec for each at least
         SolBase.sleep(exec_interval_ms * run_count)
 
         # Stop

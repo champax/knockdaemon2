@@ -1,2 +1,8 @@
-# Created by .ignore support plugin (hsz.mobi)
-.idea/
+/.tox/
+/.venv/
+/.idea/
+/build/
+/dist/
+/knockdaemon2.egg-info/
+/knockdaemon2/knockdaemon2.egg-info/
+

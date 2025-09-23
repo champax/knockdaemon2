@@ -27,7 +27,7 @@ import json
 import logging
 import re
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 
 import dateutil
 import pymongo
@@ -712,7 +712,7 @@ class MongoDbStat(KnockProbe):
             elif not shardsvr and not config_db:
                 t = "standalone"
             else:
-                # WTF ! how i pass here !
+                # WTF ! how I pass here !
                 t = "unknown"
 
             # Add
@@ -1009,7 +1009,7 @@ class MongoDbStat(KnockProbe):
                     self.notify_value_n("k.mongodb.index_stats.ops", d_tags, v)
                     if 'since' in accesses:
                         since = accesses['since']
-                        since_millis = float((datetime.utcnow().timestamp() - since.timestamp()) * 1000)
+                        since_millis = float((datetime.now(timezone.utc).timestamp() - since.timestamp()) * 1000)
                         self.notify_value_n("k.mongodb.index_stats.last_used_millis", d_tags, since_millis)
 
     def process_data_repl_lag(self, host, port):
@@ -1211,7 +1211,7 @@ class MongoDbStat(KnockProbe):
             r'BinData\(.*\)',
         ]
 
-        # Totally sub-optimal, unittests, we dont care
+        # Totally suboptimal, unittests, we don't care
         for s in ar_regex:
             for ss in re.findall(s, buf):
                 if 'NumberLong("' in ss:
@@ -1222,9 +1222,9 @@ class MongoDbStat(KnockProbe):
                     buf_dt = ss.replace('ISODate("', "").replace('")', "")
                     try:
                         dt = dateutil.parser.parse(buf_dt)
+                        buf = buf.replace(ss, f'"{dt.isoformat()}"')
                     except TypeError as e:
                         logger.error("Parse date error %s, %s", buf_dt, SolBase.extostr(e))
-                    buf = buf.replace(ss, f'"{dt.isoformat()}"')
                 elif 'Timestamp(' in ss:
                     ts = ss.replace('Timestamp(', '').replace(')', '').split(',')[0]
                     buf = buf.replace(ss, ts)

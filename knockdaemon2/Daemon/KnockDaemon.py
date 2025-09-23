@@ -93,7 +93,7 @@ class KnockDaemon(Daemon):
     def initialize_arguments_parser(cls):
         """
         Initialize the parser.
-        :param cls: class.
+        :param cls: class
         :return ArgumentParser
         :rtype ArgumentParser
         """

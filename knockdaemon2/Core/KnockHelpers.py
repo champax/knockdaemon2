@@ -21,7 +21,6 @@ Copyright (C) 2013/2022 Laurent Labatut / Laurent Champagnac
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  ===============================================================================
 """
-import ctypes
 import logging
 import os
 import sys
@@ -49,10 +48,8 @@ class KnockHelpers(object):
         :rtype: bool
 
         """
-        try:
-            is_admin = os.getuid() == 0
-        except AttributeError:
-            is_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
+
+        is_admin = os.getuid() == 0
         return is_admin
 
     def sudoize(self, cmd):

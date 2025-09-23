@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 def expect_value(self, k, key, value, operator, d_tags_expected=None, cast_to_float=False, target_count=None, d_values_key=None):
     """
     Expect key to have value
-    :param self: self (must be a unittest.case.TestCase)
+    :param self: self (it must be an unittest.case.TestCase)
     :param k: knockdaemon2.Core.KnockManager.KnockManager
     :type k: knockdaemon2.Core.KnockManager.KnockManager
     :param key str

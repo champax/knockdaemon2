@@ -277,7 +277,7 @@ class Inventory(KnockProbe):
                 logger.warning("dmesg invoke failed, ec=%s, so=%s, se=%s", ec, so, se)
                 return ""
             else:
-                return ec
+                return so
         except Exception as e:
             logger.warning("Ex=%s", SolBase.extostr(e))
             return ""

@@ -3,16 +3,16 @@ pip
 setuptools
 
 # pysol
-pysolbase>=3.0.2
-pysolcache>=3.0.0
-pysoldaemon>=3.0.0
-pysolmysql>=3.0.0
-pysolhttpclient>=3.0.4
-pysolmeters>=3.0.2
-pysoltcp>=3.0.0
+pysolbase
+pysolcache
+pysoldaemon
+pysolmysql
+pysolhttpclient
+pysolmeters>=3.13.7
+pysoltcp
 
-# Got SIGABRT with 25.4.1 in libev, locking
-gevent<=24.11.1
+# Got SIGABRT with 25.4.1 in libev, locking : was due to assert stuff + DEBUG => all are removed
+gevent
 geventhttpclient
 greenlet
 
@@ -36,7 +36,6 @@ influxdb
 psutil
 dnspython
 ntplib
-argparse
 PyYAML
 urllib3
 jinja2
@@ -48,5 +47,8 @@ mdstat
 # aptitude install libdbus-1-dev libglib2.0-dev
 dbus-python
 
-pystemd~=0.13.2
-python-dateutil~=2.8.2
+# need conditional version based on python version for this one
+pystemd<=0.13; python_version < '3.8'
+pystemd; python_version >= '3.8'
+
+python-dateutil

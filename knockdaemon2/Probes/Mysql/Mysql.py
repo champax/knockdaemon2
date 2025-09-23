@@ -191,6 +191,7 @@ class Mysql(KnockProbe):
 
         for cur_version, cur_file in Mysql.MYSQL_CONFIG_FILES:
             try:
+                t_out = None
                 if cur_version == "V1":
                     # File is root access only, try to load
                     buf = None
@@ -301,7 +302,7 @@ class Mysql(KnockProbe):
         id_mysql = "default"
 
         try:
-            # Fetch (MUST NOT FAILS)
+            # Fetch (MUST NOT FAIL)
             login, pwd, soc, config_file, config_version = self._parse_config_debian()
 
             self._execute_via_creds(login, pwd, soc, id_mysql)
