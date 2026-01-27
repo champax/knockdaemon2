@@ -111,6 +111,14 @@ probes:
     class_name: knockdaemon2.Probes.Mysql.Mysql.Mysql
     exec_interval_sec: 60
     exec_enabled: true
+
+  # ============================
+  # MANTICORE
+  # ============================
+  Manticore:
+    class_name: knockdaemon2.Probes.Manticore.Manticore.Manticore
+    exec_interval_sec: 60
+    exec_enabled: true
   
   # ============================
   # APACHE2
