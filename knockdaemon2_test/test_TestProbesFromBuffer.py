@@ -1774,24 +1774,27 @@ class TestProbesFromBuffer(unittest.TestCase):
         m.set_manager(self.k)
 
         # Go
-        for cur_version, f_status, f_variables, f_slave, f_user_stat, f_table_stat, f_index_stat, f_inno_table_stat in [
+        for cur_version, f_status, f_variables, f_slave, f_user_stat, f_table_stat, f_index_stat, f_inno_table_stat, f_open_tables in [
             # Old
             (
                     "OLD",
                     "mysql/old/status.out", "mysql/old/variables.out", "mysql/old/slave.out",
                     "mysql/old/USER_STATISTICS.out", "mysql/old/TABLE_STATISTICS.out", "mysql/old/INDEX_STATISTICS.out", "mysql/old/innodb_table_stats.out",
+                    "mysql/old/show_open_tables.out",
             ),
             # maria 10.5
             (
                     "MARIA_10.5",
                     "mysql/maria_10.5.24-18/status.out", "mysql/maria_10.5.24-18/variables.out", "mysql/maria_10.5.24-18/slave.out",
                     "mysql/maria_10.5.24-18/USER_STATISTICS.out", "mysql/maria_10.5.24-18/TABLE_STATISTICS.out", "mysql/maria_10.5.24-18/INDEX_STATISTICS.out", "mysql/maria_10.5.24-18/innodb_table_stats.out",
+                    "mysql/maria_10.5.24-18/show_open_tables.out",
             ),
             # maria 10.11
             (
                     "MARIA_10.11",
                     "mysql/maria_10.11.6/status.out", "mysql/maria_10.11.6/variables.out", "mysql/maria_10.11.6/slave.out",
                     "mysql/maria_10.11.6/USER_STATISTICS.out", "mysql/maria_10.11.6/TABLE_STATISTICS.out", "mysql/maria_10.11.6/INDEX_STATISTICS.out", "mysql/maria_10.11.6/innodb_table_stats.out",
+                    "mysql/maria_10.11.6/show_open_tables.out",
             ),
         ]:
             logger.info("CHECKING v=%s", cur_version)
@@ -1805,6 +1808,7 @@ class TestProbesFromBuffer(unittest.TestCase):
             f_table_stat = self.sample_dir + f_table_stat
             f_index_stat = self.sample_dir + f_index_stat
             f_inno_table_stat = self.sample_dir + f_inno_table_stat
+            f_open_tables = self.sample_dir + f_open_tables
 
             # Reset
             self.k._reset_superv_notify()
@@ -1826,6 +1830,8 @@ class TestProbesFromBuffer(unittest.TestCase):
             index_stat_buf = FileUtility.file_to_textbuffer(f_index_stat, "utf8")
             self.assertTrue(FileUtility.is_file_exist(f_inno_table_stat))
             inno_table_stat_buf = FileUtility.file_to_textbuffer(f_inno_table_stat, "utf8")
+            self.assertTrue(FileUtility.is_file_exist(f_open_tables))
+            open_tables_buf = FileUtility.file_to_textbuffer(f_open_tables, "utf8")
 
             # Switch to list - status
             ar_status = list()
@@ -1863,16 +1869,18 @@ class TestProbesFromBuffer(unittest.TestCase):
                 d_slave[k] = v
             ar_slave = [d_slave]
 
-            # Switch to list - user_stat_buf / table_stat_buf / index_stat_buf / inno_table_stat_buf
+            # Switch to list - user_stat_buf / table_stat_buf / index_stat_buf / inno_table_stat_buf / open_tables_buf
             ar_user_stats = list()
             ar_table_stats = list()
             ar_index_stats = list()
             ar_innodb_table_stats = list()
+            ar_show_open_tables = list()
             for s_type, header, ar_out, buf_in in [
                 ("ar_user_stats", "| USER", ar_user_stats, user_stat_buf),
                 ("ar_table_stats", "| TABLE_SCHEMA ", ar_table_stats, table_stat_buf),
                 ("ar_index_stats", "| TABLE_SCHEMA ", ar_index_stats, index_stat_buf),
                 ("ar_innodb_table_stats", "| database_name", ar_innodb_table_stats, inno_table_stat_buf),
+                ("ar_show_open_tables", "| Database", ar_show_open_tables, open_tables_buf),
             ]:
                 ar_fields = None
                 for s in buf_in.split("\n"):
@@ -1902,7 +1910,8 @@ class TestProbesFromBuffer(unittest.TestCase):
                 ar_table_stats, ar_user_stats, ar_index_stats,
                 ar_innodb_table_stats,
                 "default",
-                22)
+                22,
+                ar_show_open_tables=ar_show_open_tables)
 
             # Log
             for tu in self.k.superv_notify_value_list:
@@ -2033,6 +2042,24 @@ class TestProbesFromBuffer(unittest.TestCase):
                 expect_value(self, self.k, "k.mysql.stats.innodb_table", float(n1), "eq", dd, d_values_key="n_rows")
                 expect_value(self, self.k, "k.mysql.stats.innodb_table", float(n2), "eq", dd, d_values_key="clustered_index_size")
                 expect_value(self, self.k, "k.mysql.stats.innodb_table", float(n3), "eq", dd, d_values_key="sum_of_other_index_sizes")
+
+            # Check open tables currently in use
+            if cur_version == "OLD":
+                expect_value(self, self.k, "k.mysql.open.cur.tables_in_use", 3, "eq", {"ID": "default"})
+                expect_value(self, self.k, "k.mysql.stats.open_table", 1.0, "eq", {"ID": "default", "schema": "db01", "table": "ta"}, d_values_key="In_use")
+                expect_value(self, self.k, "k.mysql.stats.open_table", 2.0, "eq", {"ID": "default", "schema": "db01", "table": "tb"}, d_values_key="In_use")
+                expect_value(self, self.k, "k.mysql.stats.open_table", 1.0, "eq", {"ID": "default", "schema": "db01", "table": "tc"}, d_values_key="In_use")
+            elif cur_version == "MARIA_10.5":
+                expect_value(self, self.k, "k.mysql.open.cur.tables_in_use", 5, "eq", {"ID": "default"})
+                expect_value(self, self.k, "k.mysql.stats.open_table", 1.0, "eq", {"ID": "default", "schema": "db01", "table": "ta"}, d_values_key="In_use")
+                expect_value(self, self.k, "k.mysql.stats.open_table", 2.0, "eq", {"ID": "default", "schema": "db01", "table": "tb"}, d_values_key="In_use")
+                expect_value(self, self.k, "k.mysql.stats.open_table", 1.0, "eq", {"ID": "default", "schema": "db01", "table": "tc"}, d_values_key="In_use")
+                expect_value(self, self.k, "k.mysql.stats.open_table", 3.0, "eq", {"ID": "default", "schema": "other_db", "table": "users"}, d_values_key="In_use")
+                expect_value(self, self.k, "k.mysql.stats.open_table", 1.0, "eq", {"ID": "default", "schema": "other_db", "table": "logs"}, d_values_key="In_use")
+            elif cur_version == "MARIA_10.11":
+                expect_value(self, self.k, "k.mysql.open.cur.tables_in_use", 2, "eq", {"ID": "default"})
+                expect_value(self, self.k, "k.mysql.stats.open_table", 1.0, "eq", {"ID": "default", "schema": "db01", "table": "ta"}, d_values_key="In_use")
+                expect_value(self, self.k, "k.mysql.stats.open_table", 2.0, "eq", {"ID": "default", "schema": "db01", "table": "tb"}, d_values_key="In_use")
 
     def test_from_buffer_mongo(self):
         """
