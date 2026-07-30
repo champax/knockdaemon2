@@ -825,6 +825,10 @@ class TestProbesDirect(unittest.TestCase):
             ]:
                 continue
 
+            # Local infra may not have galera cluster, we bypass
+            if knock_key.startswith("k.mysql.wsrep_"):
+                continue
+
             # Check
             dd = {"ID": "default"}
             if knock_type == "int":
