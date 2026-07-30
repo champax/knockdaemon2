@@ -52,7 +52,7 @@ class Manticore(KnockProbe):
     # Debian : extract creds from file
     MANTICORE_CONFIG_FILES = [
         # Old ones
-        ("V1", "/etc/manticoresearch/manticore.conf "),
+        ("V1", "/etc/manticoresearch/manticore.conf"),
     ]
 
     def __init__(self):
