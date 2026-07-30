@@ -156,6 +156,7 @@ class Mysql(KnockProbe):
         ("Open_tables", "int", "k.mysql.open.cur.tables", None),
         ("Opened_files", "float", "k.mysql.open.total.files", None),
         ("Opened_tables", "float", "k.mysql.open.total.tables", None),
+        ("k.mysql.open.cur.tables_in_use", "int", "k.mysql.open.cur.tables_in_use", None),
 
         # THREAD STUFF
         ("Threads_cached", "int", "k.mysql.thread.cur.cached", None),
@@ -409,12 +410,21 @@ class Mysql(KnockProbe):
             logger.info("TABLE_STATISTICS failed (non fatal), ex=%s", SolBase.extostr(e))
             ar_table_stats = None
 
+        # Open tables currently in use
+        try:
+            ar_show_open_tables = MysqlApi.exec_n(d_conf, "SHOW OPEN TABLES WHERE In_use > 0;")
+            logger.info("SHOW OPEN TABLES OK, len=%s", len(ar_show_open_tables))
+        except Exception as e:
+            logger.info("SHOW OPEN TABLES failed (non fatal), ex=%s", SolBase.extostr(e))
+            ar_show_open_tables = None
+
         # Process
         self.process_mysql_buffers(
             ar_show_global_status, ar_show_slave_status, ar_show_global_variables,
             ar_table_stats, ar_user_stats, ar_index_stats,
             ar_innodb_table_stats,
-            id_mysql, SolBase.msdiff(ms)
+            id_mysql, SolBase.msdiff(ms),
+            ar_show_open_tables=ar_show_open_tables
         )
 
     def process_mysql_buffers(
@@ -422,7 +432,8 @@ class Mysql(KnockProbe):
             ar_show_global_status, ar_show_slave_status, ar_show_global_variables,
             ar_table_stats, ar_user_stats, ar_index_stats,
             ar_innodb_table_stats,
-            mysql_id, ms_mysql):
+            mysql_id, ms_mysql,
+            ar_show_open_tables=None):
         """
         Process mysql buffer
         :param ar_show_global_status: list
@@ -443,10 +454,19 @@ class Mysql(KnockProbe):
         :type mysql_id: str
         :param ms_mysql: float
         :type ms_mysql: float
+        :param ar_show_open_tables: list,None
+        :type ar_show_open_tables: list,None
         """
 
         # Allocate output dict
         d_out = dict()
+
+        # Open tables in use
+        if ar_show_open_tables is not None:
+            open_tables_in_use = len(ar_show_open_tables)
+        else:
+            open_tables_in_use = 0
+        d_out["k.mysql.open.cur.tables_in_use"] = open_tables_in_use
 
         # Notify exec time
         self.notify_value_n("k.mysql.exec.ss.ms", {"ID": mysql_id}, ms_mysql)
@@ -694,6 +714,28 @@ class Mysql(KnockProbe):
                 self.notify_value_n("k.mysql.stats.innodb_table", tags, 0.0, d_values=d_values)
         else:
             logger.info("ar_index_stats None")
+
+        # -----------------------------
+        # ar_show_open_tables (per-table stats)
+        # -----------------------------
+
+        if ar_show_open_tables is not None:
+            for d in ar_show_open_tables:
+                try:
+                    schema = d.get("Database", "").strip()
+                    table = d.get("Table", "").strip()
+                    if not schema or not table:
+                        continue
+                    tags = {"ID": mysql_id, "schema": schema, "table": table}
+                    d_values = {
+                        "In_use": float(d.get("In_use", 0)),
+                        "Name_locked": float(d.get("Name_locked", 0))
+                    }
+                    self.notify_value_n("k.mysql.stats.open_table", tags, 0.0, d_values=d_values)
+                except Exception as e:
+                    logger.warning("Failed to process open table row %s, ex=%s", d, SolBase.extostr(e))
+        else:
+            logger.info("ar_show_open_tables None")
 
         # -----------------------------
         # Debug
