@@ -171,6 +171,15 @@ class Mysql(KnockProbe):
         ("max_connections", "int", "k.mysql.limit.max_connections", None),
         # Compared to => Open_tables
         ("table_open_cache", "int", "k.mysql.limit.table_open_cache", None),
+
+        # GALERA
+        ["wsrep_local_cert_failures", "float", "k.mysql.wsrep_local_cert_failures", None],
+        ["wsrep_local_bf_aborts", "float", "k.mysql.wsrep_local_bf_aborts", None],
+        ["wsrep_local_recv_queue", "float", "k.mysql.wsrep_local_recv_queue", None],
+        ["wsrep_flow_control_paused", "float", "k.mysql.wsrep_flow_control_paused", None],
+        ["wsrep_local_send_queue_avg", "float", "k.mysql.wsrep_local_send_queue_avg", None],
+        ["wsrep_local_recv_queue_avg", "float", "k.mysql.wsrep_local_recv_queue_avg", None],
+        ["wsrep_cert_deps_distance", "float", "k.mysql.wsrep_cert_deps_distance", None],
     ]
 
     def __init__(self):

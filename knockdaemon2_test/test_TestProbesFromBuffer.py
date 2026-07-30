@@ -22,10 +22,12 @@
 # ===============================================================================
 """
 import json
+import re
 from typing import Union, List
 
 from pysolbase.SolBase import SolBase
 
+from knockdaemon2.Probes.Manticore.Manticore import Manticore
 from knockdaemon2.Probes.Maxscale.MaxscaleStat import MaxscaleStat
 
 SolBase.voodoo_init()
@@ -1923,8 +1925,34 @@ class TestProbesFromBuffer(unittest.TestCase):
                     if knock_key in [
                         "k.mysql.inno.rows.read_retry",
                         "k.mysql.inno.rows.read_rnd_deleted",
+                        "k.mysql.wsrep_local_cert_failures",
+                        "k.mysql.wsrep_local_bf_aborts",
+                        "k.mysql.wsrep_local_recv_queue",
+                        "k.mysql.wsrep_flow_control_paused",
+                        "k.mysql.wsrep_local_send_queue_avg",
+                        "k.mysql.wsrep_local_recv_queue_avg",
+                        "k.mysql.wsrep_cert_deps_distance",
                     ]:
                         continue
+
+                # 10.5 bypass
+                if cur_version == "MARIA_10.5":
+                    if knock_key in [
+                        "k.mysql.wsrep_local_cert_failures",
+                    ]:
+                        continue
+
+                if cur_version == "MARIA_10.11":
+                    if knock_key in [
+                        "k.mysql.wsrep_local_cert_failures",
+                        "k.mysql.wsrep_local_recv_queue",
+                        "k.mysql.wsrep_flow_control_paused",
+                        "k.mysql.wsrep_local_send_queue_avg",
+                        "k.mysql.wsrep_local_recv_queue_avg",
+                        "k.mysql.wsrep_cert_deps_distance",
+                    ]:
+                        continue
+
 
                 # Don't have this for 10.5 in samples
                 if cur_version in ["MARIA_10.5", "MARIA_10.11"]:
@@ -2190,3 +2218,139 @@ class TestProbesFromBuffer(unittest.TestCase):
                 expect_value(self, self.k, k_expected, v_expected, "exists", dd)
 
         self.k._reset_superv_notify()
+
+    @unittest.skipIf("lchdeb" not in SolBase.get_machine_name(), "lch linux required")
+    def test_from_native_manticore(self):
+        """
+        Test
+        """
+
+        # Init
+        m = Manticore()
+        m.set_manager(self.k)
+
+        # Try a parse
+        host, port = Manticore._parse_config_debian_buffer(
+            """
+            searchd {
+                listen = 127.0.0.1:9312
+                listen = 127.0.0.1:9306:mysql
+                listen = 127.0.0.1:9308:http
+                log = /var/log/manticore/searchd.log
+                query_log = /var/log/manticore/query.log
+                pid_file = /var/run/manticore/searchd.pid
+                data_dir = /var/lib/manticore
+            
+                access_plain_attrs = mmap
+                access_blob_attrs = mmap
+            }
+            """
+        )
+        self.assertEqual("127.0.0.1", host)
+        self.assertEqual(9306, port)
+
+        # Try a native call (ie connect using mysql)
+        m._execute_via_creds("127.0.0.1", 9306)
+
+        # Log
+        for tu in self.k.superv_notify_value_list:
+            logger.info("Having tu=%s", tu)
+
+        # Check one
+        expect_value(self, self.k, "k.manticore.command_ping", 0.0, "exists", {"PORT": "9306"}, d_values_key=None)
+
+    def test_from_buffer_manticore(self):
+        """
+        Test
+        """
+
+        # Init
+        m = Manticore()
+        m.set_manager(self.k)
+
+        # Go
+        for cluster_name, show_status_file in [
+            # Local
+            (
+                    "local_cluster",
+                    "manticore/local_show_status.txt",
+            ),
+            # Cluster
+            (
+                    "cluster001",
+                    "manticore/cluster_show_status.txt",
+            ),
+        ]:
+            logger.info("CHECKING cluster_name=%s", cluster_name)
+
+            # Path
+            show_status_file = self.sample_dir + show_status_file
+
+            # Reset
+            self.k._reset_superv_notify()
+            Meters.reset()
+
+            # Load
+            self.assertTrue(FileUtility.is_file_exist(show_status_file))
+            show_status_buf = FileUtility.file_to_textbuffer(show_status_file, "utf8")
+
+            # Switch to list - show_status_buf
+            ar_show_status = list()
+            d_show_status = dict()
+            for s in show_status_buf.split("\n"):
+                s = s.strip()
+                if not s.startswith("|"):
+                    continue
+                ar = s.split("|")
+                k = ar[1].strip()
+                v = ar[2].strip()
+                ar_show_status.append({"Counter": k, "Value": v})
+                d_show_status[k] = v
+
+            # Process
+            m.process_manticore_buffers(
+                ar_show_status,
+                9306,
+                22
+            )
+
+            # Log
+            for tu in self.k.superv_notify_value_list:
+                logger.info("Having tu=%s", tu)
+
+            # Check
+            dd = {"PORT": "9306"}
+            for known_key in Manticore.get_known_keys(cluster_name):
+                # May have regex....
+                ar_known_keys = list()
+                if ".*" in known_key:
+                    # Regex
+                    for k in d_show_status.keys():
+                        if re.match(known_key, k):
+                            ar_known_keys.append(k)
+                else:
+                    # Direct
+                    ar_known_keys.append(known_key)
+
+                # Check
+                if len(ar_known_keys) == 0:
+                    continue
+
+                # GO
+                for current_key in ar_known_keys:
+                    # Remove cluster name
+                    current_key = "k.manticore." + current_key.replace("_%s_" % cluster_name, "_")
+                    logger.info("CHECKING %s for %s", cluster_name, current_key)
+
+                    # For local_cluster, we bypass sst (we do not have them)
+                    if cluster_name == "local_cluster" and "_sst_" in current_key:
+                        continue
+
+                    if "_stats_ms" in current_key or known_key in ["load", "load_primary", "load_secondary"]:
+                        # Special
+                        expect_value(self, self.k, current_key + "_last_1_min", 0.0, "exists", dd, d_values_key=None)
+                        expect_value(self, self.k, current_key + "_last_5_min", 0.0, "exists", dd, d_values_key=None)
+                        expect_value(self, self.k, current_key + "_last_15_min", 0.0, "exists", dd, d_values_key=None)
+                    else:
+                        # Direct
+                        expect_value(self, self.k, current_key, 0.0, "exists", dd, d_values_key=None)
